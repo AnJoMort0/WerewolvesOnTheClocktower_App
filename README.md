@@ -209,67 +209,6 @@ npm run preview:lan
 
 Direct refresh on deployed routes is supported by `public/_redirects`.
 
-## Supabase Setup
-
-The committed Supabase project ref is:
-
-```text
-ahbkwclivorvwndnmblz
-```
-
-Link the project locally:
-
-```sh
-supabase login
-supabase init
-supabase link --project-ref ahbkwclivorvwndnmblz
-```
-
-Apply migrations:
-
-```sh
-supabase db push
-```
-
-No Edge Functions are currently present in this repository.
-
-Important database note: the current schema is represented by migrations, but
-the live project should still be compared before destructive production changes:
-
-```sh
-supabase db diff --linked
-```
-
-## Free Hosted Deployment
-
-The intended free hosted setup is Cloudflare Pages connected to GitHub.
-
-Use these settings:
-
-```text
-Framework preset: Vite
-Production branch: main
-Install command: npm ci
-Build command: npm run build
-Build output directory: dist
-Node version: 22
-```
-
-Cloudflare environment variables:
-
-```text
-VITE_SUPABASE_URL
-VITE_SUPABASE_PUBLISHABLE_KEY
-VITE_PUBLIC_APP_URL
-```
-
-After the first deploy, Cloudflare gives the project a free `pages.dev` URL.
-Put that full URL into `VITE_PUBLIC_APP_URL` so hosted QR codes use the hosted
-site address.
-
-For click-by-click setup and temporary information Codex may need, see
-`CODEX_NEEDS_NEXT.md`.
-
 ## Updating the Application
 
 ```sh
@@ -421,13 +360,6 @@ Mobile route refresh:
 This repository is now configured to build and deploy independently of Lovable.
 Cloudflare Pages plus the existing Supabase project are sufficient for the free
 hosted mode. Local Wi-Fi mode works through Vite and Supabase Cloud.
-
-Steps that still require dashboard clicks:
-
-- Add this GitHub repo to Cloudflare Pages.
-- Set the Cloudflare Pages build settings and env vars.
-- Confirm the Supabase project env values.
-- Apply migrations to the live Supabase project after reviewing `db diff`.
 
 ## Credits
 

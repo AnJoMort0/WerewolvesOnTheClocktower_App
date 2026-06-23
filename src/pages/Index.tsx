@@ -54,6 +54,12 @@ const Index = () => {
       }
 
       if (error?.code !== "23505") {
+        console.error("Failed to create room in Supabase.", {
+          code: error?.code,
+          message: error?.message,
+          details: error?.details,
+          hint: error?.hint,
+        });
         toast.error(getToast("genericError", language));
         setLoading(false);
         return;
