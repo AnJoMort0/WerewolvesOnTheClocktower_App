@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Crown } from "lucide-react";
 import villagerIcon from "@/assets/icons/villager.png";
-import { SUPPORTED_LANGUAGES, t, type Language } from "@/lib/i18n";
+import { SUPPORTED_LANGUAGES, getToast, t, type Language } from "@/lib/i18n";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,8 @@ const generateRoomCode = () => {
   return code;
 };
 
+const MAX_ROOM_CODE_ATTEMPTS = 8;
+
 const Index = () => {
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
@@ -34,17 +37,30 @@ const Index = () => {
   const createRoom = async () => {
     setLoading(true);
     localStorage.setItem("preferred_language", language);
-    const code = generateRoomCode();
-    const { data, error } = await supabase
-      .from("rooms")
-      .insert({ code, language })
-      .select()
-      .single();
 
-    if (data && !error) {
-      localStorage.setItem(`gm_token_${data.id}`, data.gm_token);
-      navigate(`/gm/${data.id}`);
+    for (let attempt = 0; attempt < MAX_ROOM_CODE_ATTEMPTS; attempt += 1) {
+      const code = generateRoomCode();
+      const { data, error } = await supabase
+        .from("rooms")
+        .insert({ code, language })
+        .select()
+        .single();
+
+      if (data && !error) {
+        localStorage.setItem(`gm_token_${data.id}`, data.gm_token);
+        navigate(`/gm/${data.id}`);
+        setLoading(false);
+        return;
+      }
+
+      if (error?.code !== "23505") {
+        toast.error(getToast("genericError", language));
+        setLoading(false);
+        return;
+      }
     }
+
+    toast.error(getToast("genericError", language));
     setLoading(false);
   };
 

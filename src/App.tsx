@@ -19,7 +19,10 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/host" element={<Index />} />
+          <Route path="/host/:roomId" element={<GMRoom />} />
           <Route path="/gm/:roomId" element={<GMRoom />} />
+          <Route path="/join" element={<JoinRoom />} />
           <Route path="/join/:code" element={<JoinRoom />} />
           <Route path="/play/:playerId" element={<PlayerView />} />
           <Route path="*" element={<NotFound />} />

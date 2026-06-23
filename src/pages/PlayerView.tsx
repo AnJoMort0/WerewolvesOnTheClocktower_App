@@ -17,7 +17,6 @@ type RoomPlayer = {
   name: string;
   seat_position: number | null;
   is_alive: boolean;
-  character: string | null;
 };
 
 const PlayerView = () => {
@@ -43,6 +42,7 @@ const PlayerView = () => {
     illusionPlayerId: string | null;
     isVidentePoisoned: boolean;
     fakeMap: Record<string, string> | null;
+    roleAssignments: Record<string, RoleId>;
   } | null>(null);
   const [meninaReveal, setMeninaReveal] = useState(false);
   const [meninaCards, setMeninaCards] = useState<RevealCard[]>([]);
@@ -91,7 +91,7 @@ const PlayerView = () => {
 
       const { data: allPlayers } = await supabase
         .from("players")
-        .select("id, name, seat_position, is_alive, character")
+        .select("id, name, seat_position, is_alive")
         .eq("room_id", data.room_id)
         .order("created_at");
       if (allPlayers) setRoomPlayers(allPlayers);
@@ -151,7 +151,7 @@ const PlayerView = () => {
           async () => {
             const { data } = await supabase
               .from("players")
-              .select("id, name, seat_position, is_alive, character")
+              .select("id, name, seat_position, is_alive")
               .eq("room_id", roomId)
               .order("created_at");
             if (data) setRoomPlayers(data);
@@ -170,6 +170,7 @@ const PlayerView = () => {
               illusionPlayerId: data.illusionPlayerId,
               isVidentePoisoned: !!data.isVidentePoisoned,
               fakeMap: data.fakeMap || null,
+              roleAssignments: data.roleAssignments || {},
             });
             setVidenteReveal(true);
           } else {
@@ -274,14 +275,6 @@ const PlayerView = () => {
   const roleDef = player?.character
     ? ROLES[player.character as RoleId] ?? null
     : null;
-
-  // Build role assignments from roomPlayers for VidenteModal
-  const roleAssignments: Record<string, RoleId> = {};
-  roomPlayers.forEach((p) => {
-    if (p.character && ROLES[p.character as RoleId]) {
-      roleAssignments[p.id] = p.character as RoleId;
-    }
-  });
 
   const isVidente = player?.character === "e04";
   const isMenina = player?.character === "v01";
@@ -514,7 +507,7 @@ const PlayerView = () => {
           onClose={() => setVidenteReveal(false)}
           deadPlayerIds={videnteData.deadPlayerIds}
           illusionPlayerId={videnteData.illusionPlayerId}
-          roleAssignments={roleAssignments}
+          roleAssignments={videnteData.roleAssignments}
           players={roomPlayers}
           isVidentePoisoned={videnteData.isVidentePoisoned}
           precomputedFakeMap={videnteData.fakeMap}

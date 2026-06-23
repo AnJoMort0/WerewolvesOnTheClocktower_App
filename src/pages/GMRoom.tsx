@@ -16,10 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { assignRoles, ROLES, isUniqueRole, WEREWOLF_ROLES, EVIL_ROLES, type RoleId } from "@/lib/roles";
 import { LanguageContext, getRoleLabel, t, getToast, getValidation, format, type Language, type WinKind } from "@/lib/i18n";
 import { getScriptOrderIndex } from "@/lib/nightScript";
+import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
@@ -27,6 +29,7 @@ import imunityIcon from "@/assets/icons/imunity_full.png";
 import villagerIcon from "@/assets/icons/villager.png";
 
 const TIMER_DEFAULTS_STORAGE_KEY = "wotct_gm_timer_defaults";
+const JOIN_BASE_URL_STORAGE_KEY = "wotct_join_base_url";
 const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   v19: "role-v19",
   v22: "role-v22",
@@ -79,6 +82,11 @@ const GMRoom = () => {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [copied, setCopied] = useState(false);
+  const [copiedJoinLink, setCopiedJoinLink] = useState(false);
+  const [joinBaseOverride, setJoinBaseOverride] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(JOIN_BASE_URL_STORAGE_KEY) ?? "";
+  });
   const [roleAssignments, setRoleAssignments] = useState<Record<string, RoleId>>({});
   const [rolesAssigned, setRolesAssigned] = useState(false);
   const [pendingChanges, setPendingChanges] = useState(false);
@@ -178,7 +186,15 @@ const GMRoom = () => {
   const [spyRevealOpen, setSpyRevealOpen] = useState(false);
   const [spyRevealCards, setSpyRevealCards] = useState<RevealCard[]>([]);
 
-  const joinUrl = room ? `${window.location.origin}/join/${room.code}` : "";
+  const defaultJoinBaseUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return getDefaultJoinBaseUrl(window.location.origin, import.meta.env.VITE_PUBLIC_APP_URL);
+  }, []);
+  const joinBaseUrl = normalizeJoinBaseUrl(joinBaseOverride || defaultJoinBaseUrl);
+  const joinUrl = room ? buildJoinUrl(room.code, joinBaseUrl) : "";
+  const qrPopupSize = typeof window === "undefined"
+    ? 240
+    : Math.max(180, Math.min(window.innerHeight, window.innerWidth) - 200);
 
   // Derived states
   const isBruxaPermaDead = useMemo(() => {
@@ -484,6 +500,16 @@ const GMRoom = () => {
     });
   }, [roomId, gameCyclePhase, dayPhase, nightNumber]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const value = joinBaseOverride.trim();
+    if (value) {
+      window.localStorage.setItem(JOIN_BASE_URL_STORAGE_KEY, value);
+    } else {
+      window.localStorage.removeItem(JOIN_BASE_URL_STORAGE_KEY);
+    }
+  }, [joinBaseOverride]);
+
   // Fetch room
   useEffect(() => {
     if (!roomId) return;
@@ -545,6 +571,13 @@ const GMRoom = () => {
       setTimeout(() => setCopied(false), 2000);
     }
   }, [room]);
+
+  const copyJoinUrl = useCallback(() => {
+    if (!joinUrl) return;
+    navigator.clipboard.writeText(joinUrl);
+    setCopiedJoinLink(true);
+    setTimeout(() => setCopiedJoinLink(false), 2000);
+  }, [joinUrl]);
 
   const updateSeatPosition = async (playerId: string, position: number | null) => {
     await supabase.from("players").update({ seat_position: position }).eq("id", playerId);
@@ -1487,6 +1520,11 @@ const GMRoom = () => {
         illusionPlayerId,
         isVidentePoisoned,
         fakeMap: fakeMap || null,
+        roleAssignments: Object.fromEntries(
+          lastNightDeadPlayerIds
+            .map((playerId) => [playerId, roleAssignments[playerId]])
+            .filter(([, roleId]) => !!roleId),
+        ),
         show: true,
       },
     });
@@ -2624,9 +2662,32 @@ const GMRoom = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="bg-parchment p-6 rounded-2xl">
-                <QRCodeSVG value={joinUrl} size={Math.min(window.innerHeight, window.innerWidth) - 200} bgColor="hsl(40, 30%, 85%)" fgColor="hsl(30, 10%, 8%)" />
+                <QRCodeSVG value={joinUrl} size={qrPopupSize} bgColor="hsl(40, 30%, 85%)" fgColor="hsl(30, 10%, 8%)" />
               </div>
               <div className="font-display text-5xl tracking-[0.4em] text-foreground">{room.code}</div>
+              <div className="w-full max-w-md space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    aria-label="Join link base URL"
+                    value={joinBaseOverride || defaultJoinBaseUrl}
+                    onChange={(event) => setJoinBaseOverride(event.target.value)}
+                    className="h-10 bg-secondary border-border text-xs"
+                    placeholder="http://YOUR-LAN-IP:8080"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    onClick={copyJoinUrl}
+                    title="Copy join link"
+                    aria-label="Copy join link"
+                    className="h-10 w-10 flex-shrink-0"
+                  >
+                    {copiedJoinLink ? <Check className="h-4 w-4 text-gold" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="break-all text-center text-xs text-muted-foreground">{joinUrl}</p>
+              </div>
               <button
                 onClick={() => setQrPopupOpen(false)}
                 className="text-muted-foreground hover:text-foreground font-display text-sm tracking-widest uppercase"

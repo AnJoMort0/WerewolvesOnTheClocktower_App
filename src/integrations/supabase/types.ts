@@ -20,6 +20,8 @@ export type Database = {
           created_at: string
           id: string
           is_alive: boolean
+          is_ready: boolean
+          last_seen_at: string
           name: string
           player_token: string
           room_id: string
@@ -30,6 +32,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_alive?: boolean
+          is_ready?: boolean
+          last_seen_at?: string
           name: string
           player_token?: string
           room_id: string
@@ -40,6 +44,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_alive?: boolean
+          is_ready?: boolean
+          last_seen_at?: string
           name?: string
           player_token?: string
           room_id?: string
@@ -58,26 +64,32 @@ export type Database = {
       rooms: {
         Row: {
           code: string
+          completed_at: string | null
           created_at: string
           gm_token: string
           id: string
           language: string
+          last_activity_at: string
           status: string
         }
         Insert: {
           code: string
+          completed_at?: string | null
           created_at?: string
           gm_token?: string
           id?: string
           language?: string
+          last_activity_at?: string
           status?: string
         }
         Update: {
           code?: string
+          completed_at?: string | null
           created_at?: string
           gm_token?: string
           id?: string
           language?: string
+          last_activity_at?: string
           status?: string
         }
         Relationships: []
@@ -87,7 +99,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_old_rooms: {
+        Args: {
+          retention?: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,9 @@ import villagerIcon from "@/assets/icons/villager.png";
 import { t, getToast, type Language } from "@/lib/i18n";
 
 const JoinRoom = () => {
-  const { code } = useParams<{ code: string }>();
+  const { code: pathCode } = useParams<{ code: string }>();
+  const [searchParams] = useSearchParams();
+  const code = pathCode ?? searchParams.get("room") ?? "";
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
