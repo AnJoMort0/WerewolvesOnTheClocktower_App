@@ -88,7 +88,7 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language, d
                     ) : imageBlock}
                     {c.name && <span className="font-body text-sm text-foreground">{c.name}</span>}
                     <span className="font-display text-xs text-blue-400 text-center">{c.label}</span>
-                    {c.checkboxes && (
+                    {!!c.checkboxes?.length && (
                       <div className="flex gap-1 mt-1">
                         {c.checkboxes.map((checked, idx) => (
                           <Checkbox key={idx} checked={checked} disabled className="h-4 w-4 border-primary data-[state=checked]:bg-primary" />
@@ -122,6 +122,10 @@ export function resolveKillerCard(
   if (source === "soldado") {
     const role = ROLES["v09"];
     return { image: role.image, label: getRoleLabel("v09", lang), roleId: "v09" };
+  }
+  if (source === "s01-suicide") {
+    const role = ROLES["s01"];
+    return { image: role.image, label: t("meninaSuicide", lang), roleId: "s01" };
   }
   if (illusionPlayerId) {
     const illusionRole = roleAssignments[illusionPlayerId];

@@ -116,9 +116,10 @@ const PlayerView = () => {
 
     const syncChannel = supabase
       .channel(`player-sync-${roomId}`)
-      .on("broadcast", { event: "sync" }, (payload) => {
-        const ids = payload.payload?.playerIds as string[] | undefined;
-        if (!ids || ids.includes(playerId)) refreshPlayerState();
+      .on("broadcast", { event: "sync" }, () => {
+        // Every device refreshes the room circle; the resurrected player's own
+        // row is refreshed in the same query so stale dead markers cannot linger.
+        refreshPlayerState();
       })
       .subscribe();
 
@@ -255,7 +256,8 @@ const PlayerView = () => {
           const d = payload.payload;
           if (d.show && d.role && ROLES[d.role as RoleId]) {
             const def = ROLES[d.role as RoleId];
-            setFaroleiroCards([{ image: def.image, label: def.label, roleId: d.role as RoleId, checkboxes: d.charges || [] }]);
+            const checkboxes = Array.isArray(d.charges) && d.charges.length > 0 ? d.charges : undefined;
+            setFaroleiroCards([{ image: def.image, label: def.label, roleId: d.role as RoleId, checkboxes }]);
             setFaroleiroReveal(true);
           } else { setFaroleiroReveal(false); }
         }).subscribe();

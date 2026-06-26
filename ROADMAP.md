@@ -18,12 +18,13 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] v04 Has the new checkbox - good. However, This checkbox should not appear for the v21 power
-* [ ] v04's checkbox should not appear in the first night
-* [ ] Players that were dead and ressurected stay marked as dead in the players' devices. Fix that
-* [ ] s01 : It's missing the checkboxes in the player circle. When a checkbox is ticked it gives cupid immunity to the lovers. Cupid Immunity should be removed at dawn. When one of the lovers is red-x, the other lover is also red-x (if not immune). The v01 will see the second lover's murder as the cupid card but the text will say "suicide".
-* [ ] Poison seems to be broken for some characters (it was working on the Lovable build so it may not have transfered properly). Most characters that drag-drop poisonned should only aim at a character they didn't target. Animal tamers should only get the wrong information ("O Urso não rosna" even it should for example)
-* [ ] Fix in the poisoned v01: Should show only wrong answers but from the following list: Soldier, Suicide, Hunter, Paranoid, Pyromaniac, Rusted Knight, Mime, Actor, Werewolves, White Werewolf
+* [x] v04 Has the new checkbox - good. However, This checkbox should not appear for the v21 power
+* [x] v04's checkbox should not appear in the first night
+* [x] Players that were dead and ressurected stay marked as dead in the players' devices. Fix that
+* [x] s01 : It's missing the checkboxes in the player circle. When a checkbox is ticked it gives cupid immunity to the lovers. Cupid Immunity should be removed at dawn. When one of the lovers is red-x, the other lover is also red-x (if not immune). The v01 will see the second lover's murder as the cupid card but the text will say "suicide".
+* [x] Poison seems to be broken for some characters (it was working on the Lovable build so it may not have transfered properly). Most characters that drag-drop poisonned should only aim at a character they didn't target. Animal tamers should only get the wrong information ("O Urso não rosna" even it should for example)
+  * Codex note 2026-06-26: wrong-target powers now exclude the intended target; powers documented as failing while poisoned still fail. Automated Bear, Crow, and Rabbit information is guaranteed to be wrong rather than randomly possibly correct.
+* [x] Fix in the poisoned v01: Should show only wrong answers but from the following list: Soldier, Suicide, Hunter, Paranoid, Pyromaniac, Rusted Knight, Mime, Actor, Werewolves, White Werewolf
 
 
 ## Fixes

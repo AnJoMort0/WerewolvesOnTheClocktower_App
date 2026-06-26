@@ -184,6 +184,9 @@ export interface UIStrings {
   revealManual: string;
   unknown: string;
   execution: string;
+  meninaSoldier: string;
+  meninaSuicide: string;
+  meninaWerewolves: string;
   gameMaster: string;
   playersInRoom: string;
   playersHeader: string;

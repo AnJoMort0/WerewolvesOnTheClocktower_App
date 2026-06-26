@@ -9,6 +9,7 @@ import {
 } from "@/lib/nightScript";
 import { useLanguage, getScripts, getDynamic, t, getToast } from "@/lib/i18n";
 import { ROLES, type RoleId } from "@/lib/roles";
+import { getGuaranteedWrongCount } from "@/lib/gameRules";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import { toast } from "sonner";
 import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
@@ -143,6 +144,7 @@ function ScriptLineDisplay({
   dynamicText,
   foxDisabled,
   onFoxDisabledToggle,
+  showFoxCheckbox,
   forceStrikethrough,
   paranoicoCharges,
   onParanoicoChargeToggle,
@@ -152,6 +154,7 @@ function ScriptLineDisplay({
   onLobisomemMauChargeToggle,
   cupidoCharges,
   onCupidoChargeToggle,
+  showCupidoCheckboxes,
   lobisomemVampiroUsed,
   onLobisomemVampiroToggle,
   juizCharges,
@@ -177,6 +180,7 @@ function ScriptLineDisplay({
   dynamicText?: string;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
+  showFoxCheckbox: boolean;
   forceStrikethrough?: boolean;
   paranoicoCharges?: number;
   onParanoicoChargeToggle?: (idx: number) => void;
@@ -186,6 +190,7 @@ function ScriptLineDisplay({
   onLobisomemMauChargeToggle?: (idx: number) => void;
   cupidoCharges?: number;
   onCupidoChargeToggle?: (idx: number) => void;
+  showCupidoCheckboxes: boolean;
   lobisomemVampiroUsed?: boolean;
   onLobisomemVampiroToggle?: () => void;
   juizCharges?: number;
@@ -305,7 +310,7 @@ function ScriptLineDisplay({
         )}
 
         {/* Fox checkbox */}
-        {isFoxLine && onFoxDisabledToggle != null && (
+        {isFoxLine && showFoxCheckbox && onFoxDisabledToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             <Checkbox
               checked={foxDisabled}
@@ -338,7 +343,7 @@ function ScriptLineDisplay({
             ))}
           </div>
         )}
-        {isCupidoLine && onCupidoChargeToggle != null && (
+        {isCupidoLine && showCupidoCheckboxes && onCupidoChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
               <Checkbox key={idx} checked={(cupidoCharges ?? 0) > idx} onCheckedChange={() => onCupidoChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
@@ -519,15 +524,11 @@ export const NightScript = ({
     const right = findNeighbor(1);
     const neighbors = [left, right].filter(Boolean) as typeof players;
 
-    const isBearPoisoned = poisonedPlayerId === bearPlayerId;
-    if (isBearPoisoned) {
-      return Math.random() > 0.5 ? dyn.bearGrowl : dyn.bearSilent;
-    }
-
     const hasIllusionNeighbor = neighbors.some((n) => n.id === illusionPlayerId);
-    if (hasIllusionNeighbor) return dyn.bearConfused;
-
     const hasEvilNeighbor = neighbors.some((n) => countsAsEvilBeing(n.id));
+    const isBearPoisoned = poisonedPlayerId === bearPlayerId;
+    if (isBearPoisoned) return hasEvilNeighbor ? dyn.bearSilent : dyn.bearGrowl;
+    if (hasIllusionNeighbor) return dyn.bearConfused;
     return hasEvilNeighbor ? dyn.bearGrowl : dyn.bearSilent;
   }, [roleAssignments, players, _permanentlyDeadPlayerIds, poisonedPlayerId, illusionPlayerId, countsAsEvilBeing, dyn]);
 
@@ -541,8 +542,7 @@ export const NightScript = ({
     const illusionActive = !!illusionPlayerId && !_permanentlyDeadPlayerIds.has(illusionPlayerId) && countsAsEvilBeing(illusionPlayerId);
 
     if (isCrowPoisoned) {
-      const offset = Math.random() > 0.5 ? 1 : -1;
-      const fakeCount = Math.max(0, aliveEvilCount + offset);
+      const fakeCount = getGuaranteedWrongCount(aliveEvilCount);
       return dyn.crowReveal.replace("{n}", String(fakeCount));
     }
 
@@ -579,15 +579,18 @@ export const NightScript = ({
     const right = findNeighbor(1);
     const neighbors = [left, right].filter(Boolean) as typeof players;
     const relevantIds = [rabbitPlayerId, ...neighbors.map((n) => n.id)];
+    const wasTargeted = relevantIds.some((id) => nightTargetedPlayerIds.has(id));
+    const isRabbitPoisoned = poisonedPlayerId === rabbitPlayerId;
+
+    if (isRabbitPoisoned) return wasTargeted ? `~~${dyn.rabbitNothing}~~` : dyn.rabbitHeard;
 
     const hasIllusionNeighbor = neighbors.some((n) => n.id === illusionPlayerId);
     if (hasIllusionNeighbor) return dyn.rabbitConfused;
 
-    const wasTargeted = relevantIds.some((id) => nightTargetedPlayerIds.has(id));
     if (wasTargeted) return dyn.rabbitHeard;
 
     return `~~${dyn.rabbitNothing}~~`;
-  }, [roleAssignments, players, _permanentlyDeadPlayerIds, illusionPlayerId, nightTargetedPlayerIds, dyn]);
+  }, [roleAssignments, players, _permanentlyDeadPlayerIds, poisonedPlayerId, illusionPlayerId, nightTargetedPlayerIds, dyn]);
 
   const spiderConfusedText = useMemo(() => {
     const webbedPid = Object.entries(_playerEffects).find(([, e]) => e.has("webbed"))?.[0];
@@ -699,6 +702,7 @@ export const NightScript = ({
                 dynamicText={getDynamicText(line)}
                 foxDisabled={foxDisabled}
                 onFoxDisabledToggle={onFoxDisabledToggle}
+                showFoxCheckbox={nightNumber > 1}
                 forceStrikethrough={isLineForcedStrikethrough(line)}
                 paranoicoCharges={paranoicoCharges}
                 onParanoicoChargeToggle={onParanoicoChargeToggle}
@@ -708,6 +712,7 @@ export const NightScript = ({
                 onLobisomemMauChargeToggle={onLobisomemMauChargeToggle}
                 cupidoCharges={cupidoCharges}
                 onCupidoChargeToggle={onCupidoChargeToggle}
+                showCupidoCheckboxes={nightNumber > 1}
                 lobisomemVampiroUsed={lobisomemVampiroUsed}
                 onLobisomemVampiroToggle={onLobisomemVampiroToggle}
                 juizCharges={juizCharges}

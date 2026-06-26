@@ -65,12 +65,16 @@ interface PlayerCircleProps {
   compact?: boolean;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
+  showFoxCheckbox?: boolean;
   juizCharges?: number;
   onJuizChargeToggle?: (idx: number) => void;
   acusadorCharges?: number;
   onAcusadorChargeToggle?: (idx: number) => void;
   lobisomemMauCharges?: number;
   onLobisomemMauChargeToggle?: (idx: number) => void;
+  cupidoCharges?: number;
+  onCupidoChargeToggle?: (idx: number) => void;
+  showCupidoCheckboxes?: boolean;
   spiderDayChangeUsed?: boolean;
   onSpiderDayChangeToggle?: () => void;
   lobisomemVampiroUsed?: boolean;
@@ -108,12 +112,16 @@ export const PlayerCircle = ({
   compact = false,
   foxDisabled = false,
   onFoxDisabledToggle,
+  showFoxCheckbox = true,
   juizCharges = 0,
   onJuizChargeToggle,
   acusadorCharges = 0,
   onAcusadorChargeToggle,
   lobisomemMauCharges = 0,
   onLobisomemMauChargeToggle,
+  cupidoCharges = 0,
+  onCupidoChargeToggle,
+  showCupidoCheckboxes = true,
   spiderDayChangeUsed = false,
   onSpiderDayChangeToggle,
   lobisomemVampiroUsed = false,
@@ -166,8 +174,8 @@ export const PlayerCircle = ({
         onChamanDrop?.(seated.id);
         onDragAction?.("__catch__", seated.id, sourcePlayerId);
       } else if (action === "illusion") {
-        onSetIllusion?.(seated.id);
-        onDragAction?.("__catch__", seated.id, sourcePlayerId);
+        if (onDragAction) onDragAction(action, seated.id, sourcePlayerId);
+        else onSetIllusion?.(seated.id);
       } else {
         // Generic drag-drop action
         onDragAction?.(action, seated.id, sourcePlayerId);
@@ -424,7 +432,7 @@ export const PlayerCircle = ({
                 </div>
               )}
               {/* Fox checkbox */}
-              {isGM && isFox && !isPermanentlyDead && onFoxDisabledToggle && (
+              {isGM && isFox && showFoxCheckbox && !isPermanentlyDead && onFoxDisabledToggle && (
                 <div className="flex items-center gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={foxDisabled}
@@ -432,6 +440,19 @@ export const PlayerCircle = ({
                     className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                   />
                   <span className="text-[9px] text-muted-foreground">⚡</span>
+                </div>
+              )}
+              {/* Cupido (s01) protection charges */}
+              {isGM && role === ("s01" as RoleId) && showCupidoCheckboxes && !isPermanentlyDead && onCupidoChargeToggle && (
+                <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
+                  {[0, 1].map((idx) => (
+                    <Checkbox
+                      key={idx}
+                      checked={cupidoCharges > idx}
+                      onCheckedChange={() => onCupidoChargeToggle(idx)}
+                      className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
+                    />
+                  ))}
                 </div>
               )}
               {/* Lobisomem Mau (m01) checkboxes */}
