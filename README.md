@@ -1,94 +1,84 @@
-# Private Hidden-Role Game Companion
+<div align="center">
 
-This is a private, non-commercial companion app for running a custom hidden-role party game inspired by classic Werewolf-style social deduction games. It is built for a trusted friend group or small event where one Game Master runs the session and players use their phones.
+# Werewolves on the Clocktower
 
-The app gives the GM a control panel for creating a room, sharing a code or QR link, seating players, assigning roles, running the night script, tracking status effects, revealing role-specific information, and moving through day and tribunal phases. Player phones show only the information each player should normally see: their own role, public table state, phase information, timers, and GM-triggered reveal popups.
+### A hidden-role village mystery made for crowded rooms, whispered alliances, and difficult accusations
 
-The project began in Lovable and is now maintained directly from this repository with local code edits. Lovable is not required to build, run, deploy, or maintain it.
+<p>
+  <img src="src/assets/roles/e01.png" alt="Werewolf character artwork" width="145">
+  &nbsp;&nbsp;
+  <img src="src/assets/roles/a01.png" alt="Drunk character artwork" width="145">
+  &nbsp;&nbsp;
+  <img src="src/assets/roles/s01.png" alt="Cupid character artwork" width="145">
+</p>
 
-## Current Languages
+*A private, non-commercial companion for an original social-deduction game inspired by* Werewolf of the Miller's Hollow *and selected ideas from* Blood on the Clocktower.
 
-- EU Portuguese
-- French
+</div>
 
-Future plans may include English rulebooks and UI text.
+---
 
-Reference rule documents:
+## Welcome to the village of Freebourough
 
-- Portuguese rules: <https://docs.google.com/document/d/1aV9II9br_8ln4zrA7wgHRByBLqyb8EzkOqc2ltHGCes/edit?usp=sharing>
-- French rules: <https://docs.google.com/document/d/1Jd6N6Us3eo_LdNMcFmwEd3A5IbOAB332adSVViu7Na0/edit?tab=t.0#heading=h.dy2z3kn1r3as>
+By day, everyone is free to move, bargain, accuse, mislead, and search for the few people they might be able to trust. When the village gathers for the Tribunal, suspicions become public, defendants must answer for themselves, and a vote may end a life.
 
-Official tier list:
+By night, the village closes its eyes. Werewolves choose their victims, strange powers awaken, hidden loyalties shift, and the Game Master quietly guides each character through the consequences.
 
-- <https://tiermaker.com/create/werewolves-on-the-clocktower---official-teir-list-17406677>
+**Werewolves on the Clocktower** expands the familiar Werewolf formula into a larger, more involved game with more than forty distinct characters. Every player receives something meaningful to do, bluffing remains understandable for newcomers, and death does not remove anyone from the story: fallen players return as ghosts and continue taking part in the village.
 
-Creator contact:
+## What the companion does
 
-- <https://linktr.ee/anjomorto>
+The project is a web-based assistant for running the game around a real table.
 
-## Stack
+One Game Master creates a room and shares its code or QR link. Players join from their phones and privately receive only the information meant for them, while the Game Master follows the table state, seats players, distributes roles, advances through day, Tribunal, and night, and sends character-specific revelations when the story calls for them.
 
-- Frontend: React, TypeScript, Vite, Tailwind CSS, shadcn/ui
-- Package manager: npm, using `package-lock.json`
-- Backend/data: Supabase Cloud
-- Hosted deployment target: Cloudflare Pages
-- Local mode: Vite dev server on the GM computer
+It is designed to protect the secrecy that makes the game exciting while reducing the amount of information the Game Master must hold in their head. The long-term ambition is to make even large and complicated sessions feel smooth enough to run with a single narrator.
 
-The app can run locally, but it still needs internet access because it uses Supabase Cloud for room/player data and realtime updates.
+## The spirit of the game
 
-## Repository Structure
+This version was created for groups who enjoy conversation more than elimination. Its focus is on:
 
-- `src/pages/Index.tsx`: create or join a room
-- `src/pages/GMRoom.tsx`: GM screen
-- `src/pages/JoinRoom.tsx`: player name entry
-- `src/pages/PlayerView.tsx`: player phone interface
-- `src/components/game`: game-specific UI
-- `src/lib`: roles, i18n, night script, join URL helpers
-- `src/integrations/supabase`: Supabase client and generated types
-- `supabase/migrations`: reproducible database migrations
-- `public/_redirects`: Cloudflare Pages SPA fallback
-- `CODEX_NEEDS_NEXT.md`: deployment handoff notes and temporary info checklist
-- `ROADMAP.md`: owner-maintained roadmap and playtest notes
+- **Communication and bluffing:** players may reveal the truth, invent a role, trade information, form alliances, or set traps.
+- **A dramatic public Tribunal:** accusations have structure, defendants have a chance to speak, and the whole village decides what happens next.
+- **Characters with consequences:** information, poison, protection, love, betrayal, imitation, resurrection, and changing allegiances can reshape a game.
+- **Participation after death:** ghosts remain part of the village instead of spending the rest of the session outside the game.
+- **A welcoming learning curve:** the rules remain recognisably Werewolf, even as the character interactions grow deeper.
 
-## Maintainer Notes
+## Languages and rulebooks
 
-Setup, local Wi-Fi testing, deployment details, database notes, troubleshooting, and smoke-test checklists are in [docs/development.md](docs/development.md). The active owner-maintained roadmap is in [ROADMAP.md](ROADMAP.md).
+The game is currently written for:
 
-Common commands:
+- European Portuguese: [read the rulebook](Rulebook_PT.md) or [open the living reference document](https://docs.google.com/document/d/1aV9II9br_8ln4zrA7wgHRByBLqyb8EzkOqc2ltHGCes/edit?usp=sharing)
+- French: [read the rulebook](Rulebook_FR.md) or [open the living reference document](https://docs.google.com/document/d/1Jd6N6Us3eo_LdNMcFmwEd3A5IbOAB332adSVViu7Na0/edit?tab=t.0#heading=h.dy2z3kn1r3as)
 
-```sh
-npm install
-npm test
-npm run build
-npm run dev
-```
+English rules and interface text may be added in the future.
 
-Important environment variables are `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and optional `VITE_PUBLIC_APP_URL`. Do not commit database passwords, private Supabase keys, Cloudflare API keys, GitHub personal access keys, or account passwords.
+## Project status
 
-## Workflow
+This is an evolving personal project shaped through real games, corrections, and playtesting. Some character actions are deliberately mediated by the Game Master, and the rules may continue to change as unusual interactions are discovered around the table.
 
-GM flow: create a room, share the code or QR link, seat players, assign roles, send roles, run the night/day/tribunal flow, and trigger reveal popups when needed.
+For setup, architecture, local play, testing, database maintenance, and deployment, see the [development and maintenance guide](docs/development.md). Current ideas and playtest priorities live in [ROADMAP.md](ROADMAP.md).
 
-Player flow: join through a room code or QR link, enter a display name, keep the same browser open for the session, and use the phone view for role and public table state.
+## Share your experience
 
-Known limits: many role actions are still GM-mediated, complete backend validation is intentionally minimal, and some advanced recovery/automation features are still on the roadmap.
+Thoughts, balance suggestions, edge cases, and stories from the table are welcome. They can help refine both the rules and the companion.
 
-## Credits
+You can also rank the characters using the [official community tier list](https://tiermaker.com/create/werewolves-on-the-clocktower---official-teir-list-17406677).
 
-All art is digitally hand-drawn by L_PT_1463. The cards are original or reinterpretations of *Werewolf of the Miller's Hollow* cards inspired by:
+To find the creator elsewhere, visit [@an_jo_morto](https://linktr.ee/anjomorto).
 
-- <https://www.loups-garous-en-ligne.com/>
-- <https://loupgarou.fandom.com/fr/wiki/Wiki_Loup-Garou>
+## Art and credits
 
-The goal of recreating the cards in a unified original art style is visual consistency while keeping the designs close enough to the classic game that new players can understand the transition.
+All character art is digitally hand-drawn by **L_PT_1463**. The collection combines original designs with reinterpretations of cards from *Werewolf of the Miller's Hollow*, informed by references from [Loups-Garous en Ligne](https://www.loups-garous-en-ligne.com/) and the [Wiki Loup-Garou](https://loupgarou.fandom.com/fr/wiki/Wiki_Loup-Garou).
+
+The cards were redrawn in a unified personal style so the full cast feels like it belongs to the same village, while remaining familiar enough for players arriving from the classic game.
+
+## AI transparency
+
+The game design, character interactions, priorities, corrections, and creative direction are human-led. AI-assisted tools have been used during implementation: the application began as a Lovable project and later moved to a repository-based workflow with Codex assistance, allowing the maintainer to inspect, change, and correct the code directly.
+
+All artwork is human-created. This project does not use AI-generated art and does not intend to introduce it.
 
 ## Disclaimer
 
-This project is provided as-is. Use or modification is at your own risk.
-
-## AI Transparency
-
-This project was made in large part as a vibe-coding project. The game mechanics, role interactions, priorities, and corrections are requested and directed by a human. The app implementation side has used AI assistance: it started with Lovable and later moved to Codex so the human maintainer can use their own web-programming knowledge to inspect, change, and correct the code instead of fully relying on AI to fix AI-generated code.
-
-All images are human-created. This project will always refuse to use
-AI-generated art.
+This project is provided as-is for private, non-commercial use. Use or modification is at your own risk.

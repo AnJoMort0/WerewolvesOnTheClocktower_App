@@ -56,39 +56,39 @@ export interface ToastStrings {
   warnDuplicateName: string;
   genericError: string;
   warnHunterMissing: string;
-  warnAmanteMissing: string;
-  warnCapuchinhoWithoutHunter: string;
-  warnAmanteWithoutCupido: string;
-  warnBruxaPoisonedImmune: string;
-  warnLobosPoisoned: string;
+  warnSecretLoverMissing: string;
+  warnLittleRedWithoutHunter: string;
+  warnSecretLoverWithoutCupid: string;
+  warnWitchPoisonedImmune: string;
+  warnWolvesPoisoned: string;
   warnChamanPoisoned: string;
   warnChamanUsedAll: string;
-  warnAnjoUsedAll: string;
-  warnParanoicoUsedAll: string;
-  warnCapuchinhoImmune: string;
+  warnAngelUsedAll: string;
+  warnParanoidUsedAll: string;
+  warnLittleRedImmune: string;
   warnImmune: string;          // "{name} está imune!"
   infoUsedOnetime: string;     // "{name} usou a Imunidade Única!"
-  warn2Namorados: string;
-  warn2Inimigos: string;
-  warnCupidoPoisoned: string;
-  warnLadraoPoisoned: string;
-  warnProfetaPoisoned: string;
+  warn2Lovers: string;
+  warn2Enemies: string;
+  warnCupidPoisoned: string;
+  warnThiefPoisoned: string;
+  warnProfetPoisoned: string;
   warnChamanOnlyDead: string;
-  infoCavaleiroPoisoned: string;  // "...{name} foi infetado com Tétano."
-  infoCavaleiroDied: string;
-  infoCavaleiroExecuted: string;
+  infoKnightPoisoned: string;  // "...{name} foi infetado com Tétano."
+  infoKnightDied: string;
+  infoKnightExecuted: string;
   infoExecuted: string;           // "{name} foi executado!"
-  infoSonambuloPoisoned: string;  // "O Sonâmbulo está envenenado. Hóspede aplicado a {name}."
-  infoSalvadorPoisoned: string;
-  infoPiromaniacoPoisoned: string;
-  infoAnjoPoisoned: string;
-  infoParanoicoPoisoned: string;
+  infoSleepwalkerPoisoned: string;  // "O Sonâmbulo está envenenado. Hóspede aplicado a {name}."
+  infoSaviourPoisoned: string;
+  infoPiromaniacPoisoned: string;
+  infoAngelPoisoned: string;
+  infoParanoicPoisoned: string;
   infoBornFireWolf: string;       // "{name} (Lobisomem) foi incendiado e morreu!"
-  infoPaiAdotivoDied: string;
-  infoIrmaoSaved: string;
-  okRoubaTumulos: string;
-  errRoubaOnlyRedX: string;
-  warnRoubaPoisoned: string;
+  infoAdoptiveDadDied: string;
+  infoBrothersSaved: string;
+  okGraveRobber: string;
+  errGraveRobberOnlyRedX: string;
+  warnGraveRobberPoisoned: string;
   warnAllSpied: string;
   warnNoLimitedRoles: string;
   warnNoTargets: string;
@@ -99,18 +99,18 @@ export interface ToastStrings {
   okRoomEnded: string;
   okCleanupOldRooms: string;
   errRoomAction: string;
-  errRoubaOnlyGhost: string;
+  errGraveRobberOnlyGhost: string;
 }
 
 export interface ValidationWarningStrings {
   essentialMissing: string;     // "{label} em falta!"
   fewWerewolves: string;        // "Poucos Lobisomens ({n}/{expected})"
-  capuchinhoNeedsHunter: string;
-  amanteNeedsCupido: string;
-  irmasCount: string;           // "Irmãs precisam de exatamente 2 jogadoras (tem {n})!"
-  irmaosCount: string;
-  tooManyInimigos: string;
-  tooManyNamorados: string;
+  littleRedNeedsHunter: string;
+  secretLoverNeedsCupid: string;
+  sistersCount: string;           // "Irmãs precisam de exatamente 2 jogadoras (tem {n})!"
+  brothersCount: string;
+  tooManyInimies: string;
+  tooManyLovers: string;
 }
 
 export interface WinLabelStrings {
@@ -173,20 +173,20 @@ export interface UIStrings {
   dayTimerEnded: string;
   tribunalTimerEnded: string;
   timeUp: string;
-  revealLVTitle: string;
-  revealLVSubtitle: string;
-  revealMeninaTitle: string;
-  revealMeninaSubtitle: string;
-  revealFaroleiroTitle: string;
-  revealFaroleiroSubtitle: string;
-  revealVidenteTitle: string;
-  revealVidenteSubtitle: string;
+  revealVampireWolfTitle: string;
+  revealVampireWolfSubtitle: string;
+  revealLittleGirlTitle: string;
+  revealLittleGirlSubtitle: string;
+  revealLamplighterTitle: string;
+  revealLamplighterSubtitle: string;
+  revealFortuneTellerTitle: string;
+  revealFortuneTellerSubtitle: string;
   revealManual: string;
   unknown: string;
   execution: string;
-  meninaSoldier: string;
-  meninaSuicide: string;
-  meninaWerewolves: string;
+  littleGirlSoldier: string;
+  littleGirlSuicide: string;
+  littleGirlWerewolves: string;
   gameMaster: string;
   playersInRoom: string;
   playersHeader: string;
@@ -203,7 +203,7 @@ export interface UIStrings {
   rulebook: string;
   spiderEyeReveal: string;
   spyEyeReveal: string;
-  amanteCheckboxLabel: string;
+  secretLoverCheckboxLabel: string;
   spiderConfused: string;       // "A {Aranha} está confusa." / "L'{Araignée} est confuse."
   shareCodeOrAdd: string;
   allSeated: string;

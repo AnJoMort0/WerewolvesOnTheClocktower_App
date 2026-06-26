@@ -8,35 +8,34 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 * [ ] Human-test hosted mode with at least one phone.
 * [ ] Confirm QR codes use the correct hosted or LAN URL.
 * [ ] Find out what "Clear previous rooms" button does.
-* [ ] Check this: "Add a production smoke-test checklist for Cloudflare deployments. - Codex note 2026-06-23: Added to `docs/development.md`."
 * [ ] Check the README file.
 
 ## Other Changes Outside of the Repo
 
-* [ ] DOCS + RULEBOOKS: Once per game, on daytime, `v23` can change who is webbed
-* [ ] See patch notes to do the other stuff written there
+* [ ] DOCS + ALMANAC: Once per game, on daytime, `v23` can change who is webbed
+* [ ] DOCS + ALMANAC: Add the new (Were)Wolf Tamer card
+* [ ] DOCS + ALMANAC: Add the new Vintner card
+* [ ] DOCS + ALMANAC: Update the Saviour so full immunity lasts for only one night
+* [ ] DOCS + ALMANAC: Update the Spy so a character gains the `Spied On` status when called by the Narrator; regular Werewolves all gain it when the Werewolves are called
+* [ ] DOCS + ALMANAC: Once per game, during daytime, `v23` Spider Tamer can change who is webbed even if the current target is still alive
+* [ ] DOCS + ALMANAC: Update the Illusioner so Pedro sees an illusory Werewolf as innocent when he accuses them
+* [ ] DOCS + ALMANAC: Rearrange cards by affinity instead of ID; place the Spider Tamer beside the other Tamers and separate Werewolves from their allies
 
 ## Critical Fixes
-
-* [x] v04 Has the new checkbox - good. However, This checkbox should not appear for the v21 power
-* [x] v04's checkbox should not appear in the first night
-* [x] Players that were dead and ressurected stay marked as dead in the players' devices. Fix that
-* [x] s01 : It's missing the checkboxes in the player circle. When a checkbox is ticked it gives cupid immunity to the lovers. Cupid Immunity should be removed at dawn. When one of the lovers is red-x, the other lover is also red-x (if not immune). The v01 will see the second lover's murder as the cupid card but the text will say "suicide".
-* [x] Poison seems to be broken for some characters (it was working on the Lovable build so it may not have transfered properly). Most characters that drag-drop poisonned should only aim at a character they didn't target. Animal tamers should only get the wrong information ("O Urso não rosna" even it should for example)
-  * Codex note 2026-06-26: wrong-target powers now exclude the intended target; powers documented as failing while poisoned still fail. Automated Bear, Crow, and Rabbit information is guaranteed to be wrong rather than randomly possibly correct.
-* [x] Fix in the poisoned v01: Should show only wrong answers but from the following list: Soldier, Suicide, Hunter, Paranoid, Pyromaniac, Rusted Knight, Mime, Actor, Werewolves, White Werewolf
 
 
 ## Fixes
 
-* [ ] Remove strange manually added line breaks from the README, this file, and similar files. Do not be afraid to keep an entire paragraph on one line.
-  * Codex note 2026-06-23: README was cleaned and development docs were split out. This ROADMAP still intentionally keeps some nested note formatting for readability.
+* [ ] The Portuguese word "Esgotado" is hard coded and needs to be moved to i18n
+* [ ] Changes for the v01 pop-up: If it's a soldier that killed, it's still shows the capitain card but "soldier" in the text instead of capitain. If there werewolves killes it says werewolves plural.
+* [ ] Add the timer controls to the hidden mode in the GM screen.
+* [ ] Players did not always see the timer on their screens, when the timer is in the GM screen, it should appear in the players devices.
+* [ ] Lovable version: Some players who initially joined through the iPhone Camera app could not reconnect after disconnecting. The Camera app sometimes did not open the link in the default browser I guess, so the reconnecting session did not have access to the original persistent `localStorage` data (I don't know if there's a possibility to fix this somehow, if there isn't just tell me)
 * [ ] Check whether old or unnecessary `localStorage` values accumulate over time.
   * Codex note 2026-06-23: Old GM snapshots are pruned after 7 days. Other browser session keys still need a cleanup policy.
 * [ ] Ensure mostly one-time or obsolete `localStorage` data is removed instead of being kept indefinitely and gradually filling the computer's storage.
   * Codex note 2026-06-23: Same as above; GM snapshots now have retention cleanup, but player/browser session data still needs a deliberate cleanup design.
-* [ ] Changes for the v01 pop-up: If it's a soldier that killed, it's still shows the capitain card but soldier in the text instead of capitain. If there werewolves killes it says werewolves plural.
-* [ ] Add the timer controls to the hidden mode in the GM screen.
+--> for these two last ones, a new game at least a day apart could overight old data if that is something that is doable and the easiest way to implement it
 
 ## Additions
 
@@ -63,6 +62,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 * [ ] Add rulebook pages inside the app instead of linking to external HTML pages.
 * [ ] Add a logs of the games for easy recap at the end of the game
 * [ ] Add the fonctionnality for the complex characters not yet deployed
+* [ ] Remove any useless files or deprecated lines of code, vestiges of old versions, etc
 * [ ] Add an English rulebook and English UI.
 * [ ] Support more complete player-submitted actions from phones.
 * [ ] Add better role-selection presets for different player counts and play styles (also better balance).
@@ -73,17 +73,14 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 Add playtest notes below. Do not delete old notes until the issue is clearly fixed and tested again.
 
 * Date: 20.06.2026
-
   * App version: Still in the Lovable app
   * Player count: 14
   * Language: PT
   * What went well:
   * What broke or felt confusing:
-
     * Players did not always see the timer on their screens.
     * Some players who initially joined through the iPhone Camera app could not reconnect after disconnecting. The Camera app sometimes did not open the link in the default browser, so the reconnecting session did not have access to the original persistent `localStorage` data.
   * Follow-up items:
-
     * Verify that timer updates reliably reach every connected player.
     * Make player reconnection less dependent on browser-specific `localStorage`.
     * Consider a recoverable player token, reconnect code, or another method that works when the join link opens in a different browser context.
