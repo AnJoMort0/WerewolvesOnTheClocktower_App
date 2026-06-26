@@ -86,6 +86,48 @@ const PlayerView = () => {
   }, [playerId, player?.room_id]);
 
   useEffect(() => {
+    if (!playerId || !player?.room_id) return;
+    const roomId = player.room_id;
+
+    const refreshPlayerState = async () => {
+      const { data } = await supabase
+        .from("players")
+        .select("name, character, is_alive, room_id")
+        .eq("id", playerId)
+        .single();
+
+      if (!data) {
+        setRemoved(true);
+        return;
+      }
+
+      setPlayer((prev) => {
+        if (prev?.character !== data.character) setCharacterKey((k) => k + 1);
+        return data;
+      });
+
+      const { data: allPlayers } = await supabase
+        .from("players")
+        .select("id, name, seat_position, is_alive")
+        .eq("room_id", roomId)
+        .order("created_at");
+      if (allPlayers) setRoomPlayers(allPlayers);
+    };
+
+    const syncChannel = supabase
+      .channel(`player-sync-${roomId}`)
+      .on("broadcast", { event: "sync" }, (payload) => {
+        const ids = payload.payload?.playerIds as string[] | undefined;
+        if (!ids || ids.includes(playerId)) refreshPlayerState();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(syncChannel);
+    };
+  }, [playerId, player?.room_id]);
+
+  useEffect(() => {
     if (!playerId) return;
 
     const fetchPlayer = async () => {
@@ -213,7 +255,7 @@ const PlayerView = () => {
           const d = payload.payload;
           if (d.show && d.role && ROLES[d.role as RoleId]) {
             const def = ROLES[d.role as RoleId];
-            setFaroleiroCards([{ image: def.image, label: def.label, checkboxes: d.charges || [] }]);
+            setFaroleiroCards([{ image: def.image, label: def.label, roleId: d.role as RoleId, checkboxes: d.charges || [] }]);
             setFaroleiroReveal(true);
           } else { setFaroleiroReveal(false); }
         }).subscribe();
@@ -223,7 +265,7 @@ const PlayerView = () => {
           if (d.show && d.victimId && d.role && ROLES[d.role as RoleId]) {
             const def = ROLES[d.role as RoleId];
             const { data: vp } = await supabase.from("players").select("name").eq("id", d.victimId).single();
-            setLvCards([{ name: vp?.name, image: def.image, label: def.label }]);
+            setLvCards([{ name: vp?.name, image: def.image, label: def.label, roleId: d.role as RoleId }]);
             setLvReveal(true);
           } else { setLvReveal(false); }
         }).subscribe();
@@ -539,23 +581,24 @@ const PlayerView = () => {
           players={roomPlayers}
           isVidentePoisoned={videnteData.isVidentePoisoned}
           precomputedFakeMap={videnteData.fakeMap}
+          dismissible={false}
         />
       )}
 
       {isMenina && (
-        <RevealModal language={language} open={meninaReveal} onClose={() => setMeninaReveal(false)} title={t("revealMeninaTitle", language)} subtitle={t("revealMeninaSubtitle", language)} cards={meninaCards} />
+        <RevealModal language={language} open={meninaReveal} onClose={() => setMeninaReveal(false)} title={t("revealMeninaTitle", language)} subtitle={t("revealMeninaSubtitle", language)} cards={meninaCards} dismissible={false} />
       )}
       {isFaroleiro && (
-        <RevealModal language={language} open={faroleiroReveal} onClose={() => setFaroleiroReveal(false)} title={t("revealFaroleiroTitle", language)} subtitle={t("revealFaroleiroSubtitle", language)} cards={faroleiroCards} />
+        <RevealModal language={language} open={faroleiroReveal} onClose={() => setFaroleiroReveal(false)} title={t("revealFaroleiroTitle", language)} subtitle={t("revealFaroleiroSubtitle", language)} cards={faroleiroCards} dismissible={false} />
       )}
       {isLobisomemVidente && (
-        <RevealModal language={language} open={lvReveal} onClose={() => setLvReveal(false)} title={t("revealLVTitle", language)} subtitle={t("revealLVSubtitle", language)} cards={lvCards} />
+        <RevealModal language={language} open={lvReveal} onClose={() => setLvReveal(false)} title={t("revealLVTitle", language)} subtitle={t("revealLVSubtitle", language)} cards={lvCards} dismissible={false} />
       )}
       {isSpider && (
-        <RevealModal language={language} open={spiderReveal} onClose={() => setSpiderReveal(false)} title={t("spiderEyeReveal", language)} cards={spiderCards} />
+        <RevealModal language={language} open={spiderReveal} onClose={() => setSpiderReveal(false)} title={t("spiderEyeReveal", language)} cards={spiderCards} dismissible={false} />
       )}
       {isSpy && (
-        <RevealModal language={language} open={spyReveal} onClose={() => setSpyReveal(false)} title={t("spyEyeReveal", language)} cards={spyCards} />
+        <RevealModal language={language} open={spyReveal} onClose={() => setSpyReveal(false)} title={t("spyEyeReveal", language)} cards={spyCards} dismissible={false} />
       )}
       <GameOverModal
         open={!!gameOver && !gameOverDismissed}

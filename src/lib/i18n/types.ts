@@ -23,6 +23,7 @@ export type EffectKey =
   | "immunity_full"
   | "profecia"
   | "acusado"
+  | "acusado_next"
   | "werewolf_turned"
   | "enemy"
   | "immunity_onetime"
@@ -36,7 +37,8 @@ export type EffectKey =
   | "tetanus"
   | "webbed"
   | "caught"
-  | "spied_on";
+  | "spied_on"
+  | "dug_up";
 
 export type WinKind = "village" | "werewolves" | "lovers" | "whiteWolf" | "secretLover" | "tie";
 
@@ -216,6 +218,8 @@ export interface UIStrings {
   endRoom: string;
   endRoomConfirm: string;
   cleanupOldRooms: string;
+  hideScreen: string;
+  showSensitiveScreen: string;
   ready: string;
   connected: string;
   disconnected: string;

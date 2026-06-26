@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,7 @@ interface NightScriptProps {
   onAcusadorChargeToggle?: (idx: number) => void;
   onSpiderReveal?: () => void;
   onSpyReveal?: () => void;
+  onScriptRolesVisible?: (roles: RoleId[]) => void;
 }
 
 function isLineRelevant(
@@ -309,7 +310,7 @@ function ScriptLineDisplay({
             <Checkbox
               checked={foxDisabled}
               onCheckedChange={() => onFoxDisabledToggle?.()}
-              className="h-5 w-5 border-primary data-[state=checked]:bg-primary"
+              className="h-5 w-5 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
             />
             <span className="text-xs text-muted-foreground">{t("powerExhausted", lang)}</span>
           </div>
@@ -434,6 +435,7 @@ export const NightScript = ({
   onAcusadorChargeToggle,
   onSpiderReveal,
   onSpyReveal,
+  onScriptRolesVisible,
 }: NightScriptProps) => {
   const lang = useLanguage();
   const dyn = useMemo(() => getDynamic(lang), [lang]);
@@ -536,7 +538,7 @@ export const NightScript = ({
 
     const isCrowPoisoned = poisonedPlayerId === crowPlayerId;
     const aliveEvilCount = alivePlayers.filter((p) => countsAsEvilBeing(p.id)).length;
-    const illusionActive = illusionPlayerId && !_permanentlyDeadPlayerIds.has(illusionPlayerId);
+    const illusionActive = !!illusionPlayerId && !_permanentlyDeadPlayerIds.has(illusionPlayerId) && countsAsEvilBeing(illusionPlayerId);
 
     if (isCrowPoisoned) {
       const offset = Math.random() > 0.5 ? 1 : -1;
@@ -652,6 +654,17 @@ export const NightScript = ({
 
     return lines;
   }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds, localizedScripts, sectionLabels]);
+
+  useEffect(() => {
+    if (!onScriptRolesVisible) return;
+    const visibleRoles = new Set<RoleId>();
+    for (const section of scriptLines) {
+      for (const line of section.items) {
+        line.requires?.forEach((role) => visibleRoles.add(role));
+      }
+    }
+    onScriptRolesVisible(Array.from(visibleRoles));
+  }, [onScriptRolesVisible, scriptLines]);
 
   return (
     <div className="space-y-4">

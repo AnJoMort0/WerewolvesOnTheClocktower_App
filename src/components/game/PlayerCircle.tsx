@@ -69,6 +69,10 @@ interface PlayerCircleProps {
   onJuizChargeToggle?: (idx: number) => void;
   acusadorCharges?: number;
   onAcusadorChargeToggle?: (idx: number) => void;
+  lobisomemMauCharges?: number;
+  onLobisomemMauChargeToggle?: (idx: number) => void;
+  spiderDayChangeUsed?: boolean;
+  onSpiderDayChangeToggle?: () => void;
   lobisomemVampiroUsed?: boolean;
   onLobisomemVampiroToggle?: () => void;
   vampireVictimKeepsPower?: boolean;
@@ -79,6 +83,7 @@ interface PlayerCircleProps {
   onToggleEffect?: (playerId: string, effect: StatusEffect) => void;
   onExecute?: (playerId: string) => void;
   onDragAction?: (action: string, targetPlayerId: string, sourcePlayerId?: string | null) => void;
+  hideSensitiveInfo?: boolean;
 }
 
 export const PlayerCircle = ({
@@ -107,6 +112,10 @@ export const PlayerCircle = ({
   onJuizChargeToggle,
   acusadorCharges = 0,
   onAcusadorChargeToggle,
+  lobisomemMauCharges = 0,
+  onLobisomemMauChargeToggle,
+  spiderDayChangeUsed = false,
+  onSpiderDayChangeToggle,
   lobisomemVampiroUsed = false,
   onLobisomemVampiroToggle,
   vampireVictimKeepsPower = true,
@@ -117,6 +126,7 @@ export const PlayerCircle = ({
   onToggleEffect: _onToggleEffect,
   onExecute: _onExecute,
   onDragAction,
+  hideSensitiveInfo = false,
 }: PlayerCircleProps) => {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const roleLabel = useRoleLabel();
@@ -182,6 +192,7 @@ export const PlayerCircle = ({
   const containerH = radiusY * 2 + 160;
 
   const getStatusClasses = (playerId: string) => {
+    if (hideSensitiveInfo) return "";
     const status = playerStatuses[playerId];
     const isPDead = permanentlyDead.has(playerId);
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
@@ -194,6 +205,7 @@ export const PlayerCircle = ({
   };
 
   const getBorderClass = (playerId: string) => {
+    if (hideSensitiveInfo) return "border-primary/40";
     const status = playerStatuses[playerId];
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
     if (effects.has("incendiado")) return "border-orange-500";
@@ -204,6 +216,7 @@ export const PlayerCircle = ({
   };
 
   const getGlowStyle = (playerId: string): React.CSSProperties => {
+    if (hideSensitiveInfo) return {};
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
     if (effects.has("werewolf_turned") || effects.has("evil_being")) {
       return { boxShadow: "0 0 12px 3px rgba(239,68,68,0.5)" };
@@ -212,6 +225,7 @@ export const PlayerCircle = ({
   };
 
   const getDragProps = (playerId: string) => {
+    if (hideSensitiveInfo) return {};
     if (!isPlaying || !roleAssignments) return {};
     const role = roleAssignments[playerId];
     const isPDead = permanentlyDead.has(playerId);
@@ -298,19 +312,21 @@ export const PlayerCircle = ({
         const y = radiusY * Math.sin(angle) + containerH / 2;
 
         const seated = seatedPlayers.find((p) => p.seat_position === i);
-        const role = seated && roleAssignments?.[seated.id];
+        const role = seated && !hideSensitiveInfo && roleAssignments?.[seated.id];
         const roleDef = role ? ROLES[role] : null;
-        const status = seated ? (playerStatuses[seated.id] || "alive") : "alive";
-        const isPermanentlyDead = seated ? permanentlyDead.has(seated.id) : false;
+        const rawStatus = seated ? (playerStatuses[seated.id] || "alive") : "alive";
+        const rawIsPermanentlyDead = seated ? permanentlyDead.has(seated.id) : false;
+        const status = hideSensitiveInfo ? "alive" : rawStatus;
+        const isPermanentlyDead = hideSensitiveInfo ? false : rawIsPermanentlyDead;
         const dragProps = seated ? getDragProps(seated.id) : {};
         const hasDrag = !!dragProps.draggable;
-        const isThisIllusion = seated ? seated.id === illusionPlayerId : false;
-        const isThisPoisoned = seated ? seated.id === poisonedPlayerId : false;
+        const isThisIllusion = seated && !hideSensitiveInfo ? seated.id === illusionPlayerId : false;
+        const isThisPoisoned = seated && !hideSensitiveInfo ? seated.id === poisonedPlayerId : false;
         const isThisBruxaPoisoned = seated ? (role === "e02" && isThisPoisoned) : false;
         const isChaman = role === CHAMAN_ROLE;
         const isFox = role === ("v04" as RoleId);
-        const effects = seated ? (_playerEffects[seated.id] || new Set<StatusEffect>()) : new Set<StatusEffect>();
-        const effectsList = Array.from(effects);
+        const effects = seated && !hideSensitiveInfo ? (_playerEffects[seated.id] || new Set<StatusEffect>()) : new Set<StatusEffect>();
+        const effectsList = hideSensitiveInfo ? [] : Array.from(effects);
 
         const playerNode = seated ? (
           <div
@@ -323,9 +339,9 @@ export const PlayerCircle = ({
               animate={{ scale: 1, opacity: 1 }}
               className={`flex flex-col items-center cursor-pointer ${getStatusClasses(seated.id)} ${hasDrag ? "cursor-grab active:cursor-grabbing" : ""}`}
               onClick={() => {
-                if (isGM && isPlaying && onPlayerStatusChange) {
+                if (!hideSensitiveInfo && isGM && isPlaying && onPlayerStatusChange) {
                   setOpenPopoverId(openPopoverId === seated.id ? null : seated.id);
-                } else if (isGM && !roleAssignments) {
+                } else if (!hideSensitiveInfo && isGM && !roleAssignments) {
                   handleUnseat(seated.id);
                 }
               }}
@@ -413,9 +429,32 @@ export const PlayerCircle = ({
                   <Checkbox
                     checked={foxDisabled}
                     onCheckedChange={() => onFoxDisabledToggle()}
-                    className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
+                    className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                   />
                   <span className="text-[9px] text-muted-foreground">⚡</span>
+                </div>
+              )}
+              {/* Lobisomem Mau (m01) checkboxes */}
+              {isGM && role === ("m01" as RoleId) && !isPermanentlyDead && onLobisomemMauChargeToggle && (
+                <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
+                  {[0, 1].map((idx) => (
+                    <Checkbox
+                      key={idx}
+                      checked={(lobisomemMauCharges ?? 0) > idx}
+                      onCheckedChange={() => onLobisomemMauChargeToggle(idx)}
+                      className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
+                    />
+                  ))}
+                </div>
+              )}
+              {/* Domador da Aranha (v23) daytime web-change checkbox */}
+              {isGM && role === ("v23" as RoleId) && !isPermanentlyDead && onSpiderDayChangeToggle && (
+                <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={spiderDayChangeUsed}
+                    onCheckedChange={() => onSpiderDayChangeToggle()}
+                    className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
+                  />
                 </div>
               )}
               {/* Juiz (v13) checkboxes */}
@@ -482,7 +521,7 @@ export const PlayerCircle = ({
         const showExecutado = gameCyclePhase === "tribunal";
         const availableEffectsForPlayer = seated && _availableEffects ? _availableEffects(seated.id) : [];
 
-        const wrappedNode = seated && isGM && isPlaying && onPlayerStatusChange ? (
+        const wrappedNode = seated && !hideSensitiveInfo && isGM && isPlaying && onPlayerStatusChange ? (
           <PlayerStatusPopover
             status={status}
             isPermanentlyDead={isPermanentlyDead}

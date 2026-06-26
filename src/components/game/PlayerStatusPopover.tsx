@@ -14,6 +14,7 @@ import asleepIcon from "@/assets/icons/asleep.png";
 import immunityFullIcon from "@/assets/icons/imunity_full.png";
 import ghostProphecyIcon from "@/assets/icons/ghost_prophecy.png";
 import voteAccusedIcon from "@/assets/icons/vote_accused.png";
+import voteAccusedLastNightIcon from "@/assets/icons/vote_accused_last_nigt.png";
 import werewolfIcon from "@/assets/icons/werewolf.png";
 import enemyIcon from "@/assets/icons/enemy.png";
 import immunityOnetimeIcon from "@/assets/icons/imunity_onetime.png";
@@ -28,6 +29,7 @@ import webbedIcon from "@/assets/icons/webbed.png";
 import caughtIcon from "@/assets/icons/caught.png";
 import spiedOnIcon from "@/assets/icons/spied_on.png";
 import immunityWerewolfIcon from "@/assets/icons/imunity_werewolf.png";
+import dugUpIcon from "@/assets/icons/dug_up.png";
 
 export type PlayerStatus = "alive" | "poisoned" | "dead-this-night" | "dead";
 
@@ -40,6 +42,7 @@ export type StatusEffect =
   | "immunity_full"
   | "profecia"
   | "acusado"
+  | "acusado_next"
   | "werewolf_turned"
   | "enemy"
   | "immunity_onetime"
@@ -53,7 +56,8 @@ export type StatusEffect =
   | "tetanus"
   | "webbed"
   | "caught"
-  | "spied_on";
+  | "spied_on"
+  | "dug_up";
 
 export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   soldado: soldierIcon,
@@ -64,6 +68,7 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   immunity_full: immunityFullIcon,
   profecia: ghostProphecyIcon,
   acusado: voteAccusedIcon,
+  acusado_next: voteAccusedLastNightIcon,
   werewolf_turned: werewolfIcon,
   enemy: enemyIcon,
   immunity_onetime: immunityOnetimeIcon,
@@ -78,6 +83,7 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   webbed: webbedIcon,
   caught: caughtIcon,
   spied_on: spiedOnIcon,
+  dug_up: dugUpIcon,
 };
 
 /** @deprecated Use getEffectLabel(effect, lang) instead for i18n. */
@@ -90,6 +96,7 @@ export const STATUS_EFFECT_LABELS: Record<StatusEffect, string> = {
   immunity_full: "Imunidade Total",
   profecia: "Profecía",
   acusado: "Acusado",
+  acusado_next: "Acusado esta noite",
   werewolf_turned: "Virar Lobisomem",
   enemy: "Inimigo",
   immunity_onetime: "Imunidade Única",
@@ -104,6 +111,7 @@ export const STATUS_EFFECT_LABELS: Record<StatusEffect, string> = {
   webbed: "Fazer uma Teia",
   caught: "Apanhado",
   spied_on: "Espiado",
+  dug_up: "Desenterrado",
 };
 
 interface PlayerStatusPopoverProps {

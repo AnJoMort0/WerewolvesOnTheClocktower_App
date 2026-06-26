@@ -27,6 +27,7 @@ interface RevealModalProps {
   cards: RevealCard[];
   /** When provided, card images become anchor links to the rulebook */
   language?: Language;
+  dismissible?: boolean;
 }
 
 function rulebookUrl(lang: Language | undefined, roleId: RoleId | undefined): string | null {
@@ -35,7 +36,7 @@ function rulebookUrl(lang: Language | undefined, roleId: RoleId | undefined): st
   return `https://anjomort0.github.io/WerewolvesOnTheClocktower/${file}#${roleId}`;
 }
 
-export const RevealModal = ({ open, onClose, title, subtitle, cards, language }: RevealModalProps) => {
+export const RevealModal = ({ open, onClose, title, subtitle, cards, language, dismissible = true }: RevealModalProps) => {
   return (
     <AnimatePresence>
       {open && (
@@ -43,8 +44,8 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language }:
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-md p-4"
-          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4"
+          onClick={dismissible ? onClose : undefined}
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -55,9 +56,11 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language }:
           >
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-blue-400">{title}</h2>
-              <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-                <X className="h-5 w-5" />
-              </button>
+              {dismissible && (
+                <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
             {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}

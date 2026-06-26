@@ -13,6 +13,7 @@ interface VidenteRevealModalProps {
   players: Array<{ id: string; name: string }>;
   isVidentePoisoned?: boolean;
   precomputedFakeMap?: Record<string, string> | null;
+  dismissible?: boolean;
 }
 
 function rulebookUrl(lang: "pt" | "fr", roleId: RoleId): string {
@@ -29,6 +30,7 @@ export const VidenteRevealModal = ({
   players,
   isVidentePoisoned = false,
   precomputedFakeMap = null,
+  dismissible = true,
 }: VidenteRevealModalProps) => {
   const lang = useLanguage();
   const t = useT();
@@ -66,8 +68,8 @@ export const VidenteRevealModal = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-md p-4"
-          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4"
+          onClick={dismissible ? onClose : undefined}
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -78,9 +80,11 @@ export const VidenteRevealModal = ({
           >
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-blue-400">{t("revealVidenteTitle")}</h2>
-              <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-                <X className="h-5 w-5" />
-              </button>
+              {dismissible && (
+                <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
             <p className="text-muted-foreground text-sm">{t("revealVidenteSubtitle")}</p>

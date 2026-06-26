@@ -19,7 +19,7 @@ export const WinConfirmModal = ({ open, kind, onAccept, onDecline }: WinConfirmM
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-background p-4"
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
@@ -62,7 +62,7 @@ export const WinPickerModal = ({ open, onPick, onClose }: WinPickerModalProps) =
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-background p-4"
           onClick={onClose}
         >
           <motion.div
