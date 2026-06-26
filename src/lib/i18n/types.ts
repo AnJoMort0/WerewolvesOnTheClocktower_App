@@ -211,7 +211,6 @@ export interface UIStrings {
   enter: string;
   roomNotFound: string;
   gameAlreadyStarted: string;
-  joinHelper: string;
   copyJoinLink: string;
   resetRoom: string;
   resetRoomConfirm: string;

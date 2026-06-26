@@ -2,65 +2,44 @@
 
 This file is intentionally human-owned. Codex can add items, reorganize items, or add notes, but only the human owner should remove items after real playtests or direct confirmation.
 
-## Tests to Do
+## Human Tests to Do
 
 * [ ] Human-test local Wi-Fi mode with at least one phone.
 * [ ] Human-test hosted mode with at least one phone.
 * [ ] Confirm QR codes use the correct hosted or LAN URL.
 * [ ] Find out what "Clear previous rooms" button does.
 * [ ] Check this: "Add a production smoke-test checklist for Cloudflare deployments. - Codex note 2026-06-23: Added to `docs/development.md`."
+* [ ] Check the README file.
+
+## Other Changes Outside of the Repo
+
+* [ ] DOCS + RULEBOOKS: Once per game, on daytime, `v23` can change who is webbed
+* [ ] See patch notes to do the other stuff written there
 
 ## Critical Fixes
 
-* [x] Once player is dead, they no longer recieve updates, including ressurection or card switch (except Grave Robber, which is working fine)
-  * Codex note 2026-06-26: Added a player-sync broadcast/refetch fallback after life and character updates so dead devices receive resurrection and card-switch changes.
-* [x] Players shouldn't be able to click out of information pop-ups (if on GM screen always also show on player's device)
-  * Codex note 2026-06-26: Player-side information popups are non-dismissible and stay visible until the GM closes the matching popup.
-* [x] All intense blurs on GM screen should instead be a blank background to hide information
-* [x] Saviour's immunity should only last for the night
-  * Codex note 2026-06-26: Salvador immunity is cleared at dawn; m01 disguise immunity still lasts through the following day and clears at the next night.
-* [x] When a card appears in the script, it should receive the "Spied On" status effect (when the werewolves are called, all `e01` are marked as spied on)
-* [x] Once per game, on daytime, `v23` can change who is webbed (needs a checkbox for `v21`)
-  * Codex note 2026-06-26: Added a once-per-game daytime Spider web-change charge, visible on GM controls and included in Faroleiro/v21 limited-use reveal.
-* [x] Clicking on card image on player device pop-ups doesn't work (`v01`, `v21`, `f02`)
-* [x] `v03` should only have the confused line when an Evil Being is an illusion
-* [x] `v22` : when a player is set as accused, it first as the vote_accused_last_nigt icon instead of the vote_accused icon. After the GM clicks the End Night button, instead of removing the icon, change it to be the vote_accused icon permantly (or until manually removed). If v22 is drag-dropped onto someone, that player gets the accused status effect. v22 is never caught by the spiderweb (add a data-driven list of characters that cannot be caught by the web)
-  * Codex note 2026-06-26: `acusado_next` converts to `acusado` at dawn, and `WEB_IMMUNE_ROLES` prevents v22 from being caught.
-* [x] `a05` should be drag-and-dropped onto a red-x character, to give them the dug up effect using the `dug_up.png` icon. If a red-x character with the dug up effect permanently dies, he loses dug up effect and  switches cards with `a05`. Dug up effect is cleared at the end of the night.
-* [x] French capitals should still have accents. "Ação" instead of "Acão".
-* [x] f02: dead characters not tagged with spied_on should still appear for him
-* [x] v04: change the checkbox to look like the target of the Lobisomem Vampiro. These checkboxes don't appear to the v21
-* [x] m01 checkboxes are not appearing in the player circle. Also clicking on the checkboxes in the script is not giving him immunity like it should (and the checkboxes in the player list do)
-* [x] Add a Hide Screen option to the GM interface. In this mode, show only the circle, player names, and the day/tribunal timer. Hide all characters and other critical information so players can safely approach and talk to the GM. This should also hide the script and side panels, but keep dev tools (QR code, room controls)
-  * Codex note 2026-06-26: Hide Screen hides roles, status markers, script, side panels, validation warnings, and interactions while keeping room controls, QR access, the circle names, and a safe timer readout.
+* [ ] v04 Has the new checkbox - good. However, This checkbox should not appear for the v21 power
+* [ ] v04's checkbox should not appear in the first night
+* [ ] Players that were dead and ressurected stay marked as dead in the players' devices. Fix that
+* [ ] s01 : It's missing the checkboxes in the player circle. When a checkbox is ticked it gives cupid immunity to the lovers. Cupid Immunity should be removed at dawn. When one of the lovers is red-x, the other lover is also red-x (if not immune). The v01 will see the second lover's murder as the cupid card but the text will say "suicide".
+* [ ] Poison seems to be broken for some characters (it was working on the Lovable build so it may not have transfered properly). Most characters that drag-drop poisonned should only aim at a character they didn't target. Animal tamers should only get the wrong information ("O Urso não rosna" even it should for example)
+* [ ] Fix in the poisoned v01: Should show only wrong answers but from the following list: Soldier, Suicide, Hunter, Paranoid, Pyromaniac, Rusted Knight, Mime, Actor, Werewolves, White Werewolf
+
 
 ## Fixes
 
 * [ ] Remove strange manually added line breaks from the README, this file, and similar files. Do not be afraid to keep an entire paragraph on one line.
   * Codex note 2026-06-23: README was cleaned and development docs were split out. This ROADMAP still intentionally keeps some nested note formatting for readability.
-* [x] Rewrite the README so it is readable and useful to people visiting the GitHub repository who want to understand the project.
-* [x] Do not make the current deployed app URL or current app name easily visible in the public-facing README, because it should not attract unnecessary access.
-* [x] Move development-focused, internal, or visitor-unfriendly README content into a file such as `dev_log.md`, `docs/development.md`, or another appropriately named internal information file.
-  * Codex note 2026-06-23: Moved setup, deployment, smoke-test, and maintenance notes into `docs/development.md`.
-
-## Corrections to Verify
-
-* [ ] Verify role-assignment counts for an almost unlimited number of players, even though a real game is unlikely to exceed 35–40 players.
-  * Codex note 2026-06-23: Added automated coverage for werewolf counts up to 60 players. Full role-mix balance for very high player counts still needs design/playtest confirmation.
-* [ ] Check that GM screen controls remain usable on a tablet.
-* [ ] Check that reloading a player phone keeps the same player session.
-* [ ] Check that reloading the GM screen preserves the complete session state.
-  * Codex note 2026-06-23: Partial GM snapshot persistence was added. Needs playtest confirmation, especially timers and recovery after browser/device changes.
 * [ ] Check whether old or unnecessary `localStorage` values accumulate over time.
   * Codex note 2026-06-23: Old GM snapshots are pruned after 7 days. Other browser session keys still need a cleanup policy.
 * [ ] Ensure mostly one-time or obsolete `localStorage` data is removed instead of being kept indefinitely and gradually filling the computer's storage.
   * Codex note 2026-06-23: Same as above; GM snapshots now have retention cleanup, but player/browser session data still needs a deliberate cleanup design.
+* [ ] Changes for the v01 pop-up: If it's a soldier that killed, it's still shows the capitain card but soldier in the text instead of capitain. If there werewolves killes it says werewolves plural.
+* [ ] Add the timer controls to the hidden mode in the GM screen.
 
 ## Additions
 
-* [ ] Add screenshots to the README after the UI stabilizes.
-* [ ] Add new character `m06` to app and docs
-* [ ] Add new character `v24` to app and docs
+* [ ] Every script line has a tickeable box, when ticked it strikesthroughs for the GM to follow where they are. Drag-dropping a character (from the script, player circle or player list), or using the player's power (checkboxes) it also ticks the script line. This will also help with another automation, when a character that gives a status effect that stays until applied to someone else (e02, v09, etc) dies, the status effect is removed from the target when the GM checks a script line that is after the one of the deceased character
 * [ ] Add automatic victory-condition detection and game-over handling.
   * Codex note 2026-06-23: Manual Game Over sending was added. Automatic detection and repeated-prompt timing still need implementation.
 
@@ -78,12 +57,15 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Future Plans
 
+* [ ] Add new character `m06` to app and docs
+* [ ] Add new character `v24` to app and docs
 * [ ] Add rulebook pages inside the app instead of linking to external HTML pages.
 * [ ] Add a logs of the games for easy recap at the end of the game
 * [ ] Add the fonctionnality for the complex characters not yet deployed
 * [ ] Add an English rulebook and English UI.
 * [ ] Support more complete player-submitted actions from phones.
 * [ ] Add better role-selection presets for different player counts and play styles (also better balance).
+* [ ] Add screenshots to the README after the UI stabilizes.
 
 ## Human Playtest Notes
 
