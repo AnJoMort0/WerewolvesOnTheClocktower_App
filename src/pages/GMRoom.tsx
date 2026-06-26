@@ -11,7 +11,7 @@ import { DayTribunalPanel } from "@/components/game/DayTribunalPanel";
 import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS, STATUS_EFFECT_LABELS } from "@/components/game/PlayerStatusPopover";
 import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
-import { Copy, Check, Users, Send, AlertTriangle, X, Minus, FlaskConical, BookOpen } from "lucide-react";
+import { Copy, Check, Users, Send, AlertTriangle, X, Minus, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { assignRoles, ROLES, isUniqueRole, WEREWOLF_ROLES, EVIL_ROLES, type RoleId } from "@/lib/roles";
-import { LanguageContext, getRoleLabel, t, getToast, getValidation, format, type Language, type WinKind } from "@/lib/i18n";
+import { LanguageContext, getRoleLabel, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
@@ -30,6 +30,10 @@ import villagerIcon from "@/assets/icons/villager.png";
 
 const TIMER_DEFAULTS_STORAGE_KEY = "wotct_gm_timer_defaults";
 const JOIN_BASE_URL_STORAGE_KEY = "wotct_join_base_url";
+const GM_ADVANCED_STORAGE_PREFIX = "wotct_gm_advanced_";
+const GM_SNAPSHOT_STORAGE_PREFIX = "wotct_gm_snapshot_";
+const GM_SNAPSHOT_VERSION = 1;
+const GM_SNAPSHOT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   v19: "role-v19",
   v22: "role-v22",
@@ -56,6 +60,8 @@ type Player = {
   seat_position: number | null;
   character: string | null;
   is_alive: boolean;
+  is_ready?: boolean;
+  last_seen_at?: string;
 };
 
 type Room = {
@@ -64,6 +70,73 @@ type Room = {
   status: string;
   language?: Language;
 };
+
+type GMSnapshot = {
+  version: typeof GM_SNAPSHOT_VERSION;
+  savedAt: number;
+  roleAssignments: Record<string, RoleId>;
+  rolesAssigned: boolean;
+  pendingChanges: boolean;
+  advancedEnabled: boolean;
+  nightNumber: number;
+  playerStatuses: Record<string, PlayerStatus>;
+  permanentlyDead: string[];
+  poisonedPlayerId: string | null;
+  illusionPlayerId: string | null;
+  chamanCharges: number;
+  lastNightDeadPlayerIds: string[];
+  foxDisabled: boolean;
+  nightTargetedPlayerIds: string[];
+  cavalerioLinkedDeath: string | null;
+  gameCyclePhase: "night" | "day" | "tribunal";
+  dayPhase: "day" | "tribunal";
+  killSources: Record<string, string>;
+  videnteFakeMap: Record<string, string> | null;
+  bruxaDeathNight: number | null;
+  playerEffects: Record<string, StatusEffect[]>;
+  paranoicoCharges: number;
+  anjoCharges: number;
+  lobisomemMauCharges: number;
+  cupidoCharges: number;
+  lobisomemVidenteUsed: boolean;
+  lobisomemVampiroUsed: boolean;
+  dayKilledPlayerIds: string[];
+  paranoicoKillName: string | null;
+  profeciaDeadAtNight: Record<string, number>;
+  juizCharges: number;
+  acusadorCharges: number;
+  salvadorLastTarget: string | null;
+  chefeLastTarget: string | null;
+  vampireVictimKeepsPower: boolean;
+};
+
+const getGMSnapshotStorageKey = (roomId: string) => `${GM_SNAPSHOT_STORAGE_PREFIX}${roomId}`;
+
+function serializeEffects(effects: Record<string, Set<StatusEffect>>): Record<string, StatusEffect[]> {
+  return Object.fromEntries(Object.entries(effects).map(([playerId, set]) => [playerId, Array.from(set)]));
+}
+
+function restoreEffects(effects: Record<string, StatusEffect[]> | undefined): Record<string, Set<StatusEffect>> {
+  if (!effects) return {};
+  return Object.fromEntries(Object.entries(effects).map(([playerId, values]) => [playerId, new Set(values)]));
+}
+
+function pruneOldGMSnapshots() {
+  if (typeof window === "undefined") return;
+  const now = Date.now();
+  for (let i = window.localStorage.length - 1; i >= 0; i -= 1) {
+    const key = window.localStorage.key(i);
+    if (!key?.startsWith(GM_SNAPSHOT_STORAGE_PREFIX)) continue;
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(key) || "");
+      if (typeof parsed?.savedAt !== "number" || now - parsed.savedAt > GM_SNAPSHOT_RETENTION_MS) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      window.localStorage.removeItem(key);
+    }
+  }
+}
 
 const ESSENTIAL_ROLES: RoleId[] = ["e02", "e03", "e04"];
 const POISON_DRAG_ROLE: RoleId = "e02";
@@ -74,7 +147,7 @@ const CAVALEIRO_ROLE: RoleId = "v07";
 
 function getExpectedWerewolfCount(playerCount: number): number {
   if (playerCount < 12) return 2;
-  return Math.ceil(playerCount / 4);
+  return Math.floor(playerCount / 4);
 }
 
 const GMRoom = () => {
@@ -90,7 +163,10 @@ const GMRoom = () => {
   const [roleAssignments, setRoleAssignments] = useState<Record<string, RoleId>>({});
   const [rolesAssigned, setRolesAssigned] = useState(false);
   const [pendingChanges, setPendingChanges] = useState(false);
-  const [advancedEnabled, setAdvancedEnabled] = useState(false);
+  const [advancedEnabled, setAdvancedEnabled] = useState(() => {
+    if (typeof window === "undefined" || !roomId) return false;
+    return window.localStorage.getItem(`${GM_ADVANCED_STORAGE_PREFIX}${roomId}`) === "1";
+  });
 
   // Night & status tracking
   const [nightNumber, setNightNumber] = useState(1);
@@ -175,9 +251,6 @@ const GMRoom = () => {
   // Vampire victim "keeps power" toggle (default true once turned). Square checkbox.
   const [vampireVictimKeepsPower, setVampireVictimKeepsPower] = useState(true);
 
-  // Amante Secreto (as01b) single-use checkbox
-  const [amanteUsed, setAmanteUsed] = useState(false);
-
   // Spider (v23) reveal modal
   const [spiderRevealOpen, setSpiderRevealOpen] = useState(false);
   const [spiderRevealCards, setSpiderRevealCards] = useState<RevealCard[]>([]);
@@ -185,6 +258,10 @@ const GMRoom = () => {
   // Spy (f02) reveal modal
   const [spyRevealOpen, setSpyRevealOpen] = useState(false);
   const [spyRevealCards, setSpyRevealCards] = useState<RevealCard[]>([]);
+  const [gmSnapshotLoaded, setGmSnapshotLoaded] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [winPickerOpen, setWinPickerOpen] = useState(false);
+  const [manualWinKind, setManualWinKind] = useState<WinKind | null>(null);
 
   const defaultJoinBaseUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -192,10 +269,6 @@ const GMRoom = () => {
   }, []);
   const joinBaseUrl = normalizeJoinBaseUrl(joinBaseOverride || defaultJoinBaseUrl);
   const joinUrl = room ? buildJoinUrl(room.code, joinBaseUrl) : "";
-  const qrPopupSize = typeof window === "undefined"
-    ? 240
-    : Math.max(180, Math.min(window.innerHeight, window.innerWidth) - 200);
-
   // Derived states
   const isBruxaPermaDead = useMemo(() => {
     for (const [pid, role] of Object.entries(roleAssignments)) {
@@ -440,6 +513,160 @@ const GMRoom = () => {
     window.localStorage.setItem(TIMER_DEFAULTS_STORAGE_KEY, JSON.stringify(timerDefaults));
   }, [timerDefaults]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !roomId) return;
+    window.localStorage.setItem(`${GM_ADVANCED_STORAGE_PREFIX}${roomId}`, advancedEnabled ? "1" : "0");
+  }, [advancedEnabled, roomId]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNowMs(Date.now()), 15000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const hasAdvancedRole = Object.values(roleAssignments).some((role) => ROLES[role]?.category === "a");
+    if (hasAdvancedRole) setAdvancedEnabled(true);
+  }, [roleAssignments]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !roomId || gmSnapshotLoaded) return;
+    pruneOldGMSnapshots();
+    const raw = window.localStorage.getItem(getGMSnapshotStorageKey(roomId));
+    if (!raw) {
+      setGmSnapshotLoaded(true);
+      return;
+    }
+
+    try {
+      const snapshot = JSON.parse(raw) as Partial<GMSnapshot>;
+      if (snapshot.version !== GM_SNAPSHOT_VERSION) {
+        window.localStorage.removeItem(getGMSnapshotStorageKey(roomId));
+        setGmSnapshotLoaded(true);
+        return;
+      }
+
+      setRoleAssignments(snapshot.roleAssignments ?? {});
+      setRolesAssigned(!!snapshot.rolesAssigned);
+      setPendingChanges(!!snapshot.pendingChanges);
+      setAdvancedEnabled(!!snapshot.advancedEnabled);
+      setNightNumber(snapshot.nightNumber ?? 1);
+      setPlayerStatuses(snapshot.playerStatuses ?? {});
+      setPermanentlyDead(new Set(snapshot.permanentlyDead ?? []));
+      setPoisonedPlayerId(snapshot.poisonedPlayerId ?? null);
+      setIllusionPlayerId(snapshot.illusionPlayerId ?? null);
+      setChamanCharges(snapshot.chamanCharges ?? 0);
+      setLastNightDeadPlayerIds(snapshot.lastNightDeadPlayerIds ?? []);
+      setFoxDisabled(!!snapshot.foxDisabled);
+      setNightTargetedPlayerIds(new Set(snapshot.nightTargetedPlayerIds ?? []));
+      setCavalerioLinkedDeath(snapshot.cavalerioLinkedDeath ?? null);
+      setGameCyclePhase(snapshot.gameCyclePhase ?? "night");
+      setDayPhase(snapshot.dayPhase ?? "day");
+      setKillSources(snapshot.killSources ?? {});
+      setVidenteFakeMap(snapshot.videnteFakeMap ?? null);
+      setBruxaDeathNight(snapshot.bruxaDeathNight ?? null);
+      setPlayerEffects(restoreEffects(snapshot.playerEffects));
+      setParanoicoCharges(snapshot.paranoicoCharges ?? 0);
+      setAnjoCharges(snapshot.anjoCharges ?? 0);
+      setLobisomemMauCharges(snapshot.lobisomemMauCharges ?? 0);
+      setCupidoCharges(snapshot.cupidoCharges ?? 0);
+      setLobisomemVidenteUsed(!!snapshot.lobisomemVidenteUsed);
+      setLobisomemVampiroUsed(!!snapshot.lobisomemVampiroUsed);
+      setDayKilledPlayerIds(snapshot.dayKilledPlayerIds ?? []);
+      setParanoicoKillName(snapshot.paranoicoKillName ?? null);
+      setProfeciaDeadAtNight(snapshot.profeciaDeadAtNight ?? {});
+      setJuizCharges(snapshot.juizCharges ?? 0);
+      setAcusadorCharges(snapshot.acusadorCharges ?? 0);
+      setSalvadorLastTarget(snapshot.salvadorLastTarget ?? null);
+      setChefeLastTarget(snapshot.chefeLastTarget ?? null);
+      setVampireVictimKeepsPower(snapshot.vampireVictimKeepsPower ?? true);
+    } catch {
+      window.localStorage.removeItem(getGMSnapshotStorageKey(roomId));
+    } finally {
+      setGmSnapshotLoaded(true);
+    }
+  }, [gmSnapshotLoaded, roomId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !roomId || !gmSnapshotLoaded) return;
+
+    const snapshot: GMSnapshot = {
+      version: GM_SNAPSHOT_VERSION,
+      savedAt: Date.now(),
+      roleAssignments,
+      rolesAssigned,
+      pendingChanges,
+      advancedEnabled,
+      nightNumber,
+      playerStatuses,
+      permanentlyDead: Array.from(permanentlyDead),
+      poisonedPlayerId,
+      illusionPlayerId,
+      chamanCharges,
+      lastNightDeadPlayerIds,
+      foxDisabled,
+      nightTargetedPlayerIds: Array.from(nightTargetedPlayerIds),
+      cavalerioLinkedDeath,
+      gameCyclePhase,
+      dayPhase,
+      killSources,
+      videnteFakeMap,
+      bruxaDeathNight,
+      playerEffects: serializeEffects(playerEffects),
+      paranoicoCharges,
+      anjoCharges,
+      lobisomemMauCharges,
+      cupidoCharges,
+      lobisomemVidenteUsed,
+      lobisomemVampiroUsed,
+      dayKilledPlayerIds,
+      paranoicoKillName,
+      profeciaDeadAtNight,
+      juizCharges,
+      acusadorCharges,
+      salvadorLastTarget,
+      chefeLastTarget,
+      vampireVictimKeepsPower,
+    };
+    window.localStorage.setItem(getGMSnapshotStorageKey(roomId), JSON.stringify(snapshot));
+  }, [
+    roomId,
+    gmSnapshotLoaded,
+    roleAssignments,
+    rolesAssigned,
+    pendingChanges,
+    advancedEnabled,
+    nightNumber,
+    playerStatuses,
+    permanentlyDead,
+    poisonedPlayerId,
+    illusionPlayerId,
+    chamanCharges,
+    lastNightDeadPlayerIds,
+    foxDisabled,
+    nightTargetedPlayerIds,
+    cavalerioLinkedDeath,
+    gameCyclePhase,
+    dayPhase,
+    killSources,
+    videnteFakeMap,
+    bruxaDeathNight,
+    playerEffects,
+    paranoicoCharges,
+    anjoCharges,
+    lobisomemMauCharges,
+    cupidoCharges,
+    lobisomemVidenteUsed,
+    lobisomemVampiroUsed,
+    dayKilledPlayerIds,
+    paranoicoKillName,
+    profeciaDeadAtNight,
+    juizCharges,
+    acusadorCharges,
+    salvadorLastTarget,
+    chefeLastTarget,
+    vampireVictimKeepsPower,
+  ]);
+
   // Auto-apply vote_double effect for Juiz (dead non-execution) and Ankou (executed)
   useEffect(() => {
     setPlayerEffects((prev) => {
@@ -531,7 +758,7 @@ const GMRoom = () => {
     const fetchPlayers = async () => {
       const { data } = await supabase
         .from("players")
-        .select("id, name, seat_position, character, is_alive")
+        .select("id, name, seat_position, character, is_alive, is_ready, last_seen_at")
         .eq("room_id", roomId)
         .order("created_at");
       if (data) {
@@ -576,8 +803,150 @@ const GMRoom = () => {
     if (!joinUrl) return;
     navigator.clipboard.writeText(joinUrl);
     setCopiedJoinLink(true);
+    toast.success(getToast("okJoinLinkCopied", (room?.language as Language) || "pt"));
     setTimeout(() => setCopiedJoinLink(false), 2000);
-  }, [joinUrl]);
+  }, [joinUrl, room?.language]);
+
+  const clearGMSnapshot = useCallback(() => {
+    if (typeof window === "undefined" || !roomId) return;
+    window.localStorage.removeItem(getGMSnapshotStorageKey(roomId));
+  }, [roomId]);
+
+  const clearLocalGameState = useCallback(() => {
+    setRoleAssignments({});
+    setRolesAssigned(false);
+    setPendingChanges(false);
+    setNightNumber(1);
+    setPlayerStatuses({});
+    setPermanentlyDead(new Set());
+    setPoisonedPlayerId(null);
+    setIllusionPlayerId(null);
+    setListPopoverId(null);
+    setChamanCharges(0);
+    setLastNightDeadPlayerIds([]);
+    setVidenteModalOpen(false);
+    setFoxDisabled(false);
+    setNightTargetedPlayerIds(new Set());
+    setCavalerioLinkedDeath(null);
+    setGameCyclePhase("night");
+    setDayPhase("day");
+    setKillSources({});
+    setVidenteFakeMap(null);
+    setBruxaDeathNight(null);
+    setPlayerEffects({});
+    setParanoicoCharges(0);
+    setAnjoCharges(0);
+    setLobisomemMauCharges(0);
+    setCupidoCharges(0);
+    setLobisomemVidenteUsed(false);
+    setLobisomemVampiroUsed(false);
+    setDayKilledPlayerIds([]);
+    setParanoicoKillName(null);
+    setMeninaRevealOpen(false);
+    setFaroleiroRevealOpen(false);
+    setLobisomemVidenteRevealOpen(false);
+    setLobisomemVidenteRevealedVictim(null);
+    setFaroleiroPickedRole(null);
+    setFaroleiroPickedCharges([]);
+    setProfeciaDeadAtNight({});
+    setJuizCharges(0);
+    setAcusadorCharges(0);
+    setSalvadorLastTarget(null);
+    setChefeLastTarget(null);
+    setVampireVictimKeepsPower(true);
+    setSpiderRevealOpen(false);
+    setSpiderRevealCards([]);
+    setSpyRevealOpen(false);
+    setSpyRevealCards([]);
+  }, []);
+
+  const resetRoom = async () => {
+    if (!roomId) return;
+    const lang = (room?.language as Language) || "pt";
+    if (!window.confirm(t("resetRoomConfirm", lang))) return;
+
+    const playerUpdates = players.map((player) =>
+      supabase
+        .from("players")
+        .update({ character: null, is_alive: true, is_ready: false, last_seen_at: new Date().toISOString() })
+        .eq("id", player.id)
+    );
+    const roomUpdate = supabase.from("rooms").update({ status: "lobby" }).eq("id", roomId);
+    const results = await Promise.all([...playerUpdates, roomUpdate]);
+
+    if (results.some((result) => result.error)) {
+      toast.error(getToast("errRoomAction", lang));
+      return;
+    }
+
+    clearLocalGameState();
+    clearGMSnapshot();
+    setRoom((prev) => (prev ? { ...prev, status: "lobby" } : prev));
+    setPlayers((prev) => prev.map((player) => ({ ...player, character: null, is_alive: true, is_ready: false })));
+    toast.success(getToast("okRoomReset", lang));
+  };
+
+  const endRoom = async () => {
+    if (!roomId) return;
+    const lang = (room?.language as Language) || "pt";
+    if (!window.confirm(t("endRoomConfirm", lang))) return;
+
+    const [roomResult, playersResult] = await Promise.all([
+      supabase.from("rooms").update({ status: "finished" }).eq("id", roomId),
+      supabase.from("players").delete().eq("room_id", roomId),
+    ]);
+
+    if (roomResult.error || playersResult.error) {
+      toast.error(getToast("errRoomAction", lang));
+      return;
+    }
+
+    clearLocalGameState();
+    clearGMSnapshot();
+    setRoom((prev) => (prev ? { ...prev, status: "finished" } : prev));
+    setPlayers([]);
+    toast.success(getToast("okRoomEnded", lang));
+  };
+
+  const cleanupOldRooms = async () => {
+    const lang = (room?.language as Language) || "pt";
+    const { data, error } = await supabase.rpc("cleanup_old_rooms", { retention: "24 hours" });
+    if (error) {
+      toast.error(getToast("errRoomAction", lang));
+      return;
+    }
+    toast.success(format(getToast("okCleanupOldRooms", lang), { n: String(data ?? 0) }));
+  };
+
+  const getGameOverOutcome = useCallback((kind: WinKind, playerId: string): "victory" | "defeat" => {
+    if (kind === "tie") return "victory";
+    const role = roleAssignments[playerId];
+    const effects = playerEffects[playerId] || new Set<StatusEffect>();
+    const isEvilBeing = EVIL_ROLES.includes(role) || effects.has("evil_being") || effects.has("werewolf_turned");
+    const isNamorado = effects.has("namorado");
+
+    if (kind === "village") {
+      return !isEvilBeing && role !== "s01" && role !== "s02" && role !== "as01b" && !isNamorado ? "victory" : "defeat";
+    }
+    if (kind === "werewolves") return isEvilBeing ? "victory" : "defeat";
+    if (kind === "lovers") return role === "s01" || isNamorado ? "victory" : "defeat";
+    if (kind === "whiteWolf") return role === "s02" ? "victory" : "defeat";
+    if (kind === "secretLover") return role === "as01b" ? "victory" : "defeat";
+    return "defeat";
+  }, [playerEffects, roleAssignments]);
+
+  const sendGameOver = async (kind: WinKind) => {
+    if (!roomId) return;
+    const perPlayer = Object.fromEntries(players.map((player) => [player.id, getGameOverOutcome(kind, player.id)]));
+    await supabase.channel(`game-over-${roomId}`).send({
+      type: "broadcast",
+      event: "game-over",
+      payload: { kind, perPlayer },
+    });
+    await supabase.from("rooms").update({ status: "finished" }).eq("id", roomId);
+    setRoom((prev) => (prev ? { ...prev, status: "finished" } : prev));
+    setManualWinKind(null);
+  };
 
   const updateSeatPosition = async (playerId: string, position: number | null) => {
     await supabase.from("players").update({ seat_position: position }).eq("id", playerId);
@@ -629,6 +998,12 @@ const GMRoom = () => {
   const existingPlayerNames = useMemo(() => players.map((p) => p.name), [players]);
 
   const seatedPlayersCount = useMemo(() => players.filter(p => p.seat_position !== null).length, [players]);
+
+  const isPlayerConnected = useCallback((player: Player) => {
+    if (!player.last_seen_at) return false;
+    const lastSeen = Date.parse(player.last_seen_at);
+    return Number.isFinite(lastSeen) && nowMs - lastSeen < 45000;
+  }, [nowMs]);
 
   const confirmRoom = () => {
     const unseated = players.filter((p) => p.seat_position === null);
@@ -752,6 +1127,10 @@ const GMRoom = () => {
       return;
     } else if (newStatus === "dead-this-night") {
       const source = _source || "manual";
+      const isWerewolfTargeting = source === "e01" || WEREWOLF_ROLES.includes(source as RoleId);
+      if (isWerewolfTargeting) {
+        setNightTargetedPlayerIds((prev) => { const next = new Set(prev); next.add(playerId); return next; });
+      }
 
       // Check immunities
       if (hasImmunity(playerId, source)) {
@@ -786,7 +1165,6 @@ const GMRoom = () => {
 
       setPlayerStatuses((prev) => ({ ...prev, [playerId]: "dead-this-night" }));
       setKillSources((prev) => ({ ...prev, [playerId]: source }));
-      setNightTargetedPlayerIds((prev) => { const next = new Set(prev); next.add(playerId); return next; });
 
       // Cavaleiro Enferrujado mechanic: apply Tetanus (deferred death) instead of instant kill
       if (roleAssignments[playerId] === CAVALEIRO_ROLE && _source !== "cavaleiro-linked") {
@@ -1346,15 +1724,15 @@ const GMRoom = () => {
         });
       }
       else if (roleSource === "a05") {
-        // Rouba-Túmulos: swap roles with a red-X player
+        // Rouba-Túmulos: swap roles with a permanently dead player
         const a05Id = getRolePlayerId("a05");
         if (!a05Id) return;
         if (poisonedPlayerId === a05Id) {
           toast.warning(getToast("warnRoubaPoisoned", (room?.language as Language) || "pt"));
           return;
         }
-        if (playerStatuses[targetPlayerId] !== "dead-this-night") {
-          toast.error(getToast("errRoubaOnlyRedX", (room?.language as Language) || "pt"));
+        if (!permanentlyDead.has(targetPlayerId)) {
+          toast.error(getToast("errRoubaOnlyGhost", (room?.language as Language) || "pt"));
           return;
         }
         const targetRole = roleAssignments[targetPlayerId];
@@ -1908,6 +2286,8 @@ const GMRoom = () => {
     // Has red X players
     keys["hasRedXPlayers"] = Object.entries(playerStatuses).some(([, s]) => s === "dead-this-night");
 
+    keys["roubaTumulosHasTargets"] = Object.keys(roleAssignments).some((pid) => permanentlyDead.has(pid) && roleAssignments[pid] !== "a05");
+
     // Empregada visible: only when someone is poisoned
     keys["empregadaVisible"] = !!poisonedPlayerId;
 
@@ -1980,6 +2360,48 @@ const GMRoom = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={resetRoom}
+                title={tt("resetRoom")}
+                aria-label={tt("resetRoom")}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={() => setWinPickerOpen(true)}
+                title={getGameOver("manualGameOver", lang)}
+                aria-label={getGameOver("manualGameOver", lang)}
+              >
+                <Trophy className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={cleanupOldRooms}
+                title={tt("cleanupOldRooms")}
+                aria-label={tt("cleanupOldRooms")}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={endRoom}
+                title={tt("endRoom")}
+                aria-label={tt("endRoom")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <a
               href={lang === "fr"
                 ? "https://anjomort0.github.io/WerewolvesOnTheClocktower/Rulebook_FR.html"
@@ -2130,8 +2552,6 @@ const GMRoom = () => {
                     onAcusadorChargeToggle={(idx) => setAcusadorCharges(prev => prev > idx ? idx : idx + 1)}
                     onSpiderReveal={handleSpiderReveal}
                     onSpyReveal={handleSpyReveal}
-                    amanteUsed={amanteUsed}
-                    onAmanteToggle={() => setAmanteUsed((v) => !v)}
                   />
                 ) : (
                   <DayTribunalPanel
@@ -2519,6 +2939,9 @@ const GMRoom = () => {
                       }}
                     >
                       <span className="font-body text-lg">{player.name}</span>
+                      <span className={`ml-2 text-[10px] font-display uppercase tracking-wider ${isPlayerConnected(player) ? "text-green-400" : "text-muted-foreground"}`}>
+                        {isPlayerConnected(player) ? (player.is_ready ? tt("ready") : tt("connected")) : tt("disconnected")}
+                      </span>
                     </div>
                     {!rolesAssigned && (
                       <button
@@ -2555,7 +2978,12 @@ const GMRoom = () => {
                           {roleDef && (
                             <img src={roleDef.image} alt={roleLabel(roleDef.id)} className="w-8 h-8 rounded flex-shrink-0" />
                           )}
-                          <span className="font-body text-sm flex-1 truncate">{player.name}</span>
+                          <span className="font-body text-sm flex-1 truncate">
+                            {player.name}
+                            <span className={`ml-2 text-[9px] font-display uppercase tracking-wider ${isPlayerConnected(player) ? "text-green-400" : "text-muted-foreground"}`}>
+                              {isPlayerConnected(player) ? (player.is_ready ? tt("ready") : tt("connected")) : tt("disconnected")}
+                            </span>
+                          </span>
                           {isDuplicate && <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />}
                           <RoleSelector value={roleId} onChange={(role) => changeRole(player.id, role)} advancedEnabled={advancedEnabled} />
                         </div>
@@ -2645,26 +3073,50 @@ const GMRoom = () => {
         cards={spyRevealCards}
       />
 
+      <WinPickerModal
+        open={winPickerOpen}
+        onClose={() => setWinPickerOpen(false)}
+        onPick={(kind) => {
+          setWinPickerOpen(false);
+          setManualWinKind(kind);
+        }}
+      />
+
+      <WinConfirmModal
+        open={!!manualWinKind}
+        kind={manualWinKind}
+        onDecline={() => setManualWinKind(null)}
+        onAccept={() => {
+          if (manualWinKind) sendGameOver(manualWinKind);
+        }}
+      />
+
       <AnimatePresence>
         {qrPopupOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-background/95 backdrop-blur-sm p-6"
+            className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-background/95 backdrop-blur-sm p-4"
             onClick={() => setQrPopupOpen(false)}
           >
             <motion.div
               initial={{ scale: 0.85 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.85 }}
-              className="flex flex-col items-center gap-6"
+              className="flex max-h-[calc(100vh-2rem)] flex-col items-center gap-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-parchment p-6 rounded-2xl">
-                <QRCodeSVG value={joinUrl} size={qrPopupSize} bgColor="hsl(40, 30%, 85%)" fgColor="hsl(30, 10%, 8%)" />
+              <div className="bg-parchment p-4 rounded-2xl">
+                <QRCodeSVG
+                  value={joinUrl}
+                  size={512}
+                  bgColor="hsl(40, 30%, 85%)"
+                  fgColor="hsl(30, 10%, 8%)"
+                  style={{ width: "min(72vw, 52vh, 28rem)", height: "auto", maxWidth: "100%" }}
+                />
               </div>
-              <div className="font-display text-5xl tracking-[0.4em] text-foreground">{room.code}</div>
+              <div className="font-display text-4xl tracking-[0.3em] text-foreground">{room.code}</div>
               <div className="w-full max-w-md space-y-2">
                 <div className="flex gap-2">
                   <Input
@@ -2679,14 +3131,19 @@ const GMRoom = () => {
                     variant="secondary"
                     size="icon"
                     onClick={copyJoinUrl}
-                    title="Copy join link"
-                    aria-label="Copy join link"
+                    title={tt("copyJoinLink")}
+                    aria-label={tt("copyJoinLink")}
                     className="h-10 w-10 flex-shrink-0"
                   >
                     {copiedJoinLink ? <Check className="h-4 w-4 text-gold" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
                 <p className="break-all text-center text-xs text-muted-foreground">{joinUrl}</p>
+                {copiedJoinLink && (
+                  <p className="text-center text-xs font-display tracking-wider text-primary">
+                    {getToast("okJoinLinkCopied", lang)}
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => setQrPopupOpen(false)}

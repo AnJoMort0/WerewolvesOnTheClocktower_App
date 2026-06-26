@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, Eye, X } from "lucide-react";
+import { Moon, Sun, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -82,8 +82,6 @@ interface NightScriptProps {
   onAcusadorChargeToggle?: (idx: number) => void;
   onSpiderReveal?: () => void;
   onSpyReveal?: () => void;
-  amanteUsed?: boolean;
-  onAmanteToggle?: () => void;
 }
 
 function isLineRelevant(
@@ -161,8 +159,6 @@ function ScriptLineDisplay({
   onAcusadorChargeToggle,
   onSpiderReveal,
   onSpyReveal,
-  amanteUsed,
-  onAmanteToggle,
   werewolvesAsleepText,
 }: {
   line: ScriptLine;
@@ -197,8 +193,6 @@ function ScriptLineDisplay({
   onAcusadorChargeToggle?: (idx: number) => void;
   onSpiderReveal?: () => void;
   onSpyReveal?: () => void;
-  amanteUsed?: boolean;
-  onAmanteToggle?: () => void;
   werewolvesAsleepText: string;
 }) {
   const lang = useLanguage();
@@ -224,7 +218,6 @@ function ScriptLineDisplay({
   const isAcusadorLine = line.requires?.length === 1 && line.requires[0] === ("v14" as RoleId);
   const isSpiderCaughtLine = line.requires?.length === 1 && line.requires[0] === ("v23" as RoleId) && line.conditionKey === "spiderHasCaught";
   const isSpyLine = line.requires?.length === 1 && line.requires[0] === ("f02" as RoleId) && line.conditionKey === "spyHasUnseen";
-  const isAmanteBaseLine = line.requires?.length === 1 && line.requires[0] === ("as01b" as RoleId) && !line.conditionKey;
   const isA05Line = line.requires?.length === 1 && line.requires[0] === ("a05" as RoleId);
   const isA05Poisoned = !!poisonedPlayerId && roleAssignments[poisonedPlayerId] === "a05";
   const a05Strike = isA05Line && isA05Poisoned;
@@ -239,9 +232,6 @@ function ScriptLineDisplay({
     const r = roleAssignments[poisonedPlayerId];
     return (["e01", "m01", "m02", "m03"] as RoleId[]).includes(r);
   }, [poisonedPlayerId, roleAssignments]);
-
-  // Hide the amante base line entirely once "Encontrado/Trouvé" is ticked
-  if (isAmanteBaseLine && amanteUsed) return null;
 
   const handleNativeDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragAction) {
@@ -282,7 +272,7 @@ function ScriptLineDisplay({
         {isWerewolfLine && isWerewolfLinePoisoned ? (
           <span className="line-through text-muted-foreground">{werewolvesAsleepText}</span>
         ) : (
-          <span className={(isStrikethrough || forceStrikethrough || a05Strike || (isAmanteBaseLine && amanteUsed)) ? "line-through text-muted-foreground" : ""}>
+          <span className={(isStrikethrough || forceStrikethrough || a05Strike) ? "line-through text-muted-foreground" : ""}>
             {segments.map((seg, i) =>
               seg.isRole ? (
                 <span key={i} className={isPoisonedLine ? "font-bold text-green-400" : "font-bold text-blue-400"}>
@@ -392,17 +382,11 @@ function ScriptLineDisplay({
         {isLobisomemVidenteLine && onLobisomemVidenteReveal && (
           <button onClick={(e) => { e.stopPropagation(); onLobisomemVidenteReveal(); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
-        {isSpiderCaughtLine && onSpiderReveal && (
+        {isSpiderCaughtLine && !dynamicText && onSpiderReveal && (
           <button onClick={(e) => { e.stopPropagation(); onSpiderReveal(); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
         {isSpyLine && onSpyReveal && (
           <button onClick={(e) => { e.stopPropagation(); onSpyReveal(); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
-        )}
-        {isAmanteBaseLine && onAmanteToggle && (
-          <div className="flex items-center gap-2 mt-2">
-            <Checkbox checked={!!amanteUsed} onCheckedChange={() => onAmanteToggle()} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
-            <span className="text-xs text-muted-foreground">{t("amanteCheckboxLabel", lang)}</span>
-          </div>
         )}
       </motion.div>
     </div>
@@ -450,8 +434,6 @@ export const NightScript = ({
   onAcusadorChargeToggle,
   onSpiderReveal,
   onSpyReveal,
-  amanteUsed,
-  onAmanteToggle,
 }: NightScriptProps) => {
   const lang = useLanguage();
   const dyn = useMemo(() => getDynamic(lang), [lang]);
@@ -638,8 +620,12 @@ export const NightScript = ({
     if (l.requires?.length === 1 && l.requires[0] === ("e03" as RoleId) && chamanCharges >= 2) return false;
     if (l.requires?.length === 1 && l.requires[0] === ("e04" as RoleId) && !shouldShowVidenteLine) return false;
     if (l.requires?.length === 1 && l.requires[0] === ("v04" as RoleId) && foxDisabled) return false;
+    if (l.requires?.length === 1 && l.requires[0] === ("as01b" as RoleId) && !l.conditionKey) {
+      const amanteId = Object.entries(roleAssignments).find(([, role]) => role === "as01b")?.[0];
+      if (amanteId && _playerEffects[amanteId]?.has("namorado")) return false;
+    }
     return true;
-  }, [activeRoles, permanentlyDeadRoles, roleAssignments, effectivelyDead, conditionKeys, chamanCharges, shouldShowVidenteLine, foxDisabled, profeciaGhostPlayerIds]);
+  }, [activeRoles, permanentlyDeadRoles, roleAssignments, effectivelyDead, conditionKeys, chamanCharges, shouldShowVidenteLine, foxDisabled, profeciaGhostPlayerIds, _playerEffects]);
 
   const localizedScripts = useMemo(() => getScripts(lang), [lang]);
   const sectionLabels = useMemo(() => ({
@@ -717,8 +703,6 @@ export const NightScript = ({
                 onAcusadorChargeToggle={onAcusadorChargeToggle}
                 onSpiderReveal={onSpiderReveal}
                 onSpyReveal={onSpyReveal}
-                amanteUsed={amanteUsed}
-                onAmanteToggle={onAmanteToggle}
                 werewolvesAsleepText={dyn.werewolvesAsleep}
               />
             ))}

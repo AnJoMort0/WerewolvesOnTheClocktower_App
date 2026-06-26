@@ -5,3 +5,5 @@ GRANT USAGE ON SCHEMA public TO anon, authenticated;
 
 GRANT SELECT, INSERT, UPDATE ON TABLE public.rooms TO anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.players TO anon, authenticated;
+
+GRANT EXECUTE ON FUNCTION public.cleanup_old_rooms(INTERVAL) TO anon, authenticated;

@@ -63,6 +63,29 @@ const PlayerView = () => {
   useEffect(() => { playerRef.current = player; }, [player]);
 
   useEffect(() => {
+    if (!playerId || !player?.room_id) return;
+
+    const markSeen = () => {
+      supabase
+        .from("players")
+        .update({ is_ready: true, last_seen_at: new Date().toISOString() })
+        .eq("id", playerId);
+    };
+
+    markSeen();
+    const interval = window.setInterval(markSeen, 20000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") markSeen();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [playerId, player?.room_id]);
+
+  useEffect(() => {
     if (!playerId) return;
 
     const fetchPlayer = async () => {
@@ -231,11 +254,16 @@ const PlayerView = () => {
 
       const gameOverCh = supabase.channel(`game-over-${roomId}`)
         .on("broadcast", { event: "game-over" }, (payload) => {
-          const d = payload.payload as { kind: WinKind; perRole?: Record<string, "victory" | "defeat"> };
+          const d = payload.payload as {
+            kind: WinKind;
+            perPlayer?: Record<string, "victory" | "defeat">;
+            perRole?: Record<string, "victory" | "defeat">;
+          };
           if (!d?.kind) return;
           const myRole = (playerRef.current?.character || null) as RoleId | null;
           let outcome: "victory" | "defeat" = "defeat";
-          if (myRole && d.perRole && d.perRole[myRole]) outcome = d.perRole[myRole];
+          if (playerId && d.perPlayer?.[playerId]) outcome = d.perPlayer[playerId];
+          else if (myRole && d.perRole && d.perRole[myRole]) outcome = d.perRole[myRole];
           setGameOver({ kind: d.kind, outcome });
           setGameOverDismissed(false);
         }).subscribe();

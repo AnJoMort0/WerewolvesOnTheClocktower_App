@@ -79,9 +79,6 @@ interface PlayerCircleProps {
   onToggleEffect?: (playerId: string, effect: StatusEffect) => void;
   onExecute?: (playerId: string) => void;
   onDragAction?: (action: string, targetPlayerId: string, sourcePlayerId?: string | null) => void;
-  amanteUsed?: boolean;
-  onAmanteToggle?: () => void;
-  isAmante?: (playerId: string) => boolean;
 }
 
 export const PlayerCircle = ({
@@ -120,9 +117,6 @@ export const PlayerCircle = ({
   onToggleEffect: _onToggleEffect,
   onExecute: _onExecute,
   onDragAction,
-  amanteUsed = false,
-  onAmanteToggle,
-  isAmante,
 }: PlayerCircleProps) => {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const roleLabel = useRoleLabel();
@@ -152,10 +146,6 @@ export const PlayerCircle = ({
         onPlayerStatusChange(seated.id, "poisoned");
         onDragAction?.("__catch__", seated.id, sourcePlayerId);
       } else if (action === "kill") {
-        if (roleAssignments?.[seated.id] === "e02" && poisonedPlayerId === seated.id) {
-          toast.warning(getToast("warnBruxaPoisonedImmune", lang));
-          return;
-        }
         onPlayerStatusChange(seated.id, "dead-this-night", "e01");
         onDragAction?.("__catch__", seated.id, sourcePlayerId);
       } else if (action === "chaman") {
@@ -460,16 +450,6 @@ export const PlayerCircle = ({
                   <Checkbox
                     checked={lobisomemVampiroUsed}
                     onCheckedChange={() => onLobisomemVampiroToggle()}
-                    className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
-                  />
-                </div>
-              )}
-              {/* Amante Secreto (as01b) used checkbox */}
-              {isGM && role === ("as01b" as RoleId) && !isPermanentlyDead && onAmanteToggle && (
-                <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()} title={t("amanteCheckboxLabel")}>
-                  <Checkbox
-                    checked={amanteUsed}
-                    onCheckedChange={() => onAmanteToggle()}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                   />
                 </div>

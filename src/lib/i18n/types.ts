@@ -92,6 +92,12 @@ export interface ToastStrings {
   warnNoTargets: string;
   okChamanRessurected: string;
   errChamanDragOnlyDead: string;
+  okJoinLinkCopied: string;
+  okRoomReset: string;
+  okRoomEnded: string;
+  okCleanupOldRooms: string;
+  errRoomAction: string;
+  errRoubaOnlyGhost: string;
 }
 
 export interface ValidationWarningStrings {
@@ -203,6 +209,16 @@ export interface UIStrings {
   enter: string;
   roomNotFound: string;
   gameAlreadyStarted: string;
+  joinHelper: string;
+  copyJoinLink: string;
+  resetRoom: string;
+  resetRoomConfirm: string;
+  endRoom: string;
+  endRoomConfirm: string;
+  cleanupOldRooms: string;
+  ready: string;
+  connected: string;
+  disconnected: string;
   addPlayerPlaceholder: string;
   actionPoison: string;
   actionKill: string;

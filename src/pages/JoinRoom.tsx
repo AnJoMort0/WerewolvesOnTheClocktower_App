@@ -123,6 +123,9 @@ const JoinRoom = () => {
           <p className="text-muted-foreground">
             {t("roomLabel", lang)} <span className="font-display tracking-widest">{code?.toUpperCase()}</span>
           </p>
+          <p className="text-muted-foreground/70 text-sm">
+            {t("joinHelper", lang)}
+          </p>
         </div>
 
         <div className="space-y-4">

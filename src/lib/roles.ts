@@ -145,7 +145,20 @@ const LAME_SINGLES: RoleId[] = ["l02"];
 function getWerewolfCount(playerCount: number): number {
   // 1 werewolf per 4 players; under 12 players, always exactly 2 wolves.
   if (playerCount < 12) return 2;
-  return Math.ceil(playerCount / 4);
+  return Math.floor(playerCount / 4);
+}
+
+function getWerewolfRoles(playerCount: number): RoleId[] {
+  const wwCount = getWerewolfCount(playerCount);
+  if (playerCount < 12) {
+    return Array.from({ length: wwCount }, () => "e01" as RoleId);
+  }
+
+  const normalCount = Math.max(1, wwCount - SPECIAL_WEREWOLVES.length);
+  const specialCount = wwCount - normalCount;
+  const specialRoles = shuffle(SPECIAL_WEREWOLVES).slice(0, specialCount);
+  const normalRoles = Array.from({ length: normalCount }, () => "e01" as RoleId);
+  return [...specialRoles, ...normalRoles];
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -161,24 +174,7 @@ export function assignRoles(playerCount: number, advancedEnabled: boolean = fals
   const roles: RoleId[] = [];
   roles.push(...ESSENTIAL_SINGLES);
 
-  const wwCount = getWerewolfCount(playerCount);
-  // Balance: <12 players → only plain e01 (no specials)
-  if (playerCount < 12) {
-    for (let i = 0; i < wwCount; i++) roles.push("e01");
-  } else {
-    roles.push("e01");
-    const remainingWW = wwCount - 1;
-    const shuffledSpecialWW = shuffle(SPECIAL_WEREWOLVES);
-    let specialUsed = 0;
-    for (let i = 0; i < remainingWW; i++) {
-      if (specialUsed < shuffledSpecialWW.length) {
-        roles.push(shuffledSpecialWW[specialUsed]);
-        specialUsed++;
-      } else {
-        roles.push("e01");
-      }
-    }
-  }
+  roles.push(...getWerewolfRoles(playerCount));
 
   const assigned = new Set<RoleId>(roles);
 
