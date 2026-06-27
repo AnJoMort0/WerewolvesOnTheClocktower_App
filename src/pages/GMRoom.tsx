@@ -22,7 +22,7 @@ import { assignRoles, ROLES, isUniqueRole, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, typ
 import { LanguageContext, getRoleLabel, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
-import { getMeninaAnswerKind, MENINA_POISONED_ANSWERS, type MeninaAnswerKind } from "@/lib/gameRules";
+import { canWhiteWolfTarget, getMeninaAnswerKind, hasOtherLivingWerewolf, MENINA_POISONED_ANSWERS, type MeninaAnswerKind, type WhiteWolfPlayerState } from "@/lib/gameRules";
 import { detectAutomaticVictory, getVictoryStateSignature, playerWinsAnyVictoryGroup, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
 import poisonedIcon from "@/assets/icons/poisoned.png";
@@ -2086,7 +2086,17 @@ const GMRoom = () => {
         handlePlayerStatusChange(killId, "dead-this-night", "v08");
       }
       else if (roleSource === "s02") {
-        if (WEREWOLF_ROLES.includes(roleAssignments[targetPlayerId])) {
+        const whiteWolfId = getRolePlayerId("s02");
+        if (!whiteWolfId) return;
+        const whiteWolfPlayers: WhiteWolfPlayerState[] = players.map((player) => ({
+          id: player.id,
+          role: roleAssignments[player.id],
+          alive: !permanentlyDead.has(player.id)
+            && playerStatuses[player.id] !== "dead"
+            && playerStatuses[player.id] !== "dead-this-night",
+          werewolfTurned: !!playerEffects[player.id]?.has("werewolf_turned"),
+        }));
+        if (canWhiteWolfTarget(whiteWolfPlayers, whiteWolfId, targetPlayerId)) {
           handlePlayerStatusChange(targetPlayerId, "dead-this-night", "s02");
         }
       }
@@ -2706,6 +2716,16 @@ const GMRoom = () => {
     });
 
     keys["whitewolfNight"] = nightNumber % 3 === 0;
+    const whiteWolfId = Object.entries(roleAssignments).find(([, role]) => role === "s02")?.[0];
+    const whiteWolfPlayers: WhiteWolfPlayerState[] = players.map((player) => ({
+      id: player.id,
+      role: roleAssignments[player.id],
+      alive: !permanentlyDead.has(player.id)
+        && playerStatuses[player.id] !== "dead"
+        && playerStatuses[player.id] !== "dead-this-night",
+      werewolfTurned: !!playerEffects[player.id]?.has("werewolf_turned"),
+    }));
+    keys["whitewolfSolo"] = !!whiteWolfId && !hasOtherLivingWerewolf(whiteWolfPlayers, whiteWolfId);
 
     const enemyPlayerIds = Object.entries(playerEffects)
       .filter(([, e]) => e.has("enemy"))
@@ -2721,6 +2741,7 @@ const GMRoom = () => {
 
     // Empregada visible: only when someone is poisoned
     keys["empregadaVisible"] = !!poisonedPlayerId;
+    keys["poisonedCharacterPresent"] = !!poisonedPlayerId;
 
     // Piromaníaco visible: only when someone has Inocentado status
     keys["piromaniacoVisible"] = Object.values(playerEffects).some((e) => e.has("inocentado"));

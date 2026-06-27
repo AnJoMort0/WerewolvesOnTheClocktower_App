@@ -268,6 +268,7 @@ export interface ScriptDynamicStrings {
   rabbitNothing: string;
   rabbitConfused: string;
   werewolvesAsleep: string;
+  whiteWolfSoloKill: string;
 }
 
 export interface Translation {

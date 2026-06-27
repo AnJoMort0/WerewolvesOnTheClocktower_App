@@ -85,7 +85,7 @@ export const fr: Translation = {
       { text: "La {Méchante Sorcière} se réveille et choisit un joueur qu'elle empoisonnera cette nuit.", requires: ["e02"] },
       { text: "La {Domestique} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée.", requires: ["v20"], conditionKey: "empregadaVisible" },
       { text: "Le {Pyromane} se réveille. Les personnes innocentées au dernier Tribunal lui sont montrées. Il décide, en pointant ou en montrant le pouce vers le bas, s'il veut ou non incendier la maison de l'une d'elles.", requires: ["v15"], conditionKey: "piromaniacoVisible" },
-      { text: "La {Gitane} se réveille et indique 3 voisins. Si l'un d'eux est empoisonné, il perd le poison et la {Gitane} devient empoisonnée.", requires: ["v12"] },
+      { text: "La {Gitane} se réveille et indique 3 voisins. Si l'un d'eux est empoisonné, il perd le poison et la {Gitane} devient empoisonnée.", requires: ["v12"], conditionKey: "poisonedCharacterPresent" },
       { text: "L'{Illusionniste} se réveille et indique le joueur dont l'identité sera obstruée.", requires: ["a06"] },
       { text: "(Quelqu'un est mort) La {Voyante} se réveille et les rôles des morts d'hier lui sont révélés.", requires: ["e04"] },
       { text: "L'{Espion} se réveille et un rôle en jeu lui est révélé.", requires: ["f02"], conditionKey: "spyHasUnseen" },
@@ -126,6 +126,7 @@ export const fr: Translation = {
     rabbitNothing: "Le {Maîtres des Lapins} n'a rien entendu cette nuit.",
     rabbitConfused: "Les {Lapins} étaient confus cette nuit.",
     werewolvesAsleep: "Les Loups-garous ne se réveillent pas.",
+    whiteWolfSoloKill: "(Toutes les 3 nuits) Le {Loup-garou Blanc} se réveille et choisit un joueur supplémentaire qu'il veut tuer.",
   },
 
   ui: {

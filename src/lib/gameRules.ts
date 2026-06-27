@@ -1,4 +1,30 @@
-import type { RoleId } from "@/lib/roles";
+import { WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+
+export type WhiteWolfPlayerState = {
+  id: string;
+  role?: RoleId;
+  alive: boolean;
+  werewolfTurned: boolean;
+};
+
+const isLivingWerewolf = (player: WhiteWolfPlayerState) =>
+  player.alive && (
+    (!!player.role && WEREWOLF_ROLES.includes(player.role)) || player.werewolfTurned
+  );
+
+export function hasOtherLivingWerewolf(players: WhiteWolfPlayerState[], whiteWolfId: string): boolean {
+  return players.some((player) => player.id !== whiteWolfId && isLivingWerewolf(player));
+}
+
+export function canWhiteWolfTarget(
+  players: WhiteWolfPlayerState[],
+  whiteWolfId: string,
+  targetPlayerId: string,
+): boolean {
+  const target = players.find((player) => player.id === targetPlayerId);
+  if (!target || target.id === whiteWolfId || !target.alive) return false;
+  return !hasOtherLivingWerewolf(players, whiteWolfId) || isLivingWerewolf(target);
+}
 
 export type MeninaAnswerKind =
   | "soldier"

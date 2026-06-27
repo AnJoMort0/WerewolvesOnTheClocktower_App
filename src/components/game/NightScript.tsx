@@ -32,7 +32,6 @@ const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
   v11: "role-v11",
   f01: "role-f01",
   l02: "role-l02",
-  s01: "role-s01",
   v15: "role-v15",
   v18: "role-v18",
   s02: "role-s02",
@@ -132,6 +131,9 @@ function getRawLineDragAction(line: ScriptLine): string | null {
   // Caçador ghost lines also draggable as v08 kill
   if (line.conditionKey === "cacadorDied" || line.conditionKey === "capuchinhoExecuted") return "role-v08";
   if (!line.requires?.length) return null;
+  if (line.requires.length === 1 && line.requires[0] === "s01") {
+    return line.conditionKey ? null : "role-s01";
+  }
   const special = getLineDragAction(line);
   if (special) return special;
   if (line.requires.length === 1) return DRAG_ACTION_BY_ROLE[line.requires[0]] ?? null;
@@ -634,6 +636,9 @@ export const NightScript = ({
     if (line.requires?.length === 1 && line.requires[0] === "v03") return crowDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v05") return rabbitDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v20") return empregadaDynamicText;
+    if (line.requires?.length === 1 && line.requires[0] === "s02" && line.conditionKey === "whitewolfNight" && conditionKeys.whitewolfSolo) {
+      return dyn.whiteWolfSoloKill;
+    }
     if (line.requires?.length === 1 && line.requires[0] === "v23" && line.conditionKey === "spiderHasCaught") return spiderConfusedText;
     return undefined;
   };

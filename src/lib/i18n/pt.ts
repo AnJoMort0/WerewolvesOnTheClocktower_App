@@ -85,7 +85,7 @@ export const pt: Translation = {
       { text: "A {Bruxa Malvada} acorda e escolhe um jogador que irá envenenar esta noite.", requires: ["e02"] },
       { text: "A {Empregada} acorda e é-lhe revelada a distância até a pessoa envenenada.", requires: ["v20"], conditionKey: "empregadaVisible" },
       { text: "O {Piromaníaco} acorda. São-lhe mostradas as pessoas inocentadas no último tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.", requires: ["v15"], conditionKey: "piromaniacoVisible" },
-      { text: "A {Cigana} acorda e indica 3 vizinhos. Se um deles estiver envenenado, ele perde o veneno e a {Cigana} passa a estar envenenada.", requires: ["v12"] },
+      { text: "A {Cigana} acorda e indica 3 vizinhos. Se um deles estiver envenenado, ele perde o veneno e a {Cigana} passa a estar envenenada.", requires: ["v12"], conditionKey: "poisonedCharacterPresent" },
       { text: "O {Ilusionista} acorda e indica o jogador cuja a identidade será obstruída.", requires: ["a06"] },
       { text: "(Alguém morreu) A {Vidente} acorda e é-lhe revelado o papel dos mortos de ontem.", requires: ["e04"] },
       { text: "O {Espião} acorda e é-lhe revelado um papel em jogo.", requires: ["f02"], conditionKey: "spyHasUnseen" },
@@ -126,6 +126,7 @@ export const pt: Translation = {
     rabbitNothing: "O {Domador dos Coelhos} não ouviu nada esta noite.",
     rabbitConfused: "Os {Coelhos} estavam confusos esta noite.",
     werewolvesAsleep: "Os Lobisomens não acordam.",
+    whiteWolfSoloKill: "(A cada 3 noites) O {Lobisomem Branco} acorda e escolhe mais um jogador que quer matar.",
   },
 
   ui: {

@@ -12,6 +12,7 @@ import { LanguageContext, getRoleLabel, t, type Language, type WinKind } from "@
 import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
 import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/playerSession";
+import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
 
 type RoomPlayer = {
   id: string;
@@ -62,7 +63,29 @@ const PlayerView = () => {
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
   const playerRef = useRef<typeof player>(null);
   const gameOverEventRef = useRef<string | null>(null);
+  const previousTimerAlarmStateRef = useRef<TimerAlarmState | null>(null);
   useEffect(() => { playerRef.current = player; }, [player]);
+
+  useEffect(() => {
+    const unlock = () => {
+      unlockTimerAlarm();
+      document.removeEventListener("pointerdown", unlock, true);
+      document.removeEventListener("keydown", unlock, true);
+    };
+    document.addEventListener("pointerdown", unlock, true);
+    document.addEventListener("keydown", unlock, true);
+    return () => {
+      document.removeEventListener("pointerdown", unlock, true);
+      document.removeEventListener("keydown", unlock, true);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!timerState) return;
+    const current = { phase: timerState.phase, timerDone: timerState.timerDone };
+    if (shouldPlayTimerAlarm(previousTimerAlarmStateRef.current, current)) playTimerAlarm();
+    previousTimerAlarmStateRef.current = current;
+  }, [timerState]);
 
   useEffect(() => {
     if (!playerId || !player?.room_id) return;
