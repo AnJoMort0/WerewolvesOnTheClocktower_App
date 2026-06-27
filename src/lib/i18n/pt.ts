@@ -57,7 +57,7 @@ export const pt: Translation = {
   scripts: {
     firstNight: [
       { text: "Esta noite não terá mortos." },
-      { text: "O {Cupido} acorda e escolhe dois jogadores que serão Namorados. O {Cupido} adormece e os Namorados serão agora tocados e podem se conhecer. Se um Namorado morre, o outro se suicida. O objetivo dos Namorados e do {Cupido} é que os Namorados sejam os últimos sobreviventes.", requires: ["s01"] },
+      { text: "O {Cupido} acorda e escolhe dois jogadores que serão Namorados. O {Cupido} adormece e os Namorados serão agora tocados e podem se conhecer. Se um Namorado morre, o outro se suicida. O objetivo dos Namorados e do {Cupido} é que os Namorados sejam os últimos sobreviventes. Enquanto os Namorados estiverem vivos, o jogo continua.", requires: ["s01"] },
       { text: "O {Cupido Malvado} acorda e escolhe dois jogadores que serão Inimigos. O {Cupido Malvado} adormece e os Inimigos serão tocados e podem se conhecer. Se um Inimigo consegue condenar o outro a execução, o primeiro recebe imunidade na próxima tentativa de assassinato.", requires: ["m05"] },
       { text: "As {Irmãs} acordam para se conhecerem.", requires: ["l03"] },
       { text: "Os {Irmãos} acordam para se conhecerem.", requires: ["l04"] },

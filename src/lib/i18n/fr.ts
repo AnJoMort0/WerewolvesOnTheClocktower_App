@@ -57,7 +57,7 @@ export const fr: Translation = {
   scripts: {
     firstNight: [
       { text: "Cette nuit n'aura pas de morts." },
-      { text: "Le {Cupidon} se réveille et choisit deux joueurs qui seront Amoureux. Le {Cupidon} s'endort et les Amoureux seront maintenant touchés et peuvent se connaître. Si un Amoureux meurt, l'autre se suicide. L'objectif des Amoureux et du {Cupidon} est que les Amoureux soient les derniers survivants.", requires: ["s01"] },
+      { text: "Le {Cupidon} se réveille et choisit deux joueurs qui seront Amoureux. Le {Cupidon} s'endort et les Amoureux seront maintenant touchés et peuvent se connaître. Si un Amoureux meurt, l'autre se suicide. L'objectif des Amoureux et du {Cupidon} est que les Amoureux soient les derniers survivants. Tant que les Amoureux sont en vie, le jeu continue.", requires: ["s01"] },
       { text: "Le {Méchant Cupidon} se réveille et choisit deux joueurs qui seront Ennemis. Le {Méchant Cupidon} s'endort et les Ennemis seront touchés et peuvent se connaître. Si un Ennemi parvient à faire condamner l'autre à l'exécution, le premier reçoit une immunité contre la prochaine tentative d'assassinat.", requires: ["m05"] },
       { text: "Les {Sœurs} se réveillent pour se connaître.", requires: ["l03"] },
       { text: "Les {Frères} se réveillent pour se connaître.", requires: ["l04"] },

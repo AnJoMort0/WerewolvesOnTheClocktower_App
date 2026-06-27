@@ -136,6 +136,13 @@
 }
 </style>
 
+<!-- SOURCE-EDITING CONVENTIONS
+- Chaque personnage commence par un séparateur « PERSONNAGE ».
+- Pour le texte rouge, utiliser uniquement : <span class="rule-red">texte</span>
+- Laisser les espaces, la ponctuation et les symboles de choix (👍/👎) hors de la balise rouge.
+-->
+
+
 ## Sommaire
 
 - [Base](#base)
@@ -334,68 +341,80 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 </tr>
 </thead>
 <tbody>
+<!-- ============================================================ -->
+<!-- PERSONNAGE e01 — Loup-garou -->
+<!-- ============================================================ -->
 <tr class="role-row faction-evil" id="e01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/e01_final.png" alt="Carte : Loup-garou" width="130">
-<div><code>e01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟥 <code>e01</code> · Loup-garou <span class="role-badge">Créatures Maléfiques</span></div>
-<div class="role-meta">Catégorie : Essentiels · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il choisit, avec les autres Loups-garous, qui ils assassineront.</p>
-<p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/e01_final.png" alt="Carte : Loup-garou" width="130">
+    <div><code>e01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟥 <code>e01</code> · Loup-garou <span class="role-badge">Créatures Maléfiques</span></div>
+    <div class="role-meta">Catégorie : Essentiels · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il choisit, avec les autres Loups-garous, qui ils assassineront.</p>
+      <p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE e02 — Méchante Sorcière -->
+<!-- ============================================================ -->
 <tr class="role-row faction-evil" id="e02">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/e02_final.png" alt="Carte : Méchante Sorcière" width="130">
-<div><code>e02</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟥 <code>e02</code> · Méchante Sorcière <span class="role-badge">Créatures Maléfiques</span></div>
-<div class="role-meta">Catégorie : Essentiels · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">NE </span>SE RÉVEILLE <span class="rule-red" style="color:#cc0000;font-weight:700;">PAS </span>AVEC LES LOUPS-GAROUS.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, la sorcière peut empoisonner un personnage.</p>
-<p>Le joueur affecté aura de la difficulté à contrôler ses pouvoirs (recevra de fausses informations).</p>
-<p><strong>Si empoisonné :</strong><br>Est immune à tout attaque.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/e02_final.png" alt="Carte : Méchante Sorcière" width="130">
+    <div><code>e02</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟥 <code>e02</code> · Méchante Sorcière <span class="role-badge">Créatures Maléfiques</span></div>
+    <div class="role-meta">Catégorie : Essentiels · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">NE</span> SE RÉVEILLE <span class="rule-red">PAS</span> AVEC LES LOUPS-GAROUS.</p>
+      <p><span class="rule-red">Chaque nuit</span>, la sorcière peut empoisonner un personnage.</p>
+      <p>Le joueur affecté aura de la difficulté à contrôler ses pouvoirs (recevra de fausses informations).</p>
+      <p><strong>Si empoisonné :</strong><br>Est immune à tout attaque.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE e03 — Chaman -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="e03">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/e03_final.png" alt="Carte : Chaman" width="130">
-<div><code>e03</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>e03</code> · Chaman <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Essentiels · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span> est montré les joueurs  <span class="rule-red" style="color:#cc0000;font-weight:700;">assassinés </span>et peut choisir de les sauver.</p>
-<p>Le Chaman peut sauver (👍) <span class="rule-red" style="color:#cc0000;font-weight:700;">deux </span>joueurs <span class="rule-red" style="color:#cc0000;font-weight:700;">pendant tout le jeu</span>.</p>
-<p><strong>Si empoisonné :</strong><br>Ne sauve pas le joueur.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/e03_final.png" alt="Carte : Chaman" width="130">
+    <div><code>e03</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>e03</code> · Chaman <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Essentiels · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span> est montré les joueurs  <span class="rule-red">assassinés</span> et peut choisir de les sauver.</p>
+      <p>Le Chaman peut sauver (👍) <span class="rule-red">deux</span> joueurs <span class="rule-red">pendant tout le jeu</span>.</p>
+      <p><strong>Si empoisonné :</strong><br>Ne sauve pas le joueur.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE e04 — Voyante -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="e04">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/e04_final.png" alt="Carte : Voyante" width="130">
-<div><code>e04</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>e04</code> · Voyante <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Essentiels · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque fois qu’un joueur meurt</span>, la Voyante découvre son pouvoir <span class="rule-red" style="color:#cc0000;font-weight:700;">(elle sera informée la nuit suivante)</span>.</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/e04_final.png" alt="Carte : Voyante" width="130">
+    <div><code>e04</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>e04</code> · Voyante <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Essentiels · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque fois qu’un joueur meurt</span>, la Voyante découvre son pouvoir <span class="rule-red">(elle sera informée la nuit suivante)</span>.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
 </tbody>
 </table>
@@ -417,389 +436,462 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 </tr>
 </thead>
 <tbody>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v01 — Petite Fille -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v01_final.png" alt="Carte : Petite Fille" width="130">
-<div><code>v01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v01</code> · Petite Fille <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, les joueurs  <span class="rule-red" style="color:#cc0000;font-weight:700;">assassinés</span> lui sont montrés et elle découvre comment ils sont morts.</p>
-<p>Le Meneur lui montrera le rôle dont le pouvoir l’a tué.</p>
-<p>S’il s&#x27;agit d’un Amoureux s’étant suicidé, le carte de Cupidon lui sera montrée.</p>
-<p>Si l’assassin était un Soldat, la carte du Capitaine lui sera montrée.</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v01_final.png" alt="Carte : Petite Fille" width="130">
+    <div><code>v01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v01</code> · Petite Fille <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, les joueurs  <span class="rule-red">assassinés</span> lui sont montrés et elle découvre comment ils sont morts.</p>
+      <p>Le Meneur lui montrera le rôle dont le pouvoir l’a tué.</p>
+      <p>S’il s&#x27;agit d’un Amoureux s’étant suicidé, le carte de Cupidon lui sera montrée.</p>
+      <p>Si l’assassin était un Soldat, la carte du Capitaine lui sera montrée.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v02 — Maître de l’Ours -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v02">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v02_final.png" alt="Carte : Maître de l’Ours" width="130">
-<div><code>v02</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v02</code> · Maître de l’Ours <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, si un de ces voisins s’agit d’une Créature Maléfique, l’Ours grogne.</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v02_final.png" alt="Carte : Maître de l’Ours" width="130">
+    <div><code>v02</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v02</code> · Maître de l’Ours <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, si un de ces voisins s’agit d’une Créature Maléfique, l’Ours grogne.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v03 — Maître du Corbeau -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v03">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v03_final.png" alt="Carte : Maître du Corbeau" width="130">
-<div><code>v03</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v03</code> · Maître du Corbeau <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, le Meneur lui révèle silencieusement le nombre de Créatures Maléfiques vivantes en jeu.</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v03_final.png" alt="Carte : Maître du Corbeau" width="130">
+    <div><code>v03</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v03</code> · Maître du Corbeau <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, le Meneur lui révèle silencieusement le nombre de Créatures Maléfiques vivantes en jeu.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v04 — Maître du Renard -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v04">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v04_final.png" alt="Carte : Maître du Renard" width="130">
-<div><code>v04</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v04</code> · Maître du Renard <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il choisit un joueur et le Meneur lui révèle si entre lui et ses voisins il y a une Créature Maléfique (👍) ou pas (👎).</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Dès la deuxième nuit</span>, si tous les trois sont des Villageois, le Renard fuit et le Maître du Renard perd son pouvoir.</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v04_final.png" alt="Carte : Maître du Renard" width="130">
+    <div><code>v04</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v04</code> · Maître du Renard <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il choisit un joueur et le Meneur lui révèle si entre lui et ses voisins il y a une Créature Maléfique (👍) ou pas (👎).</p>
+      <p><span class="rule-red">Dès la deuxième nuit</span>, si tous les trois sont des Villageois, le Renard fuit et le Maître du Renard perd son pouvoir.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v05 — Maître des Lapins -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v05">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v05_final.png" alt="Carte : Maître des Lapins" width="130">
-<div><code>v05</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v05</code> · Maître des Lapins <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, si un de ces voisins ou soi-même est attaqué par les Loups-garous ou empoisonné par la Sorcière, les lapins auront peur.</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v05_final.png" alt="Carte : Maître des Lapins" width="130">
+    <div><code>v05</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v05</code> · Maître des Lapins <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, si un de ces voisins ou soi-même est attaqué par les Loups-garous ou empoisonné par la Sorcière, les lapins auront peur.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v06 — Marionnettiste -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v06">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v06_final.png" alt="Carte : Marionnettiste" width="130">
-<div><code>v06</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v06</code> · Marionnettiste <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Il fait semblant d’être un Loup-garou.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Il se réveille en même temps que les </span><span class="rule-red" style="color:#cc0000;font-weight:700;">Loups-garous</span><span class="rule-red" style="color:#cc0000;font-weight:700;"> </span>et vote avec eux.</p>
-<p><strong>Si empoisonné :</strong><br>Ne se réveille pas ; sera touché une fois que la Méchante Sorcière s’endorme.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v06_final.png" alt="Carte : Marionnettiste" width="130">
+    <div><code>v06</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v06</code> · Marionnettiste <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Il fait semblant d’être un Loup-garou.</p>
+      <p><span class="rule-red">Il se réveille en même temps que les Loups-garous</span> et vote avec eux.</p>
+      <p><strong>Si empoisonné :</strong><br>Ne se réveille pas ; sera touché une fois que la Méchante Sorcière s’endorme.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v07 — Chevalier Rouillé -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v07">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v07_final.png" alt="Carte : Chevalier Rouillé" width="130">
-<div><code>v07</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v07</code> · Chevalier Rouillé <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Une fois mort</span>, le Loup-garou le plus proche mourra durant la prochaine journée. Sa mort sera annoncée au début du Tribunal.</p>
-<p><strong>Si empoisonné quand il meurt :</strong><br>Assassine le mauvais joueur.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v07_final.png" alt="Carte : Chevalier Rouillé" width="130">
+    <div><code>v07</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v07</code> · Chevalier Rouillé <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Une fois mort</span>, le Loup-garou le plus proche mourra durant la prochaine journée. Sa mort sera annoncée au début du Tribunal.</p>
+      <p><strong>Si empoisonné quand il meurt :</strong><br>Assassine le mauvais joueur.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v08 — Chasseur -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v08">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v08_final.png" alt="Carte : Chasseur" width="130">
-<div><code>v08</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v08</code> · Chasseur <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Une fois mort</span>, sera réveillé la prochaine nuit et choisira <span class="rule-red" style="color:#cc0000;font-weight:700;">un </span>joueur qui sera assassiné.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Si le </span><span class="rule-red" style="color:#cc0000;font-weight:700;">Petit Chaperon Rouge</span><span class="rule-red" style="color:#cc0000;font-weight:700;"> est exécuté</span>, il sera réveillé la nuit suivante et choisira <span class="rule-red" style="color:#cc0000;font-weight:700;">un </span>joueur qui sera assassiné. (Pourra tout de même tuer un joueur quand il meurt).</p>
-<p><strong>Si empoisonné quand il meurt :</strong><br>Assassine le mauvais joueur.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v08_final.png" alt="Carte : Chasseur" width="130">
+    <div><code>v08</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v08</code> · Chasseur <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Une fois mort</span>, sera réveillé la prochaine nuit et choisira <span class="rule-red">un</span> joueur qui sera assassiné.</p>
+      <p><span class="rule-red">Si le Petit Chaperon Rouge est exécuté</span>, il sera réveillé la nuit suivante et choisira <span class="rule-red">un</span> joueur qui sera assassiné. (Pourra tout de même tuer un joueur quand il meurt).</p>
+      <p><strong>Si empoisonné quand il meurt :</strong><br>Assassine le mauvais joueur.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v08b — Petit Chaperon Rouge -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v08b">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v08b_final.png" alt="Carte : Petit Chaperon Rouge" width="130">
-<div><code>v08b</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v08b</code> · Petit Chaperon Rouge <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Est immune aux <span class="rule-red" style="color:#cc0000;font-weight:700;">assassinats des </span><span class="rule-red" style="color:#cc0000;font-weight:700;">Loups-garous</span><span class="rule-red" style="color:#cc0000;font-weight:700;"> </span>tant que le Chasseur soit en vie.</p>
-<p>Si <span class="rule-red" style="color:#cc0000;font-weight:700;">exécuté pendant que le </span><span class="rule-red" style="color:#cc0000;font-weight:700;">Chasseur </span><span class="rule-red" style="color:#cc0000;font-weight:700;">est vivant</span>, le Chasseur peut tuer quelqu’un la nuit suivante.</p>
-<p><strong>Si empoisonné :</strong><br>Perd son immunité cette nuit-là.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v08b_final.png" alt="Carte : Petit Chaperon Rouge" width="130">
+    <div><code>v08b</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v08b</code> · Petit Chaperon Rouge <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Est immune aux <span class="rule-red">assassinats des Loups-garous</span> tant que le Chasseur soit en vie.</p>
+      <p>Si <span class="rule-red">exécuté pendant que le Chasseur est vivant</span>, le Chasseur peut tuer quelqu’un la nuit suivante.</p>
+      <p><strong>Si empoisonné :</strong><br>Perd son immunité cette nuit-là.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v09 — Capitaine -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v09">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v09_final.png" alt="Carte : Capitaine" width="130">
-<div><code>v09</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v09</code> · Capitaine <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, choisit un Soldat pour une nuit et un jour. Le Soldat sera touché par le Meneur.</p>
-<p>Si le Soldat meurt, il pourra tuer quelqu’un la nuit suivante.</p>
-<p><strong>Si empoisonné :</strong><br>Le pouvoir affecte le mauvais joueur.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v09_final.png" alt="Carte : Capitaine" width="130">
+    <div><code>v09</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v09</code> · Capitaine <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, choisit un Soldat pour une nuit et un jour. Le Soldat sera touché par le Meneur.</p>
+      <p>Si le Soldat meurt, il pourra tuer quelqu’un la nuit suivante.</p>
+      <p><strong>Si empoisonné :</strong><br>Le pouvoir affecte le mauvais joueur.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v10 — Paranoïaque -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v10">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v10_final.png" alt="Carte : Paranoïaque" width="130">
-<div><code>v10</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v10</code> · Paranoïaque <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Deux fois</span> dans le jeu, <span class="rule-red" style="color:#cc0000;font-weight:700;">pendant le jour</span>, il peut dire <span class="rule-red" style="color:#cc0000;font-weight:700;">discrètement </span>au Meneur un joueur qu’il veut <span class="rule-red" style="color:#cc0000;font-weight:700;">assassiner</span>, sa mort sera annoncée au Tribunal.</p>
-<p><strong>Si empoisonné :</strong><br>Assassine le mauvais joueur.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v10_final.png" alt="Carte : Paranoïaque" width="130">
+    <div><code>v10</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v10</code> · Paranoïaque <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Deux fois</span> dans le jeu, <span class="rule-red">pendant le jour</span>, il peut dire <span class="rule-red">discrètement</span> au Meneur un joueur qu’il veut <span class="rule-red">assassiner</span>, sa mort sera annoncée au Tribunal.</p>
+      <p><strong>Si empoisonné :</strong><br>Assassine le mauvais joueur.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v11 — Ancien du Village -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v11">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v11_final.png" alt="Carte : Ancien du Village" width="130">
-<div><code>v11</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v11</code> · Ancien du Village <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il choisit un joueur qui aura automatiquement deux votes contre lui s’il est accusé au Tribunal du jour suivant.</p>
-<p><strong>Si empoisonné :</strong><br>Les votes du joueur choisi seront doublés.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v11_final.png" alt="Carte : Ancien du Village" width="130">
+    <div><code>v11</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v11</code> · Ancien du Village <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il choisit un joueur qui aura automatiquement deux votes contre lui s’il est accusé au Tribunal du jour suivant.</p>
+      <p><strong>Si empoisonné :</strong><br>Les votes du joueur choisi seront doublés.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v12 — Gitane -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v12">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v12_final.png" alt="Carte : Gitane" width="130">
-<div><code>v12</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v12</code> · Gitane <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, choisit un joueur et le Meneur révèlera si entre lui et ses voisins il y a quelqu’un empoisonné.</p>
-<p>Si c’est le cas, elle sera avertie (👍/👎), le joueur perd le poison et la Gitane devient empoisonnée.</p>
-<p><strong>Si empoisonné :</strong><br>Ses votes sont doublés.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v12_final.png" alt="Carte : Gitane" width="130">
+    <div><code>v12</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v12</code> · Gitane <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, choisit un joueur et le Meneur révèlera si entre lui et ses voisins il y a quelqu’un empoisonné.</p>
+      <p>Si c’est le cas, elle sera avertie (👍/👎), le joueur perd le poison et la Gitane devient empoisonnée.</p>
+      <p><strong>Si empoisonné :</strong><br>Ses votes sont doublés.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v13 — Juge -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v13">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v13_final.png" alt="Carte : Juge" width="130">
-<div><code>v13</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v13</code> · Juge <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Deux fois dans tous le jeu</span>, il peut se révéler et annuler une exécution au Tribunal.</p>
-<p>Il ne peut utiliser ce pouvoir qu&#x27;une fois par jour.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Si assassiné</span>, son Fantôme <span class="rule-red" style="color:#cc0000;font-weight:700;">peut continuer à voter</span> et son vote sera doublé.</p>
-<p><strong>Si empoisonné :</strong><br>L’annulation n’aura aucun effet.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v13_final.png" alt="Carte : Juge" width="130">
+    <div><code>v13</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v13</code> · Juge <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Deux fois dans tous le jeu</span>, il peut se révéler et annuler une exécution au Tribunal.</p>
+      <p>Il ne peut utiliser ce pouvoir qu&#x27;une fois par jour.</p>
+      <p><span class="rule-red">Si assassiné</span>, son Fantôme <span class="rule-red">peut continuer à voter</span> et son vote sera doublé.</p>
+      <p><strong>Si empoisonné :</strong><br>L’annulation n’aura aucun effet.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v14 — Accusateur -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v14">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v14_final.png" alt="Carte : Accusateur" width="130">
-<div><code>v14</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v14</code> · Accusateur <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Deux fois dans tout le jeu</span>, il peut se révéler et forcer une exécution au Tribunal.</p>
-<p>Il ne peut utiliser ce pouvoir qu&#x27;une fois par jour.</p>
-<p><strong>Si empoisonné :</strong><br>L’exécution n’aura aucun effet.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v14_final.png" alt="Carte : Accusateur" width="130">
+    <div><code>v14</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v14</code> · Accusateur <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Deux fois dans tout le jeu</span>, il peut se révéler et forcer une exécution au Tribunal.</p>
+      <p>Il ne peut utiliser ce pouvoir qu&#x27;une fois par jour.</p>
+      <p><strong>Si empoisonné :</strong><br>L’exécution n’aura aucun effet.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v15 — Pyromane -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v15">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v15_final.png" alt="Carte : Pyromane" width="130">
-<div><code>v15</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v15</code> · Pyromane <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Quand un joueur est accusé au Tribunal, mais<span class="rule-red" style="color:#cc0000;font-weight:700;"> n’est pas exécuté</span>, le Pyromane <span class="rule-red" style="color:#cc0000;font-weight:700;">peut choisir</span> la <span class="rule-red" style="color:#cc0000;font-weight:700;">nuit suivante </span>d&#x27;incendier la maison de ce joueur (👍/👎).</p>
-<p>Ce joueur meurt s’il est un Loup-garou, sinon, perd ses pouvoirs de façon permanente.</p>
-<p><strong>Si empoisonné :</strong><br>Il incendie la mauvaise maison.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v15_final.png" alt="Carte : Pyromane" width="130">
+    <div><code>v15</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v15</code> · Pyromane <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Quand un joueur est accusé au Tribunal, mais <span class="rule-red">n’est pas exécuté</span>, le Pyromane <span class="rule-red">peut choisir</span> la <span class="rule-red">nuit suivante</span> d&#x27;incendier la maison de ce joueur (👍/👎).</p>
+      <p>Ce joueur meurt s’il est un Loup-garou, sinon, perd ses pouvoirs de façon permanente.</p>
+      <p><strong>Si empoisonné :</strong><br>Il incendie la mauvaise maison.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v16 — Somnambule -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v16">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v16_final.png" alt="Carte : Somnambule" width="130">
-<div><code>v16</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v16</code> · Somnambule <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Au début de chaque nuit,</span> il choisit un joueur qu’il visitera.</p>
-<p><br>Ce joueur sera touché et ne sera pas appelé cette nuit-là.</p>
-<p>Si ce joueur est tout de même appelé (par ex. Loup-garou), il ne se réveille pas.</p>
-<p><strong>Si empoisonné :</strong><br>Va dormir chez le mauvais joueur.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v16_final.png" alt="Carte : Somnambule" width="130">
+    <div><code>v16</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v16</code> · Somnambule <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Au début de chaque nuit</span>, il choisit un joueur qu’il visitera.</p>
+      <p><br>Ce joueur sera touché et ne sera pas appelé cette nuit-là.</p>
+      <p>Si ce joueur est tout de même appelé (par ex. Loup-garou), il ne se réveille pas.</p>
+      <p><strong>Si empoisonné :</strong><br>Va dormir chez le mauvais joueur.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v17 — Sauveur -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v17">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v17_final.png" alt="Carte : Sauveur" width="130">
-<div><code>v17</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v17</code> · Sauveur <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il choisit un joueur qui sera immune <span class="rule-red" style="color:#cc0000;font-weight:700;">pendant une nuit et un jour</span>.</p>
-<p>Il peut aussi se choisir soi-même.</p>
-<p><strong>Si empoisonné :</strong><br>Donne immunité au mauvais joueur.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v17_final.png" alt="Carte : Sauveur" width="130">
+    <div><code>v17</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v17</code> · Sauveur <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il choisit un joueur qui sera immune <span class="rule-red">pendant une nuit et un jour</span>.</p>
+      <p>Il peut aussi se choisir soi-même.</p>
+      <p><strong>Si empoisonné :</strong><br>Donne immunité au mauvais joueur.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v18 — Ange -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v18">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v18_final.png" alt="Carte : Ange" width="130">
-<div><code>v18</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v18</code> · Ange <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Peut ressusciter <span class="rule-red" style="color:#cc0000;font-weight:700;">deux</span> Fantômes <span class="rule-red" style="color:#cc0000;font-weight:700;">durant tout le jeu</span>.</p>
-<p>Si le Fantôme avait un pouvoir avec des utilisations limitées, il les récupère.</p>
-<p>(Il peut demander discrètement d’utiliser son pouvoir à tout moment au Meneur ; le Fantôme sera ressuscité la nuit suivante.)</p>
-<p><strong>Si empoisonné :</strong><br>Ressuscite le mauvais joueur.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v18_final.png" alt="Carte : Ange" width="130">
+    <div><code>v18</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v18</code> · Ange <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Peut ressusciter <span class="rule-red">deux</span> Fantômes <span class="rule-red">durant tout le jeu</span>.</p>
+      <p>Si le Fantôme avait un pouvoir avec des utilisations limitées, il les récupère.</p>
+      <p>(Il peut demander discrètement d’utiliser son pouvoir à tout moment au Meneur ; le Fantôme sera ressuscité la nuit suivante.)</p>
+      <p><strong>Si empoisonné :</strong><br>Ressuscite le mauvais joueur.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v19 — Prophète -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v19">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v19_final.png" alt="Carte : Prophète" width="130">
-<div><code>v19</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v19</code> · Prophète <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">À la fin de chaque nuit</span>, le Prophète montre un joueur qu’il croit avoir été tué durant cette nuit.</p>
-<p>Si sa prophétie est correcte (👍), le joueur sera touché et pourra utiliser son pouvoir en tant que Fantôme durant le jour et la nuit suivants.</p>
-<p>Cela inclut notamment les rôles à pouvoirs limités.</p>
-<p><strong>Si empoisonné :</strong><br>La prophétie sera de toute façon fausse.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v19_final.png" alt="Carte : Prophète" width="130">
+    <div><code>v19</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v19</code> · Prophète <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">À la fin de chaque nuit</span>, le Prophète montre un joueur qu’il croit avoir été tué durant cette nuit.</p>
+      <p>Si sa prophétie est correcte (👍), le joueur sera touché et pourra utiliser son pouvoir en tant que Fantôme durant le jour et la nuit suivants.</p>
+      <p>Cela inclut notamment les rôles à pouvoirs limités.</p>
+      <p><strong>Si empoisonné :</strong><br>La prophétie sera de toute façon fausse.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v20 — Domestique -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v20">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v20_final.png" alt="Carte : Domestique" width="130">
-<div><code>v20</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v20</code> · Domestique <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, le Meneur lui révèle la distance de la personne empoisonné</p>
-<p>(Ex. : 3 = la troisième personne à droite ou à gauche).</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v20_final.png" alt="Carte : Domestique" width="130">
+    <div><code>v20</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v20</code> · Domestique <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, le Meneur lui révèle la distance de la personne empoisonné</p>
+      <p>(Ex. : 3 = la troisième personne à droite ou à gauche).</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v21 — Falotier -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v21">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v21_final.png" alt="Carte : Falotier" width="130">
-<div><code>v21</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v21</code> · Falotier <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il est montré un rôle en jeu qui a des utilisations limitées de son pouvoir et combien d’utilisations lui reste.</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v21_final.png" alt="Carte : Falotier" width="130">
+    <div><code>v21</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v21</code> · Falotier <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il est montré un rôle en jeu qui a des utilisations limitées de son pouvoir et combien d’utilisations lui reste.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v22 — Enfant -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v22">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v22_final.png" alt="Carte : Enfant" width="130">
-<div><code>v22</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v22</code> · Enfant <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Chaque fois qu’il accuse quelqu’un au Tribunal, il lui sera révélé la <span class="rule-red" style="color:#cc0000;font-weight:700;">nuit suivante</span> si ce joueur était un Loup-garou ou pas.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Ne peut jamais amener le même joueur au Tribunal deux fois.</span></p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v22_final.png" alt="Carte : Enfant" width="130">
+    <div><code>v22</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v22</code> · Enfant <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Chaque fois qu’il accuse quelqu’un au Tribunal, il lui sera révélé la <span class="rule-red">nuit suivante</span> si ce joueur était un Loup-garou ou pas.</p>
+      <p><span class="rule-red">Ne peut jamais amener le même joueur au Tribunal deux fois</span>.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE v23 — Maître de l’Araignée -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="v23">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/v23_final.png" alt="Carte : Maître de l’Araignée" width="130">
-<div><code>v23</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>v23</code> · Maître de l’Araignée <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">La première nuit</span>, il choisit un joueur chez qui il fera une toile d’araignée.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit après la première</span>, le Meneur révèle au Maître de l’Araignée chaque carte qui a pointé le joueur avec la toile cette nuit-là.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">La nuit suivant la mort du joueur avec la toile d’araignée</span>, le Maître de l’Araignée est réveillé et en choisit un nouveau..</p>
-<p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/v23_final.png" alt="Carte : Maître de l’Araignée" width="130">
+    <div><code>v23</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>v23</code> · Maître de l’Araignée <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Villageois · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">La première nuit</span>, il choisit un joueur chez qui il fera une toile d’araignée.</p>
+      <p><span class="rule-red">Chaque nuit après la première</span>, le Meneur révèle au Maître de l’Araignée chaque carte qui a pointé le joueur avec la toile cette nuit-là.</p>
+      <p><span class="rule-red">La nuit suivant la mort du joueur avec la toile d’araignée</span>, le Maître de l’Araignée est réveillé et en choisit un nouveau.</p>
+      <p><span class="rule-red">Une fois</span> dans le jeu, <span class="rule-red">pendant le jour</span>, il peut dire <span class="rule-red">discrètement</span> au Meneur s’il souhaite changer le joueur avec la toile avant la mort de celui-ci.</p>
+      <p><strong>Si empoisonné :</strong><br>Recevra de fausses informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
 </tbody>
 </table>
@@ -821,87 +913,102 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 </tr>
 </thead>
 <tbody>
+<!-- ============================================================ -->
+<!-- PERSONNAGE m01 — Méchant Loup-garou -->
+<!-- ============================================================ -->
 <tr class="role-row faction-evil" id="m01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/m01_final.png" alt="Carte : Méchant Loup-garou" width="130">
-<div><code>m01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟥 <code>m01</code> · Méchant Loup-garou <span class="role-badge">Créatures Maléfiques</span></div>
-<div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Deux fois</span> par jeu, il choisit s’il veut se déguiser en Grand-maman (👍/👎), ce qui lui donne immunité pendant un jour et une nuit.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Même étant immune</span>, il peut être <span class="rule-red" style="color:#cc0000;font-weight:700;">exécuté </span>au Tribunal si accusé par le Petit Chaperon Rouge. Dans ce cas spécifiquement, si le Chasseur vote, le Méchant Loup-garou est exécuté automatiquement.</p>
-<p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/m01_final.png" alt="Carte : Méchant Loup-garou" width="130">
+    <div><code>m01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟥 <code>m01</code> · Méchant Loup-garou <span class="role-badge">Créatures Maléfiques</span></div>
+    <div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Deux fois</span> par jeu, il choisit s’il veut se déguiser en Grand-maman (👍/👎), ce qui lui donne immunité pendant un jour et une nuit.</p>
+      <p><span class="rule-red">Même étant immune</span>, il peut être <span class="rule-red">exécuté</span> au Tribunal si accusé par le Petit Chaperon Rouge. Dans ce cas spécifiquement, si le Chasseur vote, le Méchant Loup-garou est exécuté automatiquement.</p>
+      <p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE m02 — Loup-garou Voyante -->
+<!-- ============================================================ -->
 <tr class="role-row faction-evil" id="m02">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/m02_final.png" alt="Carte : Loup-garou Voyante" width="130">
-<div><code>m02</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟥 <code>m02</code> · Loup-garou Voyante <span class="role-badge">Créatures Maléfiques</span></div>
-<div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Après que les Loups-garous ont choisi leur victime, le Loup-garou Voyante peut <span class="rule-red" style="color:#cc0000;font-weight:700;">choisir </span>NE PAS TUER ce joueur mais, à la place, voir son pouvoir.</p>
-<p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/m02_final.png" alt="Carte : Loup-garou Voyante" width="130">
+    <div><code>m02</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟥 <code>m02</code> · Loup-garou Voyante <span class="role-badge">Créatures Maléfiques</span></div>
+    <div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Après que les Loups-garous ont choisi leur victime, le Loup-garou Voyante peut <span class="rule-red">choisir</span> NE PAS TUER ce joueur mais, à la place, voir son pouvoir.</p>
+      <p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE m03 — Loup-garou Vampire -->
+<!-- ============================================================ -->
 <tr class="role-row faction-evil" id="m03">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/m03_final.png" alt="Carte : Loup-garou Vampire" width="130">
-<div><code>m03</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟥 <code>m03</code> · Loup-garou Vampire <span class="role-badge">Créatures Maléfiques</span></div>
-<div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Une seule fois dans tout le jeu</span>, il peut transformer la victime des Loups-garous en Loup-garou.</p>
-<p>La victime sera touchée. Elle <span class="rule-red" style="color:#cc0000;font-weight:700;">gardera ses pouvoirs de Villageois si elle le souhaite (👍/👎)</span> mais jouera avec l’objectif des Créatures Méchantes.</p>
-<p>Si la victime avait un pouvoir avec des utilisations limitées, elle les récupère.</p>
-<p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/m03_final.png" alt="Carte : Loup-garou Vampire" width="130">
+    <div><code>m03</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟥 <code>m03</code> · Loup-garou Vampire <span class="role-badge">Créatures Maléfiques</span></div>
+    <div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Une seule fois dans tout le jeu</span>, il peut transformer la victime des Loups-garous en Loup-garou.</p>
+      <p>La victime sera touchée. Elle <span class="rule-red">gardera ses pouvoirs de Villageois si elle le souhaite</span> (👍/👎) mais jouera avec l’objectif des Créatures Méchantes.</p>
+      <p>Si la victime avait un pouvoir avec des utilisations limitées, elle les récupère.</p>
+      <p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE m04 — Ankou -->
+<!-- ============================================================ -->
 <tr class="role-row faction-evil" id="m04">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/m04_final.png" alt="Carte : Ankou" width="130">
-<div><code>m04</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟥 <code>m04</code> · Ankou <span class="role-badge">Créatures Maléfiques</span></div>
-<div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">NE </span>SE RÉVEILLE <span class="rule-red" style="color:#cc0000;font-weight:700;">PAS </span>AVEC LES LOUPS-GAROUS.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Si exécuté</span>, son Fantôme <span class="rule-red" style="color:#cc0000;font-weight:700;">peut continuer à voter</span> et son vote sera doublé.</p>
-<p><strong>Si empoisonné :</strong><br>Sans effet.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/m04_final.png" alt="Carte : Ankou" width="130">
+    <div><code>m04</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟥 <code>m04</code> · Ankou <span class="role-badge">Créatures Maléfiques</span></div>
+    <div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">NE</span> SE RÉVEILLE <span class="rule-red">PAS</span> AVEC LES LOUPS-GAROUS.</p>
+      <p><span class="rule-red">Si exécuté</span>, son Fantôme <span class="rule-red">peut continuer à voter</span> et son vote sera doublé.</p>
+      <p><strong>Si empoisonné :</strong><br>Sans effet.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE m05 — Méchant Cupidon -->
+<!-- ============================================================ -->
 <tr class="role-row faction-evil" id="m05">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/m05_final.png" alt="Carte : Méchant Cupidon" width="130">
-<div><code>m05</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟥 <code>m05</code> · Méchant Cupidon <span class="role-badge">Créatures Maléfiques</span></div>
-<div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">NE </span>SE RÉVEILLE <span class="rule-red" style="color:#cc0000;font-weight:700;">PAS </span>AVEC LES LOUPS-GAROUS.</p>
-<p><strong><span class="rule-red" style="color:#cc0000;font-weight:700;">La première nuit</span> est appelé pour choisir deux joueurs qui seront Ennemis :</strong></p>
-<p>Si un Ennemi arrive à amener l’autre à <span class="rule-red" style="color:#cc0000;font-weight:700;">exécution</span>, le premier reçoit immunité contre le prochain <span class="rule-red" style="color:#cc0000;font-weight:700;">assassinat</span>.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Après la mort de chaque </span><span class="rule-red" style="color:#cc0000;font-weight:700;">Ennemi</span>, le Méchant Cupidon est réveillé pour choisir un nouvel Ennemi pour le survivant.</p>
-<p><strong>Si empoisonné :</strong><br>Sans effet.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/m05_final.png" alt="Carte : Méchant Cupidon" width="130">
+    <div><code>m05</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟥 <code>m05</code> · Méchant Cupidon <span class="role-badge">Créatures Maléfiques</span></div>
+    <div class="role-meta">Catégorie : Créatures Maléfiques · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">NE</span> SE RÉVEILLE <span class="rule-red">PAS</span> AVEC LES LOUPS-GAROUS.</p>
+      <p><strong><span class="rule-red">La première nuit</span> est appelé pour choisir deux joueurs qui seront Ennemis :</strong></p>
+      <p>Si un Ennemi arrive à amener l’autre à <span class="rule-red">exécution</span>, le premier reçoit immunité contre le prochain <span class="rule-red">assassinat</span>.</p>
+      <p><span class="rule-red">Après la mort de chaque Ennemi</span>, le Méchant Cupidon est réveillé pour choisir un nouvel Ennemi pour le survivant.</p>
+      <p><strong>Si empoisonné :</strong><br>Sans effet.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
 </tbody>
 </table>
@@ -923,38 +1030,45 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 </tr>
 </thead>
 <tbody>
+<!-- ============================================================ -->
+<!-- PERSONNAGE s01 — Cupidon -->
+<!-- ============================================================ -->
 <tr class="role-row faction-independent" id="s01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/s01_final.png" alt="Carte : Cupidon" width="130">
-<div><code>s01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟪 <code>s01</code> · Cupidon <span class="role-badge">Indépendant</span></div>
-<div class="role-meta">Catégorie : Personnages indépendants · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><strong><span class="rule-red" style="color:#cc0000;font-weight:700;">La première nuit</span>, il est appelé pour choisir deux joueurs qui seront Amoureux :</strong></p>
-<p>Si un Amoureux meurt, l’autre se suicide.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">L’objectif des </span><span class="rule-red" style="color:#cc0000;font-weight:700;">Amoureux</span><span class="rule-red" style="color:#cc0000;font-weight:700;"> est qu&#x27;ils soient les derniers survivants.</span></p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Deux fois pendant le jeu</span>, Cupidon peut choisir de donner immunité aux Amoureux pendant cette nuit-là (👍).</p>
-<p><strong>Si empoisonné :</strong><br>La protection ne fonctionne pas.</p>
-<p><strong>Objectif :</strong><br>Que les Amoureux soient les derniers survivants.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/s01_final.png" alt="Carte : Cupidon" width="130">
+    <div><code>s01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟪 <code>s01</code> · Cupidon <span class="role-badge">Indépendant</span></div>
+    <div class="role-meta">Catégorie : Personnages indépendants · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><strong><span class="rule-red">La première nuit</span>, il est appelé pour choisir deux joueurs qui seront Amoureux :</strong></p>
+      <p>Si un Amoureux meurt, l’autre se suicide.</p>
+      <p><span class="rule-red">L’objectif des Amoureux est qu&#x27;ils soient les derniers survivants</span>.</p>
+      <p><span class="rule-red">Deux fois pendant le jeu</span>, Cupidon peut choisir de donner immunité aux Amoureux pendant cette nuit-là (👍).</p>
+      <p><strong>Si empoisonné :</strong><br>La protection ne fonctionne pas.</p>
+      <p><strong>Objectif :</strong><br>Que les Amoureux soient les derniers survivants.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE s02 — Loup-garou Blanc -->
+<!-- ============================================================ -->
 <tr class="role-row faction-independent" id="s02">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/s02_final.png" alt="Carte : Loup-garou Blanc" width="130">
-<div><code>s02</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟪 <code>s02</code> · Loup-garou Blanc <span class="role-badge">Indépendant</span></div>
-<div class="role-meta">Catégorie : Personnages indépendants · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Il se réveille et agit comme un Loup-garou, mais <span class="rule-red" style="color:#cc0000;font-weight:700;">à chaque trois nuits</span>, il<span class="rule-red" style="color:#cc0000;font-weight:700;"> doit </span>aussi assassiner un Loup-garou.</p>
-<p><strong>Si empoisonné :</strong><br>Peut tuer un Loup-garou de plus.</p>
-<p><strong>Objectif :</strong><br>Être le dernier survivant.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/s02_final.png" alt="Carte : Loup-garou Blanc" width="130">
+    <div><code>s02</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟪 <code>s02</code> · Loup-garou Blanc <span class="role-badge">Indépendant</span></div>
+    <div class="role-meta">Catégorie : Personnages indépendants · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Il se réveille et agit comme un Loup-garou, mais <span class="rule-red">à chaque trois nuits, il doit</span> aussi assassiner un Loup-garou.</p>
+      <p><span class="rule-red">Si le Loup-garou Blanc est le seul Loup-garou restant</span>, il continue d’être appelé à chaque trois nuits, pour assassiner un joueur supplémentaire.</p>
+      <p><strong>Si empoisonné :</strong><br>Peut tuer un Loup-garou de plus.</p>
+      <p><strong>Objectif :</strong><br>Être le dernier survivant.</p>
+    </div>
+  </td>
 </tr>
 </tbody>
 </table>
@@ -976,39 +1090,45 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 </tr>
 </thead>
 <tbody>
+<!-- ============================================================ -->
+<!-- PERSONNAGE f01 — Voleur -->
+<!-- ============================================================ -->
 <tr class="role-row faction-flex" id="f01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/f01_final.png" alt="Carte : Voleur" width="130">
-<div><code>f01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟨 <code>f01</code> · Voleur <span class="role-badge">Flexible</span></div>
-<div class="role-meta">Catégorie : Personnages flexibles · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il choisit un joueur qui n’aura pas de votes au prochain Tribunal.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">La deuxième nuit</span>, il devra <span class="rule-red" style="color:#cc0000;font-weight:700;">choisir </span>être du côté des Villageois (👍) ou des Loups-garous (👎).</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">NE </span>SE RÉVEILLE <span class="rule-red" style="color:#cc0000;font-weight:700;">PAS </span>AVEC LES LOUPS-GAROUS.</p>
-<p><strong>Si empoisonné :</strong><br>Le vote n’est pas volé.</p>
-<p><strong>Objectif :</strong><br>À choix.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/f01_final.png" alt="Carte : Voleur" width="130">
+    <div><code>f01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟨 <code>f01</code> · Voleur <span class="role-badge">Flexible</span></div>
+    <div class="role-meta">Catégorie : Personnages flexibles · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il choisit un joueur qui n’aura pas de votes au prochain Tribunal.</p>
+      <p><span class="rule-red">La deuxième nuit</span>, il devra <span class="rule-red">choisir</span> être du côté des Villageois (👍) ou des Loups-garous (👎).</p>
+      <p><span class="rule-red">NE</span> SE RÉVEILLE <span class="rule-red">PAS</span> AVEC LES LOUPS-GAROUS.</p>
+      <p><strong>Si empoisonné :</strong><br>Le vote n’est pas volé.</p>
+      <p><strong>Objectif :</strong><br>À choix.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE f02 — Espion -->
+<!-- ============================================================ -->
 <tr class="role-row faction-flex" id="f02">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/f02_final.png" alt="Carte : Espion" width="130">
-<div><code>f02</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟨 <code>f02</code> · Espion <span class="role-badge">Flexible</span></div>
-<div class="role-meta">Catégorie : Personnages flexibles · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il est appelé et voit la carte d’un rôle en jeu. Il ne verra jamais le rôle d’un même joueur deux fois.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">La deuxième nuit</span>, il devra <span class="rule-red" style="color:#cc0000;font-weight:700;">choisir </span>être du côté des Villageois (👍) ou des Loups-garous (👎).</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">NE </span>SE RÉVEILLE <span class="rule-red" style="color:#cc0000;font-weight:700;">PAS </span>AVEC LES LOUPS-GAROUS.</p>
-<p><strong>Si empoisonné :</strong><br>Il verra un rôle qui n’est pas en jeu.</p>
-<p><strong>Objectif :</strong><br>À choix.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/f02_final.png" alt="Carte : Espion" width="130">
+    <div><code>f02</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟨 <code>f02</code> · Espion <span class="role-badge">Flexible</span></div>
+    <div class="role-meta">Catégorie : Personnages flexibles · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il est appelé et voit la carte d’un rôle en jeu. Il ne verra jamais le rôle d’un même joueur deux fois.</p>
+      <p><span class="rule-red">La deuxième nuit</span>, il devra <span class="rule-red">choisir</span> être du côté des Villageois (👍) ou des Loups-garous (👎).</p>
+      <p><span class="rule-red">NE</span> SE RÉVEILLE <span class="rule-red">PAS</span> AVEC LES LOUPS-GAROUS.</p>
+      <p><strong>Si empoisonné :</strong><br>Il verra un rôle qui n’est pas en jeu.</p>
+      <p><strong>Objectif :</strong><br>À choix.</p>
+    </div>
+  </td>
 </tr>
 </tbody>
 </table>
@@ -1030,129 +1150,151 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 </tr>
 </thead>
 <tbody>
+<!-- ============================================================ -->
+<!-- PERSONNAGE a01 — Ivrogne -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="a01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/a01_final.png" alt="Carte : Ivrogne" width="130">
-<div><code>a01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>a01</code> · Ivrogne <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Ne sait pas qu’il est l&#x27;ivrogne</span>.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Remplace </span>la Voyante, la Petite Fille, le Somnambule, le Maître de l’Ours, le Maître des Lapins, le Maître du Corbeau, le Maître du Renard ou le Maître de l’Araignée (aléatoire à chaque jeu).</p>
-<p>Mais toutes les informations reçues sont comme si la carte était empoisonnée.</p>
-<p><strong>Si empoisonné :</strong><br>Reçoit les bonnes informations.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/a01_final.png" alt="Carte : Ivrogne" width="130">
+    <div><code>a01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>a01</code> · Ivrogne <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Ne sait pas qu’il est l&#x27;ivrogne</span>.</p>
+      <p><span class="rule-red">Remplace</span> la Voyante, la Petite Fille, le Somnambule, le Maître de l’Ours, le Maître des Lapins, le Maître du Corbeau, le Maître du Renard ou le Maître de l’Araignée (aléatoire à chaque jeu).</p>
+      <p>Mais toutes les informations reçues sont comme si la carte était empoisonnée.</p>
+      <p><strong>Si empoisonné :</strong><br>Reçoit les bonnes informations.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE a02 — Chien-Loup -->
+<!-- ============================================================ -->
 <tr class="role-row faction-flex" id="a02">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/a02_final.png" alt="Carte : Chien-Loup" width="130">
-<div><code>a02</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟨 <code>a02</code> · Chien-Loup <span class="role-badge">Flexible</span></div>
-<div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><strong><span class="rule-red" style="color:#cc0000;font-weight:700;">Le deuxième nuit</span>, il peut <span class="rule-red" style="color:#cc0000;font-weight:700;">choisir </span>entre être un simple Loup-garou (👎) <span class="rule-red" style="color:#cc0000;font-weight:700;">ou</span><span class="rule-red" style="color:#cc0000;font-weight:700;"> </span>être un Chien (👍) :</strong></p>
-<p>Le Chien choisit un maître copie ses pouvoirs.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il se réveille avec son maître et peut ainsi agir indépendamment de ce dernier.</p>
-<p><strong>Si empoisonné :</strong><br>Effet du maître qu’il copie ou Loup-garou.</p>
-<p><strong>Objectif :</strong><br>À choix ou selon maître</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/a02_final.png" alt="Carte : Chien-Loup" width="130">
+    <div><code>a02</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟨 <code>a02</code> · Chien-Loup <span class="role-badge">Flexible</span></div>
+    <div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><strong><span class="rule-red">Le deuxième nuit</span>, il peut <span class="rule-red">choisir</span> entre être un simple Loup-garou (👎) <span class="rule-red">ou</span> être un Chien (👍) :</strong></p>
+      <p>Le Chien choisit un maître copie ses pouvoirs.</p>
+      <p><span class="rule-red">Chaque nuit</span>, il se réveille avec son maître et peut ainsi agir indépendamment de ce dernier.</p>
+      <p><strong>Si empoisonné :</strong><br>Effet du maître qu’il copie ou Loup-garou.</p>
+      <p><strong>Objectif :</strong><br>À choix ou selon maître</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE a03 — Mime -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="a03">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/a03_final.png" alt="Carte : Mime" width="130">
-<div><code>a03</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>a03</code> · Mime <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il est appelé et voit la carte d’un rôle en jeu.</p>
-<p>Aussitôt la carte révélée, le Mime indique l’action qu’il souhaite prendre selon le pouvoir.</p>
-<p>Toutes les interactions entre le Mime et le Meneur sont complètement silencieuses, indépendamment du rôle copié.</p>
-<p><strong>Si empoisonné :</strong><br>Effet du personnage qu’il copie.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/a03_final.png" alt="Carte : Mime" width="130">
+    <div><code>a03</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>a03</code> · Mime <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il est appelé et voit la carte d’un rôle en jeu.</p>
+      <p>Aussitôt la carte révélée, le Mime indique l’action qu’il souhaite prendre selon le pouvoir.</p>
+      <p>Toutes les interactions entre le Mime et le Meneur sont complètement silencieuses, indépendamment du rôle copié.</p>
+      <p><strong>Si empoisonné :</strong><br>Effet du personnage qu’il copie.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE a04 — Comédien -->
+<!-- ============================================================ -->
 <tr class="role-row faction-shifting" id="a04">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/a04_final.png" alt="Carte : Comédien" width="130">
-<div><code>a04</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩🟨 <code>a04</code> · Comédien <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">La première nuit</span>, il choisit un joueur qui devient son Idole et dont il copiera les pouvoirs aussitôt que ce dernier meurt. Le rôle lui est seulement révélé après la mort de l’Idole.</p>
-<p>Il peut changer son Idole <span class="rule-red" style="color:#cc0000;font-weight:700;">deux fois par jeu </span>(👈/👎).</p>
-<p><strong>Si empoisonné :</strong><br>Effet du personnage qu’il copie.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous. (flexible)</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/a04_final.png" alt="Carte : Comédien" width="130">
+    <div><code>a04</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩🟨 <code>a04</code> · Comédien <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">La première nuit</span>, il choisit un joueur qui devient son Idole et dont il copiera les pouvoirs aussitôt que ce dernier meurt. Le rôle lui est seulement révélé après la mort de l’Idole.</p>
+      <p>Il peut changer son Idole <span class="rule-red">deux fois par jeu</span> (👈/👎).</p>
+      <p><strong>Si empoisonné :</strong><br>Effet du personnage qu’il copie.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous. (flexible)</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE a05 — Pilleur de Tombes -->
+<!-- ============================================================ -->
 <tr class="role-row faction-shifting" id="a05">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/a05_final.png" alt="Carte : Pilleur de Tombes" width="130">
-<div><code>a05</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩🟨 <code>a05</code> · Pilleur de Tombes <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span> est montré les joueurs  <span class="rule-red" style="color:#cc0000;font-weight:700;">assassinés</span>.</p>
-<p>Sans savoir leurs pouvoirs, le Pilleur de Tombe peut choisir changer de carte avec une des victimes (👈/👎).</p>
-<p>Une fois choisi, le rôle lui sera révélé.</p>
-<p>Le Pilleur de Tombes devient permanemment le rôle volé. La victime devient Pilleur de Tombes.</p>
-<p>Le Pilleur de Tombes sera dorénavant appelé par le nom de son nouveau rôle.</p>
-<p><strong>Si empoisonné :</strong><br>Ne se réveille pas.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous. (flexible)</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/a05_final.png" alt="Carte : Pilleur de Tombes" width="130">
+    <div><code>a05</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩🟨 <code>a05</code> · Pilleur de Tombes <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span> est montré les joueurs  <span class="rule-red">assassinés</span>.</p>
+      <p>Sans savoir leurs pouvoirs, le Pilleur de Tombe peut choisir changer de carte avec une des victimes (👈/👎).</p>
+      <p>Une fois choisi, le rôle lui sera révélé.</p>
+      <p>Le Pilleur de Tombes devient permanemment le rôle volé. La victime devient Pilleur de Tombes.</p>
+      <p>Le Pilleur de Tombes sera dorénavant appelé par le nom de son nouveau rôle.</p>
+      <p><strong>Si empoisonné :</strong><br>Ne se réveille pas.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous. (flexible)</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE a06 — Illusionniste -->
+<!-- ============================================================ -->
 <tr class="role-row faction-evil" id="a06">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/a06_final.png" alt="Carte : Illusionniste" width="130">
-<div><code>a06</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟥 <code>a06</code> · Illusionniste <span class="role-badge">Créatures Maléfiques</span></div>
-<div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">NE </span>SE RÉVEILLE <span class="rule-red" style="color:#cc0000;font-weight:700;">PAS </span>AVEC LES LOUPS-GAROUS.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il choisit un joueur (qui peut être soi-même). Celui-ci sera offusqué par une Illusion.</p>
-<p>Si la Voyante, Loup-garou Voyante, le Maître de l’Araignée, le Falotier ou l’Espion voient une Illusion, ils verront le rôle “Illusionniste”.</p>
-<p>Si le Mime copie une Illusion, il copiera l&#x27;Illusionniste.</p>
-<p>Si l’une des cibles des Maîtres des Animaux est une Illusion, l’animal sera confus. Dans le cas du Maître de l’Araignée, si le joueur avec la toile d’araignée est une Illusion, l’araignée sera confuse.</p>
-<p>Si l’assassin de la victime choisi par la Petite Fille est une Illusion, la Petite Fille verra le rôle “Illusionniste”.</p>
-<p><strong>Si empoisonné :</strong><br>L’Illusion ne sera pas créée.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/a06_final.png" alt="Carte : Illusionniste" width="130">
+    <div><code>a06</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟥 <code>a06</code> · Illusionniste <span class="role-badge">Créatures Maléfiques</span></div>
+    <div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">NE</span> SE RÉVEILLE <span class="rule-red">PAS</span> AVEC LES LOUPS-GAROUS.</p>
+      <p><span class="rule-red">Chaque nuit</span>, il choisit un joueur (qui peut être soi-même). Celui-ci sera offusqué par une Illusion.</p>
+      <p>Si la Voyante, Loup-garou Voyante, le Maître de l’Araignée, le Falotier ou l’Espion voient une Illusion, ils verront le rôle “Illusionniste”.</p>
+      <p>Si le Mime copie une Illusion, il copiera l&#x27;Illusionniste.</p>
+      <p>Si l’une des cibles des Maîtres des Animaux est une Illusion, l’animal sera confus. Dans le cas du Maître de l’Araignée, si le joueur avec la toile d’araignée est une Illusion, l’araignée sera confuse.</p>
+      <p>Si l’assassin de la victime choisi par la Petite Fille est une Illusion, la Petite Fille verra le rôle “Illusionniste”.</p>
+      <p>Si le joueur accusé par l’Enfant est une Illusion, l’Enfant recevra l’information que le joueur n’était pas un Loup-garou, même s’il s’en agissait d’un.</p>
+      <p><strong>Si empoisonné :</strong><br>L’Illusion ne sera pas créée.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE as01b — Arnacœur -->
+<!-- ============================================================ -->
 <tr class="role-row faction-independent" id="as01b">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/as01b_final.png" alt="Carte : Arnacœur" width="130">
-<div><code>as01b</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟪 <code>as01b</code> · Arnacœur <span class="role-badge">Indépendant</span></div>
-<div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Chaque nuit</span>, il montre un joueur du doigt et le Meneur lui révèle s’il s’agit d’un des Amoureux (👍) ou pas (👎).</p>
-<p>Si le joueur est un des Amouruex, celui-ci sera informé, et l’Arnacoeur<span class="rule-red" style="color:#cc0000;font-weight:700;"> remplacera l’autre </span><span class="rule-red" style="color:#cc0000;font-weight:700;">Amoureux</span> sans que celui-ci le sache.</p>
-<p>Si le Traître ou l’Arnacoeur meurt, le Trahi ne mourra pas.</p>
-<p>La flèche de protection de Cupidon protège également l&#x27;identité des Amoureux (la réponse sera 👎).</p>
-<p><strong>Si empoisonné :</strong><br>Le Meneur annonce qu’un des Amoureux a été remplacé.</p>
-<p><strong>Objectif :</strong><br>Que l’Arnacoeur et le Traître soient les derniers survivants.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/as01b_final.png" alt="Carte : Arnacœur" width="130">
+    <div><code>as01b</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟪 <code>as01b</code> · Arnacœur <span class="role-badge">Indépendant</span></div>
+    <div class="role-meta">Catégorie : Personnages complexes · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">Chaque nuit</span>, il montre un joueur du doigt et le Meneur lui révèle s’il s’agit d’un des Amoureux (👍) ou pas (👎).</p>
+      <p>Si le joueur est un des Amouruex, celui-ci sera informé, et l’Arnacoeur <span class="rule-red">remplacera l’autre Amoureux</span> sans que celui-ci le sache.</p>
+      <p>Si le Traître ou l’Arnacoeur meurt, le Trahi ne mourra pas.</p>
+      <p>La flèche de protection de Cupidon protège également l&#x27;identité des Amoureux (la réponse sera 👎).</p>
+      <p><strong>Si empoisonné :</strong><br>Le Meneur annonce qu’un des Amoureux a été remplacé.</p>
+      <p><strong>Objectif :</strong><br>Que l’Arnacoeur et le Traître soient les derniers survivants.</p>
+    </div>
+  </td>
 </tr>
 </tbody>
 </table>
@@ -1174,68 +1316,80 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 </tr>
 </thead>
 <tbody>
+<!-- ============================================================ -->
+<!-- PERSONNAGE l01 — Villageois Triste -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="l01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/l01_final.png" alt="Carte : Villageois Triste" width="130">
-<div><code>l01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>l01</code> · Villageois Triste <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Personnages nuls (pour quand il y a beaucoup de joueurs) · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Sans pouvoir spéciaux.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/l01_final.png" alt="Carte : Villageois Triste" width="130">
+    <div><code>l01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>l01</code> · Villageois Triste <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Personnages nuls (pour quand il y a beaucoup de joueurs) · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Sans pouvoir spéciaux.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE l02 — Enfant Sauvage -->
+<!-- ============================================================ -->
 <tr class="role-row faction-shifting" id="l02">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/l02_final.png" alt="Carte : Enfant Sauvage" width="130">
-<div><code>l02</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩🟨 <code>l02</code> · Enfant Sauvage <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Personnages nuls (pour quand il y a beaucoup de joueurs) · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">La deuxième nuit</span>, il choisit un joueur comme Père Adoptif.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Si le Père Adoptif meurt</span>, l’Enfant Sauvage se transforme en Loup-garou.</p>
-<p><strong>Si empoisonné :</strong><br>Il se transforme en Loup-garou.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous. (flexible)</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/l02_final.png" alt="Carte : Enfant Sauvage" width="130">
+    <div><code>l02</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩🟨 <code>l02</code> · Enfant Sauvage <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Personnages nuls (pour quand il y a beaucoup de joueurs) · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p><span class="rule-red">La deuxième nuit</span>, il choisit un joueur comme Père Adoptif.</p>
+      <p><span class="rule-red">Si le Père Adoptif meurt</span>, l’Enfant Sauvage se transforme en Loup-garou.</p>
+      <p><strong>Si empoisonné :</strong><br>Il se transforme en Loup-garou.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous. (flexible)</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE l03 — Sœurs -->
+<!-- ============================================================ -->
 <tr class="role-row faction-shifting" id="l03">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/l03_final.png" alt="Carte : Sœurs" width="130">
-<div><code>l03</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩🟨 <code>l03</code> · Sœurs <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Personnages nuls (pour quand il y a beaucoup de joueurs) · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Les Soeurs se connaissent.</p>
-<p>Si une soeur est <span class="rule-red" style="color:#cc0000;font-weight:700;">exécutée</span>, l’autre peut <span class="rule-red" style="color:#cc0000;font-weight:700;">choisir </span>de se venger, se transformant en Créature Maléfique.</p>
-<p>Elle se réveille <span class="rule-red" style="color:#cc0000;font-weight:700;">UNE FOIS</span> avec les Loups-garous la nuit suivante pour qu’ils sachent qu’elle les aidera.</p>
-<p><strong>Si empoisonnée en tant que Créature Maléfique :</strong><br>Elle se transforme en Loup-garou.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous. (flexible)</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/l03_final.png" alt="Carte : Sœurs" width="130">
+    <div><code>l03</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩🟨 <code>l03</code> · Sœurs <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Personnages nuls (pour quand il y a beaucoup de joueurs) · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Les Soeurs se connaissent.</p>
+      <p>Si une soeur est <span class="rule-red">exécutée</span>, l’autre peut <span class="rule-red">choisir</span> de se venger, se transformant en Créature Maléfique.</p>
+      <p>Elle se réveille <span class="rule-red">UNE FOIS</span> avec les Loups-garous la nuit suivante pour qu’ils sachent qu’elle les aidera.</p>
+      <p><strong>Si empoisonnée en tant que Créature Maléfique :</strong><br>Elle se transforme en Loup-garou.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous. (flexible)</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE l04 — Frères -->
+<!-- ============================================================ -->
 <tr class="role-row faction-good" id="l04">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/final/l04_final.png" alt="Carte : Frères" width="130">
-<div><code>l04</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">🟩 <code>l04</code> · Frères <span class="role-badge">Villageois</span></div>
-<div class="role-meta">Catégorie : Personnages nuls (pour quand il y a beaucoup de joueurs) · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Les Frères se connaissent.</p>
-<p>Tant qu’au moins deux survivent la nuit, aucun d’eux ne meurt.</p>
-<p><strong>Si  n’importe quel Frère empoisonné :</strong><br>Il meurt tout de même.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/final/l04_final.png" alt="Carte : Frères" width="130">
+    <div><code>l04</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">🟩 <code>l04</code> · Frères <span class="role-badge">Villageois</span></div>
+    <div class="role-meta">Catégorie : Personnages nuls (pour quand il y a beaucoup de joueurs) · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Les Frères se connaissent.</p>
+      <p>Tant qu’au moins deux survivent la nuit, aucun d’eux ne meurt.</p>
+      <p><strong>Si  n’importe quel Frère empoisonné :</strong><br>Il meurt tout de même.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
 </tbody>
 </table>
@@ -1257,147 +1411,174 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 </tr>
 </thead>
 <tbody>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x01 — Villageois -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/x01_card.png" alt="Carte : Villageois" width="130">
-<div><code>x01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x01</code> · Villageois <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Effrayés et méfiants, les Villageois mentent, tentent de trouver des personnes dignes de confiance et utilisent leurs pouvoirs pour tuer et exécuter tous les Loups-garous et autres Créatures Maléfiques avant que ceux-ci ne s&#x27;emparent du village.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/x01_card.png" alt="Carte : Villageois" width="130">
+    <div><code>x01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x01</code> · Villageois <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Effrayés et méfiants, les Villageois mentent, tentent de trouver des personnes dignes de confiance et utilisent leurs pouvoirs pour tuer et exécuter tous les Loups-garous et autres Créatures Maléfiques avant que ceux-ci ne s&#x27;emparent du village.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Loups-garous.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x02 — Créatures Maléfiques -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x02">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/x02_card.png" alt="Carte : Créatures Maléfiques" width="130">
-<div><code>x02</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x02</code> · Créatures Maléfiques <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Inclut tous les ennemis des Villageois, ceux-là étant les Loups-garous ou les autres personnages maléfiques.</p>
-<p>L’objectif de toutes les Créatures Maléfiques est le même : tuer tous les Villageois, avant que ces derniers ne trouvent tous les Loups-garous.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/x02_card.png" alt="Carte : Créatures Maléfiques" width="130">
+    <div><code>x02</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x02</code> · Créatures Maléfiques <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Inclut tous les ennemis des Villageois, ceux-là étant les Loups-garous ou les autres personnages maléfiques.</p>
+      <p>L’objectif de toutes les Créatures Maléfiques est le même : tuer tous les Villageois, avant que ces derniers ne trouvent tous les Loups-garous.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x02.1 — Loups-garous -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x02.1">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/x021_card.png" alt="Carte : Loups-garous" width="130">
-<div><code>x02.1</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x02.1</code> · Loups-garous <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>C’est le groupe qui terrorise le plus les Villageois.</p>
-<p>Chacun doit choisir unanimement qui ils assassineront, dans le but de tuer les Villageois plus puissants en premier, avec l’aide des autres Créatures Maléfiques.</p>
-<p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
-<p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/x021_card.png" alt="Carte : Loups-garous" width="130">
+    <div><code>x02.1</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x02.1</code> · Loups-garous <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>C’est le groupe qui terrorise le plus les Villageois.</p>
+      <p>Chacun doit choisir unanimement qui ils assassineront, dans le but de tuer les Villageois plus puissants en premier, avec l’aide des autres Créatures Maléfiques.</p>
+      <p><strong>Si n’importe quel Loup-garou est empoisonné :</strong><br>Ils ne peuvent pas tuer.</p>
+      <p><strong>Objectif :</strong><br>Tuer tous les Villageois.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x03 — Fantômes -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x03">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/x03_card.png" alt="Carte : Fantômes" width="130">
-<div><code>x03</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x03</code> · Fantômes <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Il existe deux types de mort : <span class="rule-red" style="color:#cc0000;font-weight:700;">EXÉCUTION </span>(condamnés par le village) ou <span class="rule-red" style="color:#cc0000;font-weight:700;">ASSASSINAT </span>(tués par le pouvoir d&#x27;un personnage).</p>
-<p>Lorsqu&#x27;un joueur est tué pendant la nuit, il ne meurt réellement que le matin, au réveil, et peut donc continuer à utiliser ses pouvoirs pendant la nuit.</p>
-<p>Les joueurs morts se transforment en Fantômes, qui peuvent continuer à communiquer avec le village pendant la journée, mais ne peuvent ni parler ni voter au tribunal, et <span class="rule-red" style="color:#cc0000;font-weight:700;">perdent tous les pouvoirs qu&#x27;ils avaient</span> (sauf indication contraire dans la fiche de personnage).</p>
-<p><strong>Objectif :</strong><br>Les Fantômes gardent le même objectif que lorsqu&#x27;ils étaient vivants.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Les fantômes DORMENT ÉGALEMENT LA NUIT.</span></p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/x03_card.png" alt="Carte : Fantômes" width="130">
+    <div><code>x03</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x03</code> · Fantômes <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Il existe deux types de mort : <span class="rule-red">EXÉCUTION</span> (condamnés par le village) ou <span class="rule-red">ASSASSINAT</span> (tués par le pouvoir d&#x27;un personnage).</p>
+      <p>Lorsqu&#x27;un joueur est tué pendant la nuit, il ne meurt réellement que le matin, au réveil, et peut donc continuer à utiliser ses pouvoirs pendant la nuit.</p>
+      <p>Les joueurs morts se transforment en Fantômes, qui peuvent continuer à communiquer avec le village pendant la journée, mais ne peuvent ni parler ni voter au tribunal, et <span class="rule-red">perdent tous les pouvoirs qu&#x27;ils avaient</span> (sauf indication contraire dans la fiche de personnage).</p>
+      <p><strong>Objectif :</strong><br>Les Fantômes gardent le même objectif que lorsqu&#x27;ils étaient vivants.</p>
+      <p><span class="rule-red">Les fantômes DORMENT ÉGALEMENT LA NUIT</span>.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x.v09 — Soldat -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x.v09">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/xv09_card.png" alt="Carte : Soldat" width="130">
-<div><code>x.v09</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x.v09</code> · Soldat <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Créé par le Capitaine.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Une fois mort</span>, il sera réveillé la prochaine nuit et choisira <span class="rule-red" style="color:#cc0000;font-weight:700;">un </span>joueur qui sera assassiné.</p>
-<p><strong>Si empoisonné :</strong><br>Sans effet.</p>
-<p><strong>Objectif :</strong><br>Ne change pas.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/xv09_card.png" alt="Carte : Soldat" width="130">
+    <div><code>x.v09</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x.v09</code> · Soldat <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Créé par le Capitaine.</p>
+      <p><span class="rule-red">Une fois mort</span>, il sera réveillé la prochaine nuit et choisira <span class="rule-red">un</span> joueur qui sera assassiné.</p>
+      <p><strong>Si empoisonné :</strong><br>Sans effet.</p>
+      <p><strong>Objectif :</strong><br>Ne change pas.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x.s01 — Amoureux -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x.s01">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/xs01_card.png" alt="Carte : Amoureux" width="130">
-<div><code>x.s01</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x.s01</code> · Amoureux <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Les Amoureux se connaissent.</p>
-<p>Si l’un meurt, l’autre se suicide.</p>
-<p>Si la victime de l’assassinat est immune ou sauvée, aucun des deux ne meurt.</p>
-<p>Si le suicidaire est immune ou sauvé, seul lui survivra.</p>
-<p><strong>Objectif :</strong><br>Que les Amoureux soient les derniers survivants.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/xs01_card.png" alt="Carte : Amoureux" width="130">
+    <div><code>x.s01</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x.s01</code> · Amoureux <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Les Amoureux se connaissent.</p>
+      <p>Si l’un meurt, l’autre se suicide.</p>
+      <p>Si la victime de l’assassinat est immune ou sauvée, aucun des deux ne meurt.</p>
+      <p>Si le suicidaire est immune ou sauvé, seul lui survivra.</p>
+      <p><strong>Objectif :</strong><br>Que les Amoureux soient les derniers survivants.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x.as01b.1 — Traître -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x.as01b.1">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/x.as01b.1_card.png" alt="Carte : Traître" width="130">
-<div><code>x.as01b.1</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x.as01b.1</code> · Traître <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Connaît l’Arnacoeur.</p>
-<p>Si l’un meurt, l’autre se suicide.</p>
-<p>Si la victime de l’assassinat est immune ou sauvée, aucun des deux ne meurt.</p>
-<p>Si le suicidaire est immune ou sauvé, seul lui survivra.</p>
-<p><strong>Objectif :</strong><br>Que l’Arnacoeur et le Traître soient les derniers survivants..</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/x.as01b.1_card.png" alt="Carte : Traître" width="130">
+    <div><code>x.as01b.1</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x.as01b.1</code> · Traître <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Connaît l’Arnacoeur.</p>
+      <p>Si l’un meurt, l’autre se suicide.</p>
+      <p>Si la victime de l’assassinat est immune ou sauvée, aucun des deux ne meurt.</p>
+      <p>Si le suicidaire est immune ou sauvé, seul lui survivra.</p>
+      <p><strong>Objectif :</strong><br>Que l’Arnacoeur et le Traître soient les derniers survivants..</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x.as01b.2 — Trahi -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x.as01b.2">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/x.as01b.2_card.png" alt="Carte : Trahi" width="130">
-<div><code>x.as01b.2</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x.as01b.2</code> · Trahi <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Ne sait pas qu’il est Trahi, continue d’agir comme un Amoureux tant qu’il ne le découvre pas.</p>
-<p>Si le Traître ou l’Arnacoeur meurt, le Trahi ne meurt pas.</p>
-<p><strong>Objectif :</strong><br>Celui du rôle original.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/x.as01b.2_card.png" alt="Carte : Trahi" width="130">
+    <div><code>x.as01b.2</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x.as01b.2</code> · Trahi <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Ne sait pas qu’il est Trahi, continue d’agir comme un Amoureux tant qu’il ne le découvre pas.</p>
+      <p>Si le Traître ou l’Arnacoeur meurt, le Trahi ne meurt pas.</p>
+      <p><strong>Objectif :</strong><br>Celui du rôle original.</p>
+    </div>
+  </td>
 </tr>
+<!-- ============================================================ -->
+<!-- PERSONNAGE x.m05 — Ennemi -->
+<!-- ============================================================ -->
 <tr class="role-row faction-extra" id="x.m05">
-<td class="role-image-cell" width="150" valign="top" align="center">
-<img src="art/xtras_cards/xm05_card.png" alt="Carte : Ennemi" width="130">
-<div><code>x.m05</code></div>
-</td>
-<td class="role-text-cell" valign="top">
-<div class="role-title">⬜ <code>x.m05</code> · Ennemi <span class="role-badge">Extra</span></div>
-<div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
-<div class="role-description">
-<p>Si un Ennemis arrive à amener l’autre à <span class="rule-red" style="color:#cc0000;font-weight:700;">exécution</span>, le premier reçoit immunité contre le prochain <span class="rule-red" style="color:#cc0000;font-weight:700;">assassinat</span>.</p>
-<p><span class="rule-red" style="color:#cc0000;font-weight:700;">Après la mort de chaque Ennemie</span>, le Méchant Cupidon est réveillé pour choisir un nouvel Ennemi pour le survivant.</p>
-<p><strong>Objectif :</strong><br>Ne change pas.</p>
-</div>
-</td>
+  <td class="role-image-cell" width="150" valign="top" align="center">
+    <img src="art/xtras_cards/xm05_card.png" alt="Carte : Ennemi" width="130">
+    <div><code>x.m05</code></div>
+  </td>
+  <td class="role-text-cell" valign="top">
+    <div class="role-title">⬜ <code>x.m05</code> · Ennemi <span class="role-badge">Extra</span></div>
+    <div class="role-meta">Catégorie : Extras · <a href="#liste-rapide-de-personnages">retour à la liste rapide</a></div>
+    <div class="role-description">
+      <p>Si un Ennemis arrive à amener l’autre à <span class="rule-red">exécution</span>, le premier reçoit immunité contre le prochain <span class="rule-red">assassinat</span>.</p>
+      <p><span class="rule-red">Après la mort de chaque Ennemie</span>, le Méchant Cupidon est réveillé pour choisir un nouvel Ennemi pour le survivant.</p>
+      <p><strong>Objectif :</strong><br>Ne change pas.</p>
+    </div>
+  </td>
 </tr>
 </tbody>
 </table>
@@ -1413,7 +1594,7 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 > Cette nuit n’aura pas de morts.
 > Lancer un d12.
 
-- Cupidon se réveille et choisit deux joueurs qui seront Amoureux.  Cupidon s’endort et les Amoureux seront maintenant touchés pour qu’ils se connaissent. Si un Amoureux meurt, l’autre se suicide. L’objectif des Amoureux et de Cupidon est que les Amoureux soient les derniers survivants.
+- Cupidon se réveille et choisit deux joueurs qui seront Amoureux.  Cupidon s’endort et les Amoureux seront maintenant touchés pour qu’ils se connaissent. Si un Amoureux meurt, l’autre se suicide. L’objectif des Amoureux et de Cupidon est que les Amoureux soient les derniers survivants. Tant que les Amoureux sont en vie, le jeu continue.
 - Le Méchant Cupidon se réveille et choisit deux joueurs qui seront Ennemis.  Le Méchant Cupidon s’endort et les Ennemis seront maintenant touchés pour qu’ils se connaissent. Si un Ennemi parvient à amener l’autre à exécution, le premier reçoit immunité contre le prochain assassinat.
 - Les Sœurs se réveillent pour se connaître.
 - Les Frères se réveillent pour se connaître.
@@ -1471,7 +1652,7 @@ Utilises cette liste comme carte de navigation pour sauter directement à une fi
 - Le Méchant Loup-garou se réveille et indique di pouce s’il veut ou on se déguiser en Grand-maman aujourd’hui. Il ne peut utiliser ce pouvoir que deux fois par jeu.
 - Le Loup-garou Voyant se réveillent / ne se réveillent pas si empoisonnés. Il indique du pouce s’il veut sauver la victime pour savoir son rôle ou la laisser mourir.
 - Le Loup-garou Vampire se réveillent / ne se réveillent pas si empoisonnés ou victime sauvé par Loup-garou Voyant. Il indique du pouce s’il veut sauver la victime ou non.  Si oui, la victime sera touchée, ne se réveillera pas, et passera à se réveiller avec les Loups-garous. La victime indique du pouce si elle souhaite ou non garder ses pouvoirs.
-- (Chaque troisième nuit) Le Loup-garou Blanc se réveille et chosit un Loup-garou qu’il souhaite tuer.
+- (Chaque troisième nuit) Le Loup-garou Blanc se réveille et chosit un Loup-garou qu’il souhaite tuer. Le Loup-garou Blanc se réveille et chosit un autre joueur qu’il souhaite tuer.
 - Le Maître des Lapins entend les lapins effrayés cette nuit / [rien] (/ les Lapins sont confus)
 - Le Chaman se réveille  (/ ne se réveille pas s’il n’y a pas de victimes) et les victimes de cette nuit lui sont révélées. Il choisit s’il souhaite sauver une des victimes. Il ne peut utiliser ce pouvoir que deux fois par jeu.
 - Le Falotier se réveille et apprend d’une carte en jeu avec un pouvoir limité et découvre combien d’utilisations restent encore au pouvoir.
