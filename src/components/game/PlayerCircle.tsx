@@ -255,7 +255,7 @@ export const PlayerCircle = ({
           if (poisonedPlayerId) {
             const pr = roleAssignments[poisonedPlayerId];
             if (pr && (["e01", "m01", "m02", "m03"] as RoleId[]).includes(pr)) {
-              return getToast("warnLobosPoisoned", lang);
+              return getToast("warnWolvesPoisoned", lang);
             }
           }
           return null;
@@ -566,7 +566,7 @@ export const PlayerCircle = ({
             }}
             onSetDead={() => {
               if (role === "e02" && poisonedPlayerId === seated.id) {
-                toast.warning(getToast("warnBruxaPoisonedImmune", lang));
+                toast.warning(getToast("warnWitchPoisonedImmune", lang));
                 setOpenPopoverId(null);
                 return;
               }

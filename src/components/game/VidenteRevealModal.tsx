@@ -79,7 +79,7 @@ export const VidenteRevealModal = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-xl text-blue-400">{t("revealVidenteTitle")}</h2>
+              <h2 className="font-display text-xl text-blue-400">{t("revealFortuneTellerTitle")}</h2>
               {dismissible && (
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
                   <X className="h-5 w-5" />
@@ -87,7 +87,7 @@ export const VidenteRevealModal = ({
               )}
             </div>
 
-            <p className="text-muted-foreground text-sm">{t("revealVidenteSubtitle")}</p>
+            <p className="text-muted-foreground text-sm">{t("revealFortuneTellerSubtitle")}</p>
 
             <div className="grid grid-cols-2 gap-4">
               {deadPlayerIds.map((pid) => {

@@ -28,7 +28,7 @@ interface DayTribunalPanelProps {
 export interface DayTribunalPanelHandle {
   toggleTimer: () => void;
   resetTimer: () => void;
-  adjustTimer: (seconds: number) => void;
+  setDuration: (seconds: number) => void;
 }
 
 export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPanelProps>(({
@@ -55,10 +55,12 @@ export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPa
   const [timeLeft, setTimeLeft] = useState(matchingInitialTimer?.timeLeft ?? dayDefaultSeconds);
   const [isRunning, setIsRunning] = useState(matchingInitialTimer?.isRunning ?? false);
   const [timerDone, setTimerDone] = useState(matchingInitialTimer?.timerDone ?? false);
+  const [timerPhase, setTimerPhase] = useState(gamePhase);
   const [editingDuration, setEditingDuration] = useState(false);
   const [editMinutes, setEditMinutes] = useState("5");
   const [editSeconds, setEditSeconds] = useState("0");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const previousPhaseRef = useRef(gamePhase);
 
   const playAlarm = useCallback(() => {
     try {
@@ -86,20 +88,17 @@ export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPa
   }, [tribunalDefaultSeconds]);
 
   useEffect(() => {
-    if (initialTimerState?.phase === gamePhase) {
-      setTimeLeft(initialTimerState.timeLeft);
-      setIsRunning(initialTimerState.isRunning);
-      setTimerDone(initialTimerState.timerDone);
-      return;
-    }
+    if (previousPhaseRef.current === gamePhase) return;
+    previousPhaseRef.current = gamePhase;
     const dur = gamePhase === "day" ? dayDefault : tribunalDefault;
     setTimeLeft(dur);
     setIsRunning(false);
     setTimerDone(false);
-  }, [gamePhase, dayDefault, tribunalDefault, initialTimerState]);
+    setTimerPhase(gamePhase);
+  }, [gamePhase, dayDefault, tribunalDefault]);
 
   useEffect(() => {
-    if (isRunning && timeLeft > 0) {
+    if (timerPhase === gamePhase && isRunning && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
         setTimeLeft((t) => {
           if (t <= 1) {
@@ -115,17 +114,19 @@ export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPa
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, timeLeft, playAlarm]);
+  }, [gamePhase, isRunning, timeLeft, playAlarm, timerPhase]);
 
   useEffect(() => {
+    if (timerPhase !== gamePhase) return;
     onTimerSync?.({ phase: gamePhase, timeLeft, isRunning, timerDone });
-  }, [gamePhase, timeLeft, isRunning, timerDone, onTimerSync]);
+  }, [gamePhase, timeLeft, isRunning, timerDone, onTimerSync, timerPhase]);
 
   const resetTimer = useCallback(() => {
     const duration = gamePhase === "day" ? dayDefault : tribunalDefault;
     setTimeLeft(duration);
     setIsRunning(false);
     setTimerDone(false);
+    setTimerPhase(gamePhase);
   }, [dayDefault, gamePhase, tribunalDefault]);
 
   useImperativeHandle(ref, () => ({
@@ -140,9 +141,11 @@ export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPa
       setIsRunning((running) => !running);
     },
     resetTimer,
-    adjustTimer: (seconds) => {
-      setTimeLeft((current) => Math.max(0, current + seconds));
+    setDuration: (seconds) => {
+      setTimeLeft(Math.max(1, seconds));
+      setIsRunning(false);
       setTimerDone(false);
+      setTimerPhase(gamePhase);
     },
   }), [dayDefault, gamePhase, resetTimer, timerDone, tribunalDefault]);
 

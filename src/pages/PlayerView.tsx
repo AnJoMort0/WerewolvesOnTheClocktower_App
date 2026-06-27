@@ -213,7 +213,7 @@ const PlayerView = () => {
       )
       .subscribe();
 
-    const roomId = getPlayerSession()?.roomId ?? null;
+    const roomId = player?.room_id ?? getPlayerSession()?.roomId ?? null;
     let roomChannel: ReturnType<typeof supabase.channel> | null = null;
     let playersChannel: ReturnType<typeof supabase.channel> | null = null;
     let videnteChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -373,7 +373,7 @@ const PlayerView = () => {
       if (playersChannel) supabase.removeChannel(playersChannel);
       if (videnteChannel) supabase.removeChannel(videnteChannel);
     };
-  }, [playerId, navigate]);
+  }, [playerId, navigate, player?.room_id]);
 
   // Persist hidden state across reloads
   useEffect(() => {
@@ -627,13 +627,13 @@ const PlayerView = () => {
       )}
 
       {isMenina && (
-        <RevealModal language={language} open={meninaReveal} onClose={() => setMeninaReveal(false)} title={t("revealMeninaTitle", language)} subtitle={t("revealMeninaSubtitle", language)} cards={meninaCards} dismissible={false} />
+        <RevealModal language={language} open={meninaReveal} onClose={() => setMeninaReveal(false)} title={t("revealLittleGirlTitle", language)} subtitle={t("revealLittleGirlSubtitle", language)} cards={meninaCards} dismissible={false} />
       )}
       {isFaroleiro && (
-        <RevealModal language={language} open={faroleiroReveal} onClose={() => setFaroleiroReveal(false)} title={t("revealFaroleiroTitle", language)} subtitle={t("revealFaroleiroSubtitle", language)} cards={faroleiroCards} dismissible={false} />
+        <RevealModal language={language} open={faroleiroReveal} onClose={() => setFaroleiroReveal(false)} title={t("revealLamplighterTitle", language)} subtitle={t("revealLamplighterSubtitle", language)} cards={faroleiroCards} dismissible={false} />
       )}
       {isLobisomemVidente && (
-        <RevealModal language={language} open={lvReveal} onClose={() => setLvReveal(false)} title={t("revealLVTitle", language)} subtitle={t("revealLVSubtitle", language)} cards={lvCards} dismissible={false} />
+        <RevealModal language={language} open={lvReveal} onClose={() => setLvReveal(false)} title={t("revealVampireWolfTitle", language)} subtitle={t("revealVampireWolfSubtitle", language)} cards={lvCards} dismissible={false} />
       )}
       {isSpider && (
         <RevealModal language={language} open={spiderReveal} onClose={() => setSpiderReveal(false)} title={t("spiderEyeReveal", language)} cards={spiderCards} dismissible={false} />

@@ -11,7 +11,7 @@ import { DayTribunalPanel, type DayTribunalPanelHandle } from "@/components/game
 import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS, STATUS_EFFECT_LABELS } from "@/components/game/PlayerStatusPopover";
 import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
-import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Plus, Play, Pause, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff } from "lucide-react";
+import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -280,6 +280,9 @@ const GMRoom = () => {
   const [spiderDayChangeUsed, setSpiderDayChangeUsed] = useState(false);
   const [hideScreenMode, setHideScreenMode] = useState(false);
   const [syncedTimerState, setSyncedTimerState] = useState<TimerSyncState | null>(null);
+  const [hiddenTimerEditing, setHiddenTimerEditing] = useState(false);
+  const [hiddenTimerMinutes, setHiddenTimerMinutes] = useState("0");
+  const [hiddenTimerSeconds, setHiddenTimerSeconds] = useState("0");
   const dayPanelRef = useRef<DayTribunalPanelHandle>(null);
 
   // Spider (v23) reveal modal
@@ -360,29 +363,29 @@ const GMRoom = () => {
     }
 
     if (assignedRoles.has("v08b") && !assignedRoles.has("v08")) {
-      warnings.push(getValidation("capuchinhoNeedsHunter", lng));
+      warnings.push(getValidation("littleRedNeedsHunter", lng));
     }
     if (assignedRoles.has("as01b") && !assignedRoles.has("s01")) {
-      warnings.push(getValidation("amanteNeedsCupido", lng));
+      warnings.push(getValidation("secretLoverNeedsCupid", lng));
     }
 
     const irmasCount = Object.values(roleAssignments).filter((r) => r === "l03").length;
     if (assignedRoles.has("l03") && irmasCount !== 2) {
-      warnings.push(format(getValidation("irmasCount", lng), { n: irmasCount }));
+      warnings.push(format(getValidation("sistersCount", lng), { n: irmasCount }));
     }
     const irmaosCount = Object.values(roleAssignments).filter((r) => r === "l04").length;
     if (assignedRoles.has("l04") && irmaosCount !== 3) {
-      warnings.push(format(getValidation("irmaosCount", lng), { n: irmaosCount }));
+      warnings.push(format(getValidation("brothersCount", lng), { n: irmaosCount }));
     }
 
     const inimigosCount = Object.entries(playerEffects).filter(([, e]) => e.has("enemy")).length;
     if (inimigosCount > 2) {
-      warnings.push(format(getValidation("tooManyInimigos", lng), { n: inimigosCount }));
+      warnings.push(format(getValidation("tooManyEnemies", lng), { n: inimigosCount }));
     }
 
     const namoradosCount = Object.entries(playerEffects).filter(([, e]) => e.has("namorado")).length;
     if (namoradosCount > 2) {
-      warnings.push(format(getValidation("tooManyNamorados", lng), { n: namoradosCount }));
+      warnings.push(format(getValidation("tooManyLovers", lng), { n: namoradosCount }));
     }
 
     return warnings;
@@ -478,7 +481,7 @@ const GMRoom = () => {
       if (effect === "namorado") {
         const existing = Object.entries(newEffects).filter(([pid, e]) => pid !== playerId && e.has("namorado"));
         if (existing.length >= 2) {
-          toast.warning(getToast("warn2Namorados", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warn2Lovers", (room?.language as Language) || "pt"));
           return prev;
         }
       }
@@ -487,7 +490,7 @@ const GMRoom = () => {
       if (effect === "enemy") {
         const existing = Object.entries(newEffects).filter(([pid, e]) => pid !== playerId && e.has("enemy"));
         if (existing.length >= 2) {
-          toast.warning(getToast("warn2Inimigos", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warn2Enemies", (room?.language as Language) || "pt"));
           return prev;
         }
       }
@@ -497,7 +500,7 @@ const GMRoom = () => {
         // Check if cupido is poisoned
         const cupidoId = Object.entries(roleAssignments).find(([, r]) => r === "s01")?.[0];
         if (cupidoId && poisonedPlayerId === cupidoId) {
-          toast.warning(getToast("warnCupidoPoisoned", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warnCupidPoisoned", (room?.language as Language) || "pt"));
           return prev;
         }
         // Apply to both namorados
@@ -522,7 +525,7 @@ const GMRoom = () => {
       if (effect === "vote_revoked") {
         const ladraoId = Object.entries(roleAssignments).find(([, r]) => r === "f01")?.[0];
         if (ladraoId && poisonedPlayerId === ladraoId) {
-          toast.warning(getToast("warnLadraoPoisoned", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warnThiefPoisoned", (room?.language as Language) || "pt"));
           return prev;
         }
       }
@@ -531,7 +534,7 @@ const GMRoom = () => {
       if (effect === "profecia") {
         const profetaId = Object.entries(roleAssignments).find(([, r]) => r === "v19")?.[0];
         if (profetaId && poisonedPlayerId === profetaId) {
-          toast.warning(getToast("warnProfetaPoisoned", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warnProphetPoisoned", (room?.language as Language) || "pt"));
           return prev;
         }
       }
@@ -1130,16 +1133,16 @@ const GMRoom = () => {
     }
     if (role === "as01b") {
       const hasCupido = Object.values(roleAssignments).some((r) => r === "s01");
-      if (!hasCupido) toast.warning(getToast("warnAmanteMissing", (room?.language as Language) || "pt"));
+      if (!hasCupido) toast.warning(getToast("warnSecretLoverMissing", (room?.language as Language) || "pt"));
     }
     const oldRole = roleAssignments[playerId];
     if (oldRole === "v08" && role !== "v08") {
       const hasCapuchinho = Object.entries(roleAssignments).some(([pid, r]) => r === "v08b" && pid !== playerId);
-      if (hasCapuchinho) toast.warning(getToast("warnCapuchinhoWithoutHunter", (room?.language as Language) || "pt"));
+      if (hasCapuchinho) toast.warning(getToast("warnLittleRedWithoutHunter", (room?.language as Language) || "pt"));
     }
     if (oldRole === "s01" && role !== "s01") {
       const hasAmante = Object.entries(roleAssignments).some(([pid, r]) => r === "as01b" && pid !== playerId);
-      if (hasAmante) toast.warning(getToast("warnAmanteWithoutCupido", (room?.language as Language) || "pt"));
+      if (hasAmante) toast.warning(getToast("warnSecretLoverWithoutCupid", (room?.language as Language) || "pt"));
     }
 
     setRoleAssignments((prev) => ({ ...prev, [playerId]: role }));
@@ -1259,14 +1262,14 @@ const GMRoom = () => {
           const cacadorAlive = Object.entries(roleAssignments).some(([pid, r]) => r === "v08" && !permanentlyDead.has(pid));
           const capuchinhoPoisoned = poisonedPlayerId === playerId;
           if (cacadorAlive && !capuchinhoPoisoned) {
-            toast.warning(getToast("warnCapuchinhoImmune", (room?.language as Language) || "pt"));
+            toast.warning(getToast("warnLittleRedImmune", (room?.language as Language) || "pt"));
             return;
           }
         }
       }
 
       if (roleAssignments[playerId] === "e02" && poisonedPlayerId === playerId) {
-        toast.warning(getToast("warnBruxaPoisonedImmune", (room?.language as Language) || "pt"));
+        toast.warning(getToast("warnWitchPoisonedImmune", (room?.language as Language) || "pt"));
         return;
       }
 
@@ -1288,7 +1291,7 @@ const GMRoom = () => {
               return { ...prev, [victim.id]: cur };
             });
             setCavalerioLinkedDeath(victim.id);
-            toast.info(format(getToast("infoCavaleiroPoisoned", (room?.language as Language) || "pt"), { name: victim.name }));
+            toast.info(format(getToast("infoKnightPoisoned", (room?.language as Language) || "pt"), { name: victim.name }));
           }
         } else {
           const closestWW = findClosestWerewolf(playerId);
@@ -1299,7 +1302,7 @@ const GMRoom = () => {
               return { ...prev, [closestWW.id]: cur };
             });
             setCavalerioLinkedDeath(closestWW.id);
-            toast.info(format(getToast("infoCavaleiroDied", (room?.language as Language) || "pt"), { name: closestWW.name }));
+            toast.info(format(getToast("infoKnightDied", (room?.language as Language) || "pt"), { name: closestWW.name }));
           }
         }
       }
@@ -1335,7 +1338,7 @@ const GMRoom = () => {
             supabase.from("players").update({ character: targetRole }).eq("id", a05Id),
             supabase.from("players").update({ character: "a05" }).eq("id", playerId),
           ]).then(() => broadcastPlayerSync([a05Id, playerId]));
-          toast.success(getToast("okRoubaTumulos", (room?.language as Language) || "pt"));
+          toast.success(getToast("okGraveRobber", (room?.language as Language) || "pt"));
         }
       }
       void supabase.from("players").update({ is_alive: false }).eq("id", playerId).then(() => {
@@ -1405,7 +1408,7 @@ const GMRoom = () => {
             return { ...prev, [closestWW.id]: cur };
           });
           setCavalerioLinkedDeath(closestWW.id);
-          toast.info(format(getToast("infoCavaleiroExecuted", (room?.language as Language) || "pt"), { name: closestWW.name }));
+          toast.info(format(getToast("infoKnightExecuted", (room?.language as Language) || "pt"), { name: closestWW.name }));
         }
       }
     }
@@ -1461,7 +1464,7 @@ const GMRoom = () => {
       if (aliveIrmaos.length >= 2 && deadThisNightIrmaos.length > 0 && !someIrmaoPoisoned) {
         for (const pid of deadThisNightIrmaos) {
           newStatuses[pid] = "alive";
-          toast.info(format(getToast("infoIrmaoSaved", (room?.language as Language) || "pt"), { name: players.find(p => p.id === pid)?.name || "" }));
+          toast.info(format(getToast("infoBrothersSaved", (room?.language as Language) || "pt"), { name: players.find(p => p.id === pid)?.name || "" }));
         }
       }
     }
@@ -1574,7 +1577,7 @@ const GMRoom = () => {
           supabase.from("players").update({ character: "a05" }).eq("id", dugUpDeathId),
         );
         resetUsesForRoleId(targetRole);
-        toast.success(getToast("okRoubaTumulos", (room?.language as Language) || "pt"));
+        toast.success(getToast("okGraveRobber", (room?.language as Language) || "pt"));
       }
     }
 
@@ -1621,12 +1624,13 @@ const GMRoom = () => {
         setRoleAssignments((prev) => ({ ...prev, [criancaId]: "e01" }));
         await supabase.from("players").update({ character: "e01" }).eq("id", criancaId);
         broadcastPlayerSync([criancaId]);
-        toast.info(getToast("infoPaiAdotivoDied", (room?.language as Language) || "pt"));
+        toast.info(getToast("infoAdoptiveDadDied", (room?.language as Language) || "pt"));
       }
     }
 
     toast.success(format(getToast("okNightEnded", (room?.language as Language) || "pt"), { n: nightNumber }));
     setCompletedScriptLineKeys(new Set());
+    setScriptAutoComplete({ role: null, version: 0 });
     setGameCyclePhase("day");
     setDayPhase("day");
   };
@@ -1731,6 +1735,7 @@ const GMRoom = () => {
     setPlayerEffects(newEffects);
 
     setCompletedScriptLineKeys(new Set());
+    setScriptAutoComplete({ role: null, version: 0 });
     setGameCyclePhase("night");
     setNightNumber((n) => n + 1);
     setNightTargetedPlayerIds(new Set());
@@ -1811,7 +1816,7 @@ const GMRoom = () => {
   const handleCupidoChargeToggle = useCallback((idx: number) => {
     const cupidoId = getRolePlayerId("s01");
     if (cupidoId && poisonedPlayerId === cupidoId) {
-      toast.warning(getToast("warnCupidoPoisoned", (room?.language as Language) || "pt"));
+      toast.warning(getToast("warnCupidPoisoned", (room?.language as Language) || "pt"));
       return;
     }
 
@@ -1944,7 +1949,7 @@ const GMRoom = () => {
           const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== sonambuloId);
           if (random) {
             toggleEffect(random.id, "hospede");
-            toast.info(format(getToast("infoSonambuloPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
+            toast.info(format(getToast("infoSleepwalkerPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
           }
         } else {
           toggleEffect(targetPlayerId, "hospede");
@@ -1958,7 +1963,7 @@ const GMRoom = () => {
           const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== salvadorId);
           if (random) {
             actualTarget = random.id;
-            toast.info(format(getToast("infoSalvadorPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
+            toast.info(format(getToast("infoSaviourPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
           }
         }
         // Remove immunity from previous Salvador target if different
@@ -2022,7 +2027,7 @@ const GMRoom = () => {
           if (inocentados.length > 0) {
             const victim = inocentados[Math.floor(Math.random() * inocentados.length)];
             toggleEffect(victim.id, "incendiado");
-            toast.info(format(getToast("infoPiromaniacoPoisoned", (room?.language as Language) || "pt"), { name: victim.name }));
+            toast.info(format(getToast("infoPiromaniacPoisoned", (room?.language as Language) || "pt"), { name: victim.name }));
           }
         } else if (targetEffects.has("inocentado")) {
           toggleEffect(targetPlayerId, "incendiado");
@@ -2033,7 +2038,7 @@ const GMRoom = () => {
       else if (roleSource === "v18") {
         // Anjo: needs to be perma-dead target. If poisoned → random other perma-dead.
         if (anjoCharges >= 2) {
-          toast.warning(getToast("warnAnjoUsedAll", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warnAngelUsedAll", (room?.language as Language) || "pt"));
           return;
         }
         const anjoId = getRolePlayerId("v18");
@@ -2043,7 +2048,7 @@ const GMRoom = () => {
           const random = pickRandomPlayer((p) => permanentlyDead.has(p.id) && p.id !== targetPlayerId, anjoId || undefined);
           if (random) {
             resurrectId = random.id;
-            toast.info(format(getToast("infoAnjoPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
+            toast.info(format(getToast("infoAngelPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
           } else {
             resurrectId = null;
           }
@@ -2053,7 +2058,7 @@ const GMRoom = () => {
           resetUsesForRole(resurrectId);
           setAnjoCharges((c) => Math.min(c + 1, 2));
         } else if (resurrectId) {
-          toast.warning(getToast("warnAnjoUsedAll", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warnAngelUsedAll", (room?.language as Language) || "pt"));
         }
       }
       else if (roleSource === "v08") {
@@ -2083,7 +2088,7 @@ const GMRoom = () => {
       }
       else if (roleSource === "v10" || roleSource === "v10-poisoned") {
         if (paranoicoCharges >= 2) {
-          toast.warning(getToast("warnParanoicoUsedAll", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warnParanoidUsedAll", (room?.language as Language) || "pt"));
           return;
         }
         const paranoicoId = getRolePlayerId("v10");
@@ -2092,7 +2097,7 @@ const GMRoom = () => {
           const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== paranoicoId && p.id !== targetPlayerId);
           if (!random) { toast.warning(getToast("warnNoTargets", (room?.language as Language) || "pt")); return; }
           killId = random.id;
-          toast.info(format(getToast("infoParanoicoPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
+          toast.info(format(getToast("infoParanoidPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
         }
         handlePlayerStatusChange(killId, "dead-this-night", "v10");
         setParanoicoCharges((c) => Math.min(c + 1, 2));
@@ -2134,11 +2139,11 @@ const GMRoom = () => {
         const a05Id = getRolePlayerId("a05");
         if (!a05Id) return;
         if (poisonedPlayerId === a05Id) {
-          toast.warning(getToast("warnRoubaPoisoned", (room?.language as Language) || "pt"));
+          toast.warning(getToast("warnGraveRobberPoisoned", (room?.language as Language) || "pt"));
           return;
         }
         if (playerStatuses[targetPlayerId] !== "dead-this-night") {
-          toast.error(getToast("errRoubaOnlyRedX", (room?.language as Language) || "pt"));
+          toast.error(getToast("errGraveRobberOnlyRedX", (room?.language as Language) || "pt"));
           return;
         }
         setPlayerEffects((prev) => {
@@ -2155,7 +2160,7 @@ const GMRoom = () => {
           next[targetPlayerId] = cur;
           return next;
         });
-        toast.success(getToast("okRoubaTumulos", (room?.language as Language) || "pt"));
+        toast.success(getToast("okGraveRobber", (room?.language as Language) || "pt"));
       }
       else if (roleSource === "soldado-kill") {
         // Soldado ghost kill
@@ -2209,7 +2214,7 @@ const GMRoom = () => {
         onDragStart: (e: React.DragEvent) => {
           if (isAnyWerewolfPoisoned) {
             e.preventDefault();
-            toast.warning(getToast("warnLobosPoisoned", (room?.language as Language) || "pt"));
+            toast.warning(getToast("warnWolvesPoisoned", (room?.language as Language) || "pt"));
             return;
           }
           e.dataTransfer.setData("action", "kill");
@@ -2743,24 +2748,38 @@ const GMRoom = () => {
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
   const tt = useCallback((key: Parameters<typeof t>[0]) => t(key, lang), [lang]);
   const effectiveGMPhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
+  useEffect(() => setHiddenTimerEditing(false), [effectiveGMPhase]);
   const visibleTimerState = effectiveGMPhase !== "night" && syncedTimerState?.phase === effectiveGMPhase ? syncedTimerState : null;
   const formatTimerValue = (seconds: number) =>
     `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  const beginHiddenTimerEdit = () => {
+    if (effectiveGMPhase === "night") return;
+    const duration = timerDefaults[effectiveGMPhase];
+    setHiddenTimerMinutes(String(Math.floor(duration / 60)));
+    setHiddenTimerSeconds(String(duration % 60));
+    setHiddenTimerEditing(true);
+  };
+  const saveHiddenTimerDuration = () => {
+    if (effectiveGMPhase === "night") return;
+    const minutes = Number.parseInt(hiddenTimerMinutes, 10);
+    const seconds = Number.parseInt(hiddenTimerSeconds, 10) || 0;
+    if (Number.isNaN(minutes) || minutes < 0 || minutes > 30 || seconds < 0 || seconds > 59) return;
+    const duration = minutes * 60 + seconds;
+    if (duration <= 0) return;
+    setTimerDefaults((current) => ({ ...current, [effectiveGMPhase]: duration }));
+    dayPanelRef.current?.setDuration(duration);
+    setHiddenTimerEditing(false);
+  };
   const victoryPlayers = useMemo<VictoryPlayer[]>(() => players
     .filter((player) => player.seat_position !== null && !!roleAssignments[player.id])
     .map((player) => {
-      const status = playerStatuses[player.id];
-      const alive = !permanentlyDead.has(player.id)
-        && status !== "dead"
-        && status !== "dead-this-night"
-        && (status !== undefined || player.is_alive);
       return {
         id: player.id,
         role: roleAssignments[player.id],
-        alive,
+        alive: !permanentlyDead.has(player.id),
         effects: playerEffects[player.id] || new Set<StatusEffect>(),
       };
-    }), [players, roleAssignments, playerStatuses, permanentlyDead, playerEffects]);
+    }), [players, roleAssignments, permanentlyDead, playerEffects]);
   const detectedWinKind = useMemo(() => detectAutomaticVictory(victoryPlayers), [victoryPlayers]);
   const victoryStateSignature = useMemo(
     () => getVictoryStateSignature(victoryPlayers, `${effectiveGMPhase}:${nightNumber}`),
@@ -3001,43 +3020,41 @@ const GMRoom = () => {
                     <p className={`font-display text-5xl tracking-wider mt-3 ${visibleTimerState.timeLeft <= 30 ? "text-destructive" : "text-foreground"}`}>
                       {formatTimerValue(visibleTimerState.timeLeft)}
                     </p>
-                    <div className="mt-3 flex items-center justify-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => dayPanelRef.current?.adjustTimer(-60)}
-                        title={tt("subtractMinute")}
-                        aria-label={tt("subtractMinute")}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => dayPanelRef.current?.toggleTimer()}
-                        title={visibleTimerState.isRunning ? tt("pauseTimer") : tt("startTimer")}
-                        aria-label={visibleTimerState.isRunning ? tt("pauseTimer") : tt("startTimer")}
-                      >
-                        {visibleTimerState.isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => dayPanelRef.current?.resetTimer()}
-                        title={tt("resetTimer")}
-                        aria-label={tt("resetTimer")}
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => dayPanelRef.current?.adjustTimer(60)}
-                        title={tt("addMinute")}
-                        aria-label={tt("addMinute")}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                    <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                      {!visibleTimerState.timerDone && (
+                        <>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => dayPanelRef.current?.toggleTimer()}
+                            title={visibleTimerState.isRunning ? tt("pauseTimer") : tt("startTimer")}
+                            aria-label={visibleTimerState.isRunning ? tt("pauseTimer") : tt("startTimer")}
+                          >
+                            {visibleTimerState.isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => dayPanelRef.current?.resetTimer()}
+                            title={tt("resetTimer")}
+                            aria-label={tt("resetTimer")}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      {!hiddenTimerEditing ? (
+                        <Button size="icon" variant="ghost" onClick={beginHiddenTimerEdit}>
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <Input type="number" value={hiddenTimerMinutes} onChange={(event) => setHiddenTimerMinutes(event.target.value)} className="w-14 h-8 text-center text-sm" min={0} max={30} />
+                          <span className="text-xs text-muted-foreground">:</span>
+                          <Input type="number" value={hiddenTimerSeconds} onChange={(event) => setHiddenTimerSeconds(event.target.value)} className="w-14 h-8 text-center text-sm" min={0} max={59} />
+                          <Button size="sm" variant="ghost" onClick={saveHiddenTimerDuration}>OK</Button>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
@@ -3575,8 +3592,8 @@ const GMRoom = () => {
         language={lang}
         open={meninaRevealOpen}
         onClose={handleCloseMeninaModal}
-        title={tt("revealMeninaTitle")}
-        subtitle={tt("revealMeninaSubtitle")}
+        title={tt("revealLittleGirlTitle")}
+        subtitle={tt("revealLittleGirlSubtitle")}
         cards={meninaCards}
       />
 
@@ -3584,8 +3601,8 @@ const GMRoom = () => {
         language={lang}
         open={faroleiroRevealOpen}
         onClose={handleCloseFaroleiroModal}
-        title={tt("revealFaroleiroTitle")}
-        subtitle={tt("revealFaroleiroSubtitle")}
+        title={tt("revealLamplighterTitle")}
+        subtitle={tt("revealLamplighterSubtitle")}
         cards={faroleiroPickedRole ? [{
           image: ROLES[faroleiroPickedRole].image,
           label: roleLabel(faroleiroPickedRole),
@@ -3598,8 +3615,8 @@ const GMRoom = () => {
         language={lang}
         open={lobisomemVidenteRevealOpen}
         onClose={handleCloseLobisomemVidenteModal}
-        title={tt("revealLVTitle")}
-        subtitle={tt("revealLVSubtitle")}
+        title={tt("revealVampireWolfTitle")}
+        subtitle={tt("revealVampireWolfSubtitle")}
         cards={lobisomemVidenteRevealedVictim ? [{
           name: lobisomemVidenteRevealedVictim.name,
           image: ROLES[lobisomemVidenteRevealedVictim.role]?.image || villagerIcon,

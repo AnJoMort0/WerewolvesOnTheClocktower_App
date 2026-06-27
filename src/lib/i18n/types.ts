@@ -72,7 +72,7 @@ export interface ToastStrings {
   warn2Enemies: string;
   warnCupidPoisoned: string;
   warnThiefPoisoned: string;
-  warnProfetPoisoned: string;
+  warnProphetPoisoned: string;
   warnChamanOnlyDead: string;
   infoKnightPoisoned: string;  // "...{name} foi infetado com Tétano."
   infoKnightDied: string;
@@ -82,7 +82,7 @@ export interface ToastStrings {
   infoSaviourPoisoned: string;
   infoPiromaniacPoisoned: string;
   infoAngelPoisoned: string;
-  infoParanoicPoisoned: string;
+  infoParanoidPoisoned: string;
   infoBornFireWolf: string;       // "{name} (Lobisomem) foi incendiado e morreu!"
   infoAdoptiveDadDied: string;
   infoBrothersSaved: string;
@@ -109,7 +109,7 @@ export interface ValidationWarningStrings {
   secretLoverNeedsCupid: string;
   sistersCount: string;           // "Irmãs precisam de exatamente 2 jogadoras (tem {n})!"
   brothersCount: string;
-  tooManyInimies: string;
+  tooManyEnemies: string;
   tooManyLovers: string;
 }
 

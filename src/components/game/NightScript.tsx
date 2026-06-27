@@ -263,7 +263,7 @@ function ScriptLineDisplay({
       }
       if (dragAction === "kill" && isWerewolfPoisoned) {
         e.preventDefault();
-        toast.warning(getToast("warnLobosPoisoned", lang));
+        toast.warning(getToast("warnWolvesPoisoned", lang));
         return;
       }
       e.dataTransfer.setData("action", dragAction);
@@ -664,7 +664,8 @@ export const NightScript = ({
   }, [activeRoles, permanentlyDeadRoles, roleAssignments, effectivelyDead, conditionKeys, chamanCharges, shouldShowVidenteLine, foxDisabled, profeciaGhostPlayerIds, _playerEffects]);
 
   const localizedScripts = useMemo(() => getScripts(lang), [lang]);
-  const processedAutoCompleteVersion = useRef(0);
+  // A remounted script must not replay an action from the previous night.
+  const processedAutoCompleteVersion = useRef(autoCompleteVersion);
   const sectionLabels = useMemo(() => ({
     first: t("firstNight", lang),
     secondStart: t("secondNightStart", lang),
