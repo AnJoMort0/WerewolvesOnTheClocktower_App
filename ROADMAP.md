@@ -23,13 +23,13 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] Didn't properly explain these winning conditions. Needs to be fixed ASAP:
-* [ ] When the tagged lovers are alive, the game continues util they are killed, because even if the werewolves are killed, there's still the possibility of the lovers or the secret lover to keep killing everyone to accomplish their objective of being the last ones alive. s01 can also be alive for the lovers winning condition to work, but it's not mandatory that he is, s01 also wins when this happens. The other winning conditions will only be possible when the lovers are dead.
-* [ ] Even if all non-werewolves are dead, but the s02 is still alive, the game continues in case he kills all the other werewolves to win. The werewolves only win once he is dead.
-* [ ] When the GM manually sends a tie win, a list of all the possible groups appear for the GM to tick which ones tied. Can be none and therefore everyone gets a defeat, can be some or all of them.
-* [ ] **Secret Lover victory:** Trigger when only `as01b` and one other character tagged `Namorado` remain. `as01b` **and the lover wins** and everyone else loses.
+* [x] Didn't properly explain these winning conditions. Needs to be fixed ASAP:
+* [x] When the tagged lovers are alive, the game continues util they are killed, because even if the werewolves are killed, there's still the possibility of the lovers or the secret lover to keep killing everyone to accomplish their objective of being the last ones alive. s01 can also be alive for the lovers winning condition to work, but it's not mandatory that he is, s01 also wins when this happens. The other winning conditions will only be possible when the lovers are dead.
+* [x] Even if all non-werewolves are dead, but the s02 is still alive, the game continues in case he kills all the other werewolves to win. The werewolves only win once he is dead.
+* [x] When the GM manually sends a tie win, a list of all the possible groups appear for the GM to tick which ones tied. Can be none and therefore everyone gets a defeat, can be some or all of them.
+* [x] **Secret Lover victory:** Trigger when only `as01b` and one other character tagged `Namorado` remain. `as01b` **and the lover wins** and everyone else loses.
 
-* [ ] Remove all code links to the 2 characters that were not yet implemented but are already showing in the app. We'll properly implement them fully later on.
+* [x] Remove all code links to the 2 characters that were not yet implemented but are already showing in the app. We'll properly implement them fully later on.
 
 ## Fixes
 

@@ -133,6 +133,7 @@ export interface GameOverStrings {
   decline: string;
   manualGameOver: string;
   selectWinCondition: string;
+  selectTieWinners: string;
   dismiss: string;
 }
 

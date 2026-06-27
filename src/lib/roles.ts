@@ -35,7 +35,6 @@ import m02Img from "@/assets/roles/m02.png";
 import m03Img from "@/assets/roles/m03.png";
 import m04Img from "@/assets/roles/m04.png";
 import m05Img from "@/assets/roles/m05.png";
-import m06Img from "@/assets/icons/werewolf.png";
 import s01Img from "@/assets/roles/s01.png";
 import s02Img from "@/assets/roles/s02.png";
 import f01Img from "@/assets/roles/f01.png";
@@ -47,13 +46,12 @@ import a04Img from "@/assets/roles/a04.png";
 import a05Img from "@/assets/roles/a05.png";
 import a06Img from "@/assets/roles/a06.png";
 import as01bImg from "@/assets/roles/as01b.png";
-import v24Img from "@/assets/icons/villager.png";
 
 export type RoleId =
   | "e01" | "e02" | "e03" | "e04"
   | "v01" | "v02" | "v03" | "v04" | "v05" | "v06" | "v07" | "v08" | "v08b" | "v09" | "v10"
-  | "v11" | "v12" | "v13" | "v14" | "v15" | "v16" | "v17" | "v18" | "v19" | "v20" | "v21" | "v22" | "v23" | "v24"
-  | "m01" | "m02" | "m03" | "m04" | "m05" | "m06"
+  | "v11" | "v12" | "v13" | "v14" | "v15" | "v16" | "v17" | "v18" | "v19" | "v20" | "v21" | "v22" | "v23"
+  | "m01" | "m02" | "m03" | "m04" | "m05"
   | "s01" | "s02"
   | "f01" | "f02"
   | "a01" | "a02" | "a03" | "a04" | "a05" | "a06" | "as01b"
@@ -99,13 +97,11 @@ export const ROLES: Record<RoleId, RoleDef> = {
   v21: { id: "v21", label: "Faroleiro", image: v21Img, category: "v" },
   v22: { id: "v22", label: "Pedro", image: v22Img, category: "v" },
   v23: { id: "v23", label: "Domador da Aranha", image: v23Img, category: "v" },
-  v24: { id: "v24", label: "V24 (por definir)", image: v24Img, category: "v" },
   m01: { id: "m01", label: "Lobisomem Mau", image: m01Img, category: "m" },
   m02: { id: "m02", label: "Lobisomem Vidente", image: m02Img, category: "m" },
   m03: { id: "m03", label: "Lobisomem Vampiro", image: m03Img, category: "m" },
   m04: { id: "m04", label: "Ankou", image: m04Img, category: "m" },
   m05: { id: "m05", label: "Cupido Malvado", image: m05Img, category: "m" },
-  m06: { id: "m06", label: "M06 (por definir)", image: m06Img, category: "m" },
   s01: { id: "s01", label: "Cupido", image: s01Img, category: "s" },
   s02: { id: "s02", label: "Lobisomem Branco", image: s02Img, category: "s" },
   f01: { id: "f01", label: "Ladrão", image: f01Img, category: "f" },
@@ -129,7 +125,7 @@ export function isUniqueRole(id: RoleId): boolean {
   return id !== "e01" && id !== "l01";
 }
 
-export const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05", "m06"];
+export const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05"];
 
 export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "s02"];
 
@@ -142,10 +138,10 @@ const ESSENTIAL_SINGLES: RoleId[] = ["e02", "e03", "e04"];
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "s02"];
 const VILLAGER_UNIQUE: RoleId[] = [
   "v01", "v02", "v03", "v04", "v05", "v06", "v07", "v08", "v08b", "v09", "v10",
-  "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24",
+  "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
 ];
 const ADVANCED_ROLES: RoleId[] = ["a01", "a02", "a03", "a04", "a05", "a06", "as01b"];
-const OTHER_UNIQUE: RoleId[] = ["m04", "m05", "m06", "s01", "f01", "f02"];
+const OTHER_UNIQUE: RoleId[] = ["m04", "m05", "s01", "f01", "f02"];
 const LAME_SINGLES: RoleId[] = ["l02"];
 
 function getWerewolfCount(playerCount: number): number {

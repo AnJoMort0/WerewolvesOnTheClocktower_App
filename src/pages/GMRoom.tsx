@@ -18,12 +18,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { assignRoles, ROLES, isUniqueRole, WEREWOLF_ROLES, EVIL_ROLES, WEB_IMMUNE_ROLES, type RoleId } from "@/lib/roles";
+import { assignRoles, ROLES, isUniqueRole, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, type RoleId } from "@/lib/roles";
 import { LanguageContext, getRoleLabel, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
 import { getMeninaAnswerKind, MENINA_POISONED_ANSWERS, type MeninaAnswerKind } from "@/lib/gameRules";
-import { detectAutomaticVictory, getVictoryStateSignature, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
+import { detectAutomaticVictory, getVictoryStateSignature, playerWinsAnyVictoryGroup, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
@@ -296,6 +296,7 @@ const GMRoom = () => {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [winPickerOpen, setWinPickerOpen] = useState(false);
   const [manualWinKind, setManualWinKind] = useState<WinKind | null>(null);
+  const [tieWinnerGroups, setTieWinnerGroups] = useState<Set<AutomaticWinKind>>(new Set());
   const [automaticWinKind, setAutomaticWinKind] = useState<AutomaticWinKind | null>(null);
   const [declinedAutomaticVictory, setDeclinedAutomaticVictory] = useState<{ kind: AutomaticWinKind; signature: string } | null>(null);
   const [completedScriptLineKeys, setCompletedScriptLineKeys] = useState<Set<string>>(new Set());
@@ -950,6 +951,7 @@ const GMRoom = () => {
     setScriptAutoComplete({ role: null, version: 0 });
     setAutomaticWinKind(null);
     setDeclinedAutomaticVictory(null);
+    setTieWinnerGroups(new Set());
   }, []);
 
   const resetRoom = async () => {
@@ -1016,26 +1018,32 @@ const GMRoom = () => {
   };
 
   const getGameOverOutcome = useCallback((kind: WinKind, playerId: string): "victory" | "defeat" => {
-    if (kind === "tie") return "victory";
-    const role = roleAssignments[playerId];
-    const effects = playerEffects[playerId] || new Set<StatusEffect>();
-    const isEvilBeing = EVIL_ROLES.includes(role) || effects.has("evil_being") || effects.has("werewolf_turned");
-    const isNamorado = effects.has("namorado");
-
-    if (kind === "village") {
-      return !isEvilBeing && role !== "s01" && role !== "s02" && role !== "as01b" && !isNamorado ? "victory" : "defeat";
-    }
-    if (kind === "werewolves") return isEvilBeing ? "victory" : "defeat";
-    if (kind === "lovers") return role === "s01" || isNamorado ? "victory" : "defeat";
-    if (kind === "whiteWolf") return role === "s02" ? "victory" : "defeat";
-    if (kind === "secretLover") return role === "as01b" ? "victory" : "defeat";
-    return "defeat";
-  }, [playerEffects, roleAssignments]);
+    const allVictoryPlayers = players.flatMap<VictoryPlayer>((player) => {
+      const role = roleAssignments[player.id];
+      if (!role) return [];
+      return [{
+        id: player.id,
+        role,
+        alive: !permanentlyDead.has(player.id),
+        effects: playerEffects[player.id] || new Set<StatusEffect>(),
+      }];
+    });
+    const victoryPlayer = allVictoryPlayers.find((player) => player.id === playerId);
+    if (!victoryPlayer) return "defeat";
+    const winnerGroups: AutomaticWinKind[] = kind === "tie" ? Array.from(tieWinnerGroups) : [kind];
+    return playerWinsAnyVictoryGroup(victoryPlayer, winnerGroups, allVictoryPlayers)
+      ? "victory"
+      : "defeat";
+  }, [permanentlyDead, playerEffects, players, roleAssignments, tieWinnerGroups]);
 
   const sendGameOver = async (kind: WinKind) => {
     if (!roomId) return;
     const perPlayer = Object.fromEntries(players.map((player) => [player.id, getGameOverOutcome(kind, player.id)]));
-    const gameOverState = { kind, perPlayer };
+    const gameOverState = {
+      kind,
+      perPlayer,
+      ...(kind === "tie" ? { tieWinnerGroups: Array.from(tieWinnerGroups) } : {}),
+    };
     await supabase.channel(`game-over-${roomId}`).send({
       type: "broadcast",
       event: "game-over",
@@ -1045,6 +1053,7 @@ const GMRoom = () => {
     setRoom((prev) => (prev ? { ...prev, status: "finished" } : prev));
     setManualWinKind(null);
     setAutomaticWinKind(null);
+    setTieWinnerGroups(new Set());
   };
 
   const updateSeatPosition = async (playerId: string, position: number | null) => {
@@ -3646,6 +3655,7 @@ const GMRoom = () => {
         onClose={() => setWinPickerOpen(false)}
         onPick={(kind) => {
           setWinPickerOpen(false);
+          setTieWinnerGroups(new Set());
           setManualWinKind(kind);
         }}
       />
@@ -3656,6 +3666,7 @@ const GMRoom = () => {
         onDecline={() => {
           if (manualWinKind) {
             setManualWinKind(null);
+            setTieWinnerGroups(new Set());
             return;
           }
           if (automaticWinKind) {
@@ -3665,6 +3676,15 @@ const GMRoom = () => {
         }}
         onAccept={() => {
           if (pendingWinKind) sendGameOver(pendingWinKind);
+        }}
+        tieWinnerGroups={tieWinnerGroups}
+        onTieWinnerGroupToggle={(kind) => {
+          setTieWinnerGroups((current) => {
+            const next = new Set(current);
+            if (next.has(kind)) next.delete(kind);
+            else next.add(kind);
+            return next;
+          });
         }}
       />
 

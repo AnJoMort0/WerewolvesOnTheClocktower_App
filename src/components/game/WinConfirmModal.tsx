@@ -1,16 +1,29 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage, getGameOver, getWinLabel, format, type WinKind } from "@/lib/i18n";
+import type { AutomaticWinKind } from "@/lib/victory";
+
+const TIE_WINNER_GROUPS: AutomaticWinKind[] = ["village", "werewolves", "lovers", "whiteWolf", "secretLover"];
 
 interface WinConfirmModalProps {
   open: boolean;
   kind: WinKind | null;
   onAccept: () => void;
   onDecline: () => void;
+  tieWinnerGroups?: Set<AutomaticWinKind>;
+  onTieWinnerGroupToggle?: (kind: AutomaticWinKind) => void;
 }
 
-export const WinConfirmModal = ({ open, kind, onAccept, onDecline }: WinConfirmModalProps) => {
+export const WinConfirmModal = ({
+  open,
+  kind,
+  onAccept,
+  onDecline,
+  tieWinnerGroups = new Set(),
+  onTieWinnerGroupToggle,
+}: WinConfirmModalProps) => {
   const lang = useLanguage();
   return (
     <AnimatePresence>
@@ -34,6 +47,22 @@ export const WinConfirmModal = ({ open, kind, onAccept, onDecline }: WinConfirmM
             <p className="text-sm text-muted-foreground">
               {format(getGameOver("endGameQuestion", lang), { label: getWinLabel(kind, lang) })}
             </p>
+            {kind === "tie" && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">{getGameOver("selectTieWinners", lang)}</p>
+                <div className="space-y-2">
+                  {TIE_WINNER_GROUPS.map((group) => (
+                    <label key={group} className="flex items-center gap-3 text-sm font-body cursor-pointer">
+                      <Checkbox
+                        checked={tieWinnerGroups.has(group)}
+                        onCheckedChange={() => onTieWinnerGroupToggle?.(group)}
+                      />
+                      <span>{getWinLabel(group, lang)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={onDecline}>{getGameOver("decline", lang)}</Button>
               <Button onClick={onAccept} className="bg-primary hover:bg-blood-glow">{getGameOver("accept", lang)}</Button>
