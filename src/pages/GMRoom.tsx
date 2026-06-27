@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
@@ -7,11 +7,11 @@ import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { AddPlayerForm } from "@/components/game/AddPlayerForm";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import { NightScript } from "@/components/game/NightScript";
-import { DayTribunalPanel } from "@/components/game/DayTribunalPanel";
+import { DayTribunalPanel, type DayTribunalPanelHandle } from "@/components/game/DayTribunalPanel";
 import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS, STATUS_EFFECT_LABELS } from "@/components/game/PlayerStatusPopover";
 import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
-import { Copy, Check, Users, Send, AlertTriangle, X, Minus, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff } from "lucide-react";
+import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Plus, Play, Pause, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +23,7 @@ import { LanguageContext, getRoleLabel, t, getToast, getValidation, getGameOver,
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
 import { getMeninaAnswerKind, MENINA_POISONED_ANSWERS, type MeninaAnswerKind } from "@/lib/gameRules";
+import { detectAutomaticVictory, getVictoryStateSignature, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
@@ -34,7 +35,7 @@ const JOIN_BASE_URL_STORAGE_KEY = "wotct_join_base_url";
 const GM_ADVANCED_STORAGE_PREFIX = "wotct_gm_advanced_";
 const GM_SNAPSHOT_STORAGE_PREFIX = "wotct_gm_snapshot_";
 const GM_SNAPSHOT_VERSION = 1;
-const GM_SNAPSHOT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+const GM_SNAPSHOT_RETENTION_MS = 24 * 60 * 60 * 1000;
 const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   v19: "role-v19",
   v22: "role-v22",
@@ -70,6 +71,8 @@ type Room = {
   code: string;
   status: string;
   language?: Language;
+  phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
+  timer_state?: TimerSyncState | null;
 };
 
 type TimerSyncState = {
@@ -119,6 +122,8 @@ type GMSnapshot = {
   spiderDayChangeUsed: boolean;
   hideScreenMode: boolean;
   syncedTimerState: TimerSyncState | null;
+  completedScriptLineKeys: string[];
+  declinedAutomaticVictory?: { kind: AutomaticWinKind; signature: string } | null;
 };
 
 const getGMSnapshotStorageKey = (roomId: string) => `${GM_SNAPSHOT_STORAGE_PREFIX}${roomId}`;
@@ -142,9 +147,11 @@ function pruneOldGMSnapshots() {
       const parsed = JSON.parse(window.localStorage.getItem(key) || "");
       if (typeof parsed?.savedAt !== "number" || now - parsed.savedAt > GM_SNAPSHOT_RETENTION_MS) {
         window.localStorage.removeItem(key);
+        window.localStorage.removeItem(`${GM_ADVANCED_STORAGE_PREFIX}${key.slice(GM_SNAPSHOT_STORAGE_PREFIX.length)}`);
       }
     } catch {
       window.localStorage.removeItem(key);
+      window.localStorage.removeItem(`${GM_ADVANCED_STORAGE_PREFIX}${key.slice(GM_SNAPSHOT_STORAGE_PREFIX.length)}`);
     }
   }
 }
@@ -155,6 +162,15 @@ const KILL_DRAG_ROLE: RoleId = "e01";
 const CHAMAN_ROLE: RoleId = "e03";
 const ILLUSION_DRAG_ROLE: RoleId = "a06";
 const CAVALEIRO_ROLE: RoleId = "v07";
+const DEAD_SOURCE_EFFECTS: Partial<Record<RoleId, StatusEffect[]>> = {
+  v09: ["soldado"],
+  v11: ["vote_against", "vote_double"],
+  v16: ["hospede"],
+  v17: ["immunity_full"],
+  v19: ["profecia"],
+  v23: ["webbed"],
+  f01: ["vote_revoked"],
+};
 
 function getExpectedWerewolfCount(playerCount: number): number {
   if (playerCount < 12) return 2;
@@ -264,6 +280,7 @@ const GMRoom = () => {
   const [spiderDayChangeUsed, setSpiderDayChangeUsed] = useState(false);
   const [hideScreenMode, setHideScreenMode] = useState(false);
   const [syncedTimerState, setSyncedTimerState] = useState<TimerSyncState | null>(null);
+  const dayPanelRef = useRef<DayTribunalPanelHandle>(null);
 
   // Spider (v23) reveal modal
   const [spiderRevealOpen, setSpiderRevealOpen] = useState(false);
@@ -276,6 +293,10 @@ const GMRoom = () => {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [winPickerOpen, setWinPickerOpen] = useState(false);
   const [manualWinKind, setManualWinKind] = useState<WinKind | null>(null);
+  const [automaticWinKind, setAutomaticWinKind] = useState<AutomaticWinKind | null>(null);
+  const [declinedAutomaticVictory, setDeclinedAutomaticVictory] = useState<{ kind: AutomaticWinKind; signature: string } | null>(null);
+  const [completedScriptLineKeys, setCompletedScriptLineKeys] = useState<Set<string>>(new Set());
+  const [scriptAutoComplete, setScriptAutoComplete] = useState<{ role: RoleId | null; version: number }>({ role: null, version: 0 });
 
   const defaultJoinBaseUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -597,6 +618,8 @@ const GMRoom = () => {
       setSpiderDayChangeUsed(!!snapshot.spiderDayChangeUsed);
       setHideScreenMode(!!snapshot.hideScreenMode);
       setSyncedTimerState(snapshot.syncedTimerState ?? null);
+      setCompletedScriptLineKeys(new Set(snapshot.completedScriptLineKeys ?? []));
+      setDeclinedAutomaticVictory(snapshot.declinedAutomaticVictory ?? null);
     } catch {
       window.localStorage.removeItem(getGMSnapshotStorageKey(roomId));
     } finally {
@@ -647,6 +670,8 @@ const GMRoom = () => {
       spiderDayChangeUsed,
       hideScreenMode,
       syncedTimerState,
+      completedScriptLineKeys: Array.from(completedScriptLineKeys),
+      declinedAutomaticVictory,
     };
     window.localStorage.setItem(getGMSnapshotStorageKey(roomId), JSON.stringify(snapshot));
   }, [
@@ -689,6 +714,8 @@ const GMRoom = () => {
     spiderDayChangeUsed,
     hideScreenMode,
     syncedTimerState,
+    completedScriptLineKeys,
+    declinedAutomaticVictory,
   ]);
 
   // Auto-apply vote_double effect for Juiz (dead non-execution) and Ankou (executed)
@@ -740,16 +767,18 @@ const GMRoom = () => {
   }, [playerEffects, roleAssignments]);
   // Broadcast current game phase to player devices (so they can show Noite/Dia/Tribunal X)
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !room || !gmSnapshotLoaded) return;
     // When in the day cycle, the effective phase shown to players is dayPhase (day or tribunal).
     const effectivePhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
+    const phaseState = { phase: effectivePhase, number: nightNumber };
     const ch = supabase.channel(`room-phase-${roomId}`);
     ch.send({
       type: "broadcast",
       event: "phase",
-      payload: { phase: effectivePhase, number: nightNumber },
+      payload: phaseState,
     });
-  }, [roomId, gameCyclePhase, dayPhase, nightNumber]);
+    void supabase.from("rooms").update({ phase_state: phaseState }).eq("id", roomId);
+  }, [roomId, room, gmSnapshotLoaded, gameCyclePhase, dayPhase, nightNumber]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -761,16 +790,45 @@ const GMRoom = () => {
     }
   }, [joinBaseOverride]);
 
+  const handleTimerSync = useCallback((state: TimerSyncState) => {
+    setSyncedTimerState((current) => {
+      if (current
+        && current.phase === state.phase
+        && current.timeLeft === state.timeLeft
+        && current.isRunning === state.isRunning
+        && current.timerDone === state.timerDone) return current;
+      return state;
+    });
+    if (!roomId) return;
+    void supabase.channel(`room-timer-${roomId}`).send({
+      type: "broadcast", event: "timer", payload: state,
+    });
+    void supabase.from("rooms").update({ timer_state: state }).eq("id", roomId);
+  }, [roomId]);
+
   // Fetch room
   useEffect(() => {
     if (!roomId) return;
     const fetchRoom = async () => {
       const { data } = await supabase
         .from("rooms")
-        .select("id, code, status, language")
+        .select("id, code, status, language, phase_state, timer_state")
         .eq("id", roomId)
         .single();
-      if (data) setRoom(data as Room);
+      if (data) {
+        const fetchedRoom = data as unknown as Room;
+        setRoom(fetchedRoom);
+        if (fetchedRoom.timer_state) setSyncedTimerState(fetchedRoom.timer_state);
+        if (fetchedRoom.phase_state) {
+          setNightNumber(fetchedRoom.phase_state.number);
+          if (fetchedRoom.phase_state.phase === "night") {
+            setGameCyclePhase("night");
+          } else {
+            setGameCyclePhase("day");
+            setDayPhase(fetchedRoom.phase_state.phase);
+          }
+        }
+      }
     };
     fetchRoom();
   }, [roomId]);
@@ -885,6 +943,10 @@ const GMRoom = () => {
     setSpiderRevealCards([]);
     setSpyRevealOpen(false);
     setSpyRevealCards([]);
+    setCompletedScriptLineKeys(new Set());
+    setScriptAutoComplete({ role: null, version: 0 });
+    setAutomaticWinKind(null);
+    setDeclinedAutomaticVictory(null);
   }, []);
 
   const resetRoom = async () => {
@@ -898,7 +960,12 @@ const GMRoom = () => {
         .update({ character: null, is_alive: true, is_ready: false, last_seen_at: new Date().toISOString() })
         .eq("id", player.id)
     );
-    const roomUpdate = supabase.from("rooms").update({ status: "lobby" }).eq("id", roomId);
+    const roomUpdate = supabase.from("rooms").update({
+      status: "lobby",
+      phase_state: null,
+      timer_state: null,
+      game_over_state: null,
+    }).eq("id", roomId);
     const results = await Promise.all([...playerUpdates, roomUpdate]);
 
     if (results.some((result) => result.error)) {
@@ -965,14 +1032,16 @@ const GMRoom = () => {
   const sendGameOver = async (kind: WinKind) => {
     if (!roomId) return;
     const perPlayer = Object.fromEntries(players.map((player) => [player.id, getGameOverOutcome(kind, player.id)]));
+    const gameOverState = { kind, perPlayer };
     await supabase.channel(`game-over-${roomId}`).send({
       type: "broadcast",
       event: "game-over",
-      payload: { kind, perPlayer },
+      payload: gameOverState,
     });
-    await supabase.from("rooms").update({ status: "finished" }).eq("id", roomId);
+    await supabase.from("rooms").update({ status: "finished", game_over_state: gameOverState }).eq("id", roomId);
     setRoom((prev) => (prev ? { ...prev, status: "finished" } : prev));
     setManualWinKind(null);
+    setAutomaticWinKind(null);
   };
 
   const updateSeatPosition = async (playerId: string, position: number | null) => {
@@ -1557,6 +1626,7 @@ const GMRoom = () => {
     }
 
     toast.success(format(getToast("okNightEnded", (room?.language as Language) || "pt"), { n: nightNumber }));
+    setCompletedScriptLineKeys(new Set());
     setGameCyclePhase("day");
     setDayPhase("day");
   };
@@ -1660,6 +1730,7 @@ const GMRoom = () => {
 
     setPlayerEffects(newEffects);
 
+    setCompletedScriptLineKeys(new Set());
     setGameCyclePhase("night");
     setNightNumber((n) => n + 1);
     setNightTargetedPlayerIds(new Set());
@@ -1678,6 +1749,53 @@ const GMRoom = () => {
   const getRolePlayerId = useCallback((role: RoleId): string | null => {
     return Object.entries(roleAssignments).find(([, r]) => r === role)?.[0] || null;
   }, [roleAssignments]);
+
+  const markScriptRoleAction = useCallback((role: RoleId) => {
+    setScriptAutoComplete((current) => ({ role, version: current.version + 1 }));
+  }, []);
+
+  const clearEffectsFromDeadSources = useCallback((progressOrder: number) => {
+    const deadSourceRoles = [...new Set(Object.values(roleAssignments))].filter((role) => {
+      if (getScriptOrderIndex(role) >= progressOrder) return false;
+      const sourcePlayerIds = Object.entries(roleAssignments)
+        .filter(([, assignedRole]) => assignedRole === role)
+        .map(([playerId]) => playerId);
+      return sourcePlayerIds.length > 0 && sourcePlayerIds.every((playerId) => permanentlyDead.has(playerId));
+    });
+    if (deadSourceRoles.length === 0) return;
+
+    if (deadSourceRoles.includes("e02")) setPoisonedPlayerId(null);
+    if (deadSourceRoles.includes("a06")) setIllusionPlayerId(null);
+    if (deadSourceRoles.includes("v11")) setChefeLastTarget(null);
+    if (deadSourceRoles.includes("v17")) setSalvadorLastTarget(null);
+
+    const effectsToRemove = new Set<StatusEffect>();
+    deadSourceRoles.forEach((role) => DEAD_SOURCE_EFFECTS[role]?.forEach((effect) => effectsToRemove.add(effect)));
+    if (effectsToRemove.size === 0) return;
+    setPlayerEffects((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const [playerId, effects] of Object.entries(prev)) {
+        const cleaned = new Set(effects);
+        effectsToRemove.forEach((effect) => cleaned.delete(effect));
+        if (cleaned.size !== effects.size) {
+          next[playerId] = cleaned;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [permanentlyDead, roleAssignments]);
+
+  const handleScriptLineCompleted = useCallback((key: string, completed: boolean, progressOrder: number | null = null) => {
+    setCompletedScriptLineKeys((prev) => {
+      const next = new Set(prev);
+      if (completed) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+    if (completed && progressOrder !== null) clearEffectsFromDeadSources(progressOrder);
+  }, [clearEffectsFromDeadSources]);
 
   const handleLobisomemMauChargeToggle = useCallback((idx: number) => {
     const newCharges = lobisomemMauCharges > idx ? idx : idx + 1;
@@ -1788,6 +1906,18 @@ const GMRoom = () => {
       applyCaughtIfWebbed();
       return;
     }
+    const actionRole: RoleId | null = action === "poison"
+      ? "e02"
+      : action === "kill"
+      ? "e01"
+      : action === "chaman"
+      ? "e03"
+      : action === "illusion"
+      ? "a06"
+      : action.startsWith("role-") && ROLES[action.replace("role-", "") as RoleId]
+      ? action.replace("role-", "") as RoleId
+      : null;
+    if (actionRole) markScriptRoleAction(actionRole);
     applyCaughtIfWebbed();
     if (action === "poison") {
       handlePlayerStatusChange(targetPlayerId, "poisoned");
@@ -2035,7 +2165,7 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", roleSource);
       }
     }
-  }, [handlePlayerStatusChange, handleChamanDrop, handleSetIllusion, toggleEffect, roleAssignments, poisonedPlayerId, players, playerEffects, gameCyclePhase, anjoCharges, getRolePlayerId, pickRandomPlayer, permanentlyDead, resetUsesForRole, salvadorLastTarget, chefeLastTarget, playerStatuses, paranoicoCharges, spiderDayChangeUsed]);
+  }, [handlePlayerStatusChange, handleChamanDrop, handleSetIllusion, toggleEffect, roleAssignments, poisonedPlayerId, players, playerEffects, gameCyclePhase, anjoCharges, getRolePlayerId, pickRandomPlayer, permanentlyDead, resetUsesForRole, salvadorLastTarget, chefeLastTarget, playerStatuses, paranoicoCharges, spiderDayChangeUsed, markScriptRoleAction]);
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
@@ -2212,9 +2342,9 @@ const GMRoom = () => {
         const def = ROLES[answer.roleId];
         const name = players.find((p) => p.id === pid)?.name;
         const customLabels: Partial<Record<MeninaAnswerKind, string>> = {
-          soldier: t("meninaSoldier", localLang),
-          suicide: t("meninaSuicide", localLang),
-          werewolves: t("meninaWerewolves", localLang),
+          soldier: t("littleGirlSoldier", localLang),
+          suicide: t("littleGirlSuicide", localLang),
+          werewolves: t("littleGirlWerewolves", localLang),
         };
         return {
           name,
@@ -2616,6 +2746,44 @@ const GMRoom = () => {
   const visibleTimerState = effectiveGMPhase !== "night" && syncedTimerState?.phase === effectiveGMPhase ? syncedTimerState : null;
   const formatTimerValue = (seconds: number) =>
     `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  const victoryPlayers = useMemo<VictoryPlayer[]>(() => players
+    .filter((player) => player.seat_position !== null && !!roleAssignments[player.id])
+    .map((player) => {
+      const status = playerStatuses[player.id];
+      const alive = !permanentlyDead.has(player.id)
+        && status !== "dead"
+        && status !== "dead-this-night"
+        && (status !== undefined || player.is_alive);
+      return {
+        id: player.id,
+        role: roleAssignments[player.id],
+        alive,
+        effects: playerEffects[player.id] || new Set<StatusEffect>(),
+      };
+    }), [players, roleAssignments, playerStatuses, permanentlyDead, playerEffects]);
+  const detectedWinKind = useMemo(() => detectAutomaticVictory(victoryPlayers), [victoryPlayers]);
+  const victoryStateSignature = useMemo(
+    () => getVictoryStateSignature(victoryPlayers, `${effectiveGMPhase}:${nightNumber}`),
+    [victoryPlayers, effectiveGMPhase, nightNumber],
+  );
+
+  useEffect(() => {
+    if (!rolesConfirmed) {
+      setAutomaticWinKind(null);
+      return;
+    }
+    if (!detectedWinKind) {
+      setAutomaticWinKind(null);
+      setDeclinedAutomaticVictory(null);
+      return;
+    }
+    if (declinedAutomaticVictory?.kind === detectedWinKind
+      && declinedAutomaticVictory.signature === victoryStateSignature) {
+      setAutomaticWinKind(null);
+      return;
+    }
+    setAutomaticWinKind(detectedWinKind);
+  }, [rolesConfirmed, detectedWinKind, declinedAutomaticVictory, victoryStateSignature]);
 
   if (!room) {
     return (
@@ -2627,6 +2795,7 @@ const GMRoom = () => {
 
   const unseatedPlayers = players.filter((p) => p.seat_position === null);
   const isPlaying = room.status === "playing";
+  const pendingWinKind = manualWinKind ?? automaticWinKind;
 
   return (
     <LanguageContext.Provider value={lang}>
@@ -2766,11 +2935,11 @@ const GMRoom = () => {
                   isBruxaPermaDead={isBruxaPermaDead}
                   isMarionetista={isMarionetista}
                   chamanCharges={chamanCharges}
-                  onChamanChargeToggle={handleChamanChargeToggle}
+                  onChamanChargeToggle={(index) => { handleChamanChargeToggle(index); markScriptRoleAction("e03"); }}
                   onChamanDrop={handleChamanDrop}
                   isBruxaPoisoned={isBruxaPoisoned}
                   foxDisabled={foxDisabled}
-                  onFoxDisabledToggle={() => setFoxDisabled((v) => !v)}
+                  onFoxDisabledToggle={() => { setFoxDisabled((v) => !v); markScriptRoleAction("v04"); }}
                   showFoxCheckbox={nightNumber > 1}
                   playerEffects={playerEffects}
                   gameCyclePhase={gameCyclePhase}
@@ -2779,18 +2948,19 @@ const GMRoom = () => {
                   onExecute={handleExecute}
                   onDragAction={handleDragAction}
                   juizCharges={juizCharges}
-                  onJuizChargeToggle={(idx) => setJuizCharges(prev => prev > idx ? idx : idx + 1)}
+                  onJuizChargeToggle={(idx) => { setJuizCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v13"); }}
                   acusadorCharges={acusadorCharges}
-                  onAcusadorChargeToggle={(idx) => setAcusadorCharges(prev => prev > idx ? idx : idx + 1)}
+                  onAcusadorChargeToggle={(idx) => { setAcusadorCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v14"); }}
                   lobisomemMauCharges={lobisomemMauCharges}
-                  onLobisomemMauChargeToggle={handleLobisomemMauChargeToggle}
+                  onLobisomemMauChargeToggle={(idx) => { handleLobisomemMauChargeToggle(idx); markScriptRoleAction("m01"); }}
                   cupidoCharges={cupidoCharges}
-                  onCupidoChargeToggle={handleCupidoChargeToggle}
+                  onCupidoChargeToggle={(idx) => { handleCupidoChargeToggle(idx); markScriptRoleAction("s01"); }}
                   showCupidoCheckboxes={nightNumber > 1}
                   spiderDayChangeUsed={spiderDayChangeUsed}
-                  onSpiderDayChangeToggle={() => setSpiderDayChangeUsed((value) => !value)}
+                  onSpiderDayChangeToggle={() => { setSpiderDayChangeUsed((value) => !value); markScriptRoleAction("v23"); }}
                   lobisomemVampiroUsed={lobisomemVampiroUsed}
                   onLobisomemVampiroToggle={() => {
+                    markScriptRoleAction("m03");
                     const nextValue = !lobisomemVampiroUsed;
                     setLobisomemVampiroUsed(nextValue);
                     if (nextValue) {
@@ -2827,9 +2997,49 @@ const GMRoom = () => {
                     : `${tt("tribunal")} ${nightNumber}`}
                 </p>
                 {visibleTimerState && (
-                  <p className={`font-display text-5xl tracking-wider mt-3 ${visibleTimerState.timeLeft <= 30 ? "text-destructive" : "text-foreground"}`}>
-                    {formatTimerValue(visibleTimerState.timeLeft)}
-                  </p>
+                  <>
+                    <p className={`font-display text-5xl tracking-wider mt-3 ${visibleTimerState.timeLeft <= 30 ? "text-destructive" : "text-foreground"}`}>
+                      {formatTimerValue(visibleTimerState.timeLeft)}
+                    </p>
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => dayPanelRef.current?.adjustTimer(-60)}
+                        title={tt("subtractMinute")}
+                        aria-label={tt("subtractMinute")}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => dayPanelRef.current?.toggleTimer()}
+                        title={visibleTimerState.isRunning ? tt("pauseTimer") : tt("startTimer")}
+                        aria-label={visibleTimerState.isRunning ? tt("pauseTimer") : tt("startTimer")}
+                      >
+                        {visibleTimerState.isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => dayPanelRef.current?.resetTimer()}
+                        title={tt("resetTimer")}
+                        aria-label={tt("resetTimer")}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => dayPanelRef.current?.adjustTimer(60)}
+                        title={tt("addMinute")}
+                        aria-label={tt("addMinute")}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -2879,9 +3089,14 @@ const GMRoom = () => {
                     onSpiderReveal={handleSpiderReveal}
                     onSpyReveal={handleSpyReveal}
                     onScriptRolesVisible={handleScriptRolesVisible}
+                    completedLineKeys={completedScriptLineKeys}
+                    onLineCompletedChange={handleScriptLineCompleted}
+                    autoCompleteRole={scriptAutoComplete.role}
+                    autoCompleteVersion={scriptAutoComplete.version}
                   />
                 ) : (
                   <DayTribunalPanel
+                    ref={dayPanelRef}
                     nightNumber={nightNumber}
                     alivePlayers={players.filter((p) => !permanentlyDead.has(p.id) && playerStatuses[p.id] !== "dead-this-night").length}
                     onStartNight={startNextNight}
@@ -2893,13 +3108,10 @@ const GMRoom = () => {
                     dayDefaultSeconds={timerDefaults.day}
                     tribunalDefaultSeconds={timerDefaults.tribunal}
                     onDefaultsChange={setTimerDefaults}
-                    onTimerSync={(state) => {
-                      setSyncedTimerState(state);
-                      if (!roomId) return;
-                      supabase.channel(`room-timer-${roomId}`).send({
-                        type: "broadcast", event: "timer", payload: state,
-                      });
-                    }}
+                    initialTimerState={syncedTimerState}
+                    onTimerSync={handleTimerSync}
+                    completedLineKeys={completedScriptLineKeys}
+                    onLineCompletedChange={(key, completed) => handleScriptLineCompleted(key, completed, null)}
                   />
                 )}
               </div>
@@ -2983,7 +3195,7 @@ const GMRoom = () => {
                                 <Checkbox
                                   key={idx}
                                   checked={chamanCharges > idx}
-                                  onCheckedChange={() => handleChamanChargeToggle(idx)}
+                                  onCheckedChange={() => { handleChamanChargeToggle(idx); markScriptRoleAction("e03"); }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                                 />
                               ))}
@@ -2996,10 +3208,10 @@ const GMRoom = () => {
                             <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <Checkbox
                                 checked={foxDisabled}
-                                onCheckedChange={() => setFoxDisabled((v) => !v)}
+                                onCheckedChange={() => { setFoxDisabled((v) => !v); markScriptRoleAction("v04"); }}
                                 className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                               />
-                              <span className="text-[9px] text-muted-foreground">Esgotado</span>
+                              <span className="text-[9px] text-muted-foreground">{tt("powerExhausted")}</span>
                             </div>
                           )}
                           {/* Paranoico charges */}
@@ -3009,7 +3221,7 @@ const GMRoom = () => {
                                 <Checkbox
                                   key={idx}
                                   checked={paranoicoCharges > idx}
-                                  onCheckedChange={() => setParanoicoCharges(prev => prev > idx ? idx : idx + 1)}
+                                  onCheckedChange={() => { setParanoicoCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v10"); }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                                 />
                               ))}
@@ -3022,7 +3234,7 @@ const GMRoom = () => {
                                 <Checkbox
                                   key={idx}
                                   checked={anjoCharges > idx}
-                                  onCheckedChange={() => setAnjoCharges(prev => prev > idx ? idx : idx + 1)}
+                                  onCheckedChange={() => { setAnjoCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v18"); }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                                 />
                               ))}
@@ -3035,7 +3247,7 @@ const GMRoom = () => {
                                 <Checkbox
                                   key={idx}
                                   checked={lobisomemMauCharges > idx}
-                                  onCheckedChange={() => handleLobisomemMauChargeToggle(idx)}
+                                  onCheckedChange={() => { handleLobisomemMauChargeToggle(idx); markScriptRoleAction("m01"); }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                                 />
                               ))}
@@ -3046,7 +3258,7 @@ const GMRoom = () => {
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <Checkbox
                                 checked={spiderDayChangeUsed}
-                                onCheckedChange={() => setSpiderDayChangeUsed((value) => !value)}
+                                onCheckedChange={() => { setSpiderDayChangeUsed((value) => !value); markScriptRoleAction("v23"); }}
                                 className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                               />
                             </div>
@@ -3059,7 +3271,7 @@ const GMRoom = () => {
                                 <Checkbox
                                   key={idx}
                                   checked={cupidoCharges > idx}
-                                  onCheckedChange={() => handleCupidoChargeToggle(idx)}
+                                  onCheckedChange={() => { handleCupidoChargeToggle(idx); markScriptRoleAction("s01"); }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                                 />
                               ))}
@@ -3071,6 +3283,7 @@ const GMRoom = () => {
               <Checkbox
                 checked={lobisomemVampiroUsed}
                 onCheckedChange={() => {
+                  markScriptRoleAction("m03");
                   const nextValue = !lobisomemVampiroUsed;
                   setLobisomemVampiroUsed(nextValue);
                   if (nextValue) {
@@ -3108,7 +3321,7 @@ const GMRoom = () => {
                                 <Checkbox
                                   key={idx}
                                   checked={juizCharges > idx}
-                                  onCheckedChange={() => setJuizCharges(prev => prev > idx ? idx : idx + 1)}
+                                  onCheckedChange={() => { setJuizCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v13"); }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                                 />
                               ))}
@@ -3121,7 +3334,7 @@ const GMRoom = () => {
                                 <Checkbox
                                   key={idx}
                                   checked={acusadorCharges > idx}
-                                  onCheckedChange={() => setAcusadorCharges(prev => prev > idx ? idx : idx + 1)}
+                                  onCheckedChange={() => { setAcusadorCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v14"); }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                                 />
                               ))}
@@ -3421,11 +3634,20 @@ const GMRoom = () => {
       />
 
       <WinConfirmModal
-        open={!!manualWinKind}
-        kind={manualWinKind}
-        onDecline={() => setManualWinKind(null)}
+        open={!!pendingWinKind}
+        kind={pendingWinKind}
+        onDecline={() => {
+          if (manualWinKind) {
+            setManualWinKind(null);
+            return;
+          }
+          if (automaticWinKind) {
+            setDeclinedAutomaticVictory({ kind: automaticWinKind, signature: victoryStateSignature });
+            setAutomaticWinKind(null);
+          }
+        }}
         onAccept={() => {
-          if (manualWinKind) sendGameOver(manualWinKind);
+          if (pendingWinKind) sendGameOver(pendingWinKind);
         }}
       />
 

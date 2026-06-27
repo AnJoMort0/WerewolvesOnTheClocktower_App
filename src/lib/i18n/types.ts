@@ -173,6 +173,12 @@ export interface UIStrings {
   dayTimerEnded: string;
   tribunalTimerEnded: string;
   timeUp: string;
+  startTimer: string;
+  pauseTimer: string;
+  resetTimer: string;
+  addMinute: string;
+  subtractMinute: string;
+  completeScriptLine: string;
   revealVampireWolfTitle: string;
   revealVampireWolfSubtitle: string;
   revealLittleGirlTitle: string;

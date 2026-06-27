@@ -8,6 +8,7 @@ import { Users, Crown } from "lucide-react";
 import villagerIcon from "@/assets/icons/villager.png";
 import { SUPPORTED_LANGUAGES, getToast, t, type Language } from "@/lib/i18n";
 import { toast } from "sonner";
+import { cleanupObsoleteGameStorage } from "@/lib/playerSession";
 import {
   Select,
   SelectContent,
@@ -35,6 +36,7 @@ const Index = () => {
   });
 
   const createRoom = async () => {
+    cleanupObsoleteGameStorage();
     setLoading(true);
     localStorage.setItem("preferred_language", language);
 
@@ -47,7 +49,6 @@ const Index = () => {
         .single();
 
       if (data && !error) {
-        localStorage.setItem(`gm_token_${data.id}`, data.gm_token);
         navigate(`/gm/${data.id}`);
         setLoading(false);
         return;

@@ -11,6 +11,7 @@ import { GameOverModal } from "@/components/game/GameOverModal";
 import { LanguageContext, getRoleLabel, t, type Language, type WinKind } from "@/lib/i18n";
 import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
+import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/playerSession";
 
 type RoomPlayer = {
   id: string;
@@ -60,12 +61,14 @@ const PlayerView = () => {
   const [gameOver, setGameOver] = useState<{ kind: WinKind; outcome: "victory" | "defeat" } | null>(null);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
   const playerRef = useRef<typeof player>(null);
+  const gameOverEventRef = useRef<string | null>(null);
   useEffect(() => { playerRef.current = player; }, [player]);
 
   useEffect(() => {
     if (!playerId || !player?.room_id) return;
 
     const markSeen = () => {
+      touchPlayerSession(playerId);
       supabase
         .from("players")
         .update({ is_ready: true, last_seen_at: new Date().toISOString() })
@@ -146,13 +149,31 @@ const PlayerView = () => {
 
       const { data: roomData } = await supabase
         .from("rooms")
-        .select("status, language")
+        .select("status, language, phase_state, timer_state, game_over_state")
         .eq("id", data.room_id)
         .single();
       if (roomData) {
         setRoomStatus(roomData.status);
         const lang = (roomData as { language?: string }).language;
         if (lang === "fr" || lang === "pt") setLanguage(lang);
+        const durable = roomData as unknown as {
+          phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
+          timer_state?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;
+          game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat"> } | null;
+        };
+        if (durable.phase_state) setPhaseInfo(durable.phase_state);
+        if (durable.timer_state) setTimerState(durable.timer_state);
+        if (durable.game_over_state?.kind) {
+          const outcome = durable.game_over_state.perPlayer?.[playerId] ?? "defeat";
+          gameOverEventRef.current = `${durable.game_over_state.kind}:${outcome}`;
+          setGameOver({
+            kind: durable.game_over_state.kind,
+            outcome,
+          });
+          setGameOverDismissed(false);
+        } else {
+          gameOverEventRef.current = null;
+        }
       }
 
       const { data: allPlayers } = await supabase
@@ -187,12 +208,12 @@ const PlayerView = () => {
         { event: "DELETE", schema: "public", table: "players", filter: `id=eq.${playerId}` },
         () => {
           setRemoved(true);
-          try { localStorage.removeItem("player_id"); localStorage.removeItem("player_token"); localStorage.removeItem("player_room"); } catch { /* ignore */ }
+          clearPlayerSession();
         }
       )
       .subscribe();
 
-    const roomId = localStorage.getItem("player_room");
+    const roomId = getPlayerSession()?.roomId ?? null;
     let roomChannel: ReturnType<typeof supabase.channel> | null = null;
     let playersChannel: ReturnType<typeof supabase.channel> | null = null;
     let videnteChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -205,6 +226,23 @@ const PlayerView = () => {
           { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomId}` },
           (payload) => {
             setRoomStatus(payload.new.status);
+            if (payload.new.phase_state) setPhaseInfo(payload.new.phase_state);
+            if (payload.new.timer_state) setTimerState(payload.new.timer_state);
+            const durableGameOver = payload.new.game_over_state as {
+              kind?: WinKind;
+              perPlayer?: Record<string, "victory" | "defeat">;
+            } | null;
+            if (durableGameOver?.kind) {
+              const outcome = durableGameOver.perPlayer?.[playerId] ?? "defeat";
+              const eventKey = `${durableGameOver.kind}:${outcome}`;
+              if (gameOverEventRef.current !== eventKey) {
+                gameOverEventRef.current = eventKey;
+                setGameOver({ kind: durableGameOver.kind, outcome });
+                setGameOverDismissed(false);
+              }
+            } else {
+              gameOverEventRef.current = null;
+            }
           }
         )
         .subscribe();
@@ -308,6 +346,7 @@ const PlayerView = () => {
           let outcome: "victory" | "defeat" = "defeat";
           if (playerId && d.perPlayer?.[playerId]) outcome = d.perPlayer[playerId];
           else if (myRole && d.perRole && d.perRole[myRole]) outcome = d.perRole[myRole];
+          gameOverEventRef.current = `${d.kind}:${outcome}`;
           setGameOver({ kind: d.kind, outcome });
           setGameOverDismissed(false);
         }).subscribe();

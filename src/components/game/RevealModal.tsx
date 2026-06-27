@@ -121,11 +121,15 @@ export function resolveKillerCard(
   }
   if (source === "soldado") {
     const role = ROLES["v09"];
-    return { image: role.image, label: getRoleLabel("v09", lang), roleId: "v09" };
+    return { image: role.image, label: t("littleGirlSoldier", lang), roleId: "v09" };
   }
   if (source === "s01-suicide") {
     const role = ROLES["s01"];
-    return { image: role.image, label: t("meninaSuicide", lang), roleId: "s01" };
+    return { image: role.image, label: t("littleGirlSuicide", lang), roleId: "s01" };
+  }
+  if (source === "e01") {
+    const role = ROLES["e01"];
+    return { image: role.image, label: t("littleGirlWerewolves", lang), roleId: "e01" };
   }
   if (illusionPlayerId) {
     const illusionRole = roleAssignments[illusionPlayerId];

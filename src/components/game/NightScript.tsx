@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
 /** Evil roles for bear/crow mechanics */
 const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05"];
 const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "s02"];
+const EMPTY_COMPLETED_LINE_KEYS = new Set<string>();
 
 const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
   e02: "poison",
@@ -84,7 +85,17 @@ interface NightScriptProps {
   onSpiderReveal?: () => void;
   onSpyReveal?: () => void;
   onScriptRolesVisible?: (roles: RoleId[]) => void;
+  completedLineKeys?: Set<string>;
+  onLineCompletedChange?: (key: string, completed: boolean, progressOrder: number | null) => void;
+  autoCompleteRole?: RoleId | null;
+  autoCompleteVersion?: number;
 }
+
+type ScriptRenderItem = {
+  line: ScriptLine;
+  key: string;
+  progressOrder: number | null;
+};
 
 function isLineRelevant(
   line: ScriptLine,
@@ -164,6 +175,8 @@ function ScriptLineDisplay({
   onSpiderReveal,
   onSpyReveal,
   werewolvesAsleepText,
+  lineCompleted,
+  onLineCompletedChange,
 }: {
   line: ScriptLine;
   poisonedRoles: Set<RoleId>;
@@ -200,6 +213,8 @@ function ScriptLineDisplay({
   onSpiderReveal?: () => void;
   onSpyReveal?: () => void;
   werewolvesAsleepText: string;
+  lineCompleted: boolean;
+  onLineCompletedChange: (completed: boolean) => void;
 }) {
   const lang = useLanguage();
   const rawDisplayText = dynamicText ?? line.text;
@@ -265,20 +280,32 @@ function ScriptLineDisplay({
     <div
       draggable={!!dragAction}
       onDragStart={handleNativeDragStart}
+      onClickCapture={(event) => {
+        const button = (event.target as HTMLElement).closest("button");
+        if (button && !button.hasAttribute("data-line-checkbox")) onLineCompletedChange(true);
+      }}
     >
       <motion.div
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
-        className={`py-2 px-3 rounded-lg text-sm font-body leading-relaxed ${
+        className={`relative py-2 pl-3 pr-10 rounded-lg text-sm font-body leading-relaxed ${
           isPoisonedLine
             ? "bg-green-900/30 border border-green-500/40 text-green-300"
             : "bg-card/50 border border-border/30"
         } ${dragAction ? "cursor-grab active:cursor-grabbing hover:border-primary/50" : ""}`}
       >
+        <Checkbox
+          data-line-checkbox
+          checked={lineCompleted}
+          onCheckedChange={(checked) => onLineCompletedChange(checked === true)}
+          aria-label={t("completeScriptLine", lang)}
+          title={t("completeScriptLine", lang)}
+          className="absolute right-3 top-3 h-5 w-5 border-primary data-[state=checked]:bg-primary"
+        />
         {isWerewolfLine && isWerewolfLinePoisoned ? (
           <span className="line-through text-muted-foreground">{werewolvesAsleepText}</span>
         ) : (
-          <span className={(isStrikethrough || forceStrikethrough || a05Strike) ? "line-through text-muted-foreground" : ""}>
+          <span className={(isStrikethrough || forceStrikethrough || a05Strike || lineCompleted) ? "line-through text-muted-foreground" : ""}>
             {segments.map((seg, i) =>
               seg.isRole ? (
                 <span key={i} className={isPoisonedLine ? "font-bold text-green-400" : "font-bold text-blue-400"}>
@@ -441,6 +468,10 @@ export const NightScript = ({
   onSpiderReveal,
   onSpyReveal,
   onScriptRolesVisible,
+  completedLineKeys = EMPTY_COMPLETED_LINE_KEYS,
+  onLineCompletedChange,
+  autoCompleteRole = null,
+  autoCompleteVersion = 0,
 }: NightScriptProps) => {
   const lang = useLanguage();
   const dyn = useMemo(() => getDynamic(lang), [lang]);
@@ -633,6 +664,7 @@ export const NightScript = ({
   }, [activeRoles, permanentlyDeadRoles, roleAssignments, effectivelyDead, conditionKeys, chamanCharges, shouldShowVidenteLine, foxDisabled, profeciaGhostPlayerIds, _playerEffects]);
 
   const localizedScripts = useMemo(() => getScripts(lang), [lang]);
+  const processedAutoCompleteVersion = useRef(0);
   const sectionLabels = useMemo(() => ({
     first: t("firstNight", lang),
     secondStart: t("secondNightStart", lang),
@@ -640,18 +672,29 @@ export const NightScript = ({
   }), [lang]);
 
   const scriptLines = useMemo(() => {
-    const lines: { section: string; items: ScriptLine[] }[] = [];
+    const lines: { section: string; items: ScriptRenderItem[] }[] = [];
+    const makeItems = (
+      source: "first" | "second" | "normal",
+      sourceLines: ScriptLine[],
+      predicate: (line: ScriptLine) => boolean,
+    ) => sourceLines
+      .map((line, index) => ({
+        line,
+        key: `${nightNumber}:${source}:${index}`,
+        progressOrder: source === "normal" ? index : null,
+      }))
+      .filter((item) => predicate(item.line));
 
     if (nightNumber === 1) {
-      const filtered = localizedScripts.firstNight.filter((l) => isLineRelevant(l, activeRoles, permanentlyDeadRoles, roleAssignments, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds));
+      const filtered = makeItems("first", localizedScripts.firstNight, (line) => isLineRelevant(line, activeRoles, permanentlyDeadRoles, roleAssignments, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds));
       if (filtered.length > 0) lines.push({ section: sectionLabels.first, items: filtered });
     } else if (nightNumber === 2) {
-      const filtered2 = localizedScripts.secondNight.filter((l) => isLineRelevant(l, activeRoles, permanentlyDeadRoles, roleAssignments, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds));
+      const filtered2 = makeItems("second", localizedScripts.secondNight, (line) => isLineRelevant(line, activeRoles, permanentlyDeadRoles, roleAssignments, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds));
       if (filtered2.length > 0) lines.push({ section: sectionLabels.secondStart, items: filtered2 });
-      const filteredNormal = localizedScripts.normalNight.filter(filterLine);
+      const filteredNormal = makeItems("normal", localizedScripts.normalNight, filterLine);
       if (filteredNormal.length > 0) lines.push({ section: sectionLabels.night, items: filteredNormal });
     } else {
-      const filteredNormal = localizedScripts.normalNight.filter(filterLine);
+      const filteredNormal = makeItems("normal", localizedScripts.normalNight, filterLine);
       if (filteredNormal.length > 0) lines.push({ section: `${sectionLabels.night} ${nightNumber}`, items: filteredNormal });
     }
 
@@ -662,12 +705,21 @@ export const NightScript = ({
     if (!onScriptRolesVisible) return;
     const visibleRoles = new Set<RoleId>();
     for (const section of scriptLines) {
-      for (const line of section.items) {
-        line.requires?.forEach((role) => visibleRoles.add(role));
+      for (const item of section.items) {
+        item.line.requires?.forEach((role) => visibleRoles.add(role));
       }
     }
     onScriptRolesVisible(Array.from(visibleRoles));
   }, [onScriptRolesVisible, scriptLines]);
+
+  useEffect(() => {
+    if (!autoCompleteRole || autoCompleteVersion <= processedAutoCompleteVersion.current || !onLineCompletedChange) return;
+    processedAutoCompleteVersion.current = autoCompleteVersion;
+    const item = scriptLines
+      .flatMap((section) => section.items)
+      .find((candidate) => candidate.line.requires?.includes(autoCompleteRole) && !completedLineKeys.has(candidate.key));
+    if (item) onLineCompletedChange(item.key, true, item.progressOrder);
+  }, [autoCompleteRole, autoCompleteVersion, completedLineKeys, onLineCompletedChange, scriptLines]);
 
   return (
     <div className="space-y-4">
@@ -684,10 +736,10 @@ export const NightScript = ({
             <h3 className="font-display text-xs tracking-widest uppercase text-primary/70">
               {section.section}
             </h3>
-            {section.items.map((line, i) => (
+            {section.items.map((item) => (
               <ScriptLineDisplay
-                key={i}
-                line={line}
+                key={item.key}
+                line={item.line}
                 poisonedRoles={poisonedRoles}
                 poisonedPlayerId={poisonedPlayerId}
                 roleAssignments={roleAssignments}
@@ -699,11 +751,11 @@ export const NightScript = ({
                 onMeninaReveal={onMeninaReveal}
                 onFaroleiroReveal={onFaroleiroReveal}
                 onLobisomemVidenteReveal={onLobisomemVidenteReveal}
-                dynamicText={getDynamicText(line)}
+                dynamicText={getDynamicText(item.line)}
                 foxDisabled={foxDisabled}
                 onFoxDisabledToggle={onFoxDisabledToggle}
                 showFoxCheckbox={nightNumber > 1}
-                forceStrikethrough={isLineForcedStrikethrough(line)}
+                forceStrikethrough={isLineForcedStrikethrough(item.line)}
                 paranoicoCharges={paranoicoCharges}
                 onParanoicoChargeToggle={onParanoicoChargeToggle}
                 anjoCharges={anjoCharges}
@@ -722,6 +774,8 @@ export const NightScript = ({
                 onSpiderReveal={onSpiderReveal}
                 onSpyReveal={onSpyReveal}
                 werewolvesAsleepText={dyn.werewolvesAsleep}
+                lineCompleted={completedLineKeys.has(item.key)}
+                onLineCompletedChange={(completed) => onLineCompletedChange?.(item.key, completed, item.progressOrder)}
               />
             ))}
           </div>

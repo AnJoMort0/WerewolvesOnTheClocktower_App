@@ -67,30 +67,39 @@ export type Database = {
           completed_at: string | null
           created_at: string
           gm_token: string
+          game_over_state: Json | null
           id: string
           language: string
           last_activity_at: string
+          phase_state: Json | null
           status: string
+          timer_state: Json | null
         }
         Insert: {
           code: string
           completed_at?: string | null
           created_at?: string
           gm_token?: string
+          game_over_state?: Json | null
           id?: string
           language?: string
           last_activity_at?: string
+          phase_state?: Json | null
           status?: string
+          timer_state?: Json | null
         }
         Update: {
           code?: string
           completed_at?: string | null
           created_at?: string
           gm_token?: string
+          game_over_state?: Json | null
           id?: string
           language?: string
           last_activity_at?: string
+          phase_state?: Json | null
           status?: string
+          timer_state?: Json | null
         }
         Relationships: []
       }

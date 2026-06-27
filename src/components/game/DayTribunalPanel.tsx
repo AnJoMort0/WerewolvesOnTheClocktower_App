@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { forwardRef, useState, useEffect, useRef, useCallback, useImperativeHandle } from "react";
 import { motion } from "framer-motion";
 import { Sun, Scale, Play, Pause, RotateCcw, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { parseScriptText } from "@/lib/nightScript";
 import { useT } from "@/lib/i18n";
 
@@ -19,9 +20,18 @@ interface DayTribunalPanelProps {
   tribunalDefaultSeconds?: number;
   onDefaultsChange?: (defaults: { day: number; tribunal: number }) => void;
   onTimerSync?: (state: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean }) => void;
+  initialTimerState?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;
+  completedLineKeys?: Set<string>;
+  onLineCompletedChange?: (key: string, completed: boolean) => void;
 }
 
-export const DayTribunalPanel = ({
+export interface DayTribunalPanelHandle {
+  toggleTimer: () => void;
+  resetTimer: () => void;
+  adjustTimer: (seconds: number) => void;
+}
+
+export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPanelProps>(({
   nightNumber,
   alivePlayers,
   onStartNight,
@@ -34,17 +44,38 @@ export const DayTribunalPanel = ({
   tribunalDefaultSeconds = 180,
   onDefaultsChange,
   onTimerSync,
-}: DayTribunalPanelProps) => {
+  initialTimerState,
+  completedLineKeys = new Set(),
+  onLineCompletedChange,
+}, ref) => {
   const t = useT();
   const [dayDefault, setDayDefault] = useState(dayDefaultSeconds);
   const [tribunalDefault, setTribunalDefault] = useState(tribunalDefaultSeconds);
-  const [timeLeft, setTimeLeft] = useState(dayDefaultSeconds);
-  const [isRunning, setIsRunning] = useState(false);
-  const [timerDone, setTimerDone] = useState(false);
+  const matchingInitialTimer = initialTimerState?.phase === gamePhase ? initialTimerState : null;
+  const [timeLeft, setTimeLeft] = useState(matchingInitialTimer?.timeLeft ?? dayDefaultSeconds);
+  const [isRunning, setIsRunning] = useState(matchingInitialTimer?.isRunning ?? false);
+  const [timerDone, setTimerDone] = useState(matchingInitialTimer?.timerDone ?? false);
   const [editingDuration, setEditingDuration] = useState(false);
   const [editMinutes, setEditMinutes] = useState("5");
   const [editSeconds, setEditSeconds] = useState("0");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const playAlarm = useCallback(() => {
+    try {
+      const ctx = new AudioContext();
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = "square";
+        gain.gain.value = 0.3;
+        osc.start(ctx.currentTime + i * 0.3);
+        osc.stop(ctx.currentTime + i * 0.3 + 0.15);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     setDayDefault(dayDefaultSeconds);
@@ -55,11 +86,17 @@ export const DayTribunalPanel = ({
   }, [tribunalDefaultSeconds]);
 
   useEffect(() => {
+    if (initialTimerState?.phase === gamePhase) {
+      setTimeLeft(initialTimerState.timeLeft);
+      setIsRunning(initialTimerState.isRunning);
+      setTimerDone(initialTimerState.timerDone);
+      return;
+    }
     const dur = gamePhase === "day" ? dayDefault : tribunalDefault;
     setTimeLeft(dur);
     setIsRunning(false);
     setTimerDone(false);
-  }, [gamePhase, dayDefault, tribunalDefault]);
+  }, [gamePhase, dayDefault, tribunalDefault, initialTimerState]);
 
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
@@ -78,28 +115,36 @@ export const DayTribunalPanel = ({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, timeLeft]);
+  }, [isRunning, timeLeft, playAlarm]);
 
   useEffect(() => {
     onTimerSync?.({ phase: gamePhase, timeLeft, isRunning, timerDone });
   }, [gamePhase, timeLeft, isRunning, timerDone, onTimerSync]);
 
-  const playAlarm = useCallback(() => {
-    try {
-      const ctx = new AudioContext();
-      for (let i = 0; i < 3; i++) {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        osc.type = "square";
-        gain.gain.value = 0.3;
-        osc.start(ctx.currentTime + i * 0.3);
-        osc.stop(ctx.currentTime + i * 0.3 + 0.15);
+  const resetTimer = useCallback(() => {
+    const duration = gamePhase === "day" ? dayDefault : tribunalDefault;
+    setTimeLeft(duration);
+    setIsRunning(false);
+    setTimerDone(false);
+  }, [dayDefault, gamePhase, tribunalDefault]);
+
+  useImperativeHandle(ref, () => ({
+    toggleTimer: () => {
+      if (timerDone) {
+        const duration = gamePhase === "day" ? dayDefault : tribunalDefault;
+        setTimeLeft(duration);
+        setTimerDone(false);
+        setIsRunning(true);
+        return;
       }
-    } catch { /* ignore */ }
-  }, []);
+      setIsRunning((running) => !running);
+    },
+    resetTimer,
+    adjustTimer: (seconds) => {
+      setTimeLeft((current) => Math.max(0, current + seconds));
+      setTimerDone(false);
+    },
+  }), [dayDefault, gamePhase, resetTimer, timerDone, tribunalDefault]);
 
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
@@ -163,11 +208,7 @@ export const DayTribunalPanel = ({
               <Button size="sm" variant="ghost" onClick={() => setIsRunning(!isRunning)}>
                 {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => {
-                const dur = gamePhase === "day" ? dayDefault : tribunalDefault;
-                setTimeLeft(dur);
-                setIsRunning(false);
-              }}>
+              <Button size="sm" variant="ghost" onClick={resetTimer}>
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </>
@@ -219,15 +260,26 @@ export const DayTribunalPanel = ({
             <div className="space-y-1">
               {tribunalLines.map((line, i) => {
                 const { segments } = parseScriptText(line);
+                const lineKey = `${nightNumber}:tribunal:${i}`;
+                const completed = completedLineKeys.has(lineKey);
                 return (
-                  <div key={i} className="bg-card/50 border border-border/30 rounded-lg py-2 px-3 text-sm font-body">
-                    {segments.map((seg, j) =>
-                      seg.isRole ? (
-                        <span key={j} className="font-bold text-blue-400">{seg.text}</span>
-                      ) : (
-                        <span key={j}>{seg.text}</span>
-                      )
-                    )}
+                  <div key={lineKey} className="flex items-start gap-3 bg-card/50 border border-border/30 rounded-lg py-2 px-3 text-sm font-body">
+                    <Checkbox
+                      checked={completed}
+                      onCheckedChange={(checked) => onLineCompletedChange?.(lineKey, checked === true)}
+                      aria-label={t("completeScriptLine")}
+                      title={t("completeScriptLine")}
+                      className="mt-0.5 h-4 w-4 border-primary data-[state=checked]:bg-primary"
+                    />
+                    <span className={completed ? "line-through text-muted-foreground" : ""}>
+                      {segments.map((seg, j) =>
+                        seg.isRole ? (
+                          <span key={j} className="font-bold text-blue-400">{seg.text}</span>
+                        ) : (
+                          <span key={j}>{seg.text}</span>
+                        )
+                      )}
+                    </span>
                   </div>
                 );
               })}
@@ -260,4 +312,6 @@ export const DayTribunalPanel = ({
       )}
     </div>
   );
-};
+});
+
+DayTribunalPanel.displayName = "DayTribunalPanel";

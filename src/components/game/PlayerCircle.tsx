@@ -159,6 +159,10 @@ export const PlayerCircle = ({
     if (action && isPlaying && onPlayerStatusChange) {
       const seated = seatedPlayers.find((p) => p.seat_position === position);
       if (!seated) return;
+      if (onDragAction) {
+        onDragAction(action, seated.id, sourcePlayerId);
+        return;
+      }
 
       if (action === "poison") {
         onPlayerStatusChange(seated.id, "poisoned");

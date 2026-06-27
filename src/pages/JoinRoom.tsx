@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import villagerIcon from "@/assets/icons/villager.png";
 import { t, getToast, type Language } from "@/lib/i18n";
+import { getPlayerSession, savePlayerSession } from "@/lib/playerSession";
 
 const JoinRoom = () => {
   const { code: pathCode } = useParams<{ code: string }>();
@@ -16,6 +17,7 @@ const JoinRoom = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [roomStatus, setRoomStatus] = useState<string>("lobby");
   const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<Language>("pt");
 
@@ -34,19 +36,16 @@ const JoinRoom = () => {
       }
       const roomLang = (data as { language?: string }).language;
       if (roomLang === "fr" || roomLang === "pt") setLang(roomLang);
-      // Try to rejoin (per-room storage key) regardless of status
+      // Try the bounded current-player session first, regardless of room status.
       const codeKey = code.toUpperCase();
-      const storedPlayerId = localStorage.getItem(`player_id_${codeKey}`) || (localStorage.getItem("player_room") === data.id ? localStorage.getItem("player_id") : null);
-      if (storedPlayerId) {
+      const storedSession = getPlayerSession({ roomId: data.id, roomCode: codeKey });
+      if (storedSession?.playerId) {
         const { data: pCheck } = await supabase
-          .from("players").select("id").eq("id", storedPlayerId).eq("room_id", data.id).maybeSingle();
-        if (pCheck) { navigate(`/play/${storedPlayerId}`); return; }
-      }
-      if (data.status !== "lobby") {
-        setError(t("gameAlreadyStarted", (roomLang === "fr" || roomLang === "pt") ? roomLang : "pt"));
-        return;
+          .from("players").select("id").eq("id", storedSession.playerId).eq("room_id", data.id).maybeSingle();
+        if (pCheck) { navigate(`/play/${storedSession.playerId}`); return; }
       }
       setRoomId(data.id);
+      setRoomStatus(data.status);
     };
     fetchRoom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,11 +57,24 @@ const JoinRoom = () => {
 
     const { data: existing } = await supabase
       .from("players")
-      .select("name")
+      .select("id, name, player_token")
       .eq("room_id", roomId);
 
-    if (existing?.some((p) => p.name.toLowerCase() === name.trim().toLowerCase())) {
-      toast.error(getToast("warnDuplicateName", lang));
+    const existingPlayer = existing?.find((player) => player.name.toLowerCase() === name.trim().toLowerCase());
+    if (existingPlayer) {
+      savePlayerSession({
+        playerId: existingPlayer.id,
+        playerToken: existingPlayer.player_token,
+        roomId,
+        roomCode: code,
+      });
+      navigate(`/play/${existingPlayer.id}`);
+      setLoading(false);
+      return;
+    }
+
+    if (roomStatus !== "lobby") {
+      toast.error(t("gameAlreadyStarted", lang));
       setLoading(false);
       return;
     }
@@ -74,11 +86,7 @@ const JoinRoom = () => {
       .single();
 
     if (data && !err) {
-      const codeKey = (code || "").toUpperCase();
-      localStorage.setItem(`player_token_${data.id}`, data.player_token);
-      localStorage.setItem(`player_room`, roomId);
-      localStorage.setItem(`player_id`, data.id);
-      localStorage.setItem(`player_id_${codeKey}`, data.id);
+      savePlayerSession({ playerId: data.id, playerToken: data.player_token, roomId, roomCode: code });
       navigate(`/play/${data.id}`);
     } else {
       toast.error(getToast("genericError", lang));
