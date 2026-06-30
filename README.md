@@ -48,8 +48,10 @@ This version was created for groups who enjoy conversation more than elimination
 
 The game is currently written for:
 
-- European Portuguese: [read the rulebook](Rulebook_PT.md) or [open the living reference document](https://docs.google.com/document/d/1aV9II9br_8ln4zrA7wgHRByBLqyb8EzkOqc2ltHGCes/edit?usp=sharing)
-- French: [read the rulebook](Rulebook_FR.md) or [open the living reference document](https://docs.google.com/document/d/1Jd6N6Us3eo_LdNMcFmwEd3A5IbOAB332adSVViu7Na0/edit?tab=t.0#heading=h.dy2z3kn1r3as)
+- European Portuguese: built into the app, with the living reference document still available [here](https://docs.google.com/document/d/1aV9II9br_8ln4zrA7wgHRByBLqyb8EzkOqc2ltHGCes/edit?usp=sharing)
+- French: built into the app, with the living reference document still available [here](https://docs.google.com/document/d/1Jd6N6Us3eo_LdNMcFmwEd3A5IbOAB332adSVViu7Na0/edit?tab=t.0#heading=h.dy2z3kn1r3as)
+
+The editable in-app rulebook source lives in [src/lib/rulebookContent.ts](src/lib/rulebookContent.ts). It keeps rule text and character text together in structured fields so updates do not require editing markdown tables.
 
 English rules and interface text may be added in the future.
 

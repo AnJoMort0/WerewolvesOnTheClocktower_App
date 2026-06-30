@@ -8,6 +8,7 @@ import { ROLES, type RoleId } from "@/lib/roles";
 import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, type RevealCard } from "@/components/game/RevealModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
+import { RulebookModal } from "@/components/game/RulebookModal";
 import { LanguageContext, getRoleLabel, t, type Language, type WinKind } from "@/lib/i18n";
 import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
@@ -61,6 +62,8 @@ const PlayerView = () => {
   const [language, setLanguage] = useState<Language>("pt");
   const [gameOver, setGameOver] = useState<{ kind: WinKind; outcome: "victory" | "defeat" } | null>(null);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
+  const [rulebookOpen, setRulebookOpen] = useState(false);
+  const [rulebookRoleId, setRulebookRoleId] = useState<RoleId | null>(null);
   const playerRef = useRef<typeof player>(null);
   const gameOverEventRef = useRef<string | null>(null);
   const previousTimerAlarmStateRef = useRef<TimerAlarmState | null>(null);
@@ -447,6 +450,10 @@ const PlayerView = () => {
   const isDead = !player.is_alive;
   const seatedPlayers = roomPlayers.filter((p) => p.seat_position !== null).sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0));
   const totalSlots = seatedPlayers.length || roomPlayers.length;
+  const openRulebook = (roleId: RoleId | null = null) => {
+    setRulebookRoleId(roleId);
+    setRulebookOpen(true);
+  };
 
   return (
     <LanguageContext.Provider value={language}>
@@ -457,18 +464,15 @@ const PlayerView = () => {
         className="w-full max-w-sm text-center space-y-6"
       >
         <div className="space-y-2 relative">
-          <a
-            href={language === "fr"
-              ? "https://anjomort0.github.io/WerewolvesOnTheClocktower/Rulebook_FR.html"
-              : "https://anjomort0.github.io/WerewolvesOnTheClocktower/Rulebook_PT.html"}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => openRulebook()}
             className="absolute top-0 right-0 text-muted-foreground/40 hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-secondary"
             title={t("rulebook", language)}
             aria-label={t("rulebook", language)}
           >
             <BookOpen className="h-4 w-4" />
-          </a>
+          </button>
           <h1 className="font-display text-3xl font-bold">{player.name}</h1>
           <p className="text-muted-foreground/60 text-xs font-body">
             {t("appTitle", language)}
@@ -581,10 +585,9 @@ const PlayerView = () => {
                 >
                   <div className={`bg-card border border-border rounded-2xl p-6 paper-texture glow-blood space-y-4 ${isDead ? "grayscale opacity-60" : ""}`}>
                     {roleDef ? (
-                      <a
-                        href={`https://anjomort0.github.io/WerewolvesOnTheClocktower/Rulebook_${language === "fr" ? "FR" : "PT"}.html#${roleDef.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => openRulebook(roleDef.id)}
                         className="relative w-48 h-48 mx-auto rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg block"
                       >
                         <img
@@ -597,7 +600,7 @@ const PlayerView = () => {
                             <X className="w-24 h-24 text-muted-foreground" strokeWidth={2} />
                           </div>
                         )}
-                      </a>
+                      </button>
                     ) : null}
                     <p className="text-muted-foreground text-sm font-display tracking-widest uppercase">
                       {t("yourRole", language)}
@@ -646,24 +649,31 @@ const PlayerView = () => {
           isVidentePoisoned={videnteData.isVidentePoisoned}
           precomputedFakeMap={videnteData.fakeMap}
           dismissible={false}
+          onRoleClick={(roleId) => openRulebook(roleId)}
         />
       )}
 
       {isMenina && (
-        <RevealModal language={language} open={meninaReveal} onClose={() => setMeninaReveal(false)} title={t("revealLittleGirlTitle", language)} subtitle={t("revealLittleGirlSubtitle", language)} cards={meninaCards} dismissible={false} />
+        <RevealModal language={language} open={meninaReveal} onClose={() => setMeninaReveal(false)} title={t("revealLittleGirlTitle", language)} subtitle={t("revealLittleGirlSubtitle", language)} cards={meninaCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       {isFaroleiro && (
-        <RevealModal language={language} open={faroleiroReveal} onClose={() => setFaroleiroReveal(false)} title={t("revealLamplighterTitle", language)} subtitle={t("revealLamplighterSubtitle", language)} cards={faroleiroCards} dismissible={false} />
+        <RevealModal language={language} open={faroleiroReveal} onClose={() => setFaroleiroReveal(false)} title={t("revealLamplighterTitle", language)} subtitle={t("revealLamplighterSubtitle", language)} cards={faroleiroCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       {isLobisomemVidente && (
-        <RevealModal language={language} open={lvReveal} onClose={() => setLvReveal(false)} title={t("revealVampireWolfTitle", language)} subtitle={t("revealVampireWolfSubtitle", language)} cards={lvCards} dismissible={false} />
+        <RevealModal language={language} open={lvReveal} onClose={() => setLvReveal(false)} title={t("revealVampireWolfTitle", language)} subtitle={t("revealVampireWolfSubtitle", language)} cards={lvCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       {isSpider && (
-        <RevealModal language={language} open={spiderReveal} onClose={() => setSpiderReveal(false)} title={t("spiderEyeReveal", language)} cards={spiderCards} dismissible={false} />
+        <RevealModal language={language} open={spiderReveal} onClose={() => setSpiderReveal(false)} title={t("spiderEyeReveal", language)} cards={spiderCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       {isSpy && (
-        <RevealModal language={language} open={spyReveal} onClose={() => setSpyReveal(false)} title={t("spyEyeReveal", language)} cards={spyCards} dismissible={false} />
+        <RevealModal language={language} open={spyReveal} onClose={() => setSpyReveal(false)} title={t("spyEyeReveal", language)} cards={spyCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
+      <RulebookModal
+        open={rulebookOpen}
+        onOpenChange={setRulebookOpen}
+        language={language}
+        roleId={rulebookRoleId}
+      />
       <GameOverModal
         open={!!gameOver && !gameOverDismissed}
         kind={gameOver?.kind ?? null}

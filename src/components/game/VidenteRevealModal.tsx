@@ -14,11 +14,7 @@ interface VidenteRevealModalProps {
   isVidentePoisoned?: boolean;
   precomputedFakeMap?: Record<string, string> | null;
   dismissible?: boolean;
-}
-
-function rulebookUrl(lang: "pt" | "fr", roleId: RoleId): string {
-  const file = lang === "fr" ? "Rulebook_FR.html" : "Rulebook_PT.html";
-  return `https://anjomort0.github.io/WerewolvesOnTheClocktower/${file}#${roleId}`;
+  onRoleClick?: (roleId: RoleId) => void;
 }
 
 export const VidenteRevealModal = ({
@@ -31,6 +27,7 @@ export const VidenteRevealModal = ({
   isVidentePoisoned = false,
   precomputedFakeMap = null,
   dismissible = true,
+  onRoleClick,
 }: VidenteRevealModalProps) => {
   const lang = useLanguage();
   const t = useT();
@@ -114,10 +111,9 @@ export const VidenteRevealModal = ({
                     className="bg-secondary border border-border rounded-xl p-4 flex flex-col items-center gap-2"
                   >
                     {roleDef && (
-                      <a
-                        href={rulebookUrl(lang, displayRole)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => onRoleClick?.(displayRole)}
                         className="w-24 h-24 rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg block"
                       >
                         <img
@@ -125,7 +121,7 @@ export const VidenteRevealModal = ({
                           alt={label}
                           className="w-full h-full object-cover"
                         />
-                      </a>
+                      </button>
                     )}
                     <span className="font-body text-sm text-foreground">{player?.name ?? "?"}</span>
                     <span className="font-display text-xs text-blue-400">{label}</span>

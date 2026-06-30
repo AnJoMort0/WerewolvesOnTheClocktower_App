@@ -25,18 +25,12 @@ interface RevealModalProps {
   title: string;
   subtitle?: string;
   cards: RevealCard[];
-  /** When provided, card images become anchor links to the rulebook */
   language?: Language;
   dismissible?: boolean;
+  onRoleClick?: (roleId: RoleId) => void;
 }
 
-function rulebookUrl(lang: Language | undefined, roleId: RoleId | undefined): string | null {
-  if (!roleId) return null;
-  const file = (lang === "fr") ? "Rulebook_FR.html" : "Rulebook_PT.html";
-  return `https://anjomort0.github.io/WerewolvesOnTheClocktower/${file}#${roleId}`;
-}
-
-export const RevealModal = ({ open, onClose, title, subtitle, cards, language, dismissible = true }: RevealModalProps) => {
+export const RevealModal = ({ open, onClose, title, subtitle, cards, dismissible = true, onRoleClick }: RevealModalProps) => {
   return (
     <AnimatePresence>
       {open && (
@@ -67,7 +61,6 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language, d
 
             <div className="grid grid-cols-2 gap-4">
               {cards.map((c, i) => {
-                const href = rulebookUrl(language, c.roleId);
                 const imageBlock = (
                   <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg">
                     <img src={c.image} alt={c.label} className="w-full h-full object-cover" />
@@ -81,10 +74,10 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language, d
                     transition={{ delay: i * 0.05 }}
                     className="bg-secondary border border-border rounded-xl p-4 flex flex-col items-center gap-2"
                   >
-                    {href ? (
-                      <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+                    {c.roleId && onRoleClick ? (
+                      <button type="button" onClick={() => onRoleClick(c.roleId!)} className="block rounded-xl">
                         {imageBlock}
-                      </a>
+                      </button>
                     ) : imageBlock}
                     {c.name && <span className="font-body text-sm text-foreground">{c.name}</span>}
                     <span className="font-display text-xs text-blue-400 text-center">{c.label}</span>

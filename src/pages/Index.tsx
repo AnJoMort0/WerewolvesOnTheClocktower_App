@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Crown } from "lucide-react";
+import { Users, Crown, BookOpen } from "lucide-react";
+import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorModal";
 import villagerIcon from "@/assets/icons/villager.png";
 import { SUPPORTED_LANGUAGES, getToast, t, type Language } from "@/lib/i18n";
 import { toast } from "sonner";
@@ -136,6 +137,25 @@ const Index = () => {
             <Crown className="mr-2 h-5 w-5" />
             {t("createRoom", language)}
           </Button>
+
+          <div className="-mt-3">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <CharacterGeneratorButton language={language} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  localStorage.setItem("preferred_language", language);
+                  navigate(`/rulebook?lang=${language}`);
+                }}
+                className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <BookOpen className="mr-2 h-3.5 w-3.5" />
+                {t("rulebook", language)}
+              </Button>
+            </div>
+          </div>
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />

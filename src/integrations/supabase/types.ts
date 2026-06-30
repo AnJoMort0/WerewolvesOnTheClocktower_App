@@ -73,6 +73,7 @@ export type Database = {
           last_activity_at: string
           phase_state: Json | null
           status: string
+          timer_defaults: Json
           timer_state: Json | null
         }
         Insert: {
@@ -86,6 +87,7 @@ export type Database = {
           last_activity_at?: string
           phase_state?: Json | null
           status?: string
+          timer_defaults?: Json
           timer_state?: Json | null
         }
         Update: {
@@ -99,6 +101,7 @@ export type Database = {
           last_activity_at?: string
           phase_state?: Json | null
           status?: string
+          timer_defaults?: Json
           timer_state?: Json | null
         }
         Relationships: []

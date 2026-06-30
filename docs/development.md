@@ -56,13 +56,12 @@ The application can run from a local development server, but it still requires i
 - `src/pages/JoinRoom.tsx`: player name entry
 - `src/pages/PlayerView.tsx`: player phone interface
 - `src/components/game`: game-specific interface components
-- `src/lib`: roles, localisation, night script, and join URL helpers
+- `src/lib`: roles, localisation, night script, rulebook content, and join URL helpers
 - `src/integrations/supabase`: Supabase client and generated types
 - `src/assets/roles`: character artwork used by the application and README
+- `src/assets/extras`: extra rulebook card artwork used by the in-app reference
 - `supabase/migrations`: reproducible database migrations
 - `public/_redirects`: Cloudflare Pages single-page-app fallback
-- `Rulebook_PT.md`: Portuguese rules and character reference
-- `Rulebook_FR.md`: French rules and character reference
 - `CODEX_NEEDS_NEXT.md`: temporary deployment handoff notes and information checklist
 - `ROADMAP.md`: owner-maintained roadmap and playtest notes
 

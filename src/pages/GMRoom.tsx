@@ -11,6 +11,7 @@ import { DayTribunalPanel, type DayTribunalPanelHandle } from "@/components/game
 import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS, STATUS_EFFECT_LABELS } from "@/components/game/PlayerStatusPopover";
 import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
+import { RulebookModal } from "@/components/game/RulebookModal";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -30,7 +31,6 @@ import illusionIcon from "@/assets/icons/illusion.png";
 import imunityIcon from "@/assets/icons/imunity_full.png";
 import villagerIcon from "@/assets/icons/villager.png";
 
-const TIMER_DEFAULTS_STORAGE_KEY = "wotct_gm_timer_defaults";
 const JOIN_BASE_URL_STORAGE_KEY = "wotct_join_base_url";
 const GM_ADVANCED_STORAGE_PREFIX = "wotct_gm_advanced_";
 const GM_SNAPSHOT_STORAGE_PREFIX = "wotct_gm_snapshot_";
@@ -73,6 +73,7 @@ type Room = {
   language?: Language;
   phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
   timer_state?: TimerSyncState | null;
+  timer_defaults?: TimerDefaults | null;
 };
 
 type TimerSyncState = {
@@ -81,6 +82,21 @@ type TimerSyncState = {
   isRunning: boolean;
   timerDone: boolean;
 };
+
+type TimerDefaults = {
+  day: number;
+  tribunal: number;
+};
+
+const FALLBACK_TIMER_DEFAULTS: TimerDefaults = { day: 300, tribunal: 180 };
+
+function normalizeTimerDefaults(value: unknown): TimerDefaults {
+  if (!value || typeof value !== "object") return FALLBACK_TIMER_DEFAULTS;
+  const partial = value as Partial<TimerDefaults>;
+  const day = typeof partial.day === "number" && partial.day > 0 ? partial.day : FALLBACK_TIMER_DEFAULTS.day;
+  const tribunal = typeof partial.tribunal === "number" && partial.tribunal > 0 ? partial.tribunal : FALLBACK_TIMER_DEFAULTS.tribunal;
+  return { day, tribunal };
+}
 
 type GMSnapshot = {
   version: typeof GM_SNAPSHOT_VERSION;
@@ -235,20 +251,7 @@ const GMRoom = () => {
 
   // Executado tracking for day kills
   const [dayKilledPlayerIds, setDayKilledPlayerIds] = useState<string[]>([]);
-  const [timerDefaults, setTimerDefaults] = useState<{ day: number; tribunal: number }>(() => {
-    if (typeof window === "undefined") return { day: 300, tribunal: 180 };
-    const raw = window.localStorage.getItem(TIMER_DEFAULTS_STORAGE_KEY);
-    if (!raw) return { day: 300, tribunal: 180 };
-    try {
-      const parsed = JSON.parse(raw);
-      if (typeof parsed?.day === "number" && typeof parsed?.tribunal === "number") {
-        return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return { day: 300, tribunal: 180 };
-  });
+  const [timerDefaults, setTimerDefaults] = useState<TimerDefaults>(FALLBACK_TIMER_DEFAULTS);
 
   // Paranoico kill announcement for tribunal
   const [paranoicoKillName, setParanoicoKillName] = useState<string | null>(null);
@@ -301,6 +304,8 @@ const GMRoom = () => {
   const [declinedAutomaticVictory, setDeclinedAutomaticVictory] = useState<{ kind: AutomaticWinKind; signature: string } | null>(null);
   const [completedScriptLineKeys, setCompletedScriptLineKeys] = useState<Set<string>>(new Set());
   const [scriptAutoComplete, setScriptAutoComplete] = useState<{ role: RoleId | null; version: number }>({ role: null, version: 0 });
+  const [rulebookOpen, setRulebookOpen] = useState(false);
+  const [rulebookRoleId, setRulebookRoleId] = useState<RoleId | null>(null);
 
   const defaultJoinBaseUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -548,10 +553,6 @@ const GMRoom = () => {
       return newEffects;
     });
   }, [roleAssignments, poisonedPlayerId]);
-
-  useEffect(() => {
-    window.localStorage.setItem(TIMER_DEFAULTS_STORAGE_KEY, JSON.stringify(timerDefaults));
-  }, [timerDefaults]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !roomId) return;
@@ -810,18 +811,27 @@ const GMRoom = () => {
     void supabase.from("rooms").update({ timer_state: state }).eq("id", roomId);
   }, [roomId]);
 
+  const handleTimerDefaultsChange = useCallback((defaults: TimerDefaults) => {
+    const next = normalizeTimerDefaults(defaults);
+    setTimerDefaults(next);
+    setRoom((current) => current ? { ...current, timer_defaults: next } : current);
+    if (!roomId) return;
+    void supabase.from("rooms").update({ timer_defaults: next }).eq("id", roomId);
+  }, [roomId]);
+
   // Fetch room
   useEffect(() => {
     if (!roomId) return;
     const fetchRoom = async () => {
       const { data } = await supabase
         .from("rooms")
-        .select("id, code, status, language, phase_state, timer_state")
+        .select("id, code, status, language, phase_state, timer_state, timer_defaults")
         .eq("id", roomId)
         .single();
       if (data) {
         const fetchedRoom = data as unknown as Room;
         setRoom(fetchedRoom);
+        setTimerDefaults(normalizeTimerDefaults(fetchedRoom.timer_defaults));
         if (fetchedRoom.timer_state) setSyncedTimerState(fetchedRoom.timer_state);
         if (fetchedRoom.phase_state) {
           setNightNumber(fetchedRoom.phase_state.number);
@@ -2777,6 +2787,10 @@ const GMRoom = () => {
   const lang: Language = (room?.language as Language) || "pt";
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
   const tt = useCallback((key: Parameters<typeof t>[0]) => t(key, lang), [lang]);
+  const openRulebook = useCallback((roleId: RoleId | null = null) => {
+    setRulebookRoleId(roleId);
+    setRulebookOpen(true);
+  }, []);
   const effectiveGMPhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
   useEffect(() => setHiddenTimerEditing(false), [effectiveGMPhase]);
   const visibleTimerState = effectiveGMPhase !== "night" && syncedTimerState?.phase === effectiveGMPhase ? syncedTimerState : null;
@@ -2796,7 +2810,7 @@ const GMRoom = () => {
     if (Number.isNaN(minutes) || minutes < 0 || minutes > 30 || seconds < 0 || seconds > 59) return;
     const duration = minutes * 60 + seconds;
     if (duration <= 0) return;
-    setTimerDefaults((current) => ({ ...current, [effectiveGMPhase]: duration }));
+    handleTimerDefaultsChange({ ...timerDefaults, [effectiveGMPhase]: duration });
     dayPanelRef.current?.setDuration(duration);
     setHiddenTimerEditing(false);
   };
@@ -2921,18 +2935,15 @@ const GMRoom = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <a
-              href={lang === "fr"
-                ? "https://anjomort0.github.io/WerewolvesOnTheClocktower/Rulebook_FR.html"
-                : "https://anjomort0.github.io/WerewolvesOnTheClocktower/Rulebook_PT.html"}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => openRulebook()}
               className="text-muted-foreground/60 hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary"
               title={tt("rulebook")}
               aria-label={tt("rulebook")}
             >
               <BookOpen className="h-5 w-5" />
-            </a>
+            </button>
             <button
               onClick={copyCode}
               className="flex items-center gap-2 bg-secondary px-4 py-2 rounded-lg border border-border hover:border-primary/50 transition-colors"
@@ -3154,7 +3165,7 @@ const GMRoom = () => {
                     dayDeadNames={dayDeadNames}
                     dayDefaultSeconds={timerDefaults.day}
                     tribunalDefaultSeconds={timerDefaults.tribunal}
-                    onDefaultsChange={setTimerDefaults}
+                    onDefaultsChange={handleTimerDefaultsChange}
                     initialTimerState={syncedTimerState}
                     onTimerSync={handleTimerSync}
                     completedLineKeys={completedScriptLineKeys}
@@ -3616,6 +3627,7 @@ const GMRoom = () => {
         players={players}
         isVidentePoisoned={isVidentePoisoned}
         precomputedFakeMap={videnteFakeMap}
+        onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
       <RevealModal
@@ -3625,6 +3637,7 @@ const GMRoom = () => {
         title={tt("revealLittleGirlTitle")}
         subtitle={tt("revealLittleGirlSubtitle")}
         cards={meninaCards}
+        onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
       <RevealModal
@@ -3639,6 +3652,7 @@ const GMRoom = () => {
           roleId: faroleiroPickedRole,
           checkboxes: faroleiroPickedCharges.length > 0 ? faroleiroPickedCharges : undefined,
         }] : []}
+        onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
       <RevealModal
@@ -3653,6 +3667,7 @@ const GMRoom = () => {
           label: roleLabel(lobisomemVidenteRevealedVictim.role),
           roleId: lobisomemVidenteRevealedVictim.role,
         }] : []}
+        onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
       <RevealModal
@@ -3661,6 +3676,7 @@ const GMRoom = () => {
         onClose={handleCloseSpiderModal}
         title={tt("spiderEyeReveal")}
         cards={spiderRevealCards}
+        onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
       <RevealModal
@@ -3669,6 +3685,14 @@ const GMRoom = () => {
         onClose={handleCloseSpyModal}
         title={tt("spyEyeReveal")}
         cards={spyRevealCards}
+        onRoleClick={(roleId) => openRulebook(roleId)}
+      />
+
+      <RulebookModal
+        open={rulebookOpen}
+        onOpenChange={setRulebookOpen}
+        language={lang}
+        roleId={rulebookRoleId}
       />
 
       <WinPickerModal

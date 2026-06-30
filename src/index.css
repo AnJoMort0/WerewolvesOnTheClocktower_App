@@ -88,4 +88,371 @@
   .paper-texture {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
   }
+
+  .rulebook-content {
+    color: hsl(var(--foreground));
+    font-family: 'Crimson Text', serif;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  .rulebook-content h1,
+  .rulebook-content h2,
+  .rulebook-content h3,
+  .rulebook-content h4 {
+    color: hsl(var(--foreground));
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0;
+    line-height: 1.18;
+  }
+
+  .rulebook-content h1 {
+    margin: 0 0 1rem;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    color: hsl(var(--blood-glow));
+  }
+
+  .rulebook-content h2 {
+    margin: 2rem 0 0.75rem;
+    font-size: clamp(1.45rem, 3vw, 2.1rem);
+  }
+
+  .rulebook-content h3 {
+    margin: 1.5rem 0 0.6rem;
+    font-size: 1.15rem;
+    color: hsl(var(--gold));
+  }
+
+  .rulebook-content p,
+  .rulebook-content ul,
+  .rulebook-content ol,
+  .rulebook-content blockquote {
+    margin: 0.7rem 0;
+  }
+
+  .rulebook-content ul,
+  .rulebook-content ol {
+    padding-left: 1.4rem;
+  }
+
+  .rulebook-content blockquote {
+    border-left: 3px solid hsl(var(--gold));
+    background: hsl(var(--card) / 0.7);
+    padding: 0.55rem 0.8rem;
+    border-radius: 0.35rem;
+  }
+
+  .rulebook-content a {
+    color: hsl(var(--gold));
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .rulebook-content code {
+    border-radius: 0.25rem;
+    background: hsl(var(--background) / 0.45);
+    padding: 0.08rem 0.32rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88em;
+  }
+
+  .rulebook-content hr {
+    margin: 2rem 0;
+    border: 0;
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .rulebook-content .rule-red {
+    color: #cc0000;
+    font-weight: 800;
+  }
+
+  .rulebook-content .rulebook-character-index {
+    margin: 1rem 0 2.25rem;
+    padding: 1rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    background: hsl(var(--card) / 0.65);
+  }
+
+  .rulebook-content .rulebook-character-index h2 {
+    margin-top: 0;
+  }
+
+  .rulebook-content .rulebook-index-group h3 {
+    margin-top: 1.2rem;
+    color: hsl(var(--gold));
+  }
+
+  .rulebook-content .rulebook-index-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.55rem;
+  }
+
+  .rulebook-content .rulebook-index-link {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 0.05rem 0.55rem;
+    min-height: 62px;
+    padding: 0.45rem;
+    border: 1px solid rgb(0 0 0 / 0.28);
+    border-radius: 0.45rem;
+    color: #171717;
+    text-decoration: none;
+  }
+
+  .rulebook-content .rulebook-index-link:hover,
+  .rulebook-content .rulebook-index-link:focus-visible {
+    outline: 2px solid hsl(var(--gold));
+    outline-offset: 2px;
+  }
+
+  .rulebook-content .rulebook-index-link img {
+    grid-row: 1 / span 2;
+    width: 42px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 0.28rem;
+    border: 1px solid rgb(0 0 0 / 0.32);
+    background: rgb(0 0 0 / 0.16);
+  }
+
+  .rulebook-content .rulebook-index-link strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.92rem;
+    line-height: 1.1;
+  }
+
+  .rulebook-content .rulebook-index-id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    font-weight: 800;
+    opacity: 0.7;
+  }
+
+  .rulebook-content .rulebook-index-link.faction-good {
+    background: #dcefd2;
+  }
+
+  .rulebook-content .rulebook-index-link.faction-evil {
+    background: #efb1b1;
+  }
+
+  .rulebook-content .rulebook-index-link.faction-independent {
+    background: #e3d0f6;
+  }
+
+  .rulebook-content .rulebook-index-link.faction-flex {
+    background: #f7e8a7;
+  }
+
+  .rulebook-content .rulebook-index-link.faction-shifting {
+    background: linear-gradient(135deg, #dcefd2 0%, #e7edbc 58%, #f7e8a7 100%);
+  }
+
+  .rulebook-content .rulebook-index-link.faction-extra {
+    background: #eeeeee;
+  }
+
+  .rulebook-content .rulebook-character-group {
+    scroll-margin-top: 1rem;
+  }
+
+  .rulebook-content .rulebook-group-heading {
+    margin-top: 2.5rem;
+  }
+
+  .rulebook-content .character-table,
+  .rulebook-content .rulebook-simple-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.75rem;
+    table-layout: fixed;
+    overflow: hidden;
+    border-radius: 0.5rem;
+  }
+
+  .rulebook-content .rulebook-simple-table {
+    table-layout: auto;
+  }
+
+  .rulebook-content .character-table th,
+  .rulebook-content .character-table td,
+  .rulebook-content .rulebook-simple-table th,
+  .rulebook-content .rulebook-simple-table td {
+    border: 1px solid hsl(var(--background) / 0.35);
+    vertical-align: top;
+  }
+
+  .rulebook-content .character-table th,
+  .rulebook-content .rulebook-simple-table th {
+    background: hsl(var(--secondary));
+    color: hsl(var(--foreground));
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+  }
+
+  .rulebook-content .rulebook-simple-table td {
+    padding: 0.42rem 0.65rem;
+    background: hsl(var(--card));
+  }
+
+  .rulebook-content .role-image-cell {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    padding: 0.5rem;
+    text-align: center;
+  }
+
+  .rulebook-content .role-image-cell img {
+    width: 130px;
+    max-width: 130px;
+    height: auto;
+    border-radius: 0.45rem;
+    border: 1px solid rgb(0 0 0 / 0.35);
+    background: rgb(0 0 0 / 0.22);
+  }
+
+  .rulebook-content .role-text-cell {
+    width: auto;
+    min-width: 0;
+    max-width: calc(100% - 150px);
+    padding: 0.7rem 0.85rem 0.75rem;
+    overflow-wrap: anywhere;
+    color: #1b1b1b;
+  }
+
+  .rulebook-content .role-title {
+    margin: 0 0 0.25rem;
+    color: #131313;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .rulebook-content .role-meta {
+    margin: 0 0 0.5rem;
+    color: rgb(0 0 0 / 0.68);
+    font-size: 0.86rem;
+  }
+
+  .rulebook-content .role-badge {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.08rem 0.45rem;
+    border: 1px solid rgb(0 0 0 / 0.22);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.5);
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .rulebook-content .role-description {
+    max-width: 72ch;
+  }
+
+  .rulebook-content .role-description p {
+    margin: 0.38rem 0;
+  }
+
+  .rulebook-content .role-row.faction-good td {
+    background: #dcefd2;
+  }
+
+  .rulebook-content .role-row.faction-evil td {
+    background: #efb1b1;
+  }
+
+  .rulebook-content .role-row.faction-independent td {
+    background: #e3d0f6;
+  }
+
+  .rulebook-content .role-row.faction-flex td {
+    background: #f7e8a7;
+  }
+
+  .rulebook-content .role-row.faction-shifting td {
+    background: linear-gradient(135deg, #dcefd2 0%, #e7edbc 58%, #f7e8a7 100%);
+  }
+
+  .rulebook-content .role-row.faction-extra td {
+    background: #eeeeee;
+  }
+
+  .rulebook-content .role-row.faction-good .role-image-cell {
+    border-left: 6px solid #4f8f3a;
+  }
+
+  .rulebook-content .role-row.faction-evil .role-image-cell {
+    border-left: 6px solid #a73636;
+  }
+
+  .rulebook-content .role-row.faction-independent .role-image-cell {
+    border-left: 6px solid #7c4bb0;
+  }
+
+  .rulebook-content .role-row.faction-flex .role-image-cell {
+    border-left: 6px solid #b38b00;
+  }
+
+  .rulebook-content .role-row.faction-shifting .role-image-cell {
+    border-left: 6px solid #7f9f3e;
+  }
+
+  .rulebook-content .role-row.faction-extra .role-image-cell {
+    border-left: 6px solid #777777;
+  }
+
+  @media (max-width: 720px) {
+    .rulebook-content {
+      font-size: 0.98rem;
+    }
+
+    .rulebook-content .character-table {
+      min-width: 320px;
+      table-layout: fixed;
+    }
+
+    .rulebook-content .role-image-cell {
+      width: 112px;
+      min-width: 112px;
+      max-width: 112px;
+      padding: 0.35rem;
+    }
+
+    .rulebook-content .role-image-cell img {
+      width: 96px;
+      max-width: 96px;
+    }
+
+    .rulebook-content .role-text-cell {
+      max-width: calc(100vw - 135px);
+      padding: 0.45rem 0.55rem;
+      font-size: 0.9rem;
+    }
+
+    .rulebook-content .rulebook-character-index {
+      padding: 0.75rem;
+    }
+
+    .rulebook-content .rulebook-index-grid {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    }
+
+    .rulebook-content .rulebook-index-link {
+      grid-template-columns: 34px minmax(0, 1fr);
+      min-height: 54px;
+    }
+
+    .rulebook-content .rulebook-index-link img {
+      width: 34px;
+      height: 44px;
+    }
+  }
 }

@@ -4,6 +4,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Human Tests to Do
 
+* [ ] Touch screen compatibility
 * [ ] Human-test local Wi-Fi mode with at least one phone.
 * [ ] Human-test hosted mode with at least one phone.
 * [ ] Confirm QR codes use the correct hosted or LAN URL.
@@ -23,25 +24,31 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
-* [x] The v12 script line should only appear when there are poisoned characters
-* [x] Cupid normal night script line should not be drag-droppable to make lovers, that is only the first night line.
+* [x] Add rulebook links to the "generate characters only screen"
+* [x] The timer changed defaults should be room based and not device based (the default day is 5min, tribunal 3min), if the GM changes it, it becomes the default for that room, not everytime he opens the app
+  * Codex note 2026-06-30: Added room-level `timer_defaults` JSONB storage and wired GM timer duration edits to Supabase instead of device `localStorage`.
 
 ## Balance Changes
 
-* [x] When there are no other Werewolf characters alive, the s02 line "(A cada 3 noites) O {Lobisomem Branco} acorda e escolhe o Lobisomem que quer matar.", requires: ["s02"], conditionKey: "whitewolfNight"" changes to be "(A cada 3 noites) O {Lobisomem Branco} acorda e escolhe mais um jogador que quer matar.", requires: ["s02"], conditionKey: "whitewolfNight".
 
 ## Additions
 
-* [x] If there's a way for the player's device to also sound the alarm when the timer goes off, it would be cool.
 
 ## Future Plans
 
+* [x] Add messages copy-paste app into this one as an alternative with a button
+  * Codex note 2026-06-30: Added the small "only generate characters" button on the home page with app role assignment, role cards, per-player copy, and copy-all options.
 * [ ] Add new character `m06` to app and docs
 * [ ] Add new character `v24` to app and docs
-* [ ] Add rulebook pages inside the app instead of linking to external HTML pages.
+* [x] Add rulebook pages inside the app instead of linking to external HTML pages.
+  * Codex note 2026-06-30: Added in-app full rulebook and per-character rulebook modals using structured text in `src/lib/rulebookContent.ts`, then removed the local FR/PT markdown files from the app workflow.
 * [ ] Add a logs of the games for easy recap at the end of the game
-* [ ] Add the fonctionnality for the complex characters not yet deployed
 * [ ] Remove any useless files or deprecated lines of code, vestiges of old versions, etc
+* [ ] Add the fonctionnality for the complex characters not yet deployed
+    * [ ] When the Ator is in game, there's the status option for "Ídolo" with the idol.png icon. This action is also applied when the Ator is drag-dropped onto another player. Only one player can have the idol status at the time. The Ator has two checkboxes, that get ticked when he is drag-dropped, and once both are ticked he cannot be drag-drop anymore. When a idol status character becomes perma-dead the Ator switches character to become the one that died (and therefore in this specific scenario there can be two cards that are the same at the same time). However he is still seen has the "Ator" to all other character like the Vidente when he dies, Menina if he kills anyone, or any other card that can see cards.
+* [ ] Adding phone interactions:
+    * [ ] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device screen changes to the player circle and a poison button option appears, when the player clicks that button, he is in poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script.
+* [ ] Small beautifying of the page: Make the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)
 * [ ] Add an English rulebook and English UI.
 * [ ] Support more complete player-submitted actions from phones.
 * [ ] Add better role-selection presets for different player counts and play styles (also better balance).
