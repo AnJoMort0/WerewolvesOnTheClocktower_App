@@ -20,13 +20,11 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 * [ ] DOCS + ALMANAC: Rearrange cards by affinity instead of ID; place the Spider Tamer beside the other Tamers and separate Werewolves from their allies
 
 ## Critical Fixes
-* [ ]
+* [ ] 
 
 ## Fixes
 
-* [x] Add rulebook links to the "generate characters only screen"
-* [x] The timer changed defaults should be room based and not device based (the default day is 5min, tribunal 3min), if the GM changes it, it becomes the default for that room, not everytime he opens the app
-  * Codex note 2026-06-30: Added room-level `timer_defaults` JSONB storage and wired GM timer duration edits to Supabase instead of device `localStorage`.
+* [ ] 
 
 ## Balance Changes
 
@@ -36,12 +34,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Future Plans
 
-* [x] Add messages copy-paste app into this one as an alternative with a button
-  * Codex note 2026-06-30: Added the small "only generate characters" button on the home page with app role assignment, role cards, per-player copy, and copy-all options.
 * [ ] Add new character `m06` to app and docs
 * [ ] Add new character `v24` to app and docs
-* [x] Add rulebook pages inside the app instead of linking to external HTML pages.
-  * Codex note 2026-06-30: Added in-app full rulebook and per-character rulebook modals using structured text in `src/lib/rulebookContent.ts`, then removed the local FR/PT markdown files from the app workflow.
 * [ ] Add a logs of the games for easy recap at the end of the game
 * [ ] Remove any useless files or deprecated lines of code, vestiges of old versions, etc
 * [ ] Add the fonctionnality for the complex characters not yet deployed

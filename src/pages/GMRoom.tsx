@@ -12,7 +12,8 @@ import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFEC
 import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
-import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff } from "lucide-react";
+import { GameLogModal } from "@/components/game/GameLogModal";
+import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +27,7 @@ import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib
 import { canWhiteWolfTarget, getMeninaAnswerKind, hasOtherLivingWerewolf, MENINA_POISONED_ANSWERS, type MeninaAnswerKind, type WhiteWolfPlayerState } from "@/lib/gameRules";
 import { detectAutomaticVictory, getVictoryStateSignature, playerWinsAnyVictoryGroup, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
+import { MAX_GAME_LOG_EVENTS, type GameLogEvent, type GameLogPhase, type GameLogPlayerSnapshot } from "@/lib/gameLog";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
 import imunityIcon from "@/assets/icons/imunity_full.png";
@@ -139,6 +141,7 @@ type GMSnapshot = {
   hideScreenMode: boolean;
   syncedTimerState: TimerSyncState | null;
   completedScriptLineKeys: string[];
+  gameLogEvents: GameLogEvent[];
   declinedAutomaticVictory?: { kind: AutomaticWinKind; signature: string } | null;
 };
 
@@ -186,6 +189,33 @@ const DEAD_SOURCE_EFFECTS: Partial<Record<RoleId, StatusEffect[]>> = {
   v19: ["profecia"],
   v23: ["webbed"],
   f01: ["vote_revoked"],
+};
+
+const EFFECT_SOURCE_ROLES: Partial<Record<StatusEffect, RoleId>> = {
+  soldado: "v09",
+  vote_against: "v11",
+  vote_double: "v11",
+  inocentado: "v15",
+  hospede: "v16",
+  immunity_full: "v17",
+  profecia: "v19",
+  acusado: "v22",
+  acusado_next: "v22",
+  werewolf_turned: "m03",
+  enemy: "m05",
+  immunity_onetime: "m05",
+  namorado: "s01",
+  immunity_cupid: "s01",
+  evil_being: "f02",
+  vote_revoked: "f01",
+  adoptive_dad: "l02",
+  incendiado: "v15",
+  immunity_werewolf: "v08b",
+  tetanus: "v07",
+  webbed: "v23",
+  caught: "v23",
+  spied_on: "f02",
+  dug_up: "a05",
 };
 
 function getExpectedWerewolfCount(playerCount: number): number {
@@ -287,6 +317,19 @@ const GMRoom = () => {
   const [hiddenTimerMinutes, setHiddenTimerMinutes] = useState("0");
   const [hiddenTimerSeconds, setHiddenTimerSeconds] = useState("0");
   const dayPanelRef = useRef<DayTribunalPanelHandle>(null);
+  const pendingGameOverLogKindRef = useRef<WinKind | null>(null);
+  const gameLogDiffReadyRef = useRef(false);
+  const previousGameLogStateRef = useRef<{
+    playerStatuses: Record<string, PlayerStatus>;
+    permanentlyDead: Set<string>;
+    poisonedPlayerId: string | null;
+    illusionPlayerId: string | null;
+    playerEffects: Record<string, Set<StatusEffect>>;
+    roleAssignments: Record<string, RoleId>;
+    gameCyclePhase: "night" | "day" | "tribunal";
+    dayPhase: "day" | "tribunal";
+    nightNumber: number;
+  } | null>(null);
 
   // Spider (v23) reveal modal
   const [spiderRevealOpen, setSpiderRevealOpen] = useState(false);
@@ -306,6 +349,8 @@ const GMRoom = () => {
   const [scriptAutoComplete, setScriptAutoComplete] = useState<{ role: RoleId | null; version: number }>({ role: null, version: 0 });
   const [rulebookOpen, setRulebookOpen] = useState(false);
   const [rulebookRoleId, setRulebookRoleId] = useState<RoleId | null>(null);
+  const [gameLogOpen, setGameLogOpen] = useState(false);
+  const [gameLogEvents, setGameLogEvents] = useState<GameLogEvent[]>([]);
 
   const defaultJoinBaseUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -624,6 +669,7 @@ const GMRoom = () => {
       setHideScreenMode(!!snapshot.hideScreenMode);
       setSyncedTimerState(snapshot.syncedTimerState ?? null);
       setCompletedScriptLineKeys(new Set(snapshot.completedScriptLineKeys ?? []));
+      setGameLogEvents(snapshot.gameLogEvents ?? []);
       setDeclinedAutomaticVictory(snapshot.declinedAutomaticVictory ?? null);
     } catch {
       window.localStorage.removeItem(getGMSnapshotStorageKey(roomId));
@@ -676,6 +722,7 @@ const GMRoom = () => {
       hideScreenMode,
       syncedTimerState,
       completedScriptLineKeys: Array.from(completedScriptLineKeys),
+      gameLogEvents,
       declinedAutomaticVictory,
     };
     window.localStorage.setItem(getGMSnapshotStorageKey(roomId), JSON.stringify(snapshot));
@@ -720,6 +767,7 @@ const GMRoom = () => {
     hideScreenMode,
     syncedTimerState,
     completedScriptLineKeys,
+    gameLogEvents,
     declinedAutomaticVictory,
   ]);
 
@@ -959,6 +1007,10 @@ const GMRoom = () => {
     setSpyRevealCards([]);
     setCompletedScriptLineKeys(new Set());
     setScriptAutoComplete({ role: null, version: 0 });
+    setGameLogOpen(false);
+    setGameLogEvents([]);
+    previousGameLogStateRef.current = null;
+    gameLogDiffReadyRef.current = false;
     setAutomaticWinKind(null);
     setDeclinedAutomaticVictory(null);
     setTieWinnerGroups(new Set());
@@ -1048,6 +1100,7 @@ const GMRoom = () => {
 
   const sendGameOver = async (kind: WinKind) => {
     if (!roomId) return;
+    pendingGameOverLogKindRef.current = kind;
     const perPlayer = Object.fromEntries(players.map((player) => [player.id, getGameOverOutcome(kind, player.id)]));
     const gameOverState = {
       kind,
@@ -1774,9 +1827,255 @@ const GMRoom = () => {
     return Object.entries(roleAssignments).find(([, r]) => r === role)?.[0] || null;
   }, [roleAssignments]);
 
+  const getSourceRole = useCallback((source: string | null | undefined): RoleId | null => {
+    if (!source) return null;
+    if (source === "s01-suicide") return "s01";
+    if (source === "soldado") return "v09";
+    if (ROLES[source as RoleId]) return source as RoleId;
+    return null;
+  }, []);
+
+  const getPlayerLogSnapshot = useCallback((playerId: string): GameLogPlayerSnapshot | null => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player) return null;
+    const role = roleAssignments[playerId] ?? (player.character && ROLES[player.character as RoleId] ? player.character as RoleId : null);
+    return {
+      id: playerId,
+      name: player.name,
+      role,
+      status: playerStatuses[playerId] ?? (permanentlyDead.has(playerId) ? "dead" : "alive"),
+      permanentlyDead: permanentlyDead.has(playerId),
+      poisoned: poisonedPlayerId === playerId,
+      illusion: illusionPlayerId === playerId,
+      effects: Array.from(playerEffects[playerId] || []),
+    };
+  }, [illusionPlayerId, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerId, roleAssignments]);
+
+  const getActorSnapshotForRole = useCallback((role: RoleId | null | undefined) => {
+    if (!role) return null;
+    const playerId = getRolePlayerId(role);
+    return playerId ? getPlayerLogSnapshot(playerId) : null;
+  }, [getPlayerLogSnapshot, getRolePlayerId]);
+
+  const recordGameEvent = useCallback((event: Omit<GameLogEvent, "id" | "createdAt" | "phase" | "phaseNumber"> & {
+    phase?: GameLogPhase;
+    phaseNumber?: number;
+  }) => {
+    const createdAt = Date.now();
+    const effectivePhase: GameLogPhase = event.phase ?? (gameCyclePhase === "day" ? dayPhase : gameCyclePhase);
+    const nextEvent: GameLogEvent = {
+      id: `${createdAt}-${Math.random().toString(36).slice(2, 9)}`,
+      createdAt,
+      phase: effectivePhase,
+      phaseNumber: event.phaseNumber ?? nightNumber,
+      ...event,
+    };
+    setGameLogEvents((prev) => [...prev, nextEvent].slice(-MAX_GAME_LOG_EVENTS));
+  }, [dayPhase, gameCyclePhase, nightNumber]);
+
   const markScriptRoleAction = useCallback((role: RoleId) => {
     setScriptAutoComplete((current) => ({ role, version: current.version + 1 }));
   }, []);
+
+  useEffect(() => {
+    if (!gmSnapshotLoaded || room?.status !== "finished" || !pendingGameOverLogKindRef.current) return;
+    const kind = pendingGameOverLogKindRef.current;
+    pendingGameOverLogKindRef.current = null;
+    recordGameEvent({
+      action: "game_over",
+      phase: "game-over",
+      phaseNumber: nightNumber,
+      winKind: kind,
+    });
+  }, [gmSnapshotLoaded, nightNumber, recordGameEvent, room?.status]);
+
+  useEffect(() => {
+    const cloneEffects = (effects: Record<string, Set<StatusEffect>>) => (
+      Object.fromEntries(Object.entries(effects).map(([playerId, values]) => [playerId, new Set(values)]))
+    );
+    const currentState = {
+      playerStatuses: { ...playerStatuses },
+      permanentlyDead: new Set(permanentlyDead),
+      poisonedPlayerId,
+      illusionPlayerId,
+      playerEffects: cloneEffects(playerEffects),
+      roleAssignments: { ...roleAssignments },
+      gameCyclePhase,
+      dayPhase,
+      nightNumber,
+    };
+    const shouldLog = gmSnapshotLoaded && room?.status === "playing" && rolesAssigned;
+    if (!shouldLog) {
+      previousGameLogStateRef.current = currentState;
+      gameLogDiffReadyRef.current = false;
+      return;
+    }
+
+    const previousState = previousGameLogStateRef.current;
+    if (!gameLogDiffReadyRef.current || !previousState) {
+      previousGameLogStateRef.current = currentState;
+      gameLogDiffReadyRef.current = true;
+      return;
+    }
+
+    const actorForRole = (role: RoleId | null | undefined) => getActorSnapshotForRole(role);
+    const previousEffectivePhase: GameLogPhase = previousState.gameCyclePhase === "day" ? previousState.dayPhase : previousState.gameCyclePhase;
+    const currentEffectivePhase: GameLogPhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
+    const playerIds = new Set<string>([
+      ...players.map((player) => player.id),
+      ...Object.keys(previousState.playerStatuses),
+      ...Object.keys(playerStatuses),
+      ...Array.from(previousState.permanentlyDead),
+      ...Array.from(permanentlyDead),
+      ...Object.keys(previousState.playerEffects),
+      ...Object.keys(playerEffects),
+      ...Object.keys(previousState.roleAssignments),
+      ...Object.keys(roleAssignments),
+    ]);
+
+    if (previousEffectivePhase !== currentEffectivePhase || previousState.nightNumber !== nightNumber) {
+      recordGameEvent({
+        action: "phase",
+        phase: currentEffectivePhase,
+        phaseNumber: nightNumber,
+      });
+    }
+
+    if (previousState.poisonedPlayerId !== poisonedPlayerId) {
+      if (previousState.poisonedPlayerId) {
+        recordGameEvent({
+          action: "cure_poison",
+          actor: actorForRole("e02"),
+          actorRole: "e02",
+          target: getPlayerLogSnapshot(previousState.poisonedPlayerId),
+        });
+      }
+      if (poisonedPlayerId) {
+        recordGameEvent({
+          action: "poison",
+          actor: actorForRole("e02"),
+          actorRole: "e02",
+          target: getPlayerLogSnapshot(poisonedPlayerId),
+        });
+      }
+    }
+
+    if (previousState.illusionPlayerId !== illusionPlayerId) {
+      if (previousState.illusionPlayerId) {
+        recordGameEvent({
+          action: "clear_illusion",
+          actor: actorForRole("a06"),
+          actorRole: "a06",
+          target: getPlayerLogSnapshot(previousState.illusionPlayerId),
+        });
+      }
+      if (illusionPlayerId) {
+        recordGameEvent({
+          action: "illusion",
+          actor: actorForRole("a06"),
+          actorRole: "a06",
+          target: getPlayerLogSnapshot(illusionPlayerId),
+        });
+      }
+    }
+
+    for (const playerId of playerIds) {
+      const previousStatus = previousState.playerStatuses[playerId] ?? (previousState.permanentlyDead.has(playerId) ? "dead" : "alive");
+      const currentStatus = playerStatuses[playerId] ?? (permanentlyDead.has(playerId) ? "dead" : "alive");
+
+      if (previousStatus !== currentStatus) {
+        if (currentStatus === "dead-this-night") {
+          const source = killSources[playerId] ?? "manual";
+          const sourceRole = source === "executado" || source === "manual" ? null : getSourceRole(source);
+          recordGameEvent({
+            action: source === "executado" ? "execute" : "kill",
+            actor: actorForRole(sourceRole),
+            actorRole: sourceRole,
+            target: getPlayerLogSnapshot(playerId),
+            source,
+          });
+        } else if (currentStatus === "alive" && (previousStatus === "dead" || previousStatus === "dead-this-night" || previousState.permanentlyDead.has(playerId))) {
+          const sourceRole: RoleId | null = previousState.permanentlyDead.has(playerId) ? "v18" : "e03";
+          recordGameEvent({
+            action: "resurrect",
+            actor: actorForRole(sourceRole),
+            actorRole: sourceRole,
+            target: getPlayerLogSnapshot(playerId),
+          });
+        }
+      }
+
+      if (!previousState.permanentlyDead.has(playerId) && permanentlyDead.has(playerId)) {
+        const sourceRole = getSourceRole(killSources[playerId]);
+        recordGameEvent({
+          action: "permanent_death",
+          actor: actorForRole(sourceRole),
+          actorRole: sourceRole,
+          target: getPlayerLogSnapshot(playerId),
+          source: killSources[playerId] ?? null,
+        });
+      }
+
+      const previousEffects = previousState.playerEffects[playerId] || new Set<StatusEffect>();
+      const currentEffects = playerEffects[playerId] || new Set<StatusEffect>();
+      for (const effect of currentEffects) {
+        if (previousEffects.has(effect)) continue;
+        const sourceRole = EFFECT_SOURCE_ROLES[effect] ?? null;
+        recordGameEvent({
+          action: "effect_add",
+          actor: actorForRole(sourceRole),
+          actorRole: sourceRole,
+          target: getPlayerLogSnapshot(playerId),
+          effect,
+        });
+      }
+      for (const effect of previousEffects) {
+        if (currentEffects.has(effect)) continue;
+        const sourceRole = EFFECT_SOURCE_ROLES[effect] ?? null;
+        recordGameEvent({
+          action: "effect_remove",
+          actor: actorForRole(sourceRole),
+          actorRole: sourceRole,
+          target: getPlayerLogSnapshot(playerId),
+          effect,
+        });
+      }
+
+      const previousRole = previousState.roleAssignments[playerId];
+      const currentRole = roleAssignments[playerId];
+      if (previousRole && currentRole && previousRole !== currentRole) {
+        const sourceRole = previousRole === "a05" || currentRole === "a05" ? "a05" : null;
+        recordGameEvent({
+          action: "role_change",
+          actor: actorForRole(sourceRole),
+          actorRole: sourceRole,
+          target: getPlayerLogSnapshot(playerId),
+          detail: `${previousRole} -> ${currentRole}`,
+        });
+      }
+    }
+
+    previousGameLogStateRef.current = currentState;
+  }, [
+    gmSnapshotLoaded,
+    room?.status,
+    rolesAssigned,
+    playerStatuses,
+    permanentlyDead,
+    poisonedPlayerId,
+    illusionPlayerId,
+    playerEffects,
+    roleAssignments,
+    gameCyclePhase,
+    dayPhase,
+    nightNumber,
+    killSources,
+    players,
+    getActorSnapshotForRole,
+    getPlayerLogSnapshot,
+    getSourceRole,
+    recordGameEvent,
+  ]);
 
   const clearEffectsFromDeadSources = useCallback((progressOrder: number) => {
     const deadSourceRoles = [...new Set(Object.values(roleAssignments))].filter((role) => {
@@ -2787,6 +3086,7 @@ const GMRoom = () => {
   const lang: Language = (room?.language as Language) || "pt";
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
   const tt = useCallback((key: Parameters<typeof t>[0]) => t(key, lang), [lang]);
+  const gameLogLabel = lang === "fr" ? "Journal de partie" : "Registo do jogo";
   const openRulebook = useCallback((roleId: RoleId | null = null) => {
     setRulebookRoleId(roleId);
     setRulebookOpen(true);
@@ -2913,6 +3213,16 @@ const GMRoom = () => {
                 aria-label={getGameOver("manualGameOver", lang)}
               >
                 <Trophy className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={() => setGameLogOpen(true)}
+                title={gameLogLabel}
+                aria-label={gameLogLabel}
+              >
+                <ScrollText className="h-4 w-4" />
               </Button>
               <Button
                 type="button"
@@ -3693,6 +4003,20 @@ const GMRoom = () => {
         onOpenChange={setRulebookOpen}
         language={lang}
         roleId={rulebookRoleId}
+      />
+
+      <GameLogModal
+        open={gameLogOpen}
+        onOpenChange={setGameLogOpen}
+        language={lang}
+        events={gameLogEvents}
+        players={players}
+        roleAssignments={roleAssignments}
+        playerStatuses={playerStatuses}
+        permanentlyDead={permanentlyDead}
+        playerEffects={playerEffects}
+        poisonedPlayerId={poisonedPlayerId}
+        illusionPlayerId={illusionPlayerId}
       />
 
       <WinPickerModal
