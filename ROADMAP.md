@@ -24,13 +24,24 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
-* [ ] 
+* [ ] Organise the GM management buttons (put all the room controlling buttons together, then winning, then log, then rulebook in a same style button to be consistent, and the hide button)
+* [ ] Some places an emoji is used for the moon, some places it's a proper icon. Remove all emojis and have them be proper icons instead
+
+* [ ] To the logging system:
+  * [ ] When nothing happens just leave the section blank and compact
+  * [ ]  Don't log the "change of phase"
+  * [ ]  Don't log the permanent deaths (if a player gets dead and isn't ressurected/saved after, everybody knows he stayed dead)
+  * [ ] Compact the whole view so more information can appear at the same time (if the screen size is enough you can even have each section in 2 columns reading left to right)
+  * [ ] Use the same parameters for the circle that are used during the in-game screen because the current circle renders with all the characters overlapping
+  * [ ]  Don't log the removal of poison (or any other removal that comes from a switch of target)
 
 ## Balance Changes
 
+* [ ] 
 
 ## Additions
 
+* [ ] Add a supporting screen (gotta find a better name). Basically the idea is, when a projector for example is available, the room will have a button to open a new window to have a full screen that is basically the hidden view of the GM screen. It will also receive the victory pop-up when the GM confirms a victory and will also let the GM open the log modal in there too, as well as the rulebook
 
 ## Future Plans
 

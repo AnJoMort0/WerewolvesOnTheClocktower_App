@@ -13,7 +13,7 @@ import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
-import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText } from "lucide-react";
+import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,6 +28,7 @@ import { canWhiteWolfTarget, getMeninaAnswerKind, hasOtherLivingWerewolf, MENINA
 import { detectAutomaticVictory, getVictoryStateSignature, playerWinsAnyVictoryGroup, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
 import { MAX_GAME_LOG_EVENTS, type GameLogEvent, type GameLogPhase, type GameLogPlayerSnapshot } from "@/lib/gameLog";
+import { getRoomDisplayStorageKey, ROOM_DISPLAY_SNAPSHOT_VERSION, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
 import imunityIcon from "@/assets/icons/imunity_full.png";
@@ -166,11 +167,15 @@ function pruneOldGMSnapshots() {
       const parsed = JSON.parse(window.localStorage.getItem(key) || "");
       if (typeof parsed?.savedAt !== "number" || now - parsed.savedAt > GM_SNAPSHOT_RETENTION_MS) {
         window.localStorage.removeItem(key);
-        window.localStorage.removeItem(`${GM_ADVANCED_STORAGE_PREFIX}${key.slice(GM_SNAPSHOT_STORAGE_PREFIX.length)}`);
+        const storedRoomId = key.slice(GM_SNAPSHOT_STORAGE_PREFIX.length);
+        window.localStorage.removeItem(`${GM_ADVANCED_STORAGE_PREFIX}${storedRoomId}`);
+        window.localStorage.removeItem(getRoomDisplayStorageKey(storedRoomId));
       }
     } catch {
       window.localStorage.removeItem(key);
-      window.localStorage.removeItem(`${GM_ADVANCED_STORAGE_PREFIX}${key.slice(GM_SNAPSHOT_STORAGE_PREFIX.length)}`);
+      const storedRoomId = key.slice(GM_SNAPSHOT_STORAGE_PREFIX.length);
+      window.localStorage.removeItem(`${GM_ADVANCED_STORAGE_PREFIX}${storedRoomId}`);
+      window.localStorage.removeItem(getRoomDisplayStorageKey(storedRoomId));
     }
   }
 }
@@ -771,6 +776,63 @@ const GMRoom = () => {
     declinedAutomaticVictory,
   ]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !roomId || !room || !gmSnapshotLoaded) return;
+    const latestGameOverEvent = [...gameLogEvents]
+      .reverse()
+      .find((event) => event.action === "game_over" && !!event.winKind);
+    const effectivePhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
+    const displaySnapshot: RoomDisplaySnapshot = {
+      version: ROOM_DISPLAY_SNAPSHOT_VERSION,
+      updatedAt: Date.now(),
+      roomId,
+      roomCode: room.code,
+      language: room.language ?? "pt",
+      status: room.status,
+      players: players.map(({ id, name, seat_position, character, is_alive }) => ({
+        id,
+        name,
+        seat_position,
+        character,
+        is_alive,
+      })),
+      phase: effectivePhase,
+      phaseNumber: nightNumber,
+      timerState: syncedTimerState,
+      roleAssignments,
+      playerStatuses,
+      permanentlyDead: Array.from(permanentlyDead),
+      playerEffects: serializeEffects(playerEffects),
+      poisonedPlayerId,
+      illusionPlayerId,
+      gameLogEvents,
+      gameOver: latestGameOverEvent?.winKind
+        ? { id: latestGameOverEvent.id, kind: latestGameOverEvent.winKind }
+        : null,
+    };
+    try {
+      window.localStorage.setItem(getRoomDisplayStorageKey(roomId), JSON.stringify(displaySnapshot));
+    } catch {
+      // The GM snapshot remains authoritative if browser storage is unavailable.
+    }
+  }, [
+    roomId,
+    room,
+    gmSnapshotLoaded,
+    players,
+    gameCyclePhase,
+    dayPhase,
+    nightNumber,
+    syncedTimerState,
+    roleAssignments,
+    playerStatuses,
+    permanentlyDead,
+    playerEffects,
+    poisonedPlayerId,
+    illusionPlayerId,
+    gameLogEvents,
+  ]);
+
   // Auto-apply vote_double effect for Juiz (dead non-execution) and Ankou (executed)
   useEffect(() => {
     setPlayerEffects((prev) => {
@@ -954,6 +1016,7 @@ const GMRoom = () => {
   const clearGMSnapshot = useCallback(() => {
     if (typeof window === "undefined" || !roomId) return;
     window.localStorage.removeItem(getGMSnapshotStorageKey(roomId));
+    window.localStorage.removeItem(getRoomDisplayStorageKey(roomId));
   }, [roomId]);
 
   const clearLocalGameState = useCallback(() => {
@@ -1915,6 +1978,11 @@ const GMRoom = () => {
     if (!gameLogDiffReadyRef.current || !previousState) {
       previousGameLogStateRef.current = currentState;
       gameLogDiffReadyRef.current = true;
+      recordGameEvent({
+        action: "phase",
+        phase: gameCyclePhase === "day" ? dayPhase : gameCyclePhase,
+        phaseNumber: nightNumber,
+      });
       return;
     }
 
@@ -1934,6 +2002,7 @@ const GMRoom = () => {
     ]);
 
     if (previousEffectivePhase !== currentEffectivePhase || previousState.nightNumber !== nightNumber) {
+      // Structural marker for an empty/compact section in the log; it is not rendered as an event row.
       recordGameEvent({
         action: "phase",
         phase: currentEffectivePhase,
@@ -1942,14 +2011,6 @@ const GMRoom = () => {
     }
 
     if (previousState.poisonedPlayerId !== poisonedPlayerId) {
-      if (previousState.poisonedPlayerId) {
-        recordGameEvent({
-          action: "cure_poison",
-          actor: actorForRole("e02"),
-          actorRole: "e02",
-          target: getPlayerLogSnapshot(previousState.poisonedPlayerId),
-        });
-      }
       if (poisonedPlayerId) {
         recordGameEvent({
           action: "poison",
@@ -1961,14 +2022,6 @@ const GMRoom = () => {
     }
 
     if (previousState.illusionPlayerId !== illusionPlayerId) {
-      if (previousState.illusionPlayerId) {
-        recordGameEvent({
-          action: "clear_illusion",
-          actor: actorForRole("a06"),
-          actorRole: "a06",
-          target: getPlayerLogSnapshot(previousState.illusionPlayerId),
-        });
-      }
       if (illusionPlayerId) {
         recordGameEvent({
           action: "illusion",
@@ -2005,17 +2058,6 @@ const GMRoom = () => {
         }
       }
 
-      if (!previousState.permanentlyDead.has(playerId) && permanentlyDead.has(playerId)) {
-        const sourceRole = getSourceRole(killSources[playerId]);
-        recordGameEvent({
-          action: "permanent_death",
-          actor: actorForRole(sourceRole),
-          actorRole: sourceRole,
-          target: getPlayerLogSnapshot(playerId),
-          source: killSources[playerId] ?? null,
-        });
-      }
-
       const previousEffects = previousState.playerEffects[playerId] || new Set<StatusEffect>();
       const currentEffects = playerEffects[playerId] || new Set<StatusEffect>();
       for (const effect of currentEffects) {
@@ -2029,18 +2071,6 @@ const GMRoom = () => {
           effect,
         });
       }
-      for (const effect of previousEffects) {
-        if (currentEffects.has(effect)) continue;
-        const sourceRole = EFFECT_SOURCE_ROLES[effect] ?? null;
-        recordGameEvent({
-          action: "effect_remove",
-          actor: actorForRole(sourceRole),
-          actorRole: sourceRole,
-          target: getPlayerLogSnapshot(playerId),
-          effect,
-        });
-      }
-
       const previousRole = previousState.roleAssignments[playerId];
       const currentRole = roleAssignments[playerId];
       if (previousRole && currentRole && previousRole !== currentRole) {
@@ -3087,10 +3117,15 @@ const GMRoom = () => {
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
   const tt = useCallback((key: Parameters<typeof t>[0]) => t(key, lang), [lang]);
   const gameLogLabel = lang === "fr" ? "Journal de partie" : "Registo do jogo";
+  const roomDisplayLabel = lang === "fr" ? "Écran de salle" : "Ecrã da sala";
   const openRulebook = useCallback((roleId: RoleId | null = null) => {
     setRulebookRoleId(roleId);
     setRulebookOpen(true);
   }, []);
+  const openRoomDisplay = useCallback(() => {
+    if (!roomId) return;
+    window.open(`/display/${roomId}`, "_blank", "noopener,noreferrer");
+  }, [roomId]);
   const effectiveGMPhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
   useEffect(() => setHiddenTimerEditing(false), [effectiveGMPhase]);
   const visibleTimerState = effectiveGMPhase !== "night" && syncedTimerState?.phase === effectiveGMPhase ? syncedTimerState : null;
@@ -3182,18 +3217,8 @@ const GMRoom = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="icon"
-                onClick={() => setHideScreenMode((value) => !value)}
-                title={hideScreenMode ? tt("showSensitiveScreen") : tt("hideScreen")}
-                aria-label={hideScreenMode ? tt("showSensitiveScreen") : tt("hideScreen")}
-              >
-                {hideScreenMode ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              </Button>
+          <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
+            <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-md border border-border bg-card/40 p-1">
               <Button
                 type="button"
                 variant="secondary"
@@ -3208,12 +3233,45 @@ const GMRoom = () => {
                 type="button"
                 variant="secondary"
                 size="icon"
+                onClick={cleanupOldRooms}
+                title={tt("cleanupOldRooms")}
+                aria-label={tt("cleanupOldRooms")}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={openRoomDisplay}
+                title={roomDisplayLabel}
+                aria-label={roomDisplayLabel}
+              >
+                <MonitorUp className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="text-destructive hover:text-destructive"
+                onClick={endRoom}
+                title={tt("endRoom")}
+                aria-label={tt("endRoom")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <div className="mx-1 h-6 w-px bg-border" aria-hidden="true" />
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
                 onClick={() => setWinPickerOpen(true)}
                 title={getGameOver("manualGameOver", lang)}
                 aria-label={getGameOver("manualGameOver", lang)}
               >
                 <Trophy className="h-4 w-4" />
               </Button>
+              <div className="mx-1 h-6 w-px bg-border" aria-hidden="true" />
               <Button
                 type="button"
                 variant="secondary"
@@ -3228,32 +3286,24 @@ const GMRoom = () => {
                 type="button"
                 variant="secondary"
                 size="icon"
-                onClick={cleanupOldRooms}
-                title={tt("cleanupOldRooms")}
-                aria-label={tt("cleanupOldRooms")}
+                onClick={() => openRulebook()}
+                title={tt("rulebook")}
+                aria-label={tt("rulebook")}
               >
-                <Trash2 className="h-4 w-4" />
+                <BookOpen className="h-4 w-4" />
               </Button>
+              <div className="mx-1 h-6 w-px bg-border" aria-hidden="true" />
               <Button
                 type="button"
-                variant="destructive"
+                variant="secondary"
                 size="icon"
-                onClick={endRoom}
-                title={tt("endRoom")}
-                aria-label={tt("endRoom")}
+                onClick={() => setHideScreenMode((value) => !value)}
+                title={hideScreenMode ? tt("showSensitiveScreen") : tt("hideScreen")}
+                aria-label={hideScreenMode ? tt("showSensitiveScreen") : tt("hideScreen")}
               >
-                <X className="h-4 w-4" />
+                {hideScreenMode ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               </Button>
             </div>
-            <button
-              type="button"
-              onClick={() => openRulebook()}
-              className="text-muted-foreground/60 hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary"
-              title={tt("rulebook")}
-              aria-label={tt("rulebook")}
-            >
-              <BookOpen className="h-5 w-5" />
-            </button>
             <button
               onClick={copyCode}
               className="flex items-center gap-2 bg-secondary px-4 py-2 rounded-lg border border-border hover:border-primary/50 transition-colors"

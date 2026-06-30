@@ -145,7 +145,7 @@ export const fr: Translation = {
     nightFalls: "Le village s'endort…",
     scriptOfNight: "Script de la Nuit",
     endNight: "Terminer la Nuit",
-    nextNight: "🌙 Nuit Suivante",
+    nextNight: "Nuit Suivante",
     startTribunal: "Démarrer le Tribunal",
     firstNight: "Première Nuit",
     secondNightStart: "Début de la Deuxième Nuit",

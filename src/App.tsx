@@ -9,6 +9,7 @@ import GMRoom from "./pages/GMRoom";
 import JoinRoom from "./pages/JoinRoom";
 import PlayerView from "./pages/PlayerView";
 import RulebookPage from "./pages/RulebookPage";
+import RoomDisplay from "./pages/RoomDisplay";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/join" element={<JoinRoom />} />
           <Route path="/join/:code" element={<JoinRoom />} />
           <Route path="/play/:playerId" element={<PlayerView />} />
+          <Route path="/display/:roomId" element={<RoomDisplay />} />
           <Route path="/rulebook" element={<RulebookPage />} />
           <Route path="/rulebook/:roleId" element={<RulebookPage />} />
           <Route path="*" element={<NotFound />} />

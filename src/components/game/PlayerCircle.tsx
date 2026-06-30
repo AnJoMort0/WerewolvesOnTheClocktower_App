@@ -88,6 +88,8 @@ interface PlayerCircleProps {
   onExecute?: (playerId: string) => void;
   onDragAction?: (action: string, targetPlayerId: string, sourcePlayerId?: string | null) => void;
   hideSensitiveInfo?: boolean;
+  onPlayerClick?: (playerId: string) => void;
+  selectedPlayerId?: string | null;
 }
 
 export const PlayerCircle = ({
@@ -135,6 +137,8 @@ export const PlayerCircle = ({
   onExecute: _onExecute,
   onDragAction,
   hideSensitiveInfo = false,
+  onPlayerClick,
+  selectedPlayerId = null,
 }: PlayerCircleProps) => {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const roleLabel = useRoleLabel();
@@ -349,9 +353,11 @@ export const PlayerCircle = ({
               layout
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`flex flex-col items-center cursor-pointer ${getStatusClasses(seated.id)} ${hasDrag ? "cursor-grab active:cursor-grabbing" : ""}`}
+              className={`flex flex-col items-center cursor-pointer rounded-xl ${getStatusClasses(seated.id)} ${hasDrag ? "cursor-grab active:cursor-grabbing" : ""} ${selectedPlayerId === seated.id ? "outline outline-4 outline-primary/70 outline-offset-4" : ""}`}
               onClick={() => {
-                if (!hideSensitiveInfo && isGM && isPlaying && onPlayerStatusChange) {
+                if (onPlayerClick) {
+                  onPlayerClick(seated.id);
+                } else if (!hideSensitiveInfo && isGM && isPlaying && onPlayerStatusChange) {
                   setOpenPopoverId(openPopoverId === seated.id ? null : seated.id);
                 } else if (!hideSensitiveInfo && isGM && !roleAssignments) {
                   handleUnseat(seated.id);

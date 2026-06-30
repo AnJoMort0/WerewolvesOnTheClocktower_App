@@ -7,6 +7,7 @@ import { ROLES, type RoleId } from "@/lib/roles";
 import type { GameLogEvent, GameLogPlayerSnapshot, GameLogPhase } from "@/lib/gameLog";
 import type { PlayerStatus, StatusEffect } from "@/components/game/PlayerStatusPopover";
 import { STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
+import { PlayerCircle } from "@/components/game/PlayerCircle";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
 import ghostIcon from "@/assets/icons/ghost.png";
@@ -166,15 +167,15 @@ function PlayerMiniCard({
   const displayRole = player?.role ?? role ?? null;
   const roleDef = displayRole ? ROLES[displayRole] : null;
   return (
-    <div className={`min-w-[92px] max-w-[112px] rounded-md border bg-card/70 p-2 text-center ${selected ? "border-primary shadow-[0_0_0_2px_hsl(var(--primary)/0.35)]" : "border-border"}`}>
-      <div className="mx-auto h-14 w-14 overflow-hidden rounded-md border border-border/70 bg-muted">
+    <div className={`min-w-[58px] max-w-[70px] rounded-md border bg-card/70 p-1 text-center ${selected ? "border-primary shadow-[0_0_0_2px_hsl(var(--primary)/0.35)]" : "border-border"}`}>
+      <div className="mx-auto h-9 w-9 overflow-hidden rounded-md border border-border/70 bg-muted">
         {roleDef ? (
           <img src={roleDef.image} alt="" className="h-full w-full object-cover" />
         ) : (
           <img src={villagerIcon} alt="" className="h-full w-full object-cover opacity-40" />
         )}
       </div>
-      <div className="mt-1 truncate text-xs font-display text-foreground" title={player?.name ?? undefined}>
+      <div className="mt-1 truncate text-[11px] font-display text-foreground" title={player?.name ?? undefined}>
         {player?.name ?? roleLabel(displayRole, language, noRoleLabel)}
       </div>
       <div className="truncate text-[10px] text-muted-foreground" title={roleLabel(displayRole, language, noRoleLabel)}>
@@ -203,7 +204,7 @@ function StatusBadges({ player, language, compact = false }: { player: GameLogPl
           src={badge.icon}
           alt=""
           title={badge.label}
-          className={`h-4 w-4 rounded-sm ${badge.tone ?? ""}`}
+          className={`h-3.5 w-3.5 rounded-sm ${badge.tone ?? ""}`}
         />
       ))}
       {visible.length < badges.length && (
@@ -225,69 +226,29 @@ function FinalCircle({
   illusionPlayerId,
   selectedPlayerId,
   onSelect,
-  language,
 }: Omit<GameLogModalProps, "open" | "onOpenChange" | "events"> & {
   selectedPlayerId: string | null;
   onSelect: (playerId: string) => void;
 }) {
-  const seated = useMemo(() => (
-    players
-      .filter((player) => player.seat_position !== null)
-      .sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0))
-  ), [players]);
-
-  const count = Math.max(seated.length, 1);
-  const cardW = 76;
-  const cardH = 102;
-  const radiusX = Math.min(320, 90 + count * 10);
-  const radiusY = Math.min(170, 62 + count * 5);
-  const width = radiusX * 2 + cardW + 28;
-  const height = radiusY * 2 + cardH + 28;
-  const centerX = width / 2;
-  const centerY = height / 2;
+  const totalSlots = Math.max(players.filter((player) => player.seat_position !== null).length, 1);
 
   return (
     <div className="overflow-x-auto">
-      <div className="relative mx-auto" style={{ width, height }}>
-        {seated.map((player, index) => {
-          const angle = count === 1 ? -Math.PI / 2 : -Math.PI / 2 + (index / count) * Math.PI * 2;
-          const x = centerX + Math.cos(angle) * radiusX - cardW / 2;
-          const y = centerY + Math.sin(angle) * radiusY - cardH / 2;
-          const role = roleAssignments[player.id] ?? null;
-          const roleDef = role ? ROLES[role] : null;
-          const effects = playerEffects[player.id] ?? new Set<StatusEffect>();
-          const snapshot: GameLogPlayerSnapshot = {
-            id: player.id,
-            name: player.name,
-            role,
-            status: playerStatuses[player.id] ?? "alive",
-            permanentlyDead: permanentlyDead.has(player.id),
-            poisoned: poisonedPlayerId === player.id,
-            illusion: illusionPlayerId === player.id,
-            effects: Array.from(effects),
-          };
-          const selected = selectedPlayerId === player.id;
-          return (
-            <button
-              type="button"
-              key={player.id}
-              onClick={() => onSelect(player.id)}
-              className={`absolute rounded-md border bg-card/90 p-1.5 text-center transition ${selected ? "border-primary shadow-[0_0_0_3px_hsl(var(--primary)/0.25)]" : "border-border hover:border-primary/60"}`}
-              style={{ left: x, top: y, width: cardW, minHeight: cardH }}
-              title={player.name}
-            >
-              <div className={`mx-auto h-12 w-12 overflow-hidden rounded-md border border-border/70 bg-muted ${snapshot.permanentlyDead ? "grayscale opacity-60" : ""}`}>
-                {roleDef ? (
-                  <img src={roleDef.image} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <img src={villagerIcon} alt="" className="h-full w-full object-cover opacity-40" />
-                )}
-              </div>
-              <div className="mt-1 truncate text-[11px] font-display text-foreground">{player.name}</div>
-              <StatusBadges player={snapshot} language={language} compact />
-            </button>
-          );
-        })}
+      <div className="mx-auto w-max">
+        <PlayerCircle
+          players={players}
+          totalSlots={totalSlots}
+          onDropPlayer={() => undefined}
+          isGM
+          roleAssignments={roleAssignments}
+          playerStatuses={playerStatuses}
+          permanentlyDead={permanentlyDead}
+          poisonedPlayerId={poisonedPlayerId}
+          illusionPlayerId={illusionPlayerId}
+          playerEffects={playerEffects}
+          onPlayerClick={onSelect}
+          selectedPlayerId={selectedPlayerId}
+        />
       </div>
     </div>
   );
@@ -326,7 +287,9 @@ export function GameLogModal({
         byKey.set(key, group);
         grouped.push(group);
       }
-      group.events.push(event);
+      if (!["phase", "permanent_death", "cure_poison", "clear_illusion", "effect_remove"].includes(event.action)) {
+        group.events.push(event);
+      }
       group.firstCreatedAt = Math.min(group.firstCreatedAt, event.createdAt);
     }
     grouped.sort((a, b) => a.firstCreatedAt - b.firstCreatedAt);
@@ -379,17 +342,17 @@ export function GameLogModal({
             />
           </section>
 
-          <section className="mx-auto max-w-7xl space-y-4 pb-4">
+          <section className="mx-auto grid max-w-7xl grid-cols-1 gap-3 pb-4 xl:grid-cols-2">
             {groups.length === 0 ? (
               <div className="rounded-md border border-dashed border-border bg-card/40 p-6 text-center text-sm text-muted-foreground">
                 {copy.empty}
               </div>
             ) : (
               groups.map((group) => (
-                <div key={group.key} className="rounded-md border border-border bg-card/40">
-                  <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+                <div key={group.key} className="self-start rounded-md border border-border bg-card/40">
+                  <div className={`flex items-center gap-2 px-3 py-2 ${group.events.length > 0 ? "border-b border-border" : ""}`}>
                     <Clock className="h-4 w-4 text-primary" />
-                    <h3 className="font-display text-base text-foreground">{group.label}</h3>
+                    <h3 className="font-display text-sm text-foreground">{group.label}</h3>
                   </div>
                   <div className="divide-y divide-border/70">
                     {group.events.map((event) => {
@@ -405,10 +368,10 @@ export function GameLogModal({
                       return (
                         <div
                           key={event.id}
-                          className={`p-3 transition ${highlighted ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : "bg-transparent"}`}
+                          className={`p-2 transition ${highlighted ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : "bg-transparent"}`}
                         >
-                          <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
-                            <div className="flex justify-center md:w-36">
+                          <div className="grid grid-cols-[58px_minmax(64px,1fr)_minmax(58px,145px)] items-center gap-2">
+                            <div className="flex justify-center">
                               {event.actor || event.actorRole ? (
                                 <PlayerMiniCard
                                   player={event.actor}
@@ -418,22 +381,22 @@ export function GameLogModal({
                                   noRoleLabel={copy.noRole}
                                 />
                               ) : (
-                                <div className="flex min-h-[88px] min-w-[92px] items-center justify-center rounded-md border border-border bg-muted/30 px-2 text-center text-xs text-muted-foreground">
+                                <div className="flex min-h-[64px] min-w-[58px] items-center justify-center rounded-md border border-border bg-muted/30 px-1 text-center text-[10px] text-muted-foreground">
                                   {copy.system}
                                 </div>
                               )}
                             </div>
 
-                            <div className="flex min-w-[132px] flex-1 items-center justify-center gap-2 text-center">
+                            <div className="flex min-w-0 items-center justify-center gap-1 text-center">
                               <div className="flex flex-col items-center gap-1">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background">
                                   {eventIcon ? (
-                                    <img src={eventIcon} alt="" className="h-6 w-6" />
+                                    <img src={eventIcon} alt="" className="h-5 w-5" />
                                   ) : (
                                     <CircleSlash className="h-5 w-5 text-muted-foreground" />
                                   )}
                                 </div>
-                                <div className="max-w-[220px] text-xs font-medium text-foreground">{actionLabel}</div>
+                                <div className="max-w-[150px] text-[11px] font-medium leading-tight text-foreground">{actionLabel}</div>
                                 {event.detail && <div className="max-w-[260px] text-[11px] text-muted-foreground">{event.detail}</div>}
                                 {event.winKind && (
                                   <div className="text-[11px] text-muted-foreground">
@@ -441,10 +404,10 @@ export function GameLogModal({
                                   </div>
                                 )}
                               </div>
-                              {(event.target || event.secondaryTarget) && <ArrowRight className="hidden h-4 w-4 text-muted-foreground md:block" />}
+                              {(event.target || event.secondaryTarget) && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
                             </div>
 
-                            <div className="flex justify-center gap-2 md:w-44">
+                            <div className="flex justify-center gap-1">
                               {event.target ? (
                                 <PlayerMiniCard
                                   player={event.target}
@@ -453,7 +416,7 @@ export function GameLogModal({
                                   noRoleLabel={copy.noRole}
                                 />
                               ) : event.secondaryTarget ? null : (
-                                <div className="hidden min-h-[88px] min-w-[92px] md:block" />
+                                <div className="min-h-[64px] min-w-[58px]" />
                               )}
                               {event.secondaryTarget && (
                                 <PlayerMiniCard

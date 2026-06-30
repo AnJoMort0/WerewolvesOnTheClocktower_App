@@ -1,6 +1,6 @@
 import { forwardRef, useState, useEffect, useRef, useCallback, useImperativeHandle } from "react";
 import { motion } from "framer-motion";
-import { Sun, Scale, Play, Pause, RotateCcw, Settings } from "lucide-react";
+import { Sun, Scale, Play, Pause, RotateCcw, Settings, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -310,6 +310,7 @@ export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPa
           onClick={onStartNight}
           className={`w-full h-12 font-display tracking-wider ${timerDone ? "bg-secondary hover:bg-secondary/80" : "bg-secondary/50 hover:bg-secondary/80"} border border-moon/30`}
         >
+          <Moon className="mr-2 h-4 w-4" />
           {t("nextNight")}
         </Button>
       )}
