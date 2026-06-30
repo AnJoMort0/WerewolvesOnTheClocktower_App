@@ -8,14 +8,10 @@ export type GameLogAction =
   | "phase"
   | "kill"
   | "execute"
-  | "permanent_death"
   | "resurrect"
   | "poison"
-  | "cure_poison"
   | "illusion"
-  | "clear_illusion"
   | "effect_add"
-  | "effect_remove"
   | "role_change"
   | "game_over";
 

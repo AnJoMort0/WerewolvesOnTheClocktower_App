@@ -86,34 +86,6 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   dug_up: dugUpIcon,
 };
 
-/** @deprecated Use getEffectLabel(effect, lang) instead for i18n. */
-export const STATUS_EFFECT_LABELS: Record<StatusEffect, string> = {
-  soldado: "Soldado",
-  vote_against: "2 Votos Contra",
-  vote_double: "Vota a Dobrar",
-  inocentado: "Inocentado",
-  hospede: "Hóspede",
-  immunity_full: "Imunidade Total",
-  profecia: "Profecía",
-  acusado: "Acusado",
-  acusado_next: "Acusado esta noite",
-  werewolf_turned: "Virar Lobisomem",
-  enemy: "Inimigo",
-  immunity_onetime: "Imunidade Única",
-  namorado: "Namorado",
-  immunity_cupid: "Imunidade de Cúpido",
-  evil_being: "Criatura Malvada",
-  vote_revoked: "Voto Roubado",
-  adoptive_dad: "Pai Adotivo",
-  incendiado: "Incendiado",
-  immunity_werewolf: "Imunidade Lobisomens",
-  tetanus: "Tétano",
-  webbed: "Fazer uma Teia",
-  caught: "Apanhado",
-  spied_on: "Espiado",
-  dug_up: "Desenterrado",
-};
-
 interface PlayerStatusPopoverProps {
   children: React.ReactNode;
   status: PlayerStatus;

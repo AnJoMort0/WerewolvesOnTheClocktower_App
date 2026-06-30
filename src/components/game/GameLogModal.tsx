@@ -47,6 +47,7 @@ const TEXT: Record<Language, {
   unknownPlayer: string;
   noRole: string;
   close: string;
+  permanentDeath: string;
   phaseLabels: Record<GameLogPhase, string>;
   actionLabels: Record<GameLogEvent["action"], string>;
 }> = {
@@ -60,6 +61,7 @@ const TEXT: Record<Language, {
     unknownPlayer: "Jogador",
     noRole: "Sem carta",
     close: "Fechar",
+    permanentDeath: "Morte permanente",
     phaseLabels: {
       setup: "Preparação",
       night: "Noite",
@@ -71,14 +73,10 @@ const TEXT: Record<Language, {
       phase: "Mudança de fase",
       kill: "Morte",
       execute: "Execução",
-      permanent_death: "Morte permanente",
       resurrect: "Ressuscitou",
       poison: "Envenenado",
-      cure_poison: "Veneno removido",
       illusion: "Ilusão",
-      clear_illusion: "Ilusão removida",
       effect_add: "Efeito aplicado",
-      effect_remove: "Efeito removido",
       role_change: "Carta alterada",
       game_over: "Fim do jogo",
     },
@@ -93,6 +91,7 @@ const TEXT: Record<Language, {
     unknownPlayer: "Joueur",
     noRole: "Sans carte",
     close: "Fermer",
+    permanentDeath: "Mort permanente",
     phaseLabels: {
       setup: "Préparation",
       night: "Nuit",
@@ -104,14 +103,10 @@ const TEXT: Record<Language, {
       phase: "Changement de phase",
       kill: "Mort",
       execute: "Exécution",
-      permanent_death: "Mort permanente",
       resurrect: "Ressuscité",
       poison: "Empoisonné",
-      cure_poison: "Poison retiré",
       illusion: "Illusion",
-      clear_illusion: "Illusion retirée",
       effect_add: "Effet appliqué",
-      effect_remove: "Effet retiré",
       role_change: "Carte modifiée",
       game_over: "Fin de partie",
     },
@@ -120,11 +115,11 @@ const TEXT: Record<Language, {
 
 function getEventIcon(event: GameLogEvent) {
   if (event.effect && STATUS_EFFECT_ICONS[event.effect]) return STATUS_EFFECT_ICONS[event.effect];
-  if (event.action === "poison" || event.action === "cure_poison") return poisonedIcon;
-  if (event.action === "illusion" || event.action === "clear_illusion") return illusionIcon;
+  if (event.action === "poison") return poisonedIcon;
+  if (event.action === "illusion") return illusionIcon;
   if (event.action === "execute") return ghostExecutedIcon;
   if (event.action === "resurrect") return ghostRessurectIcon;
-  if (event.action === "kill" || event.action === "permanent_death") return ghostIcon;
+  if (event.action === "kill") return ghostIcon;
   return null;
 }
 
@@ -188,7 +183,7 @@ function PlayerMiniCard({
 
 function StatusBadges({ player, language, compact = false }: { player: GameLogPlayerSnapshot; language: Language; compact?: boolean }) {
   const badges: Array<{ key: string; icon: string; label: string; tone?: string }> = [];
-  if (player.permanentlyDead) badges.push({ key: "perma", icon: ghostIcon, label: TEXT[language].actionLabels.permanent_death, tone: "opacity-60" });
+  if (player.permanentlyDead) badges.push({ key: "perma", icon: ghostIcon, label: TEXT[language].permanentDeath, tone: "opacity-60" });
   else if (player.status === "dead-this-night") badges.push({ key: "redx", icon: ghostIcon, label: TEXT[language].actionLabels.kill });
   if (player.poisoned) badges.push({ key: "poison", icon: poisonedIcon, label: TEXT[language].actionLabels.poison });
   if (player.illusion) badges.push({ key: "illusion", icon: illusionIcon, label: TEXT[language].actionLabels.illusion });
@@ -272,6 +267,7 @@ export function GameLogModal({
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : null;
 
   const groups = useMemo(() => {
+    const hiddenLegacyActions = new Set(["permanent_death", "cure_poison", "clear_illusion", "effect_remove"]);
     const grouped: Array<{ key: string; label: string; events: GameLogEvent[]; firstCreatedAt: number }> = [];
     const byKey = new Map<string, { key: string; label: string; events: GameLogEvent[]; firstCreatedAt: number }>();
     for (const event of events) {
@@ -287,7 +283,7 @@ export function GameLogModal({
         byKey.set(key, group);
         grouped.push(group);
       }
-      if (!["phase", "permanent_death", "cure_poison", "clear_illusion", "effect_remove"].includes(event.action)) {
+      if (event.action !== "phase" && !hiddenLegacyActions.has(event.action)) {
         group.events.push(event);
       }
       group.firstCreatedAt = Math.min(group.firstCreatedAt, event.createdAt);

@@ -166,7 +166,7 @@ export default function CharacterGeneratorPage() {
   const activeRoles = useMemo(() => new Set(roleIds), [roleIds]);
   const scriptLines = useMemo(() => {
     return RULEBOOK_NIGHT_SCRIPT[phase].filter((line) => {
-      return line.refs.includes("general") || line.refs.some((ref) => ref !== "general" && activeRoles.has(ref));
+      return line.refs.some((ref) => ref === "general" || activeRoles.has(ref));
     });
   }, [activeRoles, phase]);
 

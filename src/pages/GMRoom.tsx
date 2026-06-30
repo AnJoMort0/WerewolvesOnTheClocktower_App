@@ -8,7 +8,7 @@ import { AddPlayerForm } from "@/components/game/AddPlayerForm";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import { NightScript } from "@/components/game/NightScript";
 import { DayTribunalPanel, type DayTribunalPanelHandle } from "@/components/game/DayTribunalPanel";
-import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS, STATUS_EFFECT_LABELS } from "@/components/game/PlayerStatusPopover";
+import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
 import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { assignRoles, ROLES, isUniqueRole, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, type RoleId } from "@/lib/roles";
-import { LanguageContext, getRoleLabel, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
+import { LanguageContext, getEffectLabel, getRoleLabel, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
 import { canWhiteWolfTarget, getMeninaAnswerKind, hasOtherLivingWerewolf, MENINA_POISONED_ANSWERS, type MeninaAnswerKind, type WhiteWolfPlayerState } from "@/lib/gameRules";
@@ -508,7 +508,7 @@ const GMRoom = () => {
     }
 
     return effects;
-  }, [roleAssignments, gameCyclePhase, playerEffects, playerStatuses, killSources, lobisomemVampiroUsed]);
+  }, [roleAssignments, playerEffects, playerStatuses, killSources, lobisomemVampiroUsed]);
 
   const toggleEffect = useCallback((playerId: string, effect: StatusEffect) => {
     setPlayerEffects((prev) => {
@@ -602,7 +602,7 @@ const GMRoom = () => {
       }
       return newEffects;
     });
-  }, [roleAssignments, poisonedPlayerId]);
+  }, [roleAssignments, poisonedPlayerId, room?.language]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !roomId) return;
@@ -995,7 +995,7 @@ const GMRoom = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [roomId]);
+  }, [roomId, room?.status]);
 
   const copyCode = useCallback(() => {
     if (room) {
@@ -1548,7 +1548,7 @@ const GMRoom = () => {
       }
     }
     setListPopoverId(null);
-  }, [players, hasImmunity, roleAssignments, poisonedPlayerId, findClosestWerewolf]);
+  }, [players, hasImmunity, roleAssignments, poisonedPlayerId, findClosestWerewolf, room?.language]);
 
   const handleSetIllusion = (playerId: string) => {
     if (illusionPlayerId === playerId) {
@@ -2528,7 +2528,7 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", roleSource);
       }
     }
-  }, [handlePlayerStatusChange, handleChamanDrop, handleSetIllusion, toggleEffect, roleAssignments, poisonedPlayerId, players, playerEffects, gameCyclePhase, anjoCharges, getRolePlayerId, pickRandomPlayer, permanentlyDead, resetUsesForRole, salvadorLastTarget, chefeLastTarget, playerStatuses, paranoicoCharges, spiderDayChangeUsed, markScriptRoleAction]);
+  }, [handlePlayerStatusChange, handleChamanDrop, handleSetIllusion, toggleEffect, roleAssignments, poisonedPlayerId, players, playerEffects, gameCyclePhase, anjoCharges, getRolePlayerId, pickRandomPlayer, permanentlyDead, resetUsesForRole, salvadorLastTarget, chefeLastTarget, playerStatuses, paranoicoCharges, spiderDayChangeUsed, markScriptRoleAction, room?.language]);
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
@@ -2779,7 +2779,7 @@ const GMRoom = () => {
       type: "broadcast", event: "faroleiro-reveal",
       payload: { show: true, role, charges },
     });
-  }, [players, permanentlyDead, roleAssignments, chamanCharges, paranoicoCharges, anjoCharges, lobisomemMauCharges, cupidoCharges, lobisomemVidenteUsed, lobisomemVampiroUsed, foxDisabled, spiderDayChangeUsed, poisonedPlayerId, roomId]);
+  }, [players, permanentlyDead, roleAssignments, chamanCharges, paranoicoCharges, anjoCharges, lobisomemMauCharges, cupidoCharges, lobisomemVidenteUsed, lobisomemVampiroUsed, juizCharges, acusadorCharges, spiderDayChangeUsed, poisonedPlayerId, roomId, room?.language]);
 
   const handleCloseFaroleiroModal = useCallback(() => {
     setFaroleiroRevealOpen(false);
@@ -2913,7 +2913,7 @@ const GMRoom = () => {
       type: "broadcast", event: "spy-reveal",
       payload: { show: true, cards },
     });
-  }, [room, roleAssignments, players, permanentlyDead, playerEffects, poisonedPlayerId, getRolePlayerId, illusionPlayerId, roomId]);
+  }, [room?.language, roleAssignments, players, playerEffects, poisonedPlayerId, getRolePlayerId, illusionPlayerId, roomId]);
 
   const handleCloseSpyModal = useCallback(() => {
     setSpyRevealOpen(false);
@@ -2951,7 +2951,7 @@ const GMRoom = () => {
       ? "La {Domestique} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée"
       : "A {Empregada} acorda e é-lhe revelada a distância até a pessoa envenenada");
     return `${baseLine}: ${distance}`;
-  }, [roleAssignments, players, poisonedPlayerId, permanentlyDead]);
+  }, [roleAssignments, players, poisonedPlayerId, permanentlyDead, room?.language]);
 
 
   // Tribunal lines
@@ -3111,7 +3111,7 @@ const GMRoom = () => {
     keys["amanteTraido"] = !!(amanteId && poisonedPlayerId === amanteId && playerEffects[amanteId]?.has("namorado"));
 
     return keys;
-  }, [playerStatuses, roleAssignments, lastNightDeadPlayerIds, permanentlyDead, killSources, playerEffects, nightNumber, poisonedPlayerId, cupidoCharges, lobisomemMauCharges, lobisomemVampiroUsed, lobisomemVidenteUsed, players]);
+  }, [playerStatuses, roleAssignments, lastNightDeadPlayerIds, permanentlyDead, killSources, playerEffects, nightNumber, poisonedPlayerId, cupidoCharges, lobisomemMauCharges, lobisomemVampiroUsed, players]);
 
   const lang: Language = (room?.language as Language) || "pt";
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
@@ -3124,7 +3124,14 @@ const GMRoom = () => {
   }, []);
   const openRoomDisplay = useCallback(() => {
     if (!roomId) return;
-    window.open(`/display/${roomId}`, "_blank", "noopener,noreferrer");
+    const width = window.screen.availWidth;
+    const height = window.screen.availHeight;
+    const displayWindow = window.open(
+      `/display/${roomId}`,
+      `wotct-room-display-${roomId}`,
+      `popup=yes,width=${width},height=${height},left=${window.screenX},top=${window.screenY},resizable=yes,scrollbars=yes`,
+    );
+    displayWindow?.focus();
   }, [roomId]);
   const effectiveGMPhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
   useEffect(() => setHiddenTimerEditing(false), [effectiveGMPhase]);
@@ -3602,7 +3609,7 @@ const GMRoom = () => {
                           {effects.size > 0 && (
                             <div className="flex gap-0.5 flex-shrink-0">
                               {Array.from(effects).map(eff => STATUS_EFFECT_ICONS[eff] ? (
-                                <img key={eff} src={STATUS_EFFECT_ICONS[eff]} alt={eff} className="h-4 w-4" title={STATUS_EFFECT_LABELS[eff]} />
+                                <img key={eff} src={STATUS_EFFECT_ICONS[eff]} alt={eff} className="h-4 w-4" title={getEffectLabel(eff, lang)} />
                               ) : null)}
                             </div>
                           )}

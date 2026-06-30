@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { ArrowUp, List } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,23 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
   const html = useMemo(() => getRulebookHtml(language, viewRoleId), [language, viewRoleId]);
   const title = viewRoleId ? RULEBOOK_CHARACTERS[viewRoleId]?.name[language] ?? t("rulebook", language) : t("rulebook", language);
 
+  const findRulebookTarget = useCallback((targetId: string): HTMLElement | null => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return null;
+    return Array.from(scroller.querySelectorAll<HTMLElement>("[id]")).find((element) => element.id === targetId) ?? null;
+  }, []);
+
+  const scrollToTarget = useCallback((targetId: string, behavior: ScrollBehavior = "smooth") => {
+    const scroller = scrollerRef.current;
+    const target = findRulebookTarget(targetId);
+    if (!scroller || !target) return;
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const top = Math.max(0, targetRect.top - scrollerRect.top + scroller.scrollTop - 12);
+    scroller.scrollTo({ top, behavior });
+  }, [findRulebookTarget]);
+
   useEffect(() => {
     if (!open) return;
     setViewRoleId(roleId);
@@ -36,24 +53,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [html, open, pendingScroll]);
-
-  const scrollToTarget = (targetId: string, behavior: ScrollBehavior = "smooth") => {
-    const scroller = scrollerRef.current;
-    const target = findRulebookTarget(targetId);
-    if (!scroller || !target) return;
-
-    const scrollerRect = scroller.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    const top = Math.max(0, targetRect.top - scrollerRect.top + scroller.scrollTop - 12);
-    scroller.scrollTo({ top, behavior });
-  };
-
-  const findRulebookTarget = (targetId: string): HTMLElement | null => {
-    const scroller = scrollerRef.current;
-    if (!scroller) return null;
-    return Array.from(scroller.querySelectorAll<HTMLElement>("[id]")).find((element) => element.id === targetId) ?? null;
-  };
+  }, [html, open, pendingScroll, scrollToTarget]);
 
   const handleArticleClick = (event: MouseEvent<HTMLElement>) => {
     const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[href^='#']");

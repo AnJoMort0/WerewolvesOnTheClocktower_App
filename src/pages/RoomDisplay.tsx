@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { BookOpen, Maximize, Moon, Scale, ScrollText, Sun, X } from "lucide-react";
+import { BookOpen, Maximize, Minimize, Moon, Scale, ScrollText, Sun, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { GameLogModal } from "@/components/game/GameLogModal";
@@ -16,6 +16,7 @@ const COPY: Record<Language, {
   log: string;
   rulebook: string;
   fullscreen: string;
+  exitFullscreen: string;
   close: string;
   night: string;
   day: string;
@@ -27,6 +28,7 @@ const COPY: Record<Language, {
     log: "Registo do jogo",
     rulebook: "Regras",
     fullscreen: "Ecrã inteiro",
+    exitFullscreen: "Sair do ecrã inteiro",
     close: "Fechar ecrã",
     night: "Noite",
     day: "Dia",
@@ -38,6 +40,7 @@ const COPY: Record<Language, {
     log: "Journal de partie",
     rulebook: "Règles",
     fullscreen: "Plein écran",
+    exitFullscreen: "Quitter le plein écran",
     close: "Fermer l'écran",
     night: "Nuit",
     day: "Jour",
@@ -55,6 +58,7 @@ export default function RoomDisplay() {
   const [gameLogOpen, setGameLogOpen] = useState(false);
   const [rulebookOpen, setRulebookOpen] = useState(false);
   const [dismissedGameOverId, setDismissedGameOverId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(() => !!document.fullscreenElement);
 
   useEffect(() => {
     if (!roomId) return;
@@ -66,6 +70,20 @@ export default function RoomDisplay() {
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
   }, [roomId]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen?.();
+    } else {
+      void document.documentElement.requestFullscreen?.();
+    }
+  };
 
   const language = snapshot?.language ?? "pt";
   const copy = COPY[language];
@@ -109,8 +127,8 @@ export default function RoomDisplay() {
             <Button type="button" size="icon" variant="secondary" onClick={() => setRulebookOpen(true)} title={copy.rulebook} aria-label={copy.rulebook}>
               <BookOpen className="h-4 w-4" />
             </Button>
-            <Button type="button" size="icon" variant="secondary" onClick={() => document.documentElement.requestFullscreen?.()} title={copy.fullscreen} aria-label={copy.fullscreen}>
-              <Maximize className="h-4 w-4" />
+            <Button type="button" size="icon" variant="secondary" onClick={toggleFullscreen} title={isFullscreen ? copy.exitFullscreen : copy.fullscreen} aria-label={isFullscreen ? copy.exitFullscreen : copy.fullscreen}>
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
             </Button>
             <Button type="button" size="icon" variant="secondary" onClick={() => window.close()} title={copy.close} aria-label={copy.close}>
               <X className="h-4 w-4" />

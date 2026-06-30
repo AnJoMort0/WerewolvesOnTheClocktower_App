@@ -31,8 +31,8 @@ export type LocalizedText = Record<Language, string>;
 export type RulebookSectionBlock =
   | { type: "h2" | "h3" | "h4"; id: string; text: string }
   | { type: "p"; text: string }
-  | { type: "note"; lines: string[] }
-  | { type: "list"; ordered?: boolean; items: string[] };
+  | { type: "note"; lines: readonly string[] }
+  | { type: "list"; ordered?: boolean; items: readonly string[] };
 
 export type RulebookNightPhase = "firstNight" | "secondNight" | "normalNight";
 export type RulebookScriptRef = "general" | RoleId;

@@ -107,7 +107,13 @@ function normalizeGroupCount(roleIds: RoleId[], roleId: RoleId, expected: number
   }
 
   while (count > expected) {
-    const index = roleIds.findLastIndex((id) => id === roleId);
+    let index = -1;
+    for (let i = roleIds.length - 1; i >= 0; i -= 1) {
+      if (roleIds[i] === roleId) {
+        index = i;
+        break;
+      }
+    }
     if (index < 0) break;
     roleIds[index] = "l01";
     count -= 1;

@@ -208,7 +208,7 @@ export const PlayerCircle = ({
   const containerH = radiusY * 2 + 160;
 
   const getStatusClasses = (playerId: string) => {
-    if (hideSensitiveInfo) return "";
+    if (hideSensitiveInfo) return permanentlyDead.has(playerId) ? "grayscale opacity-50" : "";
     const status = playerStatuses[playerId];
     const isPDead = permanentlyDead.has(playerId);
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
@@ -333,7 +333,7 @@ export const PlayerCircle = ({
         const rawStatus = seated ? (playerStatuses[seated.id] || "alive") : "alive";
         const rawIsPermanentlyDead = seated ? permanentlyDead.has(seated.id) : false;
         const status = hideSensitiveInfo ? "alive" : rawStatus;
-        const isPermanentlyDead = hideSensitiveInfo ? false : rawIsPermanentlyDead;
+        const isPermanentlyDead = rawIsPermanentlyDead;
         const dragProps = seated ? getDragProps(seated.id) : {};
         const hasDrag = !!dragProps.draggable;
         const isThisIllusion = seated && !hideSensitiveInfo ? seated.id === illusionPlayerId : false;
