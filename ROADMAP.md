@@ -20,14 +20,12 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 * [ ] DOCS + ALMANAC: Rearrange cards by affinity instead of ID; place the Spider Tamer beside the other Tamers and separate Werewolves from their allies
 
 ## Critical Fixes
+
 * [ ] 
 
 ## Fixes
 
-* [ ] In the room display screen and hidden mode, the perma-dead characters should still appear as so. Like they do in the hidden screen in the player's devices
-* [ ] Open the room display screen in a new window instead of a new tab
-* [ ] The fullscreen button only fullscreens, make it so the button turns into the un-fullscreens button when it's already full screen
-* [ ] Remove any useless files or deprecated lines of code, vestiges of old versions, etc
+* [ ] 
 
 ## Balance Changes
 
@@ -37,12 +35,17 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 * [ ] 
 
+* [ ] Adding a01.Drunkard:
+	* [ ] Completly replaces e04, v01, v02, v03, v04, v05, v16 or v23 (random every game) (make it future proof, in case I want to add more characters to this list - ones that are already in game, as well as ones that don't exist yet)
+	* [ ] Does not know he is the Drunkard, in his device he gets the card he is replacing, but everyone else that sees cards will see the Drunkard card. In the GM screen, there's the small a01 card in the corner like you did with the Actor
+	* [ ] Everytime he acts, he will act as the poisoned effect of the card he is playing as (for example, if he is replacing the Bear Tamer and there's no evil beings near him, the bear will roar still). Except when he is poisoned, in that case he will get the normal action. To indicate that, you can change the colours of the script line and/or a little Drunkard card to the script line, for the thing to be clear for the GM
+	* [ ] The log also states which character he replaced at the beginning of the game
+
 ## Future Plans
 
 * [ ] Add new character `m06` to app and docs
 * [ ] Add new character `v24` to app and docs
 * [ ] Add the fonctionnality for the complex characters not yet deployed
-    * [ ] When the Ator is in game, there's the status option for "Ídolo" with the idol.png icon. This action is also applied when the Ator is drag-dropped onto another player. Only one player can have the idol status at the time. The Ator has two checkboxes, that get ticked when he is drag-dropped, and once both are ticked he cannot be drag-drop anymore. When a idol status character becomes perma-dead the Ator switches character to become the one that died (and therefore in this specific scenario there can be two cards that are the same at the same time). However he is still seen has the "Ator" to all other character like the Vidente when he dies, Menina if he kills anyone, or any other card that can see cards.
 * [ ] Adding phone interactions:
     * [ ] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device screen changes to the player circle and a poison button option appears, when the player clicks that button, he is in poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script.
 * [ ] Small beautifying of the page: Make the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)

@@ -258,6 +258,7 @@ export const fr: Translation = {
       caught: "Pris dans la Toile",
       spied_on: "Espionné",
       dug_up: "Déterré",
+      idol: "Idole",
     },
     toasts: {
       errAddPlayer: "Erreur lors de l'ajout du joueur",

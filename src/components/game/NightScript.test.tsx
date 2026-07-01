@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NightScript } from "@/components/game/NightScript";
 import { LanguageContext } from "@/lib/i18n";
@@ -123,5 +123,207 @@ describe("NightScript conditional behavior", () => {
       </LanguageContext.Provider>,
     );
     expect(container.textContent).toContain("escolhe o Lobisomem que quer matar");
+  });
+});
+
+describe("NightScript Actor copy", () => {
+  it("shows Actor in place of a copied role and keeps a separate line when that role is also in play", () => {
+    const actorProps = {
+      ...baseProps,
+      activeRoles: new Set(["e02" as const]),
+      roleAssignments: { actor: "e02" as const, witch: "e02" as const },
+      baseRoleAssignments: { actor: "a04" as const, witch: "e02" as const },
+      players: [
+        { id: "actor", name: "Actor", seat_position: 0 },
+        { id: "witch", name: "Witch", seat_position: 1 },
+      ],
+      actorPlayerId: "actor",
+      actorCopiedRole: "e02" as const,
+    };
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...actorProps} />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Bruxa Malvada");
+    expect(container.textContent).toContain("Ator");
+  });
+
+  it("adds Actor to the shared werewolf wake-up line", () => {
+    const actorProps = {
+      ...baseProps,
+      activeRoles: new Set(["e01" as const, "m01" as const]),
+      roleAssignments: { wolf: "e01" as const, actor: "m01" as const },
+      baseRoleAssignments: { wolf: "e01" as const, actor: "a04" as const },
+      players: [
+        { id: "wolf", name: "Wolf", seat_position: 0 },
+        { id: "actor", name: "Actor", seat_position: 1 },
+      ],
+      actorPlayerId: "actor",
+      actorCopiedRole: "m01" as const,
+      conditionKeys: { lobisomemMauHasCharges: true },
+    };
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...actorProps} />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Lobisomens (+ Ator)");
+  });
+
+  it("does not keep a second script line for the dead Idol", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["e02"])}
+          roleAssignments={{ actor: "e02", idol: "e02" }}
+          baseRoleAssignments={{ actor: "a04", idol: "e02" }}
+          permanentlyDead={new Set(["idol"])}
+          players={[
+            { id: "actor", name: "Actor", seat_position: 0 },
+            { id: "idol", name: "Idol", seat_position: 1 },
+          ]}
+          actorPlayerId="actor"
+          actorCopiedRole="e02"
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Ator");
+    expect(container.textContent).not.toContain("Bruxa Malvada");
+  });
+
+  it("keeps the prophetic Idol as the owner of their final role action", () => {
+    const idolTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const actorTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          nightNumber={4}
+          activeRoles={new Set(["e02"])}
+          roleAssignments={{ actor: "e02", idol: "e02" }}
+          baseRoleAssignments={{ actor: "a04", idol: "e02" }}
+          permanentlyDead={new Set(["idol"])}
+          players={[
+            { id: "actor", name: "Actor", seat_position: 0 },
+            { id: "idol", name: "Idol", seat_position: 1 },
+          ]}
+          actorPlayerId="actor"
+          actorCopiedRole="e02"
+          profeciaGhostPlayerIds={new Set(["idol"])}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const lines = Array.from(container.querySelectorAll('[draggable="true"]'));
+    const idolLine = lines.find((line) => line.textContent?.includes("Bruxa Malvada"));
+    const actorLine = lines.find((line) => line.textContent?.includes("Ator"));
+    fireEvent.dragStart(idolLine!, { dataTransfer: idolTransfer });
+    fireEvent.dragStart(actorLine!, { dataTransfer: actorTransfer });
+
+    expect(idolTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "idol");
+    expect(actorTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "actor");
+  });
+
+  it("keeps the dead Hunter as owner of the pending ghost kill and separately calls Actor for the card change", () => {
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["v08"])}
+          roleAssignments={{ actor: "v08", hunter: "v08" }}
+          baseRoleAssignments={{ actor: "a04", hunter: "v08" }}
+          permanentlyDead={new Set(["hunter"])}
+          lastNightDeadPlayerIds={["hunter"]}
+          players={[
+            { id: "actor", name: "Actor", seat_position: 0 },
+            { id: "hunter", name: "Hunter", seat_position: 1 },
+          ]}
+          actorPlayerId="actor"
+          actorCopiedRole="v08"
+          actorCopyNoticeNight={2}
+          conditionKeys={{ cacadorDied: true }}
+          deathTriggeredSourcePlayerIds={{ cacadorDied: ["hunter"] }}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const ghostLine = Array.from(container.querySelectorAll('[draggable="true"]'))
+      .find((element) => element.textContent?.includes("Fantasma"));
+    expect(ghostLine?.textContent).toContain("Caçador");
+    expect(container.textContent).toContain("papel ao qual irá responder");
+    fireEvent.dragStart(ghostLine!, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "hunter");
+  });
+
+  it("keeps Actor's copied Hunter ghost action after Actor dies", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["v08"])}
+          roleAssignments={{ actor: "v08", hunter: "v08" }}
+          baseRoleAssignments={{ actor: "a04", hunter: "v08" }}
+          permanentlyDead={new Set(["actor", "hunter"])}
+          lastNightDeadPlayerIds={["actor"]}
+          players={[
+            { id: "actor", name: "Actor", seat_position: 0 },
+            { id: "hunter", name: "Hunter", seat_position: 1 },
+          ]}
+          actorPlayerId="actor"
+          actorCopiedRole="v08"
+          conditionKeys={{ cacadorDied: true }}
+          deathTriggeredSourcePlayerIds={{ cacadorDied: ["actor"] }}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Fantasma do Ator");
+  });
+
+  it("calls a dead Actor as the copied role on the prophecy night", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          nightNumber={4}
+          roleAssignments={{ actor: "e02", idol: "v03" }}
+          baseRoleAssignments={{ actor: "a04", idol: "v03" }}
+          permanentlyDead={new Set(["actor", "idol"])}
+          players={[
+            { id: "actor", name: "Actor", seat_position: 0 },
+            { id: "idol", name: "Idol", seat_position: 1 },
+          ]}
+          actorPlayerId="actor"
+          actorCopiedRole="e02"
+          profeciaGhostPlayerIds={new Set(["actor"])}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Ator");
+    expect(container.textContent).not.toContain("Bruxa Malvada");
+  });
+
+  it("tracks the dead Soldier as owner of the analogous ghost kill", () => {
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          conditionKeys={{ soldadoDied: true }}
+          deathTriggeredSourcePlayerIds={{ soldadoDied: ["soldier"] }}
+        />
+      </LanguageContext.Provider>,
+    );
+    const ghostLine = Array.from(container.querySelectorAll('[draggable="true"]'))
+      .find((element) => element.textContent?.includes("SOLDADO"));
+    fireEvent.dragStart(ghostLine!, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "soldier");
   });
 });

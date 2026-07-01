@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, CircleSlash, Clock, ScrollText, X } from "lucide-react";
+import { ArrowRight, CircleSlash, Clock, Minus, ScrollText, Trophy, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getEffectLabel, getGameOver, getRoleLabel, getWinLabel, type Language } from "@/lib/i18n";
@@ -44,6 +44,8 @@ const TEXT: Record<Language, {
   clearHighlight: string;
   selected: string;
   system: string;
+  village: string;
+  hideEvent: string;
   unknownPlayer: string;
   noRole: string;
   close: string;
@@ -58,6 +60,8 @@ const TEXT: Record<Language, {
     clearHighlight: "Limpar destaque",
     selected: "A destacar",
     system: "Sistema",
+    village: "Aldeia",
+    hideEvent: "Ocultar acontecimento",
     unknownPlayer: "Jogador",
     noRole: "Sem carta",
     close: "Fechar",
@@ -88,6 +92,8 @@ const TEXT: Record<Language, {
     clearHighlight: "Effacer le surlignage",
     selected: "Surligné",
     system: "Système",
+    village: "Village",
+    hideEvent: "Masquer l’événement",
     unknownPlayer: "Joueur",
     noRole: "Sans carte",
     close: "Fermer",
@@ -181,6 +187,17 @@ function PlayerMiniCard({
   );
 }
 
+function VillageMiniCard({ label }: { label: string }) {
+  return (
+    <div className="min-w-[58px] max-w-[70px] rounded-md border border-border bg-card/70 p-1 text-center">
+      <div className="mx-auto h-9 w-9 overflow-hidden rounded-md border border-border/70 bg-muted">
+        <img src={villagerIcon} alt="" className="h-full w-full object-cover" />
+      </div>
+      <div className="mt-1 truncate text-[11px] font-display text-foreground">{label}</div>
+    </div>
+  );
+}
+
 function StatusBadges({ player, language, compact = false }: { player: GameLogPlayerSnapshot; language: Language; compact?: boolean }) {
   const badges: Array<{ key: string; icon: string; label: string; tone?: string }> = [];
   if (player.permanentlyDead) badges.push({ key: "perma", icon: ghostIcon, label: TEXT[language].permanentDeath, tone: "opacity-60" });
@@ -263,6 +280,7 @@ export function GameLogModal({
   illusionPlayerId,
 }: GameLogModalProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(() => new Set());
   const copy = TEXT[language];
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : null;
 
@@ -283,7 +301,7 @@ export function GameLogModal({
         byKey.set(key, group);
         grouped.push(group);
       }
-      if (event.action !== "phase" && !hiddenLegacyActions.has(event.action)) {
+      if (event.action !== "phase" && !hiddenLegacyActions.has(event.action) && !hiddenEventIds.has(event.id)) {
         group.events.push(event);
       }
       group.firstCreatedAt = Math.min(group.firstCreatedAt, event.createdAt);
@@ -291,7 +309,7 @@ export function GameLogModal({
     grouped.sort((a, b) => a.firstCreatedAt - b.firstCreatedAt);
     grouped.forEach((group) => group.events.sort((a, b) => a.createdAt - b.createdAt));
     return grouped;
-  }, [events, language]);
+  }, [events, hiddenEventIds, language]);
 
   const handleSelectPlayer = (playerId: string) => {
     setSelectedPlayerId((current) => current === playerId ? null : playerId);
@@ -364,11 +382,22 @@ export function GameLogModal({
                       return (
                         <div
                           key={event.id}
-                          className={`p-2 transition ${highlighted ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : "bg-transparent"}`}
+                          className={`relative p-2 pr-8 transition ${highlighted ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : "bg-transparent"}`}
                         >
+                          <button
+                            type="button"
+                            onClick={() => setHiddenEventIds((current) => new Set(current).add(event.id))}
+                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                            title={copy.hideEvent}
+                            aria-label={copy.hideEvent}
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
                           <div className="grid grid-cols-[58px_minmax(64px,1fr)_minmax(58px,145px)] items-center gap-2">
                             <div className="flex justify-center">
-                              {event.actor || event.actorRole ? (
+                              {event.action === "execute" ? (
+                                <VillageMiniCard label={copy.village} />
+                              ) : event.actor || event.actorRole ? (
                                 <PlayerMiniCard
                                   player={event.actor}
                                   role={event.actorRole}
@@ -386,7 +415,9 @@ export function GameLogModal({
                             <div className="flex min-w-0 items-center justify-center gap-1 text-center">
                               <div className="flex flex-col items-center gap-1">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background">
-                                  {eventIcon ? (
+                                  {event.action === "game_over" ? (
+                                    <Trophy className="h-5 w-5 text-yellow-400" />
+                                  ) : eventIcon ? (
                                     <img src={eventIcon} alt="" className="h-5 w-5" />
                                   ) : (
                                     <CircleSlash className="h-5 w-5 text-muted-foreground" />

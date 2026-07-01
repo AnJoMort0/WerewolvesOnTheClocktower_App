@@ -10,6 +10,7 @@ import illusionIcon from "@/assets/icons/illusion.png";
 import imunityIcon from "@/assets/icons/imunity_full.png";
 import immunityWerewolfIcon from "@/assets/icons/imunity_werewolf.png";
 import { toast } from "sonner";
+import type { ActorPowerState } from "@/lib/actor";
 
 type Player = {
   id: string;
@@ -41,6 +42,7 @@ const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   v10: "role-v10",
   v23: "role-v23",
   a05: "role-a05",
+  a04: "role-a04",
 };
 
 interface PlayerCircleProps {
@@ -49,6 +51,7 @@ interface PlayerCircleProps {
   onDropPlayer: (playerId: string, position: number | null) => void;
   isGM?: boolean;
   roleAssignments?: Record<string, RoleId>;
+  baseRoleAssignments?: Record<string, RoleId>;
   playerStatuses?: Record<string, PlayerStatus>;
   permanentlyDead?: Set<string>;
   onPlayerStatusChange?: (playerId: string, status: PlayerStatus, source?: string) => void;
@@ -90,6 +93,11 @@ interface PlayerCircleProps {
   hideSensitiveInfo?: boolean;
   onPlayerClick?: (playerId: string) => void;
   selectedPlayerId?: string | null;
+  actorIdolUses?: number;
+  actorCopyActive?: boolean;
+  onActorIdolUseToggle?: (idx: number) => void;
+  actorPowerState?: ActorPowerState;
+  onActorPowerStateChange?: (state: ActorPowerState) => void;
 }
 
 export const PlayerCircle = ({
@@ -98,6 +106,7 @@ export const PlayerCircle = ({
   onDropPlayer,
   isGM,
   roleAssignments,
+  baseRoleAssignments,
   playerStatuses = {},
   permanentlyDead = new Set(),
   onPlayerStatusChange,
@@ -139,6 +148,11 @@ export const PlayerCircle = ({
   hideSensitiveInfo = false,
   onPlayerClick,
   selectedPlayerId = null,
+  actorIdolUses = 0,
+  actorCopyActive = false,
+  onActorIdolUseToggle,
+  actorPowerState,
+  onActorPowerStateChange,
 }: PlayerCircleProps) => {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const roleLabel = useRoleLabel();
@@ -244,6 +258,7 @@ export const PlayerCircle = ({
     if (hideSensitiveInfo) return {};
     if (!isPlaying || !roleAssignments) return {};
     const role = roleAssignments[playerId];
+    const isActor = baseRoleAssignments?.[playerId] === "a04";
     const isPDead = permanentlyDead.has(playerId);
 
     // Role-based drag actions
@@ -277,7 +292,7 @@ export const PlayerCircle = ({
     }
 
     // Additional role drags
-    if (ROLE_DRAG_ACTIONS[role] && !isPDead) {
+    if (ROLE_DRAG_ACTIONS[role] && !isPDead && !(isActor && !actorCopyActive && actorIdolUses >= 2)) {
       const actionName = ROLE_DRAG_ACTIONS[role]!;
       return {
         draggable: true,
@@ -329,6 +344,8 @@ export const PlayerCircle = ({
 
         const seated = seatedPlayers.find((p) => p.seat_position === i);
         const role = seated && !hideSensitiveInfo && roleAssignments?.[seated.id];
+        const baseRole = seated && !hideSensitiveInfo ? baseRoleAssignments?.[seated.id] : undefined;
+        const isActor = baseRole === "a04";
         const roleDef = role ? ROLES[role] : null;
         const rawStatus = seated ? (playerStatuses[seated.id] || "alive") : "alive";
         const rawIsPermanentlyDead = seated ? permanentlyDead.has(seated.id) : false;
@@ -419,6 +436,13 @@ export const PlayerCircle = ({
                 {effects.has("immunity_werewolf") && (
                   <img src={immunityWerewolfIcon} alt="imunidade lobisomens" className="absolute -top-1 -left-1 w-5 h-5" />
                 )}
+                {isActor && role !== "a04" && (
+                  <img
+                    src={ROLES.a04.image}
+                    alt={roleLabel("a04")}
+                    className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-primary object-cover shadow"
+                  />
+                )}
               </div>
               <span className={`text-xs font-body max-w-[80px] truncate text-center mt-1 ${isThisPoisoned ? "text-green-400" : isThisIllusion ? "text-purple-400" : ""}`}>
                 {seated.name}
@@ -434,8 +458,24 @@ export const PlayerCircle = ({
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(chamanCharges ?? 0) > idx}
-                      onCheckedChange={() => onChamanChargeToggle(idx)}
+                      checked={(isActor ? actorPowerState?.chamanCharges ?? 0 : chamanCharges ?? 0) > idx}
+                      onCheckedChange={() => {
+                        if (isActor && actorPowerState && onActorPowerStateChange) {
+                          onActorPowerStateChange({ ...actorPowerState, chamanCharges: actorPowerState.chamanCharges > idx ? idx : idx + 1 });
+                        } else onChamanChargeToggle(idx);
+                      }}
+                      className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
+                    />
+                  ))}
+                </div>
+              )}
+              {isGM && isActor && !isPermanentlyDead && onActorIdolUseToggle && (
+                <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
+                  {[0, 1].map((idx) => (
+                    <Checkbox
+                      key={idx}
+                      checked={actorIdolUses > idx}
+                      onCheckedChange={() => onActorIdolUseToggle(idx)}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
                   ))}
@@ -445,8 +485,11 @@ export const PlayerCircle = ({
               {isGM && isFox && showFoxCheckbox && !isPermanentlyDead && onFoxDisabledToggle && (
                 <div className="flex items-center gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={foxDisabled}
-                    onCheckedChange={() => onFoxDisabledToggle()}
+                    checked={isActor ? actorPowerState?.foxDisabled ?? false : foxDisabled}
+                    onCheckedChange={() => {
+                      if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, foxDisabled: !actorPowerState.foxDisabled });
+                      else onFoxDisabledToggle();
+                    }}
                     className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                   />
                   <span className="text-[9px] text-muted-foreground">⚡</span>
@@ -458,8 +501,11 @@ export const PlayerCircle = ({
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={cupidoCharges > idx}
-                      onCheckedChange={() => onCupidoChargeToggle(idx)}
+                      checked={(isActor ? actorPowerState?.cupidoCharges ?? 0 : cupidoCharges) > idx}
+                      onCheckedChange={() => {
+                        if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, cupidoCharges: actorPowerState.cupidoCharges > idx ? idx : idx + 1 });
+                        else onCupidoChargeToggle(idx);
+                      }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
                   ))}
@@ -471,8 +517,11 @@ export const PlayerCircle = ({
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(lobisomemMauCharges ?? 0) > idx}
-                      onCheckedChange={() => onLobisomemMauChargeToggle(idx)}
+                      checked={(isActor ? actorPowerState?.lobisomemMauCharges ?? 0 : lobisomemMauCharges ?? 0) > idx}
+                      onCheckedChange={() => {
+                        if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, lobisomemMauCharges: actorPowerState.lobisomemMauCharges > idx ? idx : idx + 1 });
+                        else onLobisomemMauChargeToggle(idx);
+                      }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
                   ))}
@@ -482,8 +531,11 @@ export const PlayerCircle = ({
               {isGM && role === ("v23" as RoleId) && !isPermanentlyDead && onSpiderDayChangeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={spiderDayChangeUsed}
-                    onCheckedChange={() => onSpiderDayChangeToggle()}
+                    checked={isActor ? actorPowerState?.spiderDayChangeUsed ?? false : spiderDayChangeUsed}
+                    onCheckedChange={() => {
+                      if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, spiderDayChangeUsed: !actorPowerState.spiderDayChangeUsed });
+                      else onSpiderDayChangeToggle();
+                    }}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                   />
                 </div>
@@ -494,8 +546,11 @@ export const PlayerCircle = ({
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(juizCharges ?? 0) > idx}
-                      onCheckedChange={() => onJuizChargeToggle(idx)}
+                      checked={(isActor ? actorPowerState?.juizCharges ?? 0 : juizCharges ?? 0) > idx}
+                      onCheckedChange={() => {
+                        if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, juizCharges: actorPowerState.juizCharges > idx ? idx : idx + 1 });
+                        else onJuizChargeToggle(idx);
+                      }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
                   ))}
@@ -507,8 +562,11 @@ export const PlayerCircle = ({
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(acusadorCharges ?? 0) > idx}
-                      onCheckedChange={() => onAcusadorChargeToggle(idx)}
+                      checked={(isActor ? actorPowerState?.acusadorCharges ?? 0 : acusadorCharges ?? 0) > idx}
+                      onCheckedChange={() => {
+                        if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, acusadorCharges: actorPowerState.acusadorCharges > idx ? idx : idx + 1 });
+                        else onAcusadorChargeToggle(idx);
+                      }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
                   ))}
@@ -518,8 +576,11 @@ export const PlayerCircle = ({
               {isGM && role === ("m03" as RoleId) && !isPermanentlyDead && onLobisomemVampiroToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={lobisomemVampiroUsed}
-                    onCheckedChange={() => onLobisomemVampiroToggle()}
+                    checked={isActor ? actorPowerState?.lobisomemVampiroUsed ?? false : lobisomemVampiroUsed}
+                    onCheckedChange={() => {
+                      if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, lobisomemVampiroUsed: !actorPowerState.lobisomemVampiroUsed });
+                      else onLobisomemVampiroToggle();
+                    }}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                   />
                 </div>

@@ -258,6 +258,7 @@ export const pt: Translation = {
       caught: "Apanhado",
       spied_on: "Espiado",
       dug_up: "Desenterrado",
+      idol: "Ídolo",
     },
     toasts: {
       errAddPlayer: "Erro ao adicionar jogador",

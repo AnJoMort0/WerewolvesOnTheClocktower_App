@@ -30,6 +30,7 @@ import caughtIcon from "@/assets/icons/caught.png";
 import spiedOnIcon from "@/assets/icons/spied_on.png";
 import immunityWerewolfIcon from "@/assets/icons/imunity_werewolf.png";
 import dugUpIcon from "@/assets/icons/dug_up.png";
+import idolIcon from "@/assets/icons/idol.png";
 
 export type PlayerStatus = "alive" | "poisoned" | "dead-this-night" | "dead";
 
@@ -57,7 +58,8 @@ export type StatusEffect =
   | "webbed"
   | "caught"
   | "spied_on"
-  | "dug_up";
+  | "dug_up"
+  | "idol";
 
 export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   soldado: soldierIcon,
@@ -84,6 +86,7 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   caught: caughtIcon,
   spied_on: spiedOnIcon,
   dug_up: dugUpIcon,
+  idol: idolIcon,
 };
 
 interface PlayerStatusPopoverProps {

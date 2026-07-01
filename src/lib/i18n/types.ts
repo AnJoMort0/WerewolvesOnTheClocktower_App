@@ -38,7 +38,8 @@ export type EffectKey =
   | "webbed"
   | "caught"
   | "spied_on"
-  | "dug_up";
+  | "dug_up"
+  | "idol";
 
 export type WinKind = "village" | "werewolves" | "lovers" | "whiteWolf" | "secretLover" | "tie";
 

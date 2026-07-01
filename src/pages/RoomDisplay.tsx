@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
+import { AnimatePresence, motion } from "framer-motion";
 import { BookOpen, Maximize, Minimize, Moon, Scale, ScrollText, Sun, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
@@ -29,7 +31,7 @@ const COPY: Record<Language, {
     rulebook: "Regras",
     fullscreen: "Ecrã inteiro",
     exitFullscreen: "Sair do ecrã inteiro",
-    close: "Fechar ecrã",
+    close: "Fechar",
     night: "Noite",
     day: "Dia",
     tribunal: "Tribunal",
@@ -41,7 +43,7 @@ const COPY: Record<Language, {
     rulebook: "Règles",
     fullscreen: "Plein écran",
     exitFullscreen: "Quitter le plein écran",
-    close: "Fermer l'écran",
+    close: "Fermer",
     night: "Nuit",
     day: "Jour",
     tribunal: "Tribunal",
@@ -57,6 +59,7 @@ export default function RoomDisplay() {
   const [snapshot, setSnapshot] = useState<RoomDisplaySnapshot | null>(() => readRoomDisplaySnapshot(roomId));
   const [gameLogOpen, setGameLogOpen] = useState(false);
   const [rulebookOpen, setRulebookOpen] = useState(false);
+  const [qrPopupOpen, setQrPopupOpen] = useState(false);
   const [dismissedGameOverId, setDismissedGameOverId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(() => !!document.fullscreenElement);
 
@@ -111,32 +114,44 @@ export default function RoomDisplay() {
   }
 
   const phaseLabel = snapshot.phase === "night" ? copy.night : snapshot.phase === "day" ? copy.day : copy.tribunal;
+  const joinUrl = `${window.location.origin}/join/${snapshot.roomCode}`;
 
   return (
     <LanguageContext.Provider value={language}>
-      <div className="min-h-screen overflow-hidden bg-background">
-        <header className="flex h-14 items-center justify-between border-b border-border bg-card/60 px-3 sm:px-5">
-          <div className="min-w-0">
-            <h1 className="truncate font-display text-base text-foreground sm:text-lg">{copy.title}</h1>
-            <p className="font-display text-[10px] tracking-[0.18em] text-muted-foreground">{snapshot.roomCode}</p>
+      <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <div className="relative z-10 flex min-h-24 shrink-0 flex-wrap items-center justify-end gap-3 px-3 py-2 sm:px-5">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center gap-1 rounded-md border border-border bg-card/40 p-1">
+              <Button type="button" size="icon" variant="secondary" onClick={() => setGameLogOpen(true)} title={copy.log} aria-label={copy.log}>
+                <ScrollText className="h-4 w-4" />
+              </Button>
+              <Button type="button" size="icon" variant="secondary" onClick={() => setRulebookOpen(true)} title={copy.rulebook} aria-label={copy.rulebook}>
+                <BookOpen className="h-4 w-4" />
+              </Button>
+              <Button type="button" size="icon" variant="secondary" onClick={toggleFullscreen} title={isFullscreen ? copy.exitFullscreen : copy.fullscreen} aria-label={isFullscreen ? copy.exitFullscreen : copy.fullscreen}>
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+              </Button>
+              <Button type="button" size="icon" variant="secondary" onClick={() => window.close()} title={copy.close} aria-label={copy.close}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg border border-border bg-secondary px-5 py-3">
+                <span className="font-display text-2xl tracking-[0.22em] text-foreground sm:text-3xl">{snapshot.roomCode}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQrPopupOpen(true)}
+                className="rounded-lg bg-parchment p-2 transition-opacity hover:opacity-80"
+                aria-label="QR"
+              >
+                <QRCodeSVG value={joinUrl} size={76} bgColor="hsl(40, 30%, 85%)" fgColor="hsl(30, 10%, 8%)" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Button type="button" size="icon" variant="secondary" onClick={() => setGameLogOpen(true)} title={copy.log} aria-label={copy.log}>
-              <ScrollText className="h-4 w-4" />
-            </Button>
-            <Button type="button" size="icon" variant="secondary" onClick={() => setRulebookOpen(true)} title={copy.rulebook} aria-label={copy.rulebook}>
-              <BookOpen className="h-4 w-4" />
-            </Button>
-            <Button type="button" size="icon" variant="secondary" onClick={toggleFullscreen} title={isFullscreen ? copy.exitFullscreen : copy.fullscreen} aria-label={isFullscreen ? copy.exitFullscreen : copy.fullscreen}>
-              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-            </Button>
-            <Button type="button" size="icon" variant="secondary" onClick={() => window.close()} title={copy.close} aria-label={copy.close}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </header>
+        </div>
 
-        <main className="h-[calc(100vh-3.5rem)] overflow-auto px-3 py-4">
+        <main className="min-h-0 flex-1 overflow-auto px-3 py-4">
           <section className="mx-auto flex w-max min-w-full flex-col items-center">
             <div className="flex items-center gap-2 text-muted-foreground">
               {snapshot.phase === "night" ? <Moon className="h-5 w-5 text-moon" /> : snapshot.phase === "day" ? <Sun className="h-5 w-5 text-yellow-400" /> : <Scale className="h-5 w-5 text-yellow-400" />}
@@ -179,6 +194,41 @@ export default function RoomDisplay() {
           outcome="victory"
           onDismiss={() => setDismissedGameOverId(snapshot.gameOver?.id ?? null)}
         />
+        <AnimatePresence>
+          {qrPopupOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-background p-4"
+              onClick={() => setQrPopupOpen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.85 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.85 }}
+                className="flex max-h-[calc(100vh-2rem)] flex-col items-center gap-5"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="rounded-2xl bg-parchment p-4">
+                  <QRCodeSVG
+                    value={joinUrl}
+                    size={512}
+                    bgColor="hsl(40, 30%, 85%)"
+                    fgColor="hsl(30, 10%, 8%)"
+                    style={{ width: "min(78vw, 60vh, 32rem)", height: "auto", maxWidth: "100%" }}
+                  />
+                </div>
+                <div className="rounded-lg border border-border bg-secondary px-7 py-3 font-display text-4xl tracking-[0.3em] text-foreground">
+                  {snapshot.roomCode}
+                </div>
+                <button type="button" onClick={() => setQrPopupOpen(false)} className="font-display text-sm uppercase tracking-widest text-muted-foreground hover:text-foreground">
+                  {copy.close}
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </LanguageContext.Provider>
   );

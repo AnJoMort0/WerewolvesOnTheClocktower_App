@@ -14,6 +14,7 @@ import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
 import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/playerSession";
 import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
+import { parsePlayerCharacter } from "@/lib/actor";
 
 type RoomPlayer = {
   id: string;
@@ -368,7 +369,7 @@ const PlayerView = () => {
             perRole?: Record<string, "victory" | "defeat">;
           };
           if (!d?.kind) return;
-          const myRole = (playerRef.current?.character || null) as RoleId | null;
+          const myRole = parsePlayerCharacter(playerRef.current?.character).displayRole;
           let outcome: "victory" | "defeat" = "defeat";
           if (playerId && d.perPlayer?.[playerId]) outcome = d.perPlayer[playerId];
           else if (myRole && d.perRole && d.perRole[myRole]) outcome = d.perRole[myRole];
@@ -409,16 +410,17 @@ const PlayerView = () => {
 
 
 
-  const roleDef = player?.character
-    ? ROLES[player.character as RoleId] ?? null
-    : null;
+  const parsedCharacter = parsePlayerCharacter(player?.character);
+  const displayRole = parsedCharacter.displayRole;
+  const roleDef = displayRole ? ROLES[displayRole] ?? null : null;
+  const isActorCopying = parsedCharacter.baseRole === "a04" && !!parsedCharacter.actorCopiedRole;
 
-  const isVidente = player?.character === "e04";
-  const isMenina = player?.character === "v01";
-  const isFaroleiro = player?.character === "v21";
-  const isLobisomemVidente = player?.character === "m02";
-  const isSpider = player?.character === "v23";
-  const isSpy = player?.character === "f02";
+  const isVidente = displayRole === "e04";
+  const isMenina = displayRole === "v01";
+  const isFaroleiro = displayRole === "v21";
+  const isLobisomemVidente = displayRole === "m02";
+  const isSpider = displayRole === "v23";
+  const isSpy = displayRole === "f02";
 
   if (removed) {
     return (
@@ -595,6 +597,13 @@ const PlayerView = () => {
                           alt={roleDef.label}
                           className={`w-full h-full object-cover ${isDead ? "grayscale" : ""}`}
                         />
+                        {isActorCopying && (
+                          <img
+                            src={ROLES.a04.image}
+                            alt={getRoleLabel("a04", language)}
+                            className="absolute bottom-2 right-2 h-14 w-14 rounded-md border-2 border-primary object-cover shadow-lg"
+                          />
+                        )}
                         {isDead && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             <X className="w-24 h-24 text-muted-foreground" strokeWidth={2} />
