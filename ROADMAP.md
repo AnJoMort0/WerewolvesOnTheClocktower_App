@@ -35,12 +35,6 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 * [ ] 
 
-* [ ] Adding a01.Drunkard:
-	* [ ] Completly replaces e04, v01, v02, v03, v04, v05, v16 or v23 (random every game) (make it future proof, in case I want to add more characters to this list - ones that are already in game, as well as ones that don't exist yet)
-	* [ ] Does not know he is the Drunkard, in his device he gets the card he is replacing, but everyone else that sees cards will see the Drunkard card. In the GM screen, there's the small a01 card in the corner like you did with the Actor
-	* [ ] Everytime he acts, he will act as the poisoned effect of the card he is playing as (for example, if he is replacing the Bear Tamer and there's no evil beings near him, the bear will roar still). Except when he is poisoned, in that case he will get the normal action. To indicate that, you can change the colours of the script line and/or a little Drunkard card to the script line, for the thing to be clear for the GM
-	* [ ] The log also states which character he replaced at the beginning of the game
-
 ## Future Plans
 
 * [ ] Add new character `m06` to app and docs

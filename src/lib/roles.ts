@@ -132,7 +132,7 @@ export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "s02"];
 export const WEB_IMMUNE_ROLES: RoleId[] = ["v22"];
 
 /** Information characters — randomizer tries to include at least one of these. */
-export const INFO_ROLES: RoleId[] = ["v02", "v03", "v04", "v05", "v06", "v22", "v23", "f02"];
+export const INFO_ROLES: RoleId[] = ["v02", "v03", "v04", "v05", "v06", "v22", "v23"];
 
 const ESSENTIAL_SINGLES: RoleId[] = ["e02", "e03", "e04"];
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "s02"];

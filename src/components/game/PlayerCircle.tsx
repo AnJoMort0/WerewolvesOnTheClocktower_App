@@ -95,6 +95,7 @@ interface PlayerCircleProps {
   selectedPlayerId?: string | null;
   actorIdolUses?: number;
   actorCopyActive?: boolean;
+  actorCopiesDrunkard?: boolean;
   onActorIdolUseToggle?: (idx: number) => void;
   actorPowerState?: ActorPowerState;
   onActorPowerStateChange?: (state: ActorPowerState) => void;
@@ -150,6 +151,7 @@ export const PlayerCircle = ({
   selectedPlayerId = null,
   actorIdolUses = 0,
   actorCopyActive = false,
+  actorCopiesDrunkard = false,
   onActorIdolUseToggle,
   actorPowerState,
   onActorPowerStateChange,
@@ -346,6 +348,7 @@ export const PlayerCircle = ({
         const role = seated && !hideSensitiveInfo && roleAssignments?.[seated.id];
         const baseRole = seated && !hideSensitiveInfo ? baseRoleAssignments?.[seated.id] : undefined;
         const isActor = baseRole === "a04";
+        const isDrunkard = baseRole === "a01";
         const roleDef = role ? ROLES[role] : null;
         const rawStatus = seated ? (playerStatuses[seated.id] || "alive") : "alive";
         const rawIsPermanentlyDead = seated ? permanentlyDead.has(seated.id) : false;
@@ -441,6 +444,20 @@ export const PlayerCircle = ({
                     src={ROLES.a04.image}
                     alt={roleLabel("a04")}
                     className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-primary object-cover shadow"
+                  />
+                )}
+                {isActor && actorCopiesDrunkard && role !== "a01" && (
+                  <img
+                    src={ROLES.a01.image}
+                    alt={roleLabel("a01")}
+                    className="absolute -left-1 -top-1 h-6 w-6 rounded border border-green-400 object-cover shadow"
+                  />
+                )}
+                {isDrunkard && role !== "a01" && (
+                  <img
+                    src={ROLES.a01.image}
+                    alt={roleLabel("a01")}
+                    className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-green-400 object-cover shadow"
                   />
                 )}
               </div>

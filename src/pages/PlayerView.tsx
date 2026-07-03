@@ -14,7 +14,7 @@ import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
 import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/playerSession";
 import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
-import { parsePlayerCharacter } from "@/lib/actor";
+import { parsePlayerCharacter, shouldShowActorBadge } from "@/lib/actor";
 
 type RoomPlayer = {
   id: string;
@@ -413,7 +413,7 @@ const PlayerView = () => {
   const parsedCharacter = parsePlayerCharacter(player?.character);
   const displayRole = parsedCharacter.displayRole;
   const roleDef = displayRole ? ROLES[displayRole] ?? null : null;
-  const isActorCopying = parsedCharacter.baseRole === "a04" && !!parsedCharacter.actorCopiedRole;
+  const isActorCopying = shouldShowActorBadge(player?.character);
 
   const isVidente = displayRole === "e04";
   const isMenina = displayRole === "v01";

@@ -36,6 +36,12 @@ import {
   parsePlayerCharacter,
   type ActorPowerState,
 } from "@/lib/actor";
+import {
+  encodeDrunkardCharacter,
+  getDrunkardReplacementCandidates,
+  isDrunkardActingPoisoned,
+  pickDrunkardReplacement,
+} from "@/lib/drunkard";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
 import imunityIcon from "@/assets/icons/imunity_full.png";
@@ -158,6 +164,7 @@ type GMSnapshot = {
   actorCopiedRole?: RoleId | null;
   actorCopyNoticeNight?: number | null;
   actorPowerState?: ActorPowerState;
+  drunkardReplacementRole?: RoleId | null;
 };
 
 const getGMSnapshotStorageKey = (roomId: string) => `${GM_SNAPSHOT_STORAGE_PREFIX}${roomId}`;
@@ -341,6 +348,7 @@ const GMRoom = () => {
   const dayPanelRef = useRef<DayTribunalPanelHandle>(null);
   const pendingGameOverLogKindRef = useRef<WinKind | null>(null);
   const pendingActorCopyLogRef = useRef<RoleId | null>(null);
+  const pendingDrunkardSetupLogRef = useRef<RoleId | null>(null);
   const pendingGameActionLogSourcesRef = useRef<Map<string, string>>(new Map());
   const suppressedEffectLogAddsRef = useRef<Set<string>>(new Set());
   const gameLogDiffReadyRef = useRef(false);
@@ -380,6 +388,7 @@ const GMRoom = () => {
   const [actorCopiedRole, setActorCopiedRole] = useState<RoleId | null>(null);
   const [actorCopyNoticeNight, setActorCopyNoticeNight] = useState<number | null>(null);
   const [actorPowerState, setActorPowerState] = useState<ActorPowerState>(() => ({ ...EMPTY_ACTOR_POWER_STATE }));
+  const [drunkardReplacementRole, setDrunkardReplacementRole] = useState<RoleId | null>(null);
 
   const defaultJoinBaseUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -391,14 +400,43 @@ const GMRoom = () => {
     () => Object.entries(roleAssignments).find(([, role]) => role === "a04")?.[0] ?? null,
     [roleAssignments],
   );
+  const drunkardPlayerId = useMemo(
+    () => Object.entries(roleAssignments).find(([, role]) => role === "a01")?.[0] ?? null,
+    [roleAssignments],
+  );
   const actorIdolPlayerId = useMemo(
     () => Object.entries(playerEffects).find(([, effects]) => effects.has("idol"))?.[0] ?? null,
     [playerEffects],
   );
   const effectiveRoleAssignments = useMemo(
-    () => getEffectiveRoleAssignments(roleAssignments, actorCopiedRole),
-    [actorCopiedRole, roleAssignments],
+    () => getEffectiveRoleAssignments(roleAssignments, actorCopiedRole, drunkardReplacementRole),
+    [actorCopiedRole, drunkardReplacementRole, roleAssignments],
   );
+  const actorMechanicalRole = actorCopiedRole === "a01" && drunkardReplacementRole
+    ? drunkardReplacementRole
+    : actorCopiedRole;
+  const drunkardMechanicPlayerIds = useMemo(() => {
+    const playerIds = new Set<string>();
+    if (drunkardPlayerId) playerIds.add(drunkardPlayerId);
+    if (actorCopiedRole === "a01" && actorPlayerId) playerIds.add(actorPlayerId);
+    return playerIds;
+  }, [actorCopiedRole, actorPlayerId, drunkardPlayerId]);
+  const isPlayerActingPoisoned = useCallback((playerId: string | null | undefined) => (
+    isDrunkardActingPoisoned(playerId, drunkardMechanicPlayerIds, poisonedPlayerId)
+  ), [drunkardMechanicPlayerIds, poisonedPlayerId]);
+
+  useEffect(() => {
+    if (!drunkardPlayerId) {
+      if (drunkardReplacementRole) setDrunkardReplacementRole(null);
+      return;
+    }
+    const otherRoles = Object.entries(roleAssignments)
+      .filter(([playerId]) => playerId !== drunkardPlayerId)
+      .map(([, role]) => role);
+    const candidates = getDrunkardReplacementCandidates(otherRoles);
+    if (drunkardReplacementRole && candidates.includes(drunkardReplacementRole)) return;
+    setDrunkardReplacementRole(pickDrunkardReplacement(otherRoles));
+  }, [drunkardPlayerId, drunkardReplacementRole, roleAssignments]);
   const isWerewolfAttackSource = useCallback((source: string) => (
     source === "e01"
     || WEREWOLF_ROLES.includes(source as RoleId)
@@ -444,7 +482,7 @@ const GMRoom = () => {
     if (!rolesAssigned) return [];
     const lng: Language = (room?.language as Language) || "pt";
     const warnings: string[] = [];
-    const assignedRoles = new Set(Object.values(roleAssignments));
+    const assignedRoles = new Set(Object.values(effectiveRoleAssignments));
 
     for (const essential of ESSENTIAL_ROLES) {
       if (!assignedRoles.has(essential)) {
@@ -486,7 +524,7 @@ const GMRoom = () => {
     }
 
     return warnings;
-  }, [roleAssignments, rolesAssigned, playerEffects, room?.language]);
+  }, [effectiveRoleAssignments, roleAssignments, rolesAssigned, playerEffects, room?.language]);
 
   const activeRoles = useMemo(() => new Set(Object.values(effectiveRoleAssignments)), [effectiveRoleAssignments]);
 
@@ -748,6 +786,7 @@ const GMRoom = () => {
       setActorCopiedRole(snapshot.actorCopiedRole ?? null);
       setActorCopyNoticeNight(snapshot.actorCopyNoticeNight ?? null);
       setActorPowerState({ ...EMPTY_ACTOR_POWER_STATE, ...snapshot.actorPowerState });
+      setDrunkardReplacementRole(snapshot.drunkardReplacementRole ?? null);
     } catch {
       window.localStorage.removeItem(getGMSnapshotStorageKey(roomId));
     } finally {
@@ -807,6 +846,7 @@ const GMRoom = () => {
       actorCopiedRole,
       actorCopyNoticeNight,
       actorPowerState,
+      drunkardReplacementRole,
     };
     window.localStorage.setItem(getGMSnapshotStorageKey(roomId), JSON.stringify(snapshot));
   }, [
@@ -858,6 +898,7 @@ const GMRoom = () => {
     actorCopiedRole,
     actorCopyNoticeNight,
     actorPowerState,
+    drunkardReplacementRole,
   ]);
 
   useEffect(() => {
@@ -1056,6 +1097,7 @@ const GMRoom = () => {
         if (room?.status === "playing" || data.some((p) => p.character)) {
           const assignments: Record<string, RoleId> = {};
           let fetchedActorCopy: RoleId | null = null;
+          let fetchedDrunkardReplacement: RoleId | null = null;
           let actorFound = false;
           data.forEach((p) => {
             const parsed = parsePlayerCharacter(p.character);
@@ -1064,8 +1106,10 @@ const GMRoom = () => {
               actorFound = true;
               fetchedActorCopy = parsed.actorCopiedRole;
             }
+            if (parsed.drunkardReplacementRole) fetchedDrunkardReplacement = parsed.drunkardReplacementRole;
           });
           if (actorFound) setActorCopiedRole(fetchedActorCopy);
+          if (fetchedDrunkardReplacement) setDrunkardReplacementRole(fetchedDrunkardReplacement);
           if (Object.keys(assignments).length > 0) {
             setRoleAssignments(assignments);
             setRolesAssigned(true);
@@ -1167,6 +1211,7 @@ const GMRoom = () => {
     suppressedEffectLogAddsRef.current.clear();
     pendingGameActionLogSourcesRef.current.clear();
     pendingActorCopyLogRef.current = null;
+    pendingDrunkardSetupLogRef.current = null;
     previousGameLogStateRef.current = null;
     gameLogDiffReadyRef.current = false;
     setAutomaticWinKind(null);
@@ -1176,6 +1221,7 @@ const GMRoom = () => {
     setActorCopiedRole(null);
     setActorCopyNoticeNight(null);
     setActorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
+    setDrunkardReplacementRole(null);
   }, []);
 
   const resetRoom = async () => {
@@ -1391,6 +1437,7 @@ const GMRoom = () => {
         }),
       ));
     }
+    if (oldRole === "a01" && role !== "a01") setDrunkardReplacementRole(null);
 
     setRoleAssignments((prev) => ({ ...prev, [playerId]: role }));
     if (room?.status === "playing") setPendingChanges(true);
@@ -1405,18 +1452,24 @@ const GMRoom = () => {
     });
   }, [roomId]);
 
-  const getStoredCharacter = useCallback((playerId: string, role: RoleId) => (
-    role === "a04" && playerId === actorPlayerId ? encodeActorCharacter(actorCopiedRole) : role
-  ), [actorCopiedRole, actorPlayerId]);
+  const getStoredCharacter = useCallback((playerId: string, role: RoleId) => {
+    if (role === "a04" && playerId === actorPlayerId) {
+      return encodeActorCharacter(actorCopiedRole, drunkardReplacementRole);
+    }
+    if (role === "a01" && playerId === drunkardPlayerId && drunkardReplacementRole) {
+      return encodeDrunkardCharacter(drunkardReplacementRole);
+    }
+    return role;
+  }, [actorCopiedRole, actorPlayerId, drunkardPlayerId, drunkardReplacementRole]);
 
   const syncActorCharacter = useCallback((copiedRole: RoleId | null) => {
     if (!actorPlayerId) return;
-    const character = encodeActorCharacter(copiedRole);
+    const character = encodeActorCharacter(copiedRole, drunkardReplacementRole);
     setPlayers((prev) => prev.map((player) => player.id === actorPlayerId ? { ...player, character } : player));
     void supabase.from("players").update({ character }).eq("id", actorPlayerId).then(() => {
       broadcastPlayerSync([actorPlayerId]);
     });
-  }, [actorPlayerId, broadcastPlayerSync]);
+  }, [actorPlayerId, broadcastPlayerSync, drunkardReplacementRole]);
 
   const confirmPendingChanges = async () => {
     if (!roomId) return;
@@ -1431,6 +1484,9 @@ const GMRoom = () => {
 
   const sendRolesToPlayers = async () => {
     if (!roomId) return;
+    if (drunkardPlayerId && drunkardReplacementRole) {
+      pendingDrunkardSetupLogRef.current = drunkardReplacementRole;
+    }
     const updates = Object.entries(roleAssignments).map(([playerId, roleId]) =>
       supabase.from("players").update({ character: getStoredCharacter(playerId, roleId) }).eq("id", playerId)
     );
@@ -2171,6 +2227,25 @@ const GMRoom = () => {
   }, [actorCopiedRole, actorPlayerId, getPlayerLogSnapshot, gmSnapshotLoaded, recordGameEvent, room?.language, room?.status]);
 
   useEffect(() => {
+    const replacementRole = pendingDrunkardSetupLogRef.current;
+    if (!replacementRole || !drunkardPlayerId || !gmSnapshotLoaded || room?.status !== "playing") return;
+    const drunkardSnapshot = getPlayerLogSnapshot(drunkardPlayerId);
+    if (!drunkardSnapshot) return;
+
+    pendingDrunkardSetupLogRef.current = null;
+    const language = room?.language ?? "pt";
+    recordGameEvent({
+      action: "role_change",
+      phase: "setup",
+      phaseNumber: 0,
+      actor: drunkardSnapshot,
+      actorRole: "a01",
+      target: { ...drunkardSnapshot, role: replacementRole },
+      detail: `${getRoleLabel("a01", language)} -> ${getRoleLabel(replacementRole, language)}`,
+    });
+  }, [drunkardPlayerId, getPlayerLogSnapshot, gmSnapshotLoaded, recordGameEvent, room?.language, room?.status]);
+
+  useEffect(() => {
     if (!gmSnapshotLoaded || room?.status !== "finished" || !pendingGameOverLogKindRef.current) return;
     const kind = pendingGameOverLogKindRef.current;
     pendingGameOverLogKindRef.current = null;
@@ -2555,7 +2630,10 @@ const GMRoom = () => {
       : action.startsWith("role-") && ROLES[action.replace("role-", "") as RoleId]
       ? action.replace("role-", "") as RoleId
       : null;
-    const actorActing = !!actorPlayerId && sourcePlayerId === actorPlayerId && !!actionRole && actorCopiedRole === actionRole;
+    const actorActing = !!actorPlayerId
+      && sourcePlayerId === actorPlayerId
+      && !!actionRole
+      && actorMechanicalRole === actionRole;
     const toggleActionEffect = (playerId: string, effect: StatusEffect) => toggleEffect(playerId, effect, sourcePlayerId);
     if (actionRole) markScriptRoleAction(actionRole);
     applyCaughtIfWebbed();
@@ -2584,7 +2662,7 @@ const GMRoom = () => {
       else if (roleSource === "v16") {
         // Sonâmbulo: if poisoned → random (excluding intended target & sonambulo)
         const sonambuloId = sourcePlayerId && effectiveRoleAssignments[sourcePlayerId] === "v16" ? sourcePlayerId : getRolePlayerId("v16");
-        if (sonambuloId && poisonedPlayerId === sonambuloId) {
+        if (sonambuloId && isPlayerActingPoisoned(sonambuloId)) {
           const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== sonambuloId);
           if (random) {
             toggleActionEffect(random.id, "hospede");
@@ -2849,7 +2927,7 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", actorActing ? "a04" : roleSource, sourcePlayerId);
       }
     }
-  }, [actorCopiedRole, actorIdolUses, actorPlayerId, actorPowerState, effectiveRoleAssignments, handlePlayerStatusChange, handleChamanDrop, handleSetIllusion, toggleEffect, poisonedPlayerId, players, playerEffects, gameCyclePhase, anjoCharges, getRolePlayerId, pickRandomPlayer, permanentlyDead, resetUsesForRole, salvadorLastTarget, chefeLastTarget, playerStatuses, paranoicoCharges, spiderDayChangeUsed, markScriptRoleAction, room?.language]);
+  }, [actorCopiedRole, actorIdolUses, actorMechanicalRole, actorPlayerId, actorPowerState, effectiveRoleAssignments, handlePlayerStatusChange, handleChamanDrop, handleSetIllusion, toggleEffect, poisonedPlayerId, players, playerEffects, gameCyclePhase, anjoCharges, getRolePlayerId, isPlayerActingPoisoned, pickRandomPlayer, permanentlyDead, resetUsesForRole, salvadorLastTarget, chefeLastTarget, playerStatuses, paranoicoCharges, spiderDayChangeUsed, markScriptRoleAction, room?.language]);
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
@@ -2947,8 +3025,9 @@ const GMRoom = () => {
 
   // Vidente reveal handler
   const isVidentePoisoned = useMemo(() => {
-    return !!poisonedPlayerId && effectiveRoleAssignments[poisonedPlayerId] === "e04";
-  }, [effectiveRoleAssignments, poisonedPlayerId]);
+    const videnteId = getRolePlayerId("e04");
+    return isPlayerActingPoisoned(videnteId);
+  }, [getRolePlayerId, isPlayerActingPoisoned]);
 
   const generateFakeMap = useCallback(() => {
     if (!isVidentePoisoned || lastNightDeadPlayerIds.length === 0) return null;
@@ -3013,7 +3092,7 @@ const GMRoom = () => {
   const meninaCards = useMemo<RevealCard[]>(() => {
     const localLang: Language = (room?.language as Language) || "pt";
     const meninaId = getRolePlayerId("v01");
-    const meninaPoisoned = !!meninaId && poisonedPlayerId === meninaId;
+    const meninaPoisoned = isPlayerActingPoisoned(meninaId);
     const redX = Object.entries(playerStatuses)
       .filter(([, s]) => s === "dead-this-night")
       .map(([pid]) => pid);
@@ -3043,7 +3122,7 @@ const GMRoom = () => {
       const name = players.find((p) => p.id === pid)?.name;
       return { name, image: card.image, label: card.label, roleId: card.roleId };
     });
-  }, [getRolePlayerId, room, roleAssignments, poisonedPlayerId, playerStatuses, killSources, illusionPlayerId, players]);
+  }, [getRolePlayerId, isPlayerActingPoisoned, room, roleAssignments, playerStatuses, killSources, illusionPlayerId, players]);
 
   const handleMeninaReveal = useCallback(() => {
     setMeninaRevealOpen(true);
@@ -3151,7 +3230,7 @@ const GMRoom = () => {
   const handleSpiderReveal = useCallback(() => {
     const localLang: Language = (room?.language as Language) || "pt";
     const spiderId = getRolePlayerId("v23");
-    const spiderPoisoned = !!spiderId && poisonedPlayerId === spiderId;
+    const spiderPoisoned = isPlayerActingPoisoned(spiderId);
     let cards: RevealCard[] = [];
     const caughtIds = Object.entries(playerEffects)
       .filter(([, e]) => e.has("caught"))
@@ -3182,7 +3261,7 @@ const GMRoom = () => {
       type: "broadcast", event: "spider-reveal",
       payload: { show: true, cards },
     });
-  }, [room, roleAssignments, playerEffects, poisonedPlayerId, getRolePlayerId, illusionPlayerId, roomId]);
+  }, [room, roleAssignments, playerEffects, getRolePlayerId, illusionPlayerId, isPlayerActingPoisoned, roomId]);
 
   const handleCloseSpiderModal = useCallback(() => {
     setSpiderRevealOpen(false);
@@ -3738,6 +3817,7 @@ const GMRoom = () => {
                   hideSensitiveInfo={hideScreenMode}
                   actorIdolUses={actorIdolUses}
                   actorCopyActive={!!actorCopiedRole}
+                  actorCopiesDrunkard={actorCopiedRole === "a01"}
                   onActorIdolUseToggle={(idx) => setActorIdolUses((uses) => uses > idx ? idx : idx + 1)}
                   actorPowerState={actorPowerState}
                   onActorPowerStateChange={handleActorPowerStateChange}
@@ -3899,6 +3979,7 @@ const GMRoom = () => {
                       const roleDef = roleId ? ROLES[roleId] : null;
                       const isDuplicate = baseRoleId && duplicateRoles.has(baseRoleId);
                       const isActor = baseRoleId === "a04";
+                      const isDrunkard = baseRoleId === "a01";
                       const status = playerStatuses[player.id] || "alive";
                       const isPermanentDead = permanentlyDead.has(player.id);
                       const listDragProps = getListDragProps(player.id);
@@ -3949,6 +4030,12 @@ const GMRoom = () => {
                                )}
                                {isActor && roleId !== "a04" && (
                                  <img src={ROLES.a04.image} alt={roleLabel("a04")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-primary object-cover" />
+                               )}
+                               {isActor && actorCopiedRole === "a01" && roleId !== "a01" && (
+                                 <img src={ROLES.a01.image} alt={roleLabel("a01")} className="absolute -left-1 -top-1 h-4 w-4 rounded-sm border border-green-400 object-cover" />
+                               )}
+                               {isDrunkard && roleId !== "a01" && (
+                                 <img src={ROLES.a01.image} alt={roleLabel("a01")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-green-400 object-cover" />
                                )}
                             </div>
                           )}
@@ -4249,6 +4336,7 @@ const GMRoom = () => {
                     baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                     compact
                     onDragAction={handleDragAction}
+                    actorCopiesDrunkard={actorCopiedRole === "a01"}
                   />
                 </div>
               ) : (

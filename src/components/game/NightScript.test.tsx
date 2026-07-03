@@ -2,6 +2,7 @@ import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NightScript } from "@/components/game/NightScript";
 import { LanguageContext } from "@/lib/i18n";
+import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
 
 const baseProps = {
   activeRoles: new Set(["e02" as const]),
@@ -52,6 +53,65 @@ describe("NightScript progress", () => {
 });
 
 describe("NightScript conditional behavior", () => {
+  it("renders a distinct intoxicated Drunkard line that keeps the Drunkard as its source", () => {
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const props = {
+      ...baseProps,
+      activeRoles: new Set(["v16" as const]),
+      roleAssignments: { drunkard: "v16" as const },
+      baseRoleAssignments: { drunkard: "a01" as const },
+      players: [{ id: "drunkard", name: "Drunkard", seat_position: 0 }],
+    };
+    const { container, rerender } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} />
+      </LanguageContext.Provider>,
+    );
+
+    const line = container.querySelector('[draggable="true"]') as HTMLElement;
+    expect(line).toBeTruthy();
+    expect(line.querySelector('img[alt="Bêbado"]')).toBeTruthy();
+    expect(line.firstElementChild?.className).toContain("bg-green-900/30");
+    fireEvent.dragStart(line, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "drunkard");
+
+    rerender(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} poisonedPlayerId="drunkard" />
+      </LanguageContext.Provider>,
+    );
+    expect(container.querySelector('[draggable="true"]')?.firstElementChild?.className).not.toContain("bg-green-900/30");
+  });
+
+  it("inverts Bear Tamer information for the Drunkard and restores truth when poisoned", () => {
+    const props = {
+      ...baseProps,
+      activeRoles: new Set(["v02" as const, "l01" as const]),
+      roleAssignments: { drunkard: "v02" as const, left: "l01" as const, right: "l01" as const },
+      baseRoleAssignments: { drunkard: "a01" as const, left: "l01" as const, right: "l01" as const },
+      players: [
+        { id: "drunkard", name: "Drunkard", seat_position: 0 },
+        { id: "left", name: "Left", seat_position: 1 },
+        { id: "right", name: "Right", seat_position: 2 },
+      ],
+    };
+    const { container, rerender } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("O Urso rosna.");
+    expect(container.textContent).not.toContain("O Urso não rosna.");
+
+    rerender(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} poisonedPlayerId="drunkard" />
+      </LanguageContext.Provider>,
+    );
+    expect(container.textContent).toContain("O Urso não rosna.");
+  });
+
   it("shows the v12 line only while a poisoned character exists", () => {
     const props = {
       ...baseProps,
@@ -127,6 +187,73 @@ describe("NightScript conditional behavior", () => {
 });
 
 describe("NightScript Actor copy", () => {
+  it("lets Actor inherit the hidden Drunkard replacement and poison inversion", () => {
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const props = {
+      ...baseProps,
+      activeRoles: new Set(["v16" as const]),
+      roleAssignments: { actor: "v16" as const, drunkard: "v16" as const },
+      baseRoleAssignments: { actor: "a04" as const, drunkard: "a01" as const },
+      permanentlyDead: new Set(["drunkard"]),
+      players: [
+        { id: "actor", name: "Actor", seat_position: 0 },
+        { id: "drunkard", name: "Drunkard", seat_position: 1 },
+      ],
+      actorPlayerId: "actor",
+      actorCopiedRole: "a01" as const,
+    };
+    const { container, rerender } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} />
+      </LanguageContext.Provider>,
+    );
+
+    const line = container.querySelector('[draggable="true"]') as HTMLElement;
+    expect(line.textContent).toContain("Sonâmbulo");
+    expect(line.textContent).not.toContain("Ator");
+    expect(line.querySelector('img[alt="Bêbado"]')).toBeTruthy();
+    expect(line.firstElementChild?.className).toContain("bg-green-900/30");
+    fireEvent.dragStart(line, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "actor");
+
+    rerender(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} poisonedPlayerId="actor" />
+      </LanguageContext.Provider>,
+    );
+    expect(container.querySelector('[draggable="true"]')?.firstElementChild?.className).not.toContain("bg-green-900/30");
+  });
+
+  it("uses Actor's fresh Fox state when the copied Drunkard was the Fox Tamer", () => {
+    const onActorPowerStateChange = vi.fn();
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["v04"])}
+          roleAssignments={{ actor: "v04", drunkard: "v04" }}
+          baseRoleAssignments={{ actor: "a04", drunkard: "a01" }}
+          permanentlyDead={new Set(["drunkard"])}
+          players={[
+            { id: "actor", name: "Actor", seat_position: 0 },
+            { id: "drunkard", name: "Drunkard", seat_position: 1 },
+          ]}
+          actorPlayerId="actor"
+          actorCopiedRole="a01"
+          actorPowerState={{ ...EMPTY_ACTOR_POWER_STATE, foxDisabled: false }}
+          onActorPowerStateChange={onActorPowerStateChange}
+          foxDisabled
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Domador da Raposa");
+    const foxCheckbox = Array.from(container.querySelectorAll('button[role="checkbox"]'))
+      .find((checkbox) => !checkbox.hasAttribute("data-line-checkbox"));
+    fireEvent.click(foxCheckbox!);
+    expect(onActorPowerStateChange).toHaveBeenCalledWith(expect.objectContaining({ foxDisabled: true }));
+  });
+
   it("shows Actor in place of a copied role and keeps a separate line when that role is also in play", () => {
     const actorProps = {
       ...baseProps,
