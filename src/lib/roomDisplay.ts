@@ -35,7 +35,9 @@ export type RoomDisplaySnapshot = {
   permanentlyDead: string[];
   playerEffects: Record<string, StatusEffect[]>;
   poisonedPlayerId: string | null;
+  poisonedPlayerIds?: string[];
   illusionPlayerId: string | null;
+  illusionPlayerIds?: string[];
   gameLogEvents: GameLogEvent[];
   gameOver: { id: string; kind: WinKind } | null;
 };

@@ -31,6 +31,11 @@ import spiedOnIcon from "@/assets/icons/spied_on.png";
 import immunityWerewolfIcon from "@/assets/icons/imunity_werewolf.png";
 import dugUpIcon from "@/assets/icons/dug_up.png";
 import idolIcon from "@/assets/icons/idol.png";
+import ownerIcon from "@/assets/icons/owner.png";
+import dogIdolIcon from "@/assets/icons/idol_dog.png";
+import dogAdoptiveDadIcon from "@/assets/icons/adoptive_dad_dog.png";
+import dogEnemyIcon from "@/assets/icons/enemy_dog.png";
+import dogDugUpIcon from "@/assets/icons/dug_up_dog.png";
 
 export type PlayerStatus = "alive" | "poisoned" | "dead-this-night" | "dead";
 
@@ -59,7 +64,12 @@ export type StatusEffect =
   | "caught"
   | "spied_on"
   | "dug_up"
-  | "idol";
+  | "idol"
+  | "idol_dog"
+  | "adoptive_dad_dog"
+  | "enemy_dog"
+  | "dug_up_dog"
+  | "owner";
 
 export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   soldado: soldierIcon,
@@ -87,6 +97,11 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   spied_on: spiedOnIcon,
   dug_up: dugUpIcon,
   idol: idolIcon,
+  idol_dog: dogIdolIcon,
+  adoptive_dad_dog: dogAdoptiveDadIcon,
+  enemy_dog: dogEnemyIcon,
+  dug_up_dog: dogDugUpIcon,
+  owner: ownerIcon,
 };
 
 interface PlayerStatusPopoverProps {

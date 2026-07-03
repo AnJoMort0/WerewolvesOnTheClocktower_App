@@ -60,8 +60,9 @@ export function detectAutomaticVictory(players: VictoryPlayer[]): AutomaticWinKi
   const alive = players.filter((player) => player.alive);
   if (alive.length === 0) return null;
 
-  const secretLover = alive.find((player) => player.role === "as01b");
-  if (alive.length === 2 && secretLover && alive.some((player) => player.id !== secretLover.id && isLover(player))) {
+  const secretLovers = alive.filter((player) => player.role === "as01b");
+  const nonSecretLovers = alive.filter((player) => player.role !== "as01b");
+  if (secretLovers.length > 0 && nonSecretLovers.length === 1 && isLover(nonSecretLovers[0])) {
     return "secretLover";
   }
 
@@ -74,7 +75,7 @@ export function detectAutomaticVictory(players: VictoryPlayer[]): AutomaticWinKi
   // Living lovers keep pursuing their own endgame, blocking all faction wins.
   if (aliveLovers.length > 0) return null;
 
-  if (alive.length === 1 && alive[0].role === "s02") return "whiteWolf";
+  if (alive.every((player) => player.role === "s02")) return "whiteWolf";
 
   // The White Werewolf must be eliminated before the werewolf faction can win.
   if (alive.some((player) => player.role === "s02")) return null;

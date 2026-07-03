@@ -51,11 +51,14 @@ export function applyDrunkardReplacement(
 export function isDrunkardActingPoisoned(
   playerId: string | null | undefined,
   drunkardPlayerIds: string | Iterable<string> | null | undefined,
-  poisonedPlayerId: string | null | undefined,
+  poisonedPlayerIds: string | Iterable<string> | null | undefined,
 ): boolean {
   if (!playerId) return false;
   const usesDrunkardMechanics = typeof drunkardPlayerIds === "string"
     ? playerId === drunkardPlayerIds
     : !!drunkardPlayerIds && new Set(drunkardPlayerIds).has(playerId);
-  return usesDrunkardMechanics ? poisonedPlayerId !== playerId : poisonedPlayerId === playerId;
+  const isPoisoned = typeof poisonedPlayerIds === "string"
+    ? playerId === poisonedPlayerIds
+    : !!poisonedPlayerIds && new Set(poisonedPlayerIds).has(playerId);
+  return usesDrunkardMechanics ? !isPoisoned : isPoisoned;
 }

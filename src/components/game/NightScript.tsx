@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
 import { EMPTY_ACTOR_POWER_STATE, type ActorPowerState } from "@/lib/actor";
 import { isDrunkardActingPoisoned } from "@/lib/drunkard";
+import type { DogWolfStates } from "@/lib/dogWolf";
 
 /** Evil roles for bear/crow mechanics */
 const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05"];
@@ -42,13 +43,17 @@ const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
   v23: "role-v23",
   a05: "role-a05",
   a04: "role-a04",
+  a02: "role-a02",
+  m05: "role-m05",
 };
 
 interface NightScriptProps {
   activeRoles: Set<RoleId>;
   permanentlyDead: Set<string>;
   poisonedPlayerId: string | null;
+  poisonedPlayerIds?: Set<string>;
   illusionPlayerId: string | null;
+  illusionPlayerIds?: Set<string>;
   roleAssignments: Record<string, RoleId>;
   baseRoleAssignments?: Record<string, RoleId>;
   nightNumber: number;
@@ -57,7 +62,7 @@ interface NightScriptProps {
   onChamanChargeToggle: (index: number) => void;
   lastNightDeadPlayerIds: string[];
   players: Array<{ id: string; name: string; seat_position: number | null }>;
-  onVidenteReveal?: () => void;
+  onVidenteReveal?: (sourcePlayerId?: string | null) => void;
   playerStatuses?: Record<string, PlayerStatus>;
   foxDisabled: boolean;
   onFoxDisabledToggle: () => void;
@@ -67,9 +72,9 @@ interface NightScriptProps {
   profeciaGhostPlayerIds?: Set<string>;
   powerlessPlayerIds?: Set<string>;
   empregadaDynamicText?: string;
-  onMeninaReveal?: () => void;
-  onFaroleiroReveal?: () => void;
-  onLobisomemVidenteReveal?: () => void;
+  onMeninaReveal?: (sourcePlayerId?: string | null) => void;
+  onFaroleiroReveal?: (sourcePlayerId?: string | null) => void;
+  onLobisomemVidenteReveal?: (sourcePlayerId?: string | null) => void;
   // Inline checkbox state for roles with limited uses
   paranoicoCharges?: number;
   onParanoicoChargeToggle?: (idx: number) => void;
@@ -85,12 +90,13 @@ interface NightScriptProps {
   onJuizChargeToggle?: (idx: number) => void;
   acusadorCharges?: number;
   onAcusadorChargeToggle?: (idx: number) => void;
-  onSpiderReveal?: () => void;
-  onSpyReveal?: () => void;
+  onSpiderReveal?: (sourcePlayerId?: string | null) => void;
+  onSpyReveal?: (sourcePlayerId?: string | null) => void;
   onScriptRolesVisible?: (roles: RoleId[]) => void;
   completedLineKeys?: Set<string>;
   onLineCompletedChange?: (key: string, completed: boolean, progressOrder: number | null) => void;
   autoCompleteRole?: RoleId | null;
+  autoCompleteSourcePlayerIds?: string[];
   autoCompleteVersion?: number;
   actorPlayerId?: string | null;
   actorCopiedRole?: RoleId | null;
@@ -98,6 +104,14 @@ interface NightScriptProps {
   actorPowerState?: ActorPowerState;
   onActorPowerStateChange?: (state: ActorPowerState) => void;
   deathTriggeredSourcePlayerIds?: Record<string, string[]>;
+  dogWolfStates?: DogWolfStates;
+  dogWolfPlayerIds?: string[];
+  abilityRoleAssignments?: Record<string, RoleId>;
+  objectiveRoleAssignments?: Record<string, RoleId>;
+  spiderCaughtBySource?: Record<string, string[]>;
+  independentPowerStates?: Record<string, ActorPowerState>;
+  onIndependentPowerStateChange?: (playerId: string, state: ActorPowerState) => void;
+  drunkardMechanicPlayerIds?: Set<string>;
 }
 
 type ScriptRenderItem = {
@@ -110,6 +124,10 @@ type ScriptRenderItem = {
   actorJoins?: boolean;
   drunkardLine?: boolean;
   drunkardActingPoisoned?: boolean;
+  dogWolfLine?: boolean;
+  dogWolfStandalone?: boolean;
+  dogWolfActingPoisoned?: boolean;
+  actingPoisoned?: boolean;
   sourcePlayerId?: string | null;
 };
 
@@ -158,6 +176,26 @@ function getRawLineDragAction(line: ScriptLine): string | null {
   return null;
 }
 
+function replaceRoleWithDog(text: string, lang: "pt" | "fr", copiedRole?: RoleId | null): string {
+  const dogToken = `{${t("dogCopyLabel", lang)}}`;
+  if (copiedRole) {
+    const escapedLabel = getRoleLabel(copiedRole, lang).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const roleWithArticlePattern = lang === "fr"
+      ? new RegExp(`(?:La|Le)\\s+\\{${escapedLabel}\\}|L['’]\\{${escapedLabel}\\}`)
+      : new RegExp(`(?:A|O)\\s+\\{${escapedLabel}\\}`);
+    if (roleWithArticlePattern.test(text)) {
+      return text.replace(roleWithArticlePattern, `${lang === "fr" ? "Le" : "O"} ${dogToken}`);
+    }
+    const rolePattern = new RegExp(`\\{${escapedLabel}\\}`);
+    if (rolePattern.test(text)) return text.replace(rolePattern, dogToken);
+  }
+  const articlePattern = lang === "fr"
+    ? /(?:La|Le)\s+\{[^}]+\}|L['’]\{[^}]+\}/
+    : /(?:A|O)\s+\{[^}]+\}/;
+  const withArticle = text.replace(articlePattern, `${lang === "fr" ? "Le" : "O"} ${dogToken}`);
+  return withArticle === text ? text.replace(/\{[^}]+\}/, dogToken) : withArticle;
+}
+
 function ScriptLineDisplay({
   line,
   poisonedRoles,
@@ -204,6 +242,11 @@ function ScriptLineDisplay({
   actorJoins,
   drunkardLine,
   drunkardActingPoisoned,
+  dogWolfLine,
+  dogWolfStandalone,
+  dogWolfCopiedRole,
+  dogWolfActingPoisoned,
+  actingPoisoned,
 }: {
   line: ScriptLine;
   poisonedRoles: Set<RoleId>;
@@ -213,10 +256,10 @@ function ScriptLineDisplay({
   onChamanChargeToggle: (index: number) => void;
   isWerewolfLinePoisoned: boolean;
   lastNightDeadPlayerIds: string[];
-  onVidenteReveal?: () => void;
-  onMeninaReveal?: () => void;
-  onFaroleiroReveal?: () => void;
-  onLobisomemVidenteReveal?: () => void;
+  onVidenteReveal?: (sourcePlayerId?: string | null) => void;
+  onMeninaReveal?: (sourcePlayerId?: string | null) => void;
+  onFaroleiroReveal?: (sourcePlayerId?: string | null) => void;
+  onLobisomemVidenteReveal?: (sourcePlayerId?: string | null) => void;
   dynamicText?: string;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
@@ -237,8 +280,8 @@ function ScriptLineDisplay({
   onJuizChargeToggle?: (idx: number) => void;
   acusadorCharges?: number;
   onAcusadorChargeToggle?: (idx: number) => void;
-  onSpiderReveal?: () => void;
-  onSpyReveal?: () => void;
+  onSpiderReveal?: (sourcePlayerId?: string | null) => void;
+  onSpyReveal?: (sourcePlayerId?: string | null) => void;
   werewolvesAsleepText: string;
   lineCompleted: boolean;
   onLineCompletedChange: (completed: boolean) => void;
@@ -250,10 +293,17 @@ function ScriptLineDisplay({
   actorJoins?: boolean;
   drunkardLine?: boolean;
   drunkardActingPoisoned?: boolean;
+  dogWolfLine?: boolean;
+  dogWolfStandalone?: boolean;
+  dogWolfCopiedRole?: RoleId | null;
+  dogWolfActingPoisoned?: boolean;
+  actingPoisoned?: boolean;
 }) {
   const lang = useLanguage();
   const originalText = dynamicText ?? line.text;
-  const rawDisplayText = actorJoins
+  const rawDisplayText = dogWolfLine
+    ? `${dogWolfStandalone ? "" : "("}${replaceRoleWithDog(originalText, lang, dogWolfCopiedRole)}${dogWolfStandalone ? "" : ")"}`
+    : actorJoins
     ? originalText.replace(/(\{[^}]+\})/, `$1 (+ {${getRoleLabel("a04", lang)}})`)
     : actorLine && actorCopiedRole
     ? originalText.replace(replaceAllRoleTokens ? /\{[^}]+\}/g : /\{[^}]+\}/, `{${getRoleLabel("a04", lang)}}`)
@@ -261,8 +311,12 @@ function ScriptLineDisplay({
   const isStrikethrough = rawDisplayText.startsWith("~~") && rawDisplayText.endsWith("~~");
   const displayText = isStrikethrough ? rawDisplayText.slice(2, -2) : rawDisplayText;
   const { segments } = parseScriptText(displayText);
-  const isPoisonedLine = drunkardLine
+  const isPoisonedLine = dogWolfLine
+    ? !!dogWolfActingPoisoned
+    : drunkardLine
     ? !!drunkardActingPoisoned
+    : actingPoisoned !== undefined
+    ? actingPoisoned
     : line.requires?.some((r) => poisonedRoles.has(r));
   const dragAction = disableDrag ? null : getRawLineDragAction(line);
   const isWerewolfLine = line.requires?.includes("e01" as RoleId) && line.requires?.includes("m01" as RoleId);
@@ -282,19 +336,21 @@ function ScriptLineDisplay({
   const isSpiderCaughtLine = line.requires?.length === 1 && line.requires[0] === ("v23" as RoleId) && line.conditionKey === "spiderHasCaught";
   const isSpyLine = line.requires?.length === 1 && line.requires[0] === ("f02" as RoleId) && line.conditionKey === "spyHasUnseen";
   const isA05Line = line.requires?.length === 1 && line.requires[0] === ("a05" as RoleId);
-  const isA05Poisoned = !!poisonedPlayerId && roleAssignments[poisonedPlayerId] === "a05";
+  const isA05Poisoned = sourcePlayerId ? isPoisonedLine : !!poisonedPlayerId && roleAssignments[poisonedPlayerId] === "a05";
   const a05Strike = isA05Line && isA05Poisoned;
 
   const isChamanPoisoned = useMemo(() => {
+    if (sourcePlayerId) return isChamanLine && isPoisonedLine;
     if (!poisonedPlayerId) return false;
     return roleAssignments[poisonedPlayerId] === "e03";
-  }, [poisonedPlayerId, roleAssignments]);
+  }, [isChamanLine, isPoisonedLine, poisonedPlayerId, roleAssignments, sourcePlayerId]);
 
   const isWerewolfPoisoned = useMemo(() => {
+    if (sourcePlayerId) return isWerewolfLine && isPoisonedLine;
     if (!poisonedPlayerId) return false;
     const r = roleAssignments[poisonedPlayerId];
     return (["e01", "m01", "m02", "m03"] as RoleId[]).includes(r);
-  }, [poisonedPlayerId, roleAssignments]);
+  }, [isPoisonedLine, isWerewolfLine, poisonedPlayerId, roleAssignments, sourcePlayerId]);
 
   const handleNativeDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragAction) {
@@ -451,26 +507,26 @@ function ScriptLineDisplay({
         {/* Vidente eye icon */}
         {isVidenteLine && lastNightDeadPlayerIds.length > 0 && onVidenteReveal && (
           <button
-            onClick={(e) => { e.stopPropagation(); onVidenteReveal(); }}
+            onClick={(e) => { e.stopPropagation(); onVidenteReveal(sourcePlayerId); }}
             className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20 transition-colors"
           >
             <Eye className="h-4 w-4 text-blue-400" />
           </button>
         )}
         {isMeninaLine && onMeninaReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onMeninaReveal(); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onMeninaReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
         {isFaroleiroLine && onFaroleiroReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onFaroleiroReveal(); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onFaroleiroReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
         {isLobisomemVidenteLine && onLobisomemVidenteReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onLobisomemVidenteReveal(); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onLobisomemVidenteReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
         {isSpiderCaughtLine && !dynamicText && onSpiderReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onSpiderReveal(); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onSpiderReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
         {isSpyLine && onSpyReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onSpyReveal(); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onSpyReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
       </motion.div>
     </div>
@@ -481,7 +537,9 @@ export const NightScript = ({
   activeRoles,
   permanentlyDead: _permanentlyDeadPlayerIds,
   poisonedPlayerId,
+  poisonedPlayerIds = poisonedPlayerId ? new Set([poisonedPlayerId]) : new Set(),
   illusionPlayerId,
+  illusionPlayerIds = illusionPlayerId ? new Set([illusionPlayerId]) : new Set(),
   roleAssignments,
   baseRoleAssignments = roleAssignments,
   nightNumber,
@@ -523,6 +581,7 @@ export const NightScript = ({
   completedLineKeys = EMPTY_COMPLETED_LINE_KEYS,
   onLineCompletedChange,
   autoCompleteRole = null,
+  autoCompleteSourcePlayerIds = [],
   autoCompleteVersion = 0,
   actorPlayerId = null,
   actorCopiedRole = null,
@@ -530,6 +589,14 @@ export const NightScript = ({
   actorPowerState = EMPTY_ACTOR_POWER_STATE,
   onActorPowerStateChange,
   deathTriggeredSourcePlayerIds = {},
+  dogWolfStates = {},
+  dogWolfPlayerIds = [],
+  abilityRoleAssignments = roleAssignments,
+  objectiveRoleAssignments = abilityRoleAssignments,
+  spiderCaughtBySource = {},
+  independentPowerStates = {},
+  onIndependentPowerStateChange,
+  drunkardMechanicPlayerIds: suppliedDrunkardMechanicPlayerIds,
 }: NightScriptProps) => {
   const lang = useLanguage();
   const dyn = useMemo(() => getDynamic(lang), [lang]);
@@ -538,24 +605,25 @@ export const NightScript = ({
     [baseRoleAssignments],
   );
   const drunkardMechanicPlayerIds = useMemo(() => {
+    if (suppliedDrunkardMechanicPlayerIds) return suppliedDrunkardMechanicPlayerIds;
     const playerIds = new Set<string>();
     if (drunkardPlayerId) playerIds.add(drunkardPlayerId);
     if (actorCopiedRole === "a01" && actorPlayerId) playerIds.add(actorPlayerId);
     return playerIds;
-  }, [actorCopiedRole, actorPlayerId, drunkardPlayerId]);
+  }, [actorCopiedRole, actorPlayerId, drunkardPlayerId, suppliedDrunkardMechanicPlayerIds]);
   const drunkardReplacementRole = drunkardPlayerId
     ? roleAssignments[drunkardPlayerId] ?? null
     : actorCopiedRole === "a01" && actorPlayerId
     ? roleAssignments[actorPlayerId] ?? null
     : null;
   const isPlayerActingPoisoned = useCallback((playerId: string) => (
-    isDrunkardActingPoisoned(playerId, drunkardMechanicPlayerIds, poisonedPlayerId)
-  ), [drunkardMechanicPlayerIds, poisonedPlayerId]);
+    isDrunkardActingPoisoned(playerId, drunkardMechanicPlayerIds, poisonedPlayerIds)
+  ), [drunkardMechanicPlayerIds, poisonedPlayerIds]);
   const countsAsEvilBeing = useCallback((playerId: string) => {
-    const role = roleAssignments[playerId];
+    const role = objectiveRoleAssignments[playerId] ?? roleAssignments[playerId];
     const effects = _playerEffects[playerId] || new Set<string>();
     return EVIL_ROLES.includes(role) || effects.has("werewolf_turned") || effects.has("evil_being");
-  }, [roleAssignments, _playerEffects]);
+  }, [objectiveRoleAssignments, roleAssignments, _playerEffects]);
 
   // Treat powerless players (e.g. vampire victim with keep-power off) as if they were perma-dead for line relevance
   const effectivelyDead = useMemo(() => {
@@ -582,22 +650,21 @@ export const NightScript = ({
 
   const poisonedRoles = useMemo(() => {
     const s = new Set<RoleId>();
-    if (poisonedPlayerId) {
-      const r = roleAssignments[poisonedPlayerId];
-      if (r) s.add(r);
+    for (const playerId of Object.keys(abilityRoleAssignments)) {
+      if (!isPlayerActingPoisoned(playerId)) continue;
+      const role = abilityRoleAssignments[playerId];
+      if (role) s.add(role);
     }
     return s;
-  }, [poisonedPlayerId, roleAssignments]);
+  }, [abilityRoleAssignments, isPlayerActingPoisoned]);
 
   const isWerewolfLinePoisoned = useMemo(() => {
-    if (!poisonedPlayerId) return false;
-    const r = roleAssignments[poisonedPlayerId];
-    if (WEREWOLF_ROLES.includes(r)) return true;
-    // Players with werewolf_turned status also count as werewolves
-    const effects = _playerEffects[poisonedPlayerId] || new Set<string>();
-    if (effects.has("werewolf_turned")) return true;
-    return false;
-  }, [poisonedPlayerId, roleAssignments, _playerEffects]);
+    return Object.entries(abilityRoleAssignments).some(([playerId, role]) => {
+      if (dogWolfPlayerIds.includes(playerId) || !isPlayerActingPoisoned(playerId)) return false;
+      const effects = _playerEffects[playerId] || new Set<string>();
+      return WEREWOLF_ROLES.includes(role) || effects.has("werewolf_turned");
+    });
+  }, [abilityRoleAssignments, dogWolfPlayerIds, isPlayerActingPoisoned, _playerEffects]);
 
   const shouldShowVidenteLine = lastNightDeadPlayerIds.length > 0;
 
@@ -631,13 +698,13 @@ export const NightScript = ({
     const right = findNeighbor(1);
     const neighbors = [left, right].filter(Boolean) as typeof players;
 
-    const hasIllusionNeighbor = neighbors.some((n) => n.id === illusionPlayerId);
+    const hasIllusionNeighbor = neighbors.some((n) => illusionPlayerIds.has(n.id));
     const hasEvilNeighbor = neighbors.some((n) => countsAsEvilBeing(n.id));
     const isBearPoisoned = isPlayerActingPoisoned(bearPlayerId);
     if (isBearPoisoned) return hasEvilNeighbor ? dyn.bearSilent : dyn.bearGrowl;
     if (hasIllusionNeighbor) return dyn.bearConfused;
     return hasEvilNeighbor ? dyn.bearGrowl : dyn.bearSilent;
-  }, [roleAssignments, effectivelyDead, players, _permanentlyDeadPlayerIds, illusionPlayerId, countsAsEvilBeing, dyn, isPlayerActingPoisoned]);
+  }, [roleAssignments, effectivelyDead, players, _permanentlyDeadPlayerIds, illusionPlayerIds, countsAsEvilBeing, dyn, isPlayerActingPoisoned]);
 
   // Dynamic crow text
   const crowDynamicText = useMemo(() => {
@@ -646,7 +713,9 @@ export const NightScript = ({
 
     const isCrowPoisoned = isPlayerActingPoisoned(crowPlayerId);
     const aliveEvilCount = alivePlayers.filter((p) => countsAsEvilBeing(p.id)).length;
-    const illusionActive = !!illusionPlayerId && !_permanentlyDeadPlayerIds.has(illusionPlayerId) && countsAsEvilBeing(illusionPlayerId);
+    const illusionActive = [...illusionPlayerIds].some((playerId) => (
+      !_permanentlyDeadPlayerIds.has(playerId) && countsAsEvilBeing(playerId)
+    ));
 
     if (isCrowPoisoned) {
       const fakeCount = getGuaranteedWrongCount(aliveEvilCount);
@@ -658,7 +727,7 @@ export const NightScript = ({
     }
 
     return dyn.crowReveal.replace("{n}", String(aliveEvilCount));
-  }, [roleAssignments, effectivelyDead, alivePlayers, illusionPlayerId, _permanentlyDeadPlayerIds, countsAsEvilBeing, dyn, isPlayerActingPoisoned]);
+  }, [roleAssignments, effectivelyDead, alivePlayers, illusionPlayerIds, _permanentlyDeadPlayerIds, countsAsEvilBeing, dyn, isPlayerActingPoisoned]);
 
   // Dynamic rabbit tamer text
   const rabbitDynamicText = useMemo(() => {
@@ -691,21 +760,94 @@ export const NightScript = ({
 
     if (isRabbitPoisoned) return wasTargeted ? `~~${dyn.rabbitNothing}~~` : dyn.rabbitHeard;
 
-    const hasIllusionNeighbor = neighbors.some((n) => n.id === illusionPlayerId);
+    const hasIllusionNeighbor = neighbors.some((n) => illusionPlayerIds.has(n.id));
     if (hasIllusionNeighbor) return dyn.rabbitConfused;
 
     if (wasTargeted) return dyn.rabbitHeard;
 
     return `~~${dyn.rabbitNothing}~~`;
-  }, [roleAssignments, effectivelyDead, players, _permanentlyDeadPlayerIds, illusionPlayerId, nightTargetedPlayerIds, dyn, isPlayerActingPoisoned]);
+  }, [roleAssignments, effectivelyDead, players, _permanentlyDeadPlayerIds, illusionPlayerIds, nightTargetedPlayerIds, dyn, isPlayerActingPoisoned]);
 
   const spiderConfusedText = useMemo(() => {
     const webbedPid = Object.entries(_playerEffects).find(([, e]) => e.has("webbed"))?.[0];
-    if (webbedPid && webbedPid === illusionPlayerId) return t("spiderConfused", lang);
+    if (webbedPid && illusionPlayerIds.has(webbedPid)) return t("spiderConfused", lang);
     return undefined;
-  }, [_playerEffects, illusionPlayerId, lang]);
+  }, [_playerEffects, illusionPlayerIds, lang]);
 
-  const getDynamicText = (line: ScriptLine): string | undefined => {
+  const getLivingNeighbors = (playerId: string) => {
+    const sorted = players
+      .filter((player) => player.seat_position !== null)
+      .sort((a, b) => a.seat_position! - b.seat_position!);
+    const playerIndex = sorted.findIndex((player) => player.id === playerId);
+    if (playerIndex === -1) return [];
+    const findNeighbor = (direction: 1 | -1) => {
+      for (let distance = 1; distance < sorted.length; distance += 1) {
+        const index = (playerIndex + direction * distance + sorted.length) % sorted.length;
+        if (!_permanentlyDeadPlayerIds.has(sorted[index].id)) return sorted[index];
+      }
+      return null;
+    };
+    return [findNeighbor(-1), findNeighbor(1)].filter(Boolean) as typeof players;
+  };
+
+  const getDogDynamicText = (line: ScriptLine, dogPlayerId: string): string | undefined => {
+    const role = line.requires?.length === 1 ? line.requires[0] : null;
+    if (role === "v02") {
+      const neighbors = getLivingNeighbors(dogPlayerId);
+      const hasEvilNeighbor = neighbors.some((neighbor) => countsAsEvilBeing(neighbor.id));
+      const hasIllusionNeighbor = neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id));
+      if (isPlayerActingPoisoned(dogPlayerId)) return hasEvilNeighbor ? dyn.bearSilent : dyn.bearGrowl;
+      if (hasIllusionNeighbor) return dyn.bearConfused;
+      return hasEvilNeighbor ? dyn.bearGrowl : dyn.bearSilent;
+    }
+    if (role === "v03") {
+      const aliveEvilCount = alivePlayers.filter((player) => countsAsEvilBeing(player.id)).length;
+      if (isPlayerActingPoisoned(dogPlayerId)) {
+        return dyn.crowReveal.replace("{n}", String(getGuaranteedWrongCount(aliveEvilCount)));
+      }
+      const illusionActive = [...illusionPlayerIds].some((playerId) => (
+        !_permanentlyDeadPlayerIds.has(playerId) && countsAsEvilBeing(playerId)
+      ));
+      return illusionActive ? dyn.crowConfused : dyn.crowReveal.replace("{n}", String(aliveEvilCount));
+    }
+    if (role === "v05") {
+      const neighbors = getLivingNeighbors(dogPlayerId);
+      const relevantIds = [dogPlayerId, ...neighbors.map((neighbor) => neighbor.id)];
+      const wasTargeted = relevantIds.some((playerId) => nightTargetedPlayerIds.has(playerId));
+      if (isPlayerActingPoisoned(dogPlayerId)) return wasTargeted ? `~~${dyn.rabbitNothing}~~` : dyn.rabbitHeard;
+      if (neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id))) return dyn.rabbitConfused;
+      return wasTargeted ? dyn.rabbitHeard : `~~${dyn.rabbitNothing}~~`;
+    }
+    if (role === "v20") {
+      const sorted = players
+        .filter((player) => player.seat_position !== null && !_permanentlyDeadPlayerIds.has(player.id))
+        .sort((a, b) => a.seat_position! - b.seat_position!);
+      const dogIndex = sorted.findIndex((player) => player.id === dogPlayerId);
+      let distance: number | null = null;
+      if (isPlayerActingPoisoned(dogPlayerId)) {
+        distance = Math.floor(Math.random() * Math.max(1, Math.floor(sorted.length / 2))) + 1;
+      } else if (dogIndex !== -1) {
+        const distances = sorted.flatMap((player, poisonIndex) => {
+          if (!poisonedPlayerIds.has(player.id)) return [];
+          const difference = Math.abs(dogIndex - poisonIndex);
+          return [Math.min(difference, sorted.length - difference)];
+        });
+        if (distances.length > 0) distance = Math.min(...distances);
+      }
+      if (distance === null) return undefined;
+      const baseLine = lang === "fr"
+        ? "Le {Chien} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée"
+        : "O {Cão} acorda e é-lhe revelada a distância até à pessoa envenenada";
+      return `${baseLine}: ${distance}`;
+    }
+    return undefined;
+  };
+
+  const getDynamicText = (line: ScriptLine, sourcePlayerId?: string | null, dogWolfLine = false): string | undefined => {
+    if (dogWolfLine && sourcePlayerId) {
+      const dogText = getDogDynamicText(line, sourcePlayerId);
+      if (dogText) return dogText;
+    }
     if (line.requires?.length === 1 && line.requires[0] === "v02") return bearDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v03") return crowDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v05") return rabbitDynamicText;
@@ -765,6 +907,19 @@ export const NightScript = ({
     ) => sourceLines.flatMap((line, index) => {
       const items: ScriptRenderItem[] = [];
       const progressOrder = source === "normal" ? index : null;
+      const isDogWolfChoiceLine = line.requires?.length === 1 && line.requires[0] === "a02";
+      if (isDogWolfChoiceLine) {
+        if (!predicate(line)) return items;
+        return dogWolfPlayerIds
+          .filter((dogPlayerId) => !_permanentlyDeadPlayerIds.has(dogPlayerId))
+          .filter((dogPlayerId) => !dogWolfStates[dogPlayerId]?.ownerPlayerId)
+          .map((sourcePlayerId) => ({
+            line,
+            key: `${nightNumber}:${source}:${index}:dog-choice:${sourcePlayerId}`,
+            progressOrder,
+            sourcePlayerId,
+          }));
+      }
       const deathSourcePlayerIds = line.conditionKey ? deathTriggeredSourcePlayerIds[line.conditionKey] ?? [] : [];
       const isDeathOwnedLine = line.conditionKey === "cacadorDied" || line.conditionKey === "soldadoDied";
       if (isDeathOwnedLine && predicate(line) && deathSourcePlayerIds.length > 0) {
@@ -775,6 +930,10 @@ export const NightScript = ({
           sourcePlayerId,
           actorLine: line.conditionKey === "cacadorDied" && sourcePlayerId === actorPlayerId && actorCopiedRole === "v08",
           replaceAllRoleTokens: line.conditionKey === "cacadorDied" && sourcePlayerId === actorPlayerId && actorCopiedRole === "v08",
+          dogWolfLine: dogWolfPlayerIds.includes(sourcePlayerId),
+          dogWolfActingPoisoned: dogWolfPlayerIds.includes(sourcePlayerId)
+            ? isPlayerActingPoisoned(sourcePlayerId)
+            : undefined,
         }));
       }
       const isCopiedRoleLine = !!actorCopiedRole && !!actorPlayerId && line.requires?.includes(actorCopiedRole);
@@ -791,7 +950,7 @@ export const NightScript = ({
         && line.requires?.includes(drunkardReplacementRole);
       const activeDrunkardPlayerIds = [...drunkardMechanicPlayerIds].filter((playerId) => (
         !_permanentlyDeadPlayerIds.has(playerId) || profeciaGhostPlayerIds.has(playerId)
-      )).filter((playerId) => !(
+      )).filter((playerId) => !dogWolfPlayerIds.includes(playerId)).filter((playerId) => !(
         playerId === actorPlayerId
         && drunkardReplacementRole === "v04"
         && actorPowerState.foxDisabled
@@ -804,17 +963,27 @@ export const NightScript = ({
       const drunkardAllowsStandardLine = !isDrunkardRoleLine || hasOriginalDrunkardRolePlayer;
 
       if (predicate(line) && actorAllowsStandardLine && drunkardAllowsStandardLine) {
-        items.push({
-          line,
-          key: `${nightNumber}:${source}:${index}`,
-          progressOrder,
-          actorJoins: isSharedCopiedRoleLine,
-          sourcePlayerId: isCopiedRoleLine && line.requires?.length === 1 ? originalRolePlayerId : undefined,
-        });
+        const standardSourcePlayerId = line.requires?.length === 1
+          ? Object.entries(roleAssignments).find(([, role]) => role === line.requires?.[0])?.[0]
+          : undefined;
+        const sourceHasCaught = line.conditionKey !== "spiderHasCaught"
+          || !standardSourcePlayerId
+          || (spiderCaughtBySource[standardSourcePlayerId]?.length ?? 0) > 0;
+        if (sourceHasCaught) {
+          items.push({
+            line,
+            key: `${nightNumber}:${source}:${index}`,
+            progressOrder,
+            actorJoins: isSharedCopiedRoleLine,
+            sourcePlayerId: isCopiedRoleLine && line.requires?.length === 1 ? originalRolePlayerId : standardSourcePlayerId,
+            actingPoisoned: standardSourcePlayerId ? isPlayerActingPoisoned(standardSourcePlayerId) : undefined,
+          });
+        }
       }
 
       if (isCopiedRoleLine && !isSharedCopiedRoleLine && actorCanPerform) {
-        const conditionMatches = !line.conditionKey || !!conditionKeys[line.conditionKey];
+        const conditionMatches = (!line.conditionKey || !!conditionKeys[line.conditionKey])
+          && (line.conditionKey !== "spiderHasCaught" || (spiderCaughtBySource[actorPlayerId]?.length ?? 0) > 0);
         const actorHasCharges = !(line.requires?.length === 1 && line.requires[0] === "e03" && actorPowerState.chamanCharges >= 2);
         const actorFoxEnabled = !(line.requires?.length === 1 && line.requires[0] === "v04" && actorPowerState.foxDisabled);
         const actorVidenteVisible = !(line.requires?.length === 1 && line.requires[0] === "e04" && !shouldShowVidenteLine);
@@ -835,18 +1004,72 @@ export const NightScript = ({
             key: `${nightNumber}:${source}:${index}:drunkard:${sourcePlayerId}`,
             progressOrder,
             sourcePlayerId,
+            actorLine: sourcePlayerId === actorPlayerId && actorCopiedRole === "a01",
             drunkardLine: true,
             drunkardActingPoisoned: isDrunkardActingPoisoned(
               sourcePlayerId,
               drunkardMechanicPlayerIds,
-              poisonedPlayerId,
+              poisonedPlayerIds,
             ),
           });
         });
       }
 
+      const dogPlayerIdsForLine = dogWolfPlayerIds.filter((dogPlayerId) => {
+        if (_permanentlyDeadPlayerIds.has(dogPlayerId) && !profeciaGhostPlayerIds.has(dogPlayerId)) return false;
+        const ownerPlayerId = dogWolfStates[dogPlayerId]?.ownerPlayerId;
+        if (!ownerPlayerId) return false;
+        if (_permanentlyDeadPlayerIds.has(ownerPlayerId) && !dogWolfStates[dogPlayerId]?.actorModeActive) return false;
+        const abilityRole = abilityRoleAssignments[dogPlayerId];
+        if (!abilityRole || !line.requires?.includes(abilityRole)) return false;
+        if (line.conditionKey === "enemyDied" && abilityRole === "m05") {
+          const enemyDied = (dogWolfStates[dogPlayerId]?.enemyPlayerIds ?? [])
+            .some((playerId) => _permanentlyDeadPlayerIds.has(playerId));
+          if (!enemyDied) return false;
+        } else if (line.conditionKey && !conditionKeys[line.conditionKey]) return false;
+        if (line.conditionKey === "spiderHasCaught" && (spiderCaughtBySource[dogPlayerId]?.length ?? 0) === 0) return false;
+        const powerState = independentPowerStates[dogPlayerId];
+        if (abilityRole === "e03" && (powerState?.chamanCharges ?? 0) >= 2) return false;
+        if (abilityRole === "v04" && powerState?.foxDisabled) return false;
+        return true;
+      });
+      dogPlayerIdsForLine.forEach((sourcePlayerId) => {
+        items.push({
+          line,
+          key: `${nightNumber}:${source}:${index}:dog:${sourcePlayerId}`,
+          progressOrder,
+          sourcePlayerId,
+          dogWolfLine: true,
+          dogWolfStandalone: !!dogWolfStates[sourcePlayerId]?.actorModeActive || abilityRoleAssignments[sourcePlayerId] === "m05",
+          dogWolfActingPoisoned: isPlayerActingPoisoned(sourcePlayerId),
+        });
+      });
+
       return items;
     });
+
+    const addDogEvilCupidSetupLines = (items: ScriptRenderItem[]) => {
+      const setupLine = localizedScripts.firstNight.find((line) => line.requires?.length === 1 && line.requires[0] === "m05");
+      if (!setupLine) return;
+      dogWolfPlayerIds.forEach((dogPlayerId) => {
+        if (_permanentlyDeadPlayerIds.has(dogPlayerId) || abilityRoleAssignments[dogPlayerId] !== "m05") return;
+        const livingEnemyCount = (dogWolfStates[dogPlayerId]?.enemyPlayerIds ?? [])
+          .filter((playerId) => !_permanentlyDeadPlayerIds.has(playerId)).length;
+        if (livingEnemyCount >= 2) return;
+        const hasDeadEnemy = (dogWolfStates[dogPlayerId]?.enemyPlayerIds ?? [])
+          .some((playerId) => _permanentlyDeadPlayerIds.has(playerId));
+        if (hasDeadEnemy) return;
+        items.unshift({
+          line: setupLine,
+          key: `${nightNumber}:normal:dog-evil-cupid-setup:${dogPlayerId}`,
+          progressOrder: null,
+          sourcePlayerId: dogPlayerId,
+          dogWolfLine: true,
+          dogWolfStandalone: true,
+          dogWolfActingPoisoned: isPlayerActingPoisoned(dogPlayerId),
+        });
+      });
+    };
 
     if (nightNumber === 1) {
       const filtered = makeItems("first", localizedScripts.firstNight, (line) => isLineRelevant(line, activeRoles, permanentlyDeadRoles, roleAssignments, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds));
@@ -855,6 +1078,7 @@ export const NightScript = ({
       const filtered2 = makeItems("second", localizedScripts.secondNight, (line) => isLineRelevant(line, activeRoles, permanentlyDeadRoles, roleAssignments, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds));
       if (filtered2.length > 0) lines.push({ section: sectionLabels.secondStart, items: filtered2 });
       const filteredNormal = makeItems("normal", localizedScripts.normalNight, filterLine);
+      addDogEvilCupidSetupLines(filteredNormal);
       if (actorCopiedRole && actorPlayerId && actorCopyNoticeNight === nightNumber && (actorCopiedRole === "v08" || !filteredNormal.some((item) => item.actorLine || item.actorJoins))) {
         const actorNoticeLine = localizedScripts.normalNight.find((line) => line.requires?.length === 1 && line.requires[0] === "a04");
         if (actorNoticeLine) filteredNormal.unshift({ line: actorNoticeLine, key: `${nightNumber}:normal:actor-notice`, progressOrder: null, actorNotice: true });
@@ -862,15 +1086,30 @@ export const NightScript = ({
       if (filteredNormal.length > 0) lines.push({ section: sectionLabels.night, items: filteredNormal });
     } else {
       const filteredNormal = makeItems("normal", localizedScripts.normalNight, filterLine);
+      addDogEvilCupidSetupLines(filteredNormal);
       if (actorCopiedRole && actorPlayerId && actorCopyNoticeNight === nightNumber && (actorCopiedRole === "v08" || !filteredNormal.some((item) => item.actorLine || item.actorJoins))) {
         const actorNoticeLine = localizedScripts.normalNight.find((line) => line.requires?.length === 1 && line.requires[0] === "a04");
         if (actorNoticeLine) filteredNormal.unshift({ line: actorNoticeLine, key: `${nightNumber}:normal:actor-notice`, progressOrder: null, actorNotice: true });
+      }
+      const pendingDogPlayerIds = dogWolfPlayerIds.filter((dogPlayerId) => (
+        !_permanentlyDeadPlayerIds.has(dogPlayerId) && !dogWolfStates[dogPlayerId]?.ownerPlayerId
+      ));
+      if (pendingDogPlayerIds.length > 0) {
+        const dogChoiceLine = localizedScripts.secondNight.find((line) => line.requires?.length === 1 && line.requires[0] === "a02");
+        if (dogChoiceLine) {
+          pendingDogPlayerIds.forEach((sourcePlayerId) => filteredNormal.unshift({
+            line: dogChoiceLine,
+            key: `${nightNumber}:normal:dog-choice:${sourcePlayerId}`,
+            progressOrder: null,
+            sourcePlayerId,
+          }));
+        }
       }
       if (filteredNormal.length > 0) lines.push({ section: `${sectionLabels.night} ${nightNumber}`, items: filteredNormal });
     }
 
     return lines;
-  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.chamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowVidenteLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerId]);
+  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, profeciaGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.chamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowVidenteLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
 
   useEffect(() => {
     if (!onScriptRolesVisible) return;
@@ -886,11 +1125,17 @@ export const NightScript = ({
   useEffect(() => {
     if (!autoCompleteRole || autoCompleteVersion <= processedAutoCompleteVersion.current || !onLineCompletedChange) return;
     processedAutoCompleteVersion.current = autoCompleteVersion;
-    const item = scriptLines
+    const candidates = scriptLines
       .flatMap((section) => section.items)
-      .find((candidate) => candidate.line.requires?.includes(autoCompleteRole) && !completedLineKeys.has(candidate.key));
-    if (item) onLineCompletedChange(item.key, true, item.progressOrder);
-  }, [autoCompleteRole, autoCompleteVersion, completedLineKeys, onLineCompletedChange, scriptLines]);
+      .filter((candidate) => candidate.line.requires?.includes(autoCompleteRole) && !completedLineKeys.has(candidate.key));
+    const matchingItems = autoCompleteSourcePlayerIds.length > 0
+      ? candidates.filter((candidate) => (
+        (candidate.sourcePlayerId && autoCompleteSourcePlayerIds.includes(candidate.sourcePlayerId))
+        || (!candidate.sourcePlayerId && !candidate.dogWolfLine)
+      ))
+      : candidates.slice(0, 1);
+    matchingItems.forEach((item) => onLineCompletedChange(item.key, true, item.progressOrder));
+  }, [autoCompleteRole, autoCompleteSourcePlayerIds, autoCompleteVersion, completedLineKeys, onLineCompletedChange, scriptLines]);
 
   const setActorNumericCharge = useCallback((key: keyof ActorPowerState, index: number) => {
     if (!onActorPowerStateChange) return;
@@ -928,8 +1173,24 @@ export const NightScript = ({
                 : lineRole
                 ? Object.entries(baseRoleAssignments).find(([, role]) => role === lineRole)?.[0] ?? null
                 : null);
-              const usesActorPowerState = !!item.actorLine
+              const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
+              const usesIndependentPowerState = !!independentPowerState || !!item.actorLine
                 || (!!item.drunkardLine && sourcePlayerId === actorPlayerId);
+              const powerState = independentPowerState ?? actorPowerState;
+              const setNumericCharge = (key: keyof ActorPowerState, index: number) => {
+                const current = powerState[key];
+                if (typeof current !== "number") return;
+                const next = { ...powerState, [key]: current > index ? index : index + 1 };
+                if (sourcePlayerId && onIndependentPowerStateChange) onIndependentPowerStateChange(sourcePlayerId, next);
+                else setActorNumericCharge(key, index);
+              };
+              const toggleBoolean = (key: keyof ActorPowerState) => {
+                const current = powerState[key];
+                if (typeof current !== "boolean") return;
+                const next = { ...powerState, [key]: !current };
+                if (sourcePlayerId && onIndependentPowerStateChange) onIndependentPowerStateChange(sourcePlayerId, next);
+                else toggleActorBoolean(key);
+              };
               return (
               <ScriptLineDisplay
                 key={item.key}
@@ -937,34 +1198,36 @@ export const NightScript = ({
                 poisonedRoles={poisonedRoles}
                 poisonedPlayerId={poisonedPlayerId}
                 roleAssignments={roleAssignments}
-                chamanCharges={usesActorPowerState ? actorPowerState.chamanCharges : chamanCharges}
-                onChamanChargeToggle={usesActorPowerState ? (idx) => setActorNumericCharge("chamanCharges", idx) : onChamanChargeToggle}
+                chamanCharges={usesIndependentPowerState ? powerState.chamanCharges : chamanCharges}
+                onChamanChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("chamanCharges", idx) : onChamanChargeToggle}
                 isWerewolfLinePoisoned={isWerewolfLinePoisoned}
                 lastNightDeadPlayerIds={lastNightDeadPlayerIds}
                 onVidenteReveal={onVidenteReveal}
                 onMeninaReveal={onMeninaReveal}
                 onFaroleiroReveal={onFaroleiroReveal}
                 onLobisomemVidenteReveal={onLobisomemVidenteReveal}
-                dynamicText={getDynamicText(item.line)}
-                foxDisabled={usesActorPowerState ? actorPowerState.foxDisabled : foxDisabled}
-                onFoxDisabledToggle={usesActorPowerState ? () => toggleActorBoolean("foxDisabled") : onFoxDisabledToggle}
+                dynamicText={getDynamicText(item.line, sourcePlayerId, !!item.dogWolfLine)}
+                foxDisabled={usesIndependentPowerState ? powerState.foxDisabled : foxDisabled}
+                onFoxDisabledToggle={usesIndependentPowerState ? () => toggleBoolean("foxDisabled") : onFoxDisabledToggle}
                 showFoxCheckbox={nightNumber > 1}
-                forceStrikethrough={isLineForcedStrikethrough(item.line)}
-                paranoicoCharges={usesActorPowerState ? actorPowerState.paranoicoCharges : paranoicoCharges}
-                onParanoicoChargeToggle={usesActorPowerState ? (idx) => setActorNumericCharge("paranoicoCharges", idx) : onParanoicoChargeToggle}
-                anjoCharges={usesActorPowerState ? actorPowerState.anjoCharges : anjoCharges}
-                onAnjoChargeToggle={usesActorPowerState ? (idx) => setActorNumericCharge("anjoCharges", idx) : onAnjoChargeToggle}
-                lobisomemMauCharges={usesActorPowerState ? actorPowerState.lobisomemMauCharges : lobisomemMauCharges}
-                onLobisomemMauChargeToggle={usesActorPowerState ? (idx) => setActorNumericCharge("lobisomemMauCharges", idx) : onLobisomemMauChargeToggle}
-                cupidoCharges={usesActorPowerState ? actorPowerState.cupidoCharges : cupidoCharges}
-                onCupidoChargeToggle={usesActorPowerState ? (idx) => setActorNumericCharge("cupidoCharges", idx) : onCupidoChargeToggle}
+                forceStrikethrough={item.dogWolfLine && sourcePlayerId
+                  ? !!(_playerEffects[sourcePlayerId]?.has("hospede") || _playerEffects[sourcePlayerId]?.has("incendiado"))
+                  : isLineForcedStrikethrough(item.line)}
+                paranoicoCharges={usesIndependentPowerState ? powerState.paranoicoCharges : paranoicoCharges}
+                onParanoicoChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("paranoicoCharges", idx) : onParanoicoChargeToggle}
+                anjoCharges={usesIndependentPowerState ? powerState.anjoCharges : anjoCharges}
+                onAnjoChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("anjoCharges", idx) : onAnjoChargeToggle}
+                lobisomemMauCharges={usesIndependentPowerState ? powerState.lobisomemMauCharges : lobisomemMauCharges}
+                onLobisomemMauChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("lobisomemMauCharges", idx) : onLobisomemMauChargeToggle}
+                cupidoCharges={usesIndependentPowerState ? powerState.cupidoCharges : cupidoCharges}
+                onCupidoChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("cupidoCharges", idx) : onCupidoChargeToggle}
                 showCupidoCheckboxes={nightNumber > 1}
-                lobisomemVampiroUsed={usesActorPowerState ? actorPowerState.lobisomemVampiroUsed : lobisomemVampiroUsed}
-                onLobisomemVampiroToggle={usesActorPowerState ? () => toggleActorBoolean("lobisomemVampiroUsed") : onLobisomemVampiroToggle}
-                juizCharges={usesActorPowerState ? actorPowerState.juizCharges : juizCharges}
-                onJuizChargeToggle={usesActorPowerState ? (idx) => setActorNumericCharge("juizCharges", idx) : onJuizChargeToggle}
-                acusadorCharges={usesActorPowerState ? actorPowerState.acusadorCharges : acusadorCharges}
-                onAcusadorChargeToggle={usesActorPowerState ? (idx) => setActorNumericCharge("acusadorCharges", idx) : onAcusadorChargeToggle}
+                lobisomemVampiroUsed={usesIndependentPowerState ? powerState.lobisomemVampiroUsed : lobisomemVampiroUsed}
+                onLobisomemVampiroToggle={usesIndependentPowerState ? () => toggleBoolean("lobisomemVampiroUsed") : onLobisomemVampiroToggle}
+                juizCharges={usesIndependentPowerState ? powerState.juizCharges : juizCharges}
+                onJuizChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("juizCharges", idx) : onJuizChargeToggle}
+                acusadorCharges={usesIndependentPowerState ? powerState.acusadorCharges : acusadorCharges}
+                onAcusadorChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("acusadorCharges", idx) : onAcusadorChargeToggle}
                 onSpiderReveal={onSpiderReveal}
                 onSpyReveal={onSpyReveal}
                 werewolvesAsleepText={dyn.werewolvesAsleep}
@@ -974,10 +1237,21 @@ export const NightScript = ({
                 replaceAllRoleTokens={item.replaceAllRoleTokens}
                 actorCopiedRole={actorCopiedRole}
                 sourcePlayerId={sourcePlayerId}
-                disableDrag={item.actorNotice}
+                disableDrag={item.actorNotice || (!!item.dogWolfLine && !!sourcePlayerId && (
+                  abilityRoleAssignments[sourcePlayerId] === "s01"
+                  || (abilityRoleAssignments[sourcePlayerId] === "a04" && (
+                    (dogWolfStates[sourcePlayerId]?.actorIdolUses ?? 0) >= 2
+                    || !!dogWolfStates[sourcePlayerId]?.independentRole
+                  ))
+                ))}
                 actorJoins={item.actorJoins}
                 drunkardLine={item.drunkardLine}
                 drunkardActingPoisoned={item.drunkardActingPoisoned}
+                dogWolfLine={item.dogWolfLine}
+                dogWolfStandalone={item.dogWolfStandalone}
+                dogWolfCopiedRole={item.dogWolfLine && sourcePlayerId ? abilityRoleAssignments[sourcePlayerId] : null}
+                dogWolfActingPoisoned={item.dogWolfActingPoisoned}
+                actingPoisoned={item.actingPoisoned}
               />
               );
             })}

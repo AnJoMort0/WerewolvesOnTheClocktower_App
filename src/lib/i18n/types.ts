@@ -39,7 +39,12 @@ export type EffectKey =
   | "caught"
   | "spied_on"
   | "dug_up"
-  | "idol";
+  | "idol"
+  | "idol_dog"
+  | "adoptive_dad_dog"
+  | "enemy_dog"
+  | "dug_up_dog"
+  | "owner";
 
 export type WinKind = "village" | "werewolves" | "lovers" | "whiteWolf" | "secretLover" | "tie";
 
@@ -257,6 +262,14 @@ export interface UIStrings {
   has2VotesAgainst: string; // "tem 2 votos contra."
   votesDouble: string;      // "vota a dobrar."
   noVote: string;           // "não tem voto."
+  currentObjective: string;
+  objectiveLovers: string;
+  objectiveEvilBeing: string;
+  objectiveWerewolf: string;
+  objectiveVillage: string;
+  objectiveWhiteWolf: string;
+  objectiveSecretLover: string;
+  dogCopyLabel: string;
 }
 
 export interface ScriptDynamicStrings {

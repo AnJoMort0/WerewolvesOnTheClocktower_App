@@ -82,6 +82,24 @@ describe("detectAutomaticVictory", () => {
     ])).toBe("whiteWolf");
   });
 
+  it("lets a Dog-Wolf sharing the White Werewolf objective win with its owner", () => {
+    expect(detectAutomaticVictory([
+      player("white", "s02"),
+      player("dog", "s02"),
+      player("other", "v02", false),
+    ])).toBe("whiteWolf");
+  });
+
+  it("awards a copied solo victory to both the original solo role and Actor", () => {
+    const whiteWolf = player("white", "s02");
+    const actor = player("actor", "s02");
+    const players = [whiteWolf, actor];
+
+    expect(detectAutomaticVictory(players)).toBe("whiteWolf");
+    expect(playerWinsVictoryGroup(whiteWolf, "whiteWolf", players)).toBe(true);
+    expect(playerWinsVictoryGroup(actor, "whiteWolf", players)).toBe(true);
+  });
+
   it("blocks werewolf victory until the White Werewolf dies", () => {
     expect(detectAutomaticVictory([
       player("white", "s02"),
@@ -103,6 +121,14 @@ describe("detectAutomaticVictory", () => {
       player("secret", "as01b"),
       player("lover", "v02", true, ["namorado"]),
       player("other", "e01", false),
+    ])).toBe("secretLover");
+  });
+
+  it("allows a Dog-Wolf sharing the Secret Lover objective in that endgame", () => {
+    expect(detectAutomaticVictory([
+      player("secret", "as01b"),
+      player("dog", "as01b"),
+      player("lover", "v02", true, ["namorado"]),
     ])).toBe("secretLover");
   });
 

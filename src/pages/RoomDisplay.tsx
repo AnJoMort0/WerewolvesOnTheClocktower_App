@@ -185,7 +185,9 @@ export default function RoomDisplay() {
           permanentlyDead={permanentlyDead}
           playerEffects={playerEffects}
           poisonedPlayerId={snapshot.poisonedPlayerId}
+          poisonedPlayerIds={new Set(snapshot.poisonedPlayerIds ?? (snapshot.poisonedPlayerId ? [snapshot.poisonedPlayerId] : []))}
           illusionPlayerId={snapshot.illusionPlayerId}
+          illusionPlayerIds={new Set(snapshot.illusionPlayerIds ?? (snapshot.illusionPlayerId ? [snapshot.illusionPlayerId] : []))}
         />
         <RulebookModal open={rulebookOpen} onOpenChange={setRulebookOpen} language={language} />
         <GameOverModal

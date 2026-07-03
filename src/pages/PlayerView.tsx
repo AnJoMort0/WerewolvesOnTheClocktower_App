@@ -4,17 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ROLES, type RoleId } from "@/lib/roles";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
 import { RevealModal, type RevealCard } from "@/components/game/RevealModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
-import { LanguageContext, getRoleLabel, t, type Language, type WinKind } from "@/lib/i18n";
+import { LanguageContext, format, getRoleLabel, t, type Language, type WinKind } from "@/lib/i18n";
 import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
+import loverIcon from "@/assets/icons/lover.png";
+import evilBeingIcon from "@/assets/icons/evil_being.png";
+import werewolfIcon from "@/assets/icons/werewolf.png";
+import soloIcon from "@/assets/icons/solo.png";
 import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/playerSession";
 import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
 import { parsePlayerCharacter, shouldShowActorBadge } from "@/lib/actor";
+import { parsePlayerCharacterMetadata } from "@/lib/playerCharacter";
 
 type RoomPlayer = {
   id: string;
@@ -44,6 +50,7 @@ const PlayerView = () => {
   const [videnteData, setVidenteData] = useState<{
     deadPlayerIds: string[];
     illusionPlayerId: string | null;
+    illusionPlayerIds?: string[];
     isVidentePoisoned: boolean;
     fakeMap: Record<string, string> | null;
     roleAssignments: Record<string, RoleId>;
@@ -294,17 +301,20 @@ const PlayerView = () => {
       videnteChannel = supabase
         .channel(`vidente-reveal-${roomId}`)
         .on("broadcast", { event: "vidente-reveal" }, (payload) => {
-          const data = payload.payload;
-          if (data.show) {
+          const broadcast = payload.payload;
+          const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "e04";
+          const data = broadcast.byPlayerId?.[playerId] ?? (legacyViewer ? broadcast : null);
+          if (broadcast.show && data) {
             setVidenteData({
               deadPlayerIds: data.deadPlayerIds,
               illusionPlayerId: data.illusionPlayerId,
+              illusionPlayerIds: data.illusionPlayerIds,
               isVidentePoisoned: !!data.isVidentePoisoned,
               fakeMap: data.fakeMap || null,
               roleAssignments: data.roleAssignments || {},
             });
             setVidenteReveal(true);
-          } else {
+          } else if (!broadcast.show || data) {
             setVidenteReveal(false);
           }
         })
@@ -314,39 +324,52 @@ const PlayerView = () => {
       const meninaCh = supabase.channel(`menina-reveal-${roomId}`)
         .on("broadcast", { event: "menina-reveal" }, (payload) => {
           const d = payload.payload;
-          if (d.show) { setMeninaCards(d.cards || []); setMeninaReveal(true); } else { setMeninaReveal(false); }
+          const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "v01";
+          const result = d.byPlayerId?.[playerId] ?? (legacyViewer ? d : null);
+          if (d.show && result) { setMeninaCards(result.cards || []); setMeninaReveal(true); }
+          else if (!d.show || result) { setMeninaReveal(false); }
         }).subscribe();
       const faroleiroCh = supabase.channel(`faroleiro-reveal-${roomId}`)
         .on("broadcast", { event: "faroleiro-reveal" }, (payload) => {
           const d = payload.payload;
-          if (d.show && d.role && ROLES[d.role as RoleId]) {
-            const def = ROLES[d.role as RoleId];
-            const checkboxes = Array.isArray(d.charges) && d.charges.length > 0 ? d.charges : undefined;
-            setFaroleiroCards([{ image: def.image, label: def.label, roleId: d.role as RoleId, checkboxes }]);
+          const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "v21";
+          const result = d.byPlayerId?.[playerId] ?? (legacyViewer ? d : null);
+          if (d.show && result?.role && ROLES[result.role as RoleId]) {
+            const def = ROLES[result.role as RoleId];
+            const checkboxes = Array.isArray(result.charges) && result.charges.length > 0 ? result.charges : undefined;
+            setFaroleiroCards([{ image: def.image, label: def.label, roleId: result.role as RoleId, checkboxes }]);
             setFaroleiroReveal(true);
-          } else { setFaroleiroReveal(false); }
+          } else if (!d.show || result) { setFaroleiroReveal(false); }
         }).subscribe();
       const lvCh = supabase.channel(`lobisomem-vidente-reveal-${roomId}`)
         .on("broadcast", { event: "lv-reveal" }, async (payload) => {
           const d = payload.payload;
-          if (d.show && d.victimId && d.role && ROLES[d.role as RoleId]) {
-            const def = ROLES[d.role as RoleId];
-            const { data: vp } = await supabase.from("players").select("name").eq("id", d.victimId).single();
-            setLvCards([{ name: vp?.name, image: def.image, label: def.label, roleId: d.role as RoleId }]);
+          const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "m02";
+          const result = d.byPlayerId?.[playerId] ?? (legacyViewer ? d : null);
+          if (d.show && result?.victimId && result.role && ROLES[result.role as RoleId]) {
+            const def = ROLES[result.role as RoleId];
+            const { data: vp } = await supabase.from("players").select("name").eq("id", result.victimId).single();
+            setLvCards([{ name: vp?.name, image: def.image, label: def.label, roleId: result.role as RoleId }]);
             setLvReveal(true);
-          } else { setLvReveal(false); }
+          } else if (!d.show || result) { setLvReveal(false); }
         }).subscribe();
 
       const spiderCh = supabase.channel(`spider-reveal-${roomId}`)
         .on("broadcast", { event: "spider-reveal" }, (payload) => {
           const d = payload.payload;
-          if (d.show) { setSpiderCards(d.cards || []); setSpiderReveal(true); } else { setSpiderReveal(false); }
+          const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "v23";
+          const result = d.byPlayerId?.[playerId] ?? (legacyViewer ? d : null);
+          if (d.show && result) { setSpiderCards(result.cards || []); setSpiderReveal(true); }
+          else if (!d.show || result) { setSpiderReveal(false); }
         }).subscribe();
 
       const spyCh = supabase.channel(`spy-reveal-${roomId}`)
         .on("broadcast", { event: "spy-reveal" }, (payload) => {
           const d = payload.payload;
-          if (d.show) { setSpyCards(d.cards || []); setSpyReveal(true); } else { setSpyReveal(false); }
+          const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "f02";
+          const result = d.byPlayerId?.[playerId] ?? (legacyViewer ? d : null);
+          if (d.show && result) { setSpyCards(result.cards || []); setSpyReveal(true); }
+          else if (!d.show || result) { setSpyReveal(false); }
         }).subscribe();
 
       // Phase sync from GM (Noite/Dia/Tribunal X)
@@ -414,6 +437,38 @@ const PlayerView = () => {
   const displayRole = parsedCharacter.displayRole;
   const roleDef = displayRole ? ROLES[displayRole] ?? null : null;
   const isActorCopying = shouldShowActorBadge(player?.character);
+  const characterMetadata = parsePlayerCharacterMetadata(player?.character);
+  const ownerRoleDef = characterMetadata.ownerRole ? ROLES[characterMetadata.ownerRole] : null;
+  const objectiveRoleDef = characterMetadata.objectiveRole ? ROLES[characterMetadata.objectiveRole] : ownerRoleDef;
+  const objectiveIndicators = (() => {
+    const indicators: Array<{ id: string; image: string; label: string }> = [];
+    for (const effect of characterMetadata.objectiveEffects) {
+      if (effect === "namorado") {
+        indicators.push({ id: effect, image: loverIcon, label: t("objectiveLovers", language) });
+      } else if (effect === "evil_being") {
+        indicators.push({ id: effect, image: evilBeingIcon, label: t("objectiveEvilBeing", language) });
+      } else if (effect === "werewolf_turned") {
+        indicators.push({ id: effect, image: werewolfIcon, label: t("objectiveWerewolf", language) });
+      }
+    }
+    if (objectiveRoleDef && indicators.length === 0) {
+      const ownerRole = objectiveRoleDef.id;
+      if (ownerRole === "s01") {
+        indicators.push({ id: "owner", image: soloIcon, label: t("objectiveLovers", language) });
+      } else if (ownerRole === "s02") {
+        indicators.push({ id: "owner", image: soloIcon, label: t("objectiveWhiteWolf", language) });
+      } else if (ownerRole === "as01b") {
+        indicators.push({ id: "owner", image: soloIcon, label: t("objectiveSecretLover", language) });
+      } else if (WEREWOLF_ROLES.includes(ownerRole)) {
+        indicators.push({ id: "owner", image: werewolfIcon, label: t("objectiveWerewolf", language) });
+      } else if (EVIL_ROLES.includes(ownerRole)) {
+        indicators.push({ id: "owner", image: evilBeingIcon, label: t("objectiveEvilBeing", language) });
+      } else {
+        indicators.push({ id: "owner", image: villagerIcon, label: t("objectiveVillage", language) });
+      }
+    }
+    return indicators;
+  })();
 
   const isVidente = displayRole === "e04";
   const isMenina = displayRole === "v01";
@@ -601,7 +656,24 @@ const PlayerView = () => {
                           <img
                             src={ROLES.a04.image}
                             alt={getRoleLabel("a04", language)}
-                            className="absolute bottom-2 right-2 h-14 w-14 rounded-md border-2 border-primary object-cover shadow-lg"
+                            title={getRoleLabel("a04", language)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openRulebook("a04");
+                            }}
+                            className="absolute bottom-2 right-2 h-14 w-14 cursor-pointer rounded-md border-2 border-primary object-cover shadow-lg"
+                          />
+                        )}
+                        {ownerRoleDef && (
+                          <img
+                            src={ownerRoleDef.image}
+                            alt={getRoleLabel(ownerRoleDef.id, language)}
+                            title={getRoleLabel(ownerRoleDef.id, language)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openRulebook(ownerRoleDef.id);
+                            }}
+                            className="absolute bottom-2 left-2 h-14 w-14 rounded-md border-2 border-amber-400 object-cover shadow-lg"
                           />
                         )}
                         {isDead && (
@@ -617,6 +689,26 @@ const PlayerView = () => {
                     <h2 className="font-display text-3xl font-bold text-gradient-blood">
                       {roleDef ? getRoleLabel(roleDef.id, language) : player.character}
                     </h2>
+                    {objectiveIndicators.length > 0 && (
+                      <div className="flex justify-center gap-2">
+                        {objectiveIndicators.map((indicator) => (
+                          <Popover key={indicator.id}>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className="h-10 w-10 rounded-md border border-border/60 bg-background/60 p-1 shadow"
+                                aria-label={format(t("currentObjective", language), { objective: indicator.label })}
+                              >
+                                <img src={indicator.image} alt="" className="h-full w-full rounded-sm object-cover" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 text-sm" side="top">
+                              {format(t("currentObjective", language), { objective: indicator.label })}
+                            </PopoverContent>
+                          </Popover>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <p className="text-muted-foreground text-sm">
                     {t("keepSecret", language)}
@@ -647,12 +739,13 @@ const PlayerView = () => {
       </motion.div>
 
       {/* Vidente Reveal Modal - only for Vidente player */}
-      {isVidente && videnteData && (
+      {(isVidente || videnteReveal) && videnteData && (
         <VidenteRevealModal
           open={videnteReveal}
           onClose={() => setVidenteReveal(false)}
           deadPlayerIds={videnteData.deadPlayerIds}
           illusionPlayerId={videnteData.illusionPlayerId}
+          illusionPlayerIds={videnteData.illusionPlayerIds}
           roleAssignments={videnteData.roleAssignments}
           players={roomPlayers}
           isVidentePoisoned={videnteData.isVidentePoisoned}
@@ -662,19 +755,19 @@ const PlayerView = () => {
         />
       )}
 
-      {isMenina && (
+      {(isMenina || meninaReveal) && (
         <RevealModal language={language} open={meninaReveal} onClose={() => setMeninaReveal(false)} title={t("revealLittleGirlTitle", language)} subtitle={t("revealLittleGirlSubtitle", language)} cards={meninaCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {isFaroleiro && (
+      {(isFaroleiro || faroleiroReveal) && (
         <RevealModal language={language} open={faroleiroReveal} onClose={() => setFaroleiroReveal(false)} title={t("revealLamplighterTitle", language)} subtitle={t("revealLamplighterSubtitle", language)} cards={faroleiroCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {isLobisomemVidente && (
+      {(isLobisomemVidente || lvReveal) && (
         <RevealModal language={language} open={lvReveal} onClose={() => setLvReveal(false)} title={t("revealVampireWolfTitle", language)} subtitle={t("revealVampireWolfSubtitle", language)} cards={lvCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {isSpider && (
+      {(isSpider || spiderReveal) && (
         <RevealModal language={language} open={spiderReveal} onClose={() => setSpiderReveal(false)} title={t("spiderEyeReveal", language)} cards={spiderCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {isSpy && (
+      {(isSpy || spyReveal) && (
         <RevealModal language={language} open={spyReveal} onClose={() => setSpyReveal(false)} title={t("spyEyeReveal", language)} cards={spyCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       <RulebookModal

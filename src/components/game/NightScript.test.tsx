@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { NightScript } from "@/components/game/NightScript";
 import { LanguageContext } from "@/lib/i18n";
 import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
+import { createDogWolfState } from "@/lib/dogWolf";
 
 const baseProps = {
   activeRoles: new Set(["e02" as const]),
@@ -49,6 +50,43 @@ describe("NightScript progress", () => {
     );
 
     await waitFor(() => expect(onLineCompletedChange).toHaveBeenCalledTimes(1));
+  });
+
+  it("completes both owner and Dog lines when they perform one shared action", async () => {
+    const onLineCompletedChange = vi.fn();
+    const props = {
+      ...baseProps,
+      activeRoles: new Set(["e02" as const, "a02" as const]),
+      roleAssignments: { owner: "e02" as const, dog: "a02" as const },
+      baseRoleAssignments: { owner: "e02" as const, dog: "a02" as const },
+      abilityRoleAssignments: { owner: "e02" as const, dog: "e02" as const },
+      dogWolfPlayerIds: ["dog"],
+      dogWolfStates: { dog: createDogWolfState("owner") },
+      players: [
+        { id: "owner", name: "Owner", seat_position: 0 },
+        { id: "dog", name: "Dog", seat_position: 1 },
+      ],
+      autoCompleteRole: "e02" as const,
+      autoCompleteSourcePlayerIds: ["owner", "dog"],
+      onLineCompletedChange,
+    };
+    const { rerender } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} autoCompleteVersion={1} />
+      </LanguageContext.Provider>,
+    );
+
+    rerender(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} autoCompleteVersion={2} />
+      </LanguageContext.Provider>,
+    );
+
+    await waitFor(() => expect(onLineCompletedChange).toHaveBeenCalledTimes(2));
+    expect(onLineCompletedChange.mock.calls.map(([key]) => key)).toEqual(expect.arrayContaining([
+      expect.stringContaining(":normal:"),
+      expect.stringContaining(":dog:dog"),
+    ]));
   });
 });
 
@@ -209,8 +247,8 @@ describe("NightScript Actor copy", () => {
     );
 
     const line = container.querySelector('[draggable="true"]') as HTMLElement;
-    expect(line.textContent).toContain("Sonâmbulo");
-    expect(line.textContent).not.toContain("Ator");
+    expect(line.textContent).toContain("Ator");
+    expect(line.textContent).not.toContain("Sonâmbulo");
     expect(line.querySelector('img[alt="Bêbado"]')).toBeTruthy();
     expect(line.firstElementChild?.className).toContain("bg-green-900/30");
     fireEvent.dragStart(line, { dataTransfer });
@@ -247,7 +285,8 @@ describe("NightScript Actor copy", () => {
       </LanguageContext.Provider>,
     );
 
-    expect(container.textContent).toContain("Domador da Raposa");
+    expect(container.textContent).toContain("Ator");
+    expect(container.textContent).not.toContain("Domador da Raposa");
     const foxCheckbox = Array.from(container.querySelectorAll('button[role="checkbox"]'))
       .find((checkbox) => !checkbox.hasAttribute("data-line-checkbox"));
     fireEvent.click(foxCheckbox!);
@@ -452,5 +491,171 @@ describe("NightScript Actor copy", () => {
       .find((element) => element.textContent?.includes("SOLDADO"));
     fireEvent.dragStart(ghostLine!, { dataTransfer });
     expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "soldier");
+  });
+});
+
+describe("NightScript Dog-Wolf copy", () => {
+  it("adds a parenthesized Dog line beneath the owner's line with an independent drag source", () => {
+    const transfers = [
+      { setData: vi.fn(), effectAllowed: "" },
+      { setData: vi.fn(), effectAllowed: "" },
+    ];
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["e02", "a02"])}
+          roleAssignments={{ owner: "e02", dog: "a02" }}
+          baseRoleAssignments={{ owner: "e02", dog: "a02" }}
+          abilityRoleAssignments={{ owner: "e02", dog: "e02" }}
+          dogWolfPlayerIds={["dog"]}
+          dogWolfStates={{ dog: createDogWolfState("owner") }}
+          players={[
+            { id: "owner", name: "Owner", seat_position: 0 },
+            { id: "dog", name: "Dog", seat_position: 1 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const draggableLines = Array.from(container.querySelectorAll('[draggable="true"]')) as HTMLElement[];
+    expect(draggableLines).toHaveLength(2);
+    expect(draggableLines[1].textContent).toContain("(O Cão");
+    expect(draggableLines[1].querySelector('img[alt="Cão-Lobo"]')).toBeNull();
+    draggableLines.forEach((line, index) => fireEvent.dragStart(line, { dataTransfer: transfers[index] }));
+    expect(transfers[0].setData).toHaveBeenCalledWith("sourcePlayerId", "owner");
+    expect(transfers[1].setData).toHaveBeenCalledWith("sourcePlayerId", "dog");
+  });
+
+  it("keeps owner and Dog poison states independent", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["e02", "a02"])}
+          roleAssignments={{ owner: "e02", dog: "a02" }}
+          abilityRoleAssignments={{ owner: "e02", dog: "e02" }}
+          dogWolfPlayerIds={["dog"]}
+          dogWolfStates={{ dog: createDogWolfState("owner") }}
+          poisonedPlayerIds={new Set(["dog"])}
+          players={[
+            { id: "owner", name: "Owner", seat_position: 0 },
+            { id: "dog", name: "Dog", seat_position: 1 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const draggableLines = Array.from(container.querySelectorAll('[draggable="true"]')) as HTMLElement[];
+    expect(draggableLines[0].firstElementChild?.className).not.toContain("bg-green-900/30");
+    expect(draggableLines[1].firstElementChild?.className).toContain("bg-green-900/30");
+  });
+
+  it("shows the Dog-Wolf choice line when the copied Dog-Wolf had no owner", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["a02"])}
+          roleAssignments={{ actor: "a02", dog: "a02" }}
+          baseRoleAssignments={{ actor: "a04", dog: "a02" }}
+          dogWolfPlayerIds={["dog", "actor"]}
+          dogWolfStates={{ dog: createDogWolfState(), actor: createDogWolfState() }}
+          permanentlyDead={new Set(["dog"])}
+          actorPlayerId="actor"
+          actorCopiedRole="a02"
+          nightNumber={4}
+          players={[
+            { id: "actor", name: "Actor", seat_position: 0 },
+            { id: "dog", name: "Dog", seat_position: 1 },
+            { id: "owner", name: "Owner", seat_position: 2 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Cão-Lobo acorda");
+  });
+
+  it("shows each Spider eye only for players caught in that source's own web", () => {
+    const onSpiderReveal = vi.fn();
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["v23", "a02"])}
+          roleAssignments={{ owner: "v23", dog: "a02" }}
+          abilityRoleAssignments={{ owner: "v23", dog: "v23" }}
+          dogWolfPlayerIds={["dog"]}
+          dogWolfStates={{ dog: createDogWolfState("owner") }}
+          conditionKeys={{ spiderHasCaught: true }}
+          spiderCaughtBySource={{ dog: ["visitor"] }}
+          onSpiderReveal={onSpiderReveal}
+          players={[
+            { id: "owner", name: "Owner", seat_position: 0 },
+            { id: "dog", name: "Dog", seat_position: 1 },
+            { id: "visitor", name: "Visitor", seat_position: 2 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const eyeButtons = Array.from(container.querySelectorAll("button"))
+      .filter((button) => button.querySelector("svg.lucide-eye"));
+    expect(eyeButtons).toHaveLength(1);
+    fireEvent.click(eyeButtons[0]);
+    expect(onSpiderReveal).toHaveBeenCalledWith("dog");
+  });
+
+  it("does not let Dog-as-Cupid create a second pair of Lovers", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          nightNumber={1}
+          activeRoles={new Set(["s01", "a02"])}
+          roleAssignments={{ owner: "s01", dog: "a02" }}
+          baseRoleAssignments={{ owner: "s01", dog: "a02" }}
+          abilityRoleAssignments={{ owner: "s01", dog: "s01" }}
+          dogWolfPlayerIds={["dog"]}
+          dogWolfStates={{ dog: createDogWolfState("owner") }}
+          players={[
+            { id: "owner", name: "Owner", seat_position: 0 },
+            { id: "dog", name: "Dog", seat_position: 1 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.querySelectorAll('[draggable="true"]')).toHaveLength(1);
+    expect(container.textContent).toContain("C\u00e3o");
+  });
+
+  it("keeps Dog-as-Evil-Cupid standalone until two living enemies are selected", () => {
+    const state = createDogWolfState("owner");
+    state.enemyPlayerIds = ["enemy-one"];
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["m05", "a02"])}
+          roleAssignments={{ owner: "m05", dog: "a02", "enemy-one": "v02" }}
+          baseRoleAssignments={{ owner: "m05", dog: "a02", "enemy-one": "v02" }}
+          abilityRoleAssignments={{ owner: "m05", dog: "m05", "enemy-one": "v02" }}
+          dogWolfPlayerIds={["dog"]}
+          dogWolfStates={{ dog: state }}
+          players={[
+            { id: "owner", name: "Owner", seat_position: 0 },
+            { id: "dog", name: "Dog", seat_position: 1 },
+            { id: "enemy-one", name: "Enemy", seat_position: 2 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const dogLine = Array.from(container.querySelectorAll('[draggable="true"]'))
+      .find((line) => line.textContent?.includes("C\u00e3o"));
+    expect(dogLine).toBeTruthy();
+    expect(dogLine?.textContent?.trim().startsWith("(")).toBe(false);
   });
 });

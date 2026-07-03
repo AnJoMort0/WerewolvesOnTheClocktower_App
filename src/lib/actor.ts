@@ -1,5 +1,6 @@
 import { ROLES, type RoleId } from "@/lib/roles";
 import { applyDrunkardReplacement, decodeDrunkardCharacter } from "@/lib/drunkard";
+import { stripPlayerCharacterMetadata } from "@/lib/playerCharacter";
 
 const ACTOR_CHARACTER_PREFIX = "a04:";
 const ACTOR_DRUNKARD_CHARACTER_PREFIX = `${ACTOR_CHARACTER_PREFIX}a01:`;
@@ -49,6 +50,7 @@ export function parsePlayerCharacter(character: string | null | undefined): {
   actorCopiedRole: RoleId | null;
   drunkardReplacementRole: RoleId | null;
 } {
+  character = stripPlayerCharacterMetadata(character);
   if (!character) return { baseRole: null, displayRole: null, actorCopiedRole: null, drunkardReplacementRole: null };
   if (character.startsWith(ACTOR_DRUNKARD_CHARACTER_PREFIX)) {
     const drunkardReplacementRole = decodeDrunkardCharacter(

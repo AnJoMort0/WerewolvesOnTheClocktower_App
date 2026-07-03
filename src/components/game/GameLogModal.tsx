@@ -14,6 +14,7 @@ import ghostIcon from "@/assets/icons/ghost.png";
 import ghostExecutedIcon from "@/assets/icons/ghost_executed.png";
 import ghostRessurectIcon from "@/assets/icons/ghost_ressurect.png";
 import villagerIcon from "@/assets/icons/villager.png";
+import cardSwitchIcon from "@/assets/icons/card_switch.png";
 
 type Player = {
   id: string;
@@ -34,7 +35,9 @@ interface GameLogModalProps {
   permanentlyDead: Set<string>;
   playerEffects: Record<string, Set<StatusEffect>>;
   poisonedPlayerId: string | null;
+  poisonedPlayerIds?: Set<string>;
   illusionPlayerId: string | null;
+  illusionPlayerIds?: Set<string>;
 }
 
 const TEXT: Record<Language, {
@@ -126,6 +129,7 @@ function getEventIcon(event: GameLogEvent) {
   if (event.action === "execute") return ghostExecutedIcon;
   if (event.action === "resurrect") return ghostRessurectIcon;
   if (event.action === "kill") return ghostIcon;
+  if (event.action === "role_change") return cardSwitchIcon;
   return null;
 }
 
@@ -235,7 +239,9 @@ function FinalCircle({
   permanentlyDead,
   playerEffects,
   poisonedPlayerId,
+  poisonedPlayerIds,
   illusionPlayerId,
+  illusionPlayerIds,
   selectedPlayerId,
   onSelect,
 }: Omit<GameLogModalProps, "open" | "onOpenChange" | "events"> & {
@@ -256,7 +262,9 @@ function FinalCircle({
           playerStatuses={playerStatuses}
           permanentlyDead={permanentlyDead}
           poisonedPlayerId={poisonedPlayerId}
+          poisonedPlayerIds={poisonedPlayerIds}
           illusionPlayerId={illusionPlayerId}
+          illusionPlayerIds={illusionPlayerIds}
           playerEffects={playerEffects}
           onPlayerClick={onSelect}
           selectedPlayerId={selectedPlayerId}
@@ -277,7 +285,9 @@ export function GameLogModal({
   permanentlyDead,
   playerEffects,
   poisonedPlayerId,
+  poisonedPlayerIds,
   illusionPlayerId,
+  illusionPlayerIds,
 }: GameLogModalProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(() => new Set());
@@ -350,7 +360,9 @@ export function GameLogModal({
               permanentlyDead={permanentlyDead}
               playerEffects={playerEffects}
               poisonedPlayerId={poisonedPlayerId}
+              poisonedPlayerIds={poisonedPlayerIds}
               illusionPlayerId={illusionPlayerId}
+              illusionPlayerIds={illusionPlayerIds}
               selectedPlayerId={selectedPlayerId}
               onSelect={handleSelectPlayer}
             />

@@ -9,6 +9,7 @@ interface VidenteRevealModalProps {
   onClose: () => void;
   deadPlayerIds: string[];
   illusionPlayerId: string | null;
+  illusionPlayerIds?: Iterable<string>;
   roleAssignments: Record<string, RoleId>;
   players: Array<{ id: string; name: string }>;
   isVidentePoisoned?: boolean;
@@ -22,6 +23,7 @@ export const VidenteRevealModal = ({
   onClose,
   deadPlayerIds,
   illusionPlayerId,
+  illusionPlayerIds,
   roleAssignments,
   players,
   isVidentePoisoned = false,
@@ -31,6 +33,10 @@ export const VidenteRevealModal = ({
 }: VidenteRevealModalProps) => {
   const lang = useLanguage();
   const t = useT();
+  const illusionIds = useMemo(
+    () => new Set(illusionPlayerIds ?? (illusionPlayerId ? [illusionPlayerId] : [])),
+    [illusionPlayerId, illusionPlayerIds],
+  );
 
   const fakeRoleMap = useMemo(() => {
     if (precomputedFakeMap) return precomputedFakeMap as Record<string, RoleId>;
@@ -94,7 +100,7 @@ export const VidenteRevealModal = ({
                 let displayRole: RoleId;
                 if (isVidentePoisoned && fakeRoleMap?.[pid]) {
                   displayRole = fakeRoleMap[pid] as RoleId;
-                } else if (pid === illusionPlayerId) {
+                } else if (illusionIds.has(pid)) {
                   displayRole = "a06" as RoleId;
                 } else {
                   displayRole = actualRole;

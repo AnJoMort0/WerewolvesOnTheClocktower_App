@@ -11,6 +11,7 @@ import imunityIcon from "@/assets/icons/imunity_full.png";
 import immunityWerewolfIcon from "@/assets/icons/imunity_werewolf.png";
 import { toast } from "sonner";
 import type { ActorPowerState } from "@/lib/actor";
+import type { DogWolfStates } from "@/lib/dogWolf";
 
 type Player = {
   id: string;
@@ -43,6 +44,8 @@ const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   v23: "role-v23",
   a05: "role-a05",
   a04: "role-a04",
+  a02: "role-a02",
+  m05: "role-m05",
 };
 
 interface PlayerCircleProps {
@@ -51,13 +54,17 @@ interface PlayerCircleProps {
   onDropPlayer: (playerId: string, position: number | null) => void;
   isGM?: boolean;
   roleAssignments?: Record<string, RoleId>;
+  abilityRoleAssignments?: Record<string, RoleId>;
   baseRoleAssignments?: Record<string, RoleId>;
   playerStatuses?: Record<string, PlayerStatus>;
   permanentlyDead?: Set<string>;
   onPlayerStatusChange?: (playerId: string, status: PlayerStatus, source?: string) => void;
   isPlaying?: boolean;
   poisonedPlayerId?: string | null;
+  poisonedPlayerIds?: Set<string>;
+  actingPoisonedPlayerIds?: Set<string>;
   illusionPlayerId?: string | null;
+  illusionPlayerIds?: Set<string>;
   onSetIllusion?: (playerId: string) => void;
   isBruxaPermaDead?: boolean;
   isMarionetista?: boolean;
@@ -99,6 +106,11 @@ interface PlayerCircleProps {
   onActorIdolUseToggle?: (idx: number) => void;
   actorPowerState?: ActorPowerState;
   onActorPowerStateChange?: (state: ActorPowerState) => void;
+  independentPowerStates?: Record<string, ActorPowerState>;
+  onIndependentPowerStateChange?: (playerId: string, state: ActorPowerState) => void;
+  dogWolfOwnerRoles?: Record<string, RoleId>;
+  dogWolfStates?: DogWolfStates;
+  onDogActorIdolUseToggle?: (playerId: string, index: number) => void;
 }
 
 export const PlayerCircle = ({
@@ -107,13 +119,17 @@ export const PlayerCircle = ({
   onDropPlayer,
   isGM,
   roleAssignments,
+  abilityRoleAssignments,
   baseRoleAssignments,
   playerStatuses = {},
   permanentlyDead = new Set(),
   onPlayerStatusChange,
   isPlaying,
   poisonedPlayerId,
+  poisonedPlayerIds = poisonedPlayerId ? new Set([poisonedPlayerId]) : new Set(),
+  actingPoisonedPlayerIds = poisonedPlayerIds,
   illusionPlayerId,
+  illusionPlayerIds = illusionPlayerId ? new Set([illusionPlayerId]) : new Set(),
   onSetIllusion,
   isBruxaPermaDead = false,
   isMarionetista = false,
@@ -155,6 +171,11 @@ export const PlayerCircle = ({
   onActorIdolUseToggle,
   actorPowerState,
   onActorPowerStateChange,
+  independentPowerStates = {},
+  onIndependentPowerStateChange,
+  dogWolfOwnerRoles = {},
+  dogWolfStates = {},
+  onDogActorIdolUseToggle,
 }: PlayerCircleProps) => {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const roleLabel = useRoleLabel();
@@ -168,9 +189,11 @@ export const PlayerCircle = ({
   const radiusY = Math.min(280, baseSize * 0.95) * scale;
 
   const isChamanPoisoned = useMemo(() => {
-    if (!poisonedPlayerId || !roleAssignments) return false;
-    return roleAssignments[poisonedPlayerId] === CHAMAN_ROLE;
-  }, [poisonedPlayerId, roleAssignments]);
+    const assignments = abilityRoleAssignments ?? roleAssignments;
+    if (!assignments) return false;
+    return Object.entries(assignments)
+      .some(([playerId, role]) => role === CHAMAN_ROLE && actingPoisonedPlayerIds.has(playerId));
+  }, [abilityRoleAssignments, actingPoisonedPlayerIds, roleAssignments]);
 
   const handleDrop = (e: React.DragEvent, position: number) => {
     e.preventDefault();
@@ -231,8 +254,8 @@ export const PlayerCircle = ({
     if (isPDead) return "grayscale opacity-50";
     if (effects.has("werewolf_turned")) return ""; // handled by glow
     if (effects.has("evil_being")) return ""; // handled by glow
-    if (playerId === poisonedPlayerId) return "ring-2 ring-green-500";
-    if (playerId === illusionPlayerId) return "ring-2 ring-purple-500";
+    if (poisonedPlayerIds.has(playerId)) return "ring-2 ring-green-500";
+    if (illusionPlayerIds.has(playerId)) return "ring-2 ring-purple-500";
     return "";
   };
 
@@ -241,8 +264,8 @@ export const PlayerCircle = ({
     const status = playerStatuses[playerId];
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
     if (effects.has("incendiado")) return "border-orange-500";
-    if (playerId === illusionPlayerId) return "border-purple-500";
-    if (playerId === poisonedPlayerId) return "border-green-500";
+    if (illusionPlayerIds.has(playerId)) return "border-purple-500";
+    if (poisonedPlayerIds.has(playerId)) return "border-green-500";
     if (status === "dead-this-night") return "border-destructive";
     return "border-primary/40";
   };
@@ -259,8 +282,9 @@ export const PlayerCircle = ({
   const getDragProps = (playerId: string) => {
     if (hideSensitiveInfo) return {};
     if (!isPlaying || !roleAssignments) return {};
-    const role = roleAssignments[playerId];
+    const role = abilityRoleAssignments?.[playerId] ?? roleAssignments[playerId];
     const isActor = baseRoleAssignments?.[playerId] === "a04";
+    const dogState = dogWolfStates[playerId];
     const isPDead = permanentlyDead.has(playerId);
 
     // Role-based drag actions
@@ -273,12 +297,7 @@ export const PlayerCircle = ({
       dragActions.kill = {
         action: "kill",
         check: () => {
-          if (poisonedPlayerId) {
-            const pr = roleAssignments[poisonedPlayerId];
-            if (pr && (["e01", "m01", "m02", "m03"] as RoleId[]).includes(pr)) {
-              return getToast("warnWolvesPoisoned", lang);
-            }
-          }
+          if (actingPoisonedPlayerIds.has(playerId)) return getToast("warnWolvesPoisoned", lang);
           return null;
         },
       };
@@ -286,7 +305,7 @@ export const PlayerCircle = ({
     if (role === CHAMAN_ROLE && !isPDead) {
       dragActions.chaman = {
         action: "chaman",
-        check: () => isChamanPoisoned ? getToast("warnChamanPoisoned", lang) : null,
+        check: () => actingPoisonedPlayerIds.has(playerId) ? getToast("warnChamanPoisoned", lang) : null,
       };
     }
     if (role === ILLUSION_DRAG_ROLE && !isPDead) {
@@ -294,7 +313,13 @@ export const PlayerCircle = ({
     }
 
     // Additional role drags
-    if (ROLE_DRAG_ACTIONS[role] && !isPDead && !(isActor && !actorCopyActive && actorIdolUses >= 2)) {
+    const dogActorUnavailable = !!dogState && role === "a04"
+      && (dogState.actorIdolUses >= 2 || !!dogState.independentRole);
+    const dogCupidCannotChooseLovers = !!dogState && role === "s01";
+    if (ROLE_DRAG_ACTIONS[role] && !isPDead
+      && !(isActor && !dogState && !actorCopyActive && actorIdolUses >= 2)
+      && !dogActorUnavailable
+      && !dogCupidCannotChooseLovers) {
       const actionName = ROLE_DRAG_ACTIONS[role]!;
       return {
         draggable: true,
@@ -346,6 +371,9 @@ export const PlayerCircle = ({
 
         const seated = seatedPlayers.find((p) => p.seat_position === i);
         const role = seated && !hideSensitiveInfo && roleAssignments?.[seated.id];
+        const mechanicalRole = seated && !hideSensitiveInfo
+          ? abilityRoleAssignments?.[seated.id] ?? role
+          : role;
         const baseRole = seated && !hideSensitiveInfo ? baseRoleAssignments?.[seated.id] : undefined;
         const isActor = baseRole === "a04";
         const isDrunkard = baseRole === "a01";
@@ -356,11 +384,18 @@ export const PlayerCircle = ({
         const isPermanentlyDead = rawIsPermanentlyDead;
         const dragProps = seated ? getDragProps(seated.id) : {};
         const hasDrag = !!dragProps.draggable;
-        const isThisIllusion = seated && !hideSensitiveInfo ? seated.id === illusionPlayerId : false;
-        const isThisPoisoned = seated && !hideSensitiveInfo ? seated.id === poisonedPlayerId : false;
-        const isThisBruxaPoisoned = seated ? (role === "e02" && isThisPoisoned) : false;
-        const isChaman = role === CHAMAN_ROLE;
-        const isFox = role === ("v04" as RoleId);
+        const isThisIllusion = seated && !hideSensitiveInfo ? illusionPlayerIds.has(seated.id) : false;
+        const isThisPoisoned = seated && !hideSensitiveInfo ? poisonedPlayerIds.has(seated.id) : false;
+        const isThisBruxaPoisoned = seated ? (mechanicalRole === "e02" && isThisPoisoned) : false;
+        const isChaman = mechanicalRole === CHAMAN_ROLE;
+        const isFox = mechanicalRole === ("v04" as RoleId);
+        const independentPowerState = seated ? independentPowerStates[seated.id] : undefined;
+        const dogState = seated ? dogWolfStates[seated.id] : undefined;
+        const updateIndependentPowerState = (state: ActorPowerState) => {
+          if (!seated) return;
+          if (onIndependentPowerStateChange) onIndependentPowerStateChange(seated.id, state);
+          else if (isActor && onActorPowerStateChange) onActorPowerStateChange(state);
+        };
         const effects = seated && !hideSensitiveInfo ? (_playerEffects[seated.id] || new Set<StatusEffect>()) : new Set<StatusEffect>();
         const effectsList = hideSensitiveInfo ? [] : Array.from(effects);
 
@@ -460,6 +495,13 @@ export const PlayerCircle = ({
                     className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-green-400 object-cover shadow"
                   />
                 )}
+                {seated && dogWolfOwnerRoles[seated.id] && (
+                  <img
+                    src={ROLES[dogWolfOwnerRoles[seated.id]].image}
+                    alt={roleLabel(dogWolfOwnerRoles[seated.id])}
+                    className="absolute -bottom-1 -right-1 h-6 w-6 rounded border border-amber-400 object-cover shadow"
+                  />
+                )}
               </div>
               <span className={`text-xs font-body max-w-[80px] truncate text-center mt-1 ${isThisPoisoned ? "text-green-400" : isThisIllusion ? "text-purple-400" : ""}`}>
                 {seated.name}
@@ -475,10 +517,10 @@ export const PlayerCircle = ({
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(isActor ? actorPowerState?.chamanCharges ?? 0 : chamanCharges ?? 0) > idx}
+                      checked={(independentPowerState?.chamanCharges ?? chamanCharges ?? 0) > idx}
                       onCheckedChange={() => {
-                        if (isActor && actorPowerState && onActorPowerStateChange) {
-                          onActorPowerStateChange({ ...actorPowerState, chamanCharges: actorPowerState.chamanCharges > idx ? idx : idx + 1 });
+                        if (independentPowerState) {
+                          updateIndependentPowerState({ ...independentPowerState, chamanCharges: independentPowerState.chamanCharges > idx ? idx : idx + 1 });
                         } else onChamanChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -486,7 +528,7 @@ export const PlayerCircle = ({
                   ))}
                 </div>
               )}
-              {isGM && isActor && !isPermanentlyDead && onActorIdolUseToggle && (
+              {isGM && isActor && !dogState && !isPermanentlyDead && onActorIdolUseToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
@@ -498,13 +540,25 @@ export const PlayerCircle = ({
                   ))}
                 </div>
               )}
+              {isGM && dogState && mechanicalRole === "a04" && !isPermanentlyDead && onDogActorIdolUseToggle && (
+                <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
+                  {[0, 1].map((idx) => (
+                    <Checkbox
+                      key={idx}
+                      checked={dogState.actorIdolUses > idx}
+                      onCheckedChange={() => onDogActorIdolUseToggle(seated!.id, idx)}
+                      className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
+                    />
+                  ))}
+                </div>
+              )}
               {/* Fox checkbox */}
               {isGM && isFox && showFoxCheckbox && !isPermanentlyDead && onFoxDisabledToggle && (
                 <div className="flex items-center gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={isActor ? actorPowerState?.foxDisabled ?? false : foxDisabled}
+                    checked={independentPowerState?.foxDisabled ?? foxDisabled}
                     onCheckedChange={() => {
-                      if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, foxDisabled: !actorPowerState.foxDisabled });
+                      if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, foxDisabled: !independentPowerState.foxDisabled });
                       else onFoxDisabledToggle();
                     }}
                     className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
@@ -513,14 +567,14 @@ export const PlayerCircle = ({
                 </div>
               )}
               {/* Cupido (s01) protection charges */}
-              {isGM && role === ("s01" as RoleId) && showCupidoCheckboxes && !isPermanentlyDead && onCupidoChargeToggle && (
+              {isGM && mechanicalRole === ("s01" as RoleId) && showCupidoCheckboxes && !isPermanentlyDead && onCupidoChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(isActor ? actorPowerState?.cupidoCharges ?? 0 : cupidoCharges) > idx}
+                      checked={(independentPowerState?.cupidoCharges ?? cupidoCharges) > idx}
                       onCheckedChange={() => {
-                        if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, cupidoCharges: actorPowerState.cupidoCharges > idx ? idx : idx + 1 });
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, cupidoCharges: independentPowerState.cupidoCharges > idx ? idx : idx + 1 });
                         else onCupidoChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -529,14 +583,14 @@ export const PlayerCircle = ({
                 </div>
               )}
               {/* Lobisomem Mau (m01) checkboxes */}
-              {isGM && role === ("m01" as RoleId) && !isPermanentlyDead && onLobisomemMauChargeToggle && (
+              {isGM && mechanicalRole === ("m01" as RoleId) && !isPermanentlyDead && onLobisomemMauChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(isActor ? actorPowerState?.lobisomemMauCharges ?? 0 : lobisomemMauCharges ?? 0) > idx}
+                      checked={(independentPowerState?.lobisomemMauCharges ?? lobisomemMauCharges ?? 0) > idx}
                       onCheckedChange={() => {
-                        if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, lobisomemMauCharges: actorPowerState.lobisomemMauCharges > idx ? idx : idx + 1 });
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, lobisomemMauCharges: independentPowerState.lobisomemMauCharges > idx ? idx : idx + 1 });
                         else onLobisomemMauChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -545,12 +599,12 @@ export const PlayerCircle = ({
                 </div>
               )}
               {/* Domador da Aranha (v23) daytime web-change checkbox */}
-              {isGM && role === ("v23" as RoleId) && !isPermanentlyDead && onSpiderDayChangeToggle && (
+              {isGM && mechanicalRole === ("v23" as RoleId) && !isPermanentlyDead && onSpiderDayChangeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={isActor ? actorPowerState?.spiderDayChangeUsed ?? false : spiderDayChangeUsed}
+                    checked={independentPowerState?.spiderDayChangeUsed ?? spiderDayChangeUsed}
                     onCheckedChange={() => {
-                      if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, spiderDayChangeUsed: !actorPowerState.spiderDayChangeUsed });
+                      if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, spiderDayChangeUsed: !independentPowerState.spiderDayChangeUsed });
                       else onSpiderDayChangeToggle();
                     }}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -558,14 +612,14 @@ export const PlayerCircle = ({
                 </div>
               )}
               {/* Juiz (v13) checkboxes */}
-              {isGM && role === ("v13" as RoleId) && !isPermanentlyDead && onJuizChargeToggle && (
+              {isGM && mechanicalRole === ("v13" as RoleId) && !isPermanentlyDead && onJuizChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(isActor ? actorPowerState?.juizCharges ?? 0 : juizCharges ?? 0) > idx}
+                      checked={(independentPowerState?.juizCharges ?? juizCharges ?? 0) > idx}
                       onCheckedChange={() => {
-                        if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, juizCharges: actorPowerState.juizCharges > idx ? idx : idx + 1 });
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, juizCharges: independentPowerState.juizCharges > idx ? idx : idx + 1 });
                         else onJuizChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -574,14 +628,14 @@ export const PlayerCircle = ({
                 </div>
               )}
               {/* Acusador (v14) checkboxes */}
-              {isGM && role === ("v14" as RoleId) && !isPermanentlyDead && onAcusadorChargeToggle && (
+              {isGM && mechanicalRole === ("v14" as RoleId) && !isPermanentlyDead && onAcusadorChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(isActor ? actorPowerState?.acusadorCharges ?? 0 : acusadorCharges ?? 0) > idx}
+                      checked={(independentPowerState?.acusadorCharges ?? acusadorCharges ?? 0) > idx}
                       onCheckedChange={() => {
-                        if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, acusadorCharges: actorPowerState.acusadorCharges > idx ? idx : idx + 1 });
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, acusadorCharges: independentPowerState.acusadorCharges > idx ? idx : idx + 1 });
                         else onAcusadorChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -590,12 +644,12 @@ export const PlayerCircle = ({
                 </div>
               )}
               {/* Lobisomem Vampiro (m03) used checkbox */}
-              {isGM && role === ("m03" as RoleId) && !isPermanentlyDead && onLobisomemVampiroToggle && (
+              {isGM && mechanicalRole === ("m03" as RoleId) && !isPermanentlyDead && onLobisomemVampiroToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={isActor ? actorPowerState?.lobisomemVampiroUsed ?? false : lobisomemVampiroUsed}
+                    checked={independentPowerState?.lobisomemVampiroUsed ?? lobisomemVampiroUsed}
                     onCheckedChange={() => {
-                      if (isActor && actorPowerState && onActorPowerStateChange) onActorPowerStateChange({ ...actorPowerState, lobisomemVampiroUsed: !actorPowerState.lobisomemVampiroUsed });
+                      if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, lobisomemVampiroUsed: !independentPowerState.lobisomemVampiroUsed });
                       else onLobisomemVampiroToggle();
                     }}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -649,7 +703,7 @@ export const PlayerCircle = ({
               setOpenPopoverId(null);
             }}
             onSetDead={() => {
-              if (role === "e02" && poisonedPlayerId === seated.id) {
+              if (mechanicalRole === "e02" && isThisPoisoned) {
                 toast.warning(getToast("warnWitchPoisonedImmune", lang));
                 setOpenPopoverId(null);
                 return;
