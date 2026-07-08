@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
   encodeActorCharacter,
+  getActorIdolUsesAfterSelection,
   getEffectiveRoleAssignments,
   parsePlayerCharacter,
   shouldShowActorBadge,
 } from "@/lib/actor";
 
 describe("Actor role encoding", () => {
+  it("does not spend a change when choosing the first Idol", () => {
+    expect(getActorIdolUsesAfterSelection(null, "first-idol", 0)).toBe(0);
+    expect(getActorIdolUsesAfterSelection("first-idol", "second-idol", 0)).toBe(1);
+    expect(getActorIdolUsesAfterSelection("second-idol", "third-idol", 1)).toBe(2);
+  });
+
   it("keeps Actor as the base identity while exposing the copied role privately", () => {
     const encoded = encodeActorCharacter("m01");
     expect(parsePlayerCharacter(encoded)).toEqual({

@@ -5,6 +5,7 @@ const OWNER_ROLE_KEY = "owner";
 const OWNER_PLAYER_KEY = "ownerPlayer";
 const OBJECTIVE_ROLE_KEY = "objectiveRole";
 const OBJECTIVE_EFFECTS_KEY = "objectives";
+const DOG_ACTOR_COPY_KEY = "dogActorCopy";
 
 export const OBJECTIVE_EFFECT_IDS = ["namorado", "evil_being", "werewolf_turned"] as const;
 export type ObjectiveEffectId = typeof OBJECTIVE_EFFECT_IDS[number];
@@ -14,6 +15,7 @@ export type PlayerCharacterMetadata = {
   ownerPlayerId: string | null;
   objectiveRole: RoleId | null;
   objectiveEffects: ObjectiveEffectId[];
+  dogActorCopiedRole: RoleId | null;
 };
 
 export function stripPlayerCharacterMetadata(character: string | null | undefined): string | null {
@@ -27,6 +29,7 @@ export function parsePlayerCharacterMetadata(character: string | null | undefine
     ownerPlayerId: null,
     objectiveRole: null,
     objectiveEffects: [],
+    dogActorCopiedRole: null,
   };
   if (!character?.includes(METADATA_SEPARATOR)) return metadata;
   const rawMetadata = character.slice(character.indexOf(METADATA_SEPARATOR) + 1);
@@ -40,6 +43,8 @@ export function parsePlayerCharacterMetadata(character: string | null | undefine
   metadata.objectiveEffects = objectiveEffects.filter(
     (effect): effect is ObjectiveEffectId => OBJECTIVE_EFFECT_IDS.includes(effect as ObjectiveEffectId),
   );
+  const dogActorCopiedRole = params.get(DOG_ACTOR_COPY_KEY) as RoleId | null;
+  if (dogActorCopiedRole && ROLES[dogActorCopiedRole]) metadata.dogActorCopiedRole = dogActorCopiedRole;
   return metadata;
 }
 
@@ -51,6 +56,7 @@ export function encodePlayerCharacterMetadata(
   if (metadata.ownerRole) params.set(OWNER_ROLE_KEY, metadata.ownerRole);
   if (metadata.ownerPlayerId) params.set(OWNER_PLAYER_KEY, metadata.ownerPlayerId);
   if (metadata.objectiveRole) params.set(OBJECTIVE_ROLE_KEY, metadata.objectiveRole);
+  if (metadata.dogActorCopiedRole) params.set(DOG_ACTOR_COPY_KEY, metadata.dogActorCopiedRole);
   const objectiveEffects = metadata.objectiveEffects?.filter(
     (effect): effect is ObjectiveEffectId => OBJECTIVE_EFFECT_IDS.includes(effect),
   );

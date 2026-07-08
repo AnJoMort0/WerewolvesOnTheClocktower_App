@@ -3,6 +3,7 @@ import type { RoleId } from "@/lib/roles";
 
 export type DogWolfState = {
   ownerPlayerId: string | null;
+  ownerSelectedNight: number | null;
   powerState: ActorPowerState;
   independentRole: RoleId | null;
   objectiveRoleOverride: RoleId | null;
@@ -19,6 +20,7 @@ export type DogWolfStates = Record<string, DogWolfState>;
 export function createDogWolfState(ownerPlayerId: string | null = null): DogWolfState {
   return {
     ownerPlayerId,
+    ownerSelectedNight: null,
     powerState: { ...EMPTY_ACTOR_POWER_STATE },
     independentRole: null,
     objectiveRoleOverride: null,

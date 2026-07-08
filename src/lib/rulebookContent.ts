@@ -10,6 +10,8 @@ import type { Language } from "@/lib/i18n";
   - The team field controls the background color in the in-app rulebook.
   - For rulebook paragraphs, blank lines inside a `text` template string become paragraph breaks.
   - RULEBOOK_NIGHT_SCRIPT feeds the analog character generator's filtered script.
+  - Night-script ids use only phase + role id; repeated role lines use .1, .2, etc.
+  - Keep night-script wording only in RULEBOOK_NIGHT_SCRIPT, not in RULEBOOK_TEXT.sections.
 */
 
 export type RulebookCharacterId = RoleId
@@ -122,81 +124,6 @@ Os jogadores mortos transformam-se em fantasmas, que podem continuar a comunicar
           `**Lobisomem branco:** Ser o único sobrevivente`,
         ] },
         
-      { type: "h2", id: "a-noite", text: `A Noite` },
-      { type: "h3", id: "primeira-noite", text: `Primeira Noite` },
-      { type: "note", lines: [
-          `Esta noite não terá mortos.`,
-          `Lançar um d12.`,
-        ] },
-      { type: "list", ordered: false, items: [
-          `O Cupido acorda e escolhe dois jogadores que serão Namorados. O Cupido adormece e os Namorados serão agora tocados e podem se conhecer. Se um Namorado morre, o outro se suicida. O objetivo dos Namorados e do Cupido é que os Namorados sejam os últimos sobreviventes. Enquanto os Namorados estiverem vivos, o jogo continua.`,
-          `O Cupido Malvado acorda e escolhe dois jogadores que serão Inimigos. O Cupido Malvado adormece e os Inimigos serão tocados e podem se conhecer. Se um Inimigo consegue condenar o outro a execução, o primeiro recebe imunidade na próxima tentativa de assassinato.`,
-          `As Irmãs acordam para se conhecerem.`,
-          `Os Irmãos acordam para se conhecerem.`,
-          `O Ator acorda e escolhe um Ídolo cujo poder copiará quando o Ídolo morrer. Só lhe será revelado o poder do Ídolo, na noite a seguir à morte do Ídolo.`,
-          `O Domador da Aranha acorda e escolhe um jogador no qual tece uma teia de aranhã. O Domador da Aranha, a cada noite, descobre quais personagens apontaram para esse jogador naquela noite.`,
-          `O Domador do Corvo acorda e é-lhe revelado o número de Criaturas Malvadas que vivem na Aldeia.`,
-          `O Domador da Raposa acorda e indica três vizinhos. Será-lhe revelado, com o polegar, se um desses três jogadores é uma Criatura Malvada.`,
-          `O Urso rosna/não rosna.`,
-          `O Chefe da Aldeia acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.`,
-          `No fim desta noite ouve-se um uivar. A Aldeia sabe então que os Lobisomens se revelaram e estão com fome. A Aldeia acorda desconfiada de toda a gente.`,
-        ] },
-      { type: "h3", id: "inicio-da-segunda-noite", text: `Início da Segunda Noite` },
-      { type: "list", ordered: false, items: [
-          `O Ladrão acorda e escolhe com o polegar se quer jogar do lado dos Aldeões ou do lado dos Lobisomens.`,
-          `O Cão-Lobo acorda e diz com o polegar se quer ser um Cão ou um Lobisomem. Se escolher ser um Cão vai indicar um dono, que vai ser tocado e que poderá acordar para conhecer o seu cachorro. É revelado ao Cão o papel do seu dono. A partir deste momento, o Cão acorda sempre com o seu dono e deve também usar o seu poder independentemente do dono. Se escolher ser um Lobisomem, pode voltar a dormir.`,
-          `A Criança Selvagem acorda e escolhe o seu Pai Adotivo. Se este morrer durante o jogo, a Criança Selvagem se tornará um Lobisomem.`,
-          `Os Lobisomens acordam e são-lhe apresentados as Criaturas Malvadas.`,
-        ] },
-      { type: "h3", id: "noite-normal", text: `Noite Normal` },
-      { type: "note", lines: [
-          `Lançar um d12.`,
-          `Ressuscitar o jogador salvo pelo Anjo, se aplicável.`,
-        ] },
-      { type: "note", lines: [
-          `Se o Cavaleiro Enferrujado morreu durante o dia, matar o Lobisomem mais próximo durante o próximo dia.`,
-        ] },
-      { type: "list", ordered: false, items: [
-          `(Se o jogador com a teia morreu) O Domador da Aranha acorda e escolhe um novo jogador no qual tece uma teia.`,
-          `(Se o Capuchinho Vermelho foi executado) O Caçador acorda furioso e escolhe quem quer assassinar.`,
-          `(Se o Caçador morreu) O Fantasma do Caçador acorda e escolhe quem quer assassinar.`,
-          `(Se o SOLDADO morreu) O Fantasma do Soldado acorda e escolhe quem quer assassinar.`,
-          `O Ator acorda. Se o seu Ídolo morreu, é-lhe mostrado o papel ao qual irá responder de agora em diante, senão o Ator indica ao apontar outra pessoa se quer trocar de Ídolo.`,
-          `(Se um Inimigo morrer) O Cupido Malvado acorda e escolhe um segundo Inimigo. O Cupido Malvado adormece e os Inimigos serão tocados e podem se conhecer. Se um Inimigo consegue condenar o outro a execução, o primeiro recebe imunidade na próxima tentativa de assassinato.`,
-          `O Sonâmbulo acorda e escolhe um jogador para visitar, uma vez a escolha feita, adormece na casa dessa pessoa. Essa pessoa vai ser tocada e sabe que mesmo se for chamada, não acordará.`,
-          `A Bruxa Malvada acorda e escolhe um jogador que irá envenenar esta noite.`,
-          `A Empregada acorda e é-lhe revelada a distância até a pessoa envenenada.`,
-          `A Cigana acorda e indica 3 vizinhos. Se um deles estiver envenenado, ele perde o veneno e a Cigana passa a estar envenenada.`,
-          `O Ilusionista acorda e indica o jogador cuja a identidade será obstruída.`,
-          `(Se alguém morreu) A Vidente acorda e é-lhe revelado o papel dos mortos de ontem. (Limpar “† de ontem”).`,
-          `O Espião acorda e é-lhe revelado um papel em jogo.`,
-          `O Domador do Corvo acorda e é-lhe revelado o número de Criaturas Malvadas que ainda vivem na Aldeia (ou o Corvo está confuso).`,
-          `O Domador da Raposa acorda e indica três vizinhos. Será-lhe revelado, com o polegar, se um desses três jogadores é uma Criatura Malvada (ou se a Raposa está confusa).`,
-          `O Urso rosna/não rosna (/está confuso).`,
-          `O Chefe da Aldeia acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.`,
-          `O Ladrão acorda e indica a quem quer retirar o voto no próximo Tribunal.`,
-          `O Capitão acorda e escolhe um jogador que será um SOLDADO durante esta noite e o próximo dia.`,
-          `O Cupido acorda e decide com o polegar se quer usar uma das suas duas flechas de proteção para dar imunidade aos Namorados esta noite.`,
-          `O Amante Secreto acorda e aponta para um jogador, e será revelado se é um dos Namorados. Se for o caso, esse Namorado será tocado e pode acordar para lhe ser revelado o seu Amante, que substitui o antigo Namorado.`,
-          `O Salvador acorda e indica quem será imune durante esta noite e o dia.`,
-          `O Piromaníaco acorda/não acorda. São-lhe mostradas as pessoas inocentadas no último tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.`,
-          `O Pedro acorda (todas as noites). Se ele acusou alguém em Tribunal, é-lhe indicado se essas pessoas são Lobisomens. Relembro que o Pedro não pode levar a mesma pessoa a Tribunal duas vezes.`,
-          `Os Lobisomens acordam/não acordam se envenenados e escolhem em conjunto uma vítima que irão assassinar esta noite.`,
-          `O Lobisomem Mau acorda e escolhe com o polegar se quer se mascarar de Avózinha esta noite e dia, ou não. Pode usar esse poder duas vezes durante todo o jogo.`,
-          `O Lobisomem Vidente acorda/não acorda se envenenados e decide com o polegar se quer salvar a vítima para ver o seu papel ou deixá-la morrer.`,
-          `O Lobisomem Vampiro acorda/não acorda se salvo pela Vidente ou se envenenados e diz com o polegar se quer transformar a vítima em Lobisomem. Se for o caso, a vítima será tocada, e passará a acordar sempre com os Lobisomens. A vítima diz com o polegar se quer guardar os seus poderes ou não.`,
-          `(A cada 3 noites) O Lobisomem Branco acorda e escolhe o Lobisomem que quer matar. / O Lobisomem Branco acorda e escolhe mais um jogador que quer matar.`,
-          `O Domador dos Coelhos ouviu os Coelhos assustados esta noite/ [nada] (/os Coelhos estão confusos)`,
-          `O Chaman acorda/não acorda se não houver vítimas e são-lhe apresentadas as vítimas. Ele escolhe então com o polegar se as quer salvar ou não. Relembro que pode salvar duas pessoas durante o jogo todo.`,
-          `O Faroleiro acorda e é-lhe mostrado um personagem em jogo com um poder limitado e é informado de quantos usos esse personagem ainda tem.`,
-          `O Mimo acorda e é-lhe mostrado um papel em jogo. Ele age silenciosamente segundo esse papel ou recebe as informações que esse papel receberia.`,
-          `(Se o Cavaleiro Enferrujado morreu durante a noite, matar o Lobisomem mais próximo.)`,
-          `O Rouba-Túmulos acorda/não acorda se não houver vítimas e lhe são apresentadas as vítimas. Ele decide, ao indicar ou mostrar com o polegar para baixo, se quer ou não tomar o lugar de uma delas. Se escolher substituir uma das vítimas, o Rouba-Túmulos troca de poder com esse fantasma.`,
-          `A Menina acorda/não acorda se não houver vítimas e vê como as vítimas desta noite morreram.`,
-          `O Profeta acorda/não acorda se não houver vítimas e indica, ao apontar um jogador que acha que morreu esta noite. Se estiver correto, o jogador será tocado, para saber que pode guardar o seu poder, mesmo como Fantasma, durante o próximo dia e a noite.`,
-          `O Domador da Aranha acorda/não acorda se não houver necessidade e é-lhe mostrado todas os papeis dos jogadores que foram apanhados pela teia esta noite.`,
-        ] },
-
     ],
     fr: [
       { type: "h2", id: "base", text: `Base` },
@@ -235,81 +162,6 @@ Les joueurs morts se transforment en fantômes, qui peuvent continuer à communi
           `**Amoureux et Cupidon :** les amoureux doivent être les seuls survivants.`,
           `**Amant secret :** être le seul survivant avec l'un des amoureux.`,
           `**Loup-garou blanc :** être le seul survivant.`,
-        ] },
-      { type: "h2", id: "la-nuit", text: `La Nuit` },
-      { type: "h3", id: "premiere-nuit", text: `Première Nuit` },
-      { type: "note", lines: [
-          `Cette nuit n’aura pas de morts.`,
-          `Lancer un d12.`,
-        ] },
-      { type: "list", ordered: false, items: [
-          `Cupidon se réveille et choisit deux joueurs qui seront Amoureux.  Cupidon s’endort et les Amoureux seront maintenant touchés pour qu’ils se connaissent. Si un Amoureux meurt, l’autre se suicide. L’objectif des Amoureux et de Cupidon est que les Amoureux soient les derniers survivants. Tant que les Amoureux sont en vie, le jeu continue.`,
-          `Le Méchant Cupidon se réveille et choisit deux joueurs qui seront Ennemis.  Le Méchant Cupidon s’endort et les Ennemis seront maintenant touchés pour qu’ils se connaissent. Si un Ennemi parvient à amener l’autre à exécution, le premier reçoit immunité contre le prochain assassinat.`,
-          `Les Sœurs se réveillent pour se connaître.`,
-          `Les Frères se réveillent pour se connaître.`,
-          `Le Comédien se réveille et choisit une Idole dont il copiera le pouvoir lorsque l’Idole mourra. Son nouveau rôle ne lui sera révélé que la nuit suivant la mort de l’Idole.`,
-          `Le Maître de l’Araignée se réveille et choisit un joueur sur lequel il tisse une toile d’araignée. Chaque nuit, le Maître de l’Araignée apprend quels personnages ont désigné ce joueur durant cette nuit.`,
-          `Le Maître du Corbeau se réveille et apprend le nombre de Créatures Maléfiques en jeu.`,
-          `Le Maître du Renard se réveille et indique trois joueurs voisins. Il lui sera révélé, par le pouce, si oui ou non un des joueurs est une Créature Maléfique.`,
-          `L’Ours grogne / ne grogne pas.`,
-          `L’Ancien du Village se réveille et choisit un joueur qui aura automatiquement deux votes contre lui au prochain Tribunal.`,
-          `En fin de nuit, le village entend l’hurlement d’un loup. Les villageois savent que les Loups-garous sont en ville, et se réveillent méfiants.`,
-        ] },
-      { type: "h3", id: "debut-de-la-deuxieme-nuit", text: `Début de la Deuxième Nuit` },
-      { type: "list", ordered: false, items: [
-          `Le Voleur se réveille et choisit du pouce s’il veut être du côté du village ou des loups-garous.`,
-          `L‘Espion se réveille et choisit du pouce s’il veut être du côté du village ou des loups-garous.`,
-          `Le Chien-loup se réveille et choisit du pousse s’il veut devenir Chien ou un Loup-garou.  S’il choisit être Chien, il choisit ensuite un maître qui sera touché et se réveillera pour le connaître. Son rôle est révélé au Chien. Dès lors, le Chien se réveille avec son maître et agit sur ses pouvoirs indépendamment.  S’il choisit être Loup-garou, il peut simplement se rendormir.`,
-          `L’Enfant Sauvage se réveille et choisit son Père Adoptif. Si celui-ci meurt pendant le jeu, l’Enfant Sauvage devient un Loup-garou.`,
-          `Les Loups-garous se réveillent et les Créatures Maléfiques leur sont présentées.`,
-        ] },
-      { type: "h3", id: "nuit-normale", text: `Nuit Normale` },
-      { type: "note", lines: [
-          `Lancer un d12.`,
-          `Ressusciter le joueur sauvé par l’Ange.`,
-        ] },
-      { type: "note", lines: [
-          `SOUVIENS-TOI (Si le Chevalier Rouillé est mort le jour, tuer le Loup-garou le plus proche lors de la prochaine journée)`,
-        ] },
-      { type: "list", ordered: false, items: [
-          `(Si le joueur pris dans la toile est mort) Le Maître de l’Araignée se réveille et choisit un nouveau joueur sur lequel il tisse sa toile.`,
-          `(Si le Petit Chaperon Rouge a été exécuté) Le Chasseur se réveille et indique qui il veut assassiner.`,
-          `(Si le Chasseur est mort) Le Fantôme du Chasseur se réveille et indique qui il veut assassiner.`,
-          `(Si le SOLDAT est mort) Le Fantôme du Soldat se réveille et indique qui il veut assassiner.`,
-          `Le Comédien se réveille.  Si son Idol est mort, le rôle lui est révélé et il répondra à celui-ci dès lors.  Sinon il peut indiquer un joueur s’il souhaite changer d’Idol.`,
-          `(Si un Ennemi meurt) Le Méchant Cupidon se réveille et choisit un nouvel ennemi.  Le Méchant Cupidon s’endort et les Ennemis seront maintenant touchés pour qu’ils se connaissent. Si un Ennemi arrive à amener l’autre à exécution, le premier reçoit immunité contre le prochain assassinat.`,
-          `Le Somnambule se réveille et indique quel joueur il visitera cette nuit. Un fois le choix fait, il s’endort chez le dernier.  Cette peresonne sera touché et saura que même si appelée, elle ne se réveilera pas.`,
-          `La Méchante Sorcière se réveille et indique quel joueur elle souhaite empoisonner.`,
-          `La Domestique se réveille et la distance de la personne empoisonnée lui est révélée.`,
-          `La Gitane se réveille et indique trois joueurs voisins. Si l’un d’eux est empoisonné, il perd son poison et la Gitane devient empoisonnée.`,
-          `L'Illusionniste se réveille et indique un joueur dont l’identité sera offusquée.`,
-          `(Si quelqu’un est mort) La Voyante se réveille et les rôles des morts d’hier lui sont révélés. (Effacer « Morts de hier »)`,
-          `L’Espion se réveille et un rôle en jeu lui est révélé.`,
-          `Le Maître du Corbeau se réveille et apprend le nombre de Créatures Maléfiques en jeu. (ou si le Corbeau est confus)`,
-          `Le Maître du Renard se réveille et indique trois joueurs voisins. Il lui sera révélé, par le pouce, si oui ou non un des joueurs est une Créature Maléfique. (ou si le Renard est confus)`,
-          `L’Ours grogne / ne grogne pas. (/ est confus)`,
-          `L’Ancien du Village se réveille et choisit un joueur qui aura automatiquement deux votes contre lui au prochain Tribunal.`,
-          `Le Voleur se réveille et indique à qui il souhaite voler le vote au prochain Tribunal.`,
-          `Le Capitaine se réveille et indique le joueur qui sera un SOLDAT pendant un jour et une nuit.`,
-          `Cupidon se réveille et indique s’il veut utiliser une de ses deux flèches de protection pour donner immunité aux Amoureux.`,
-          `L’Arnaœur se réveille et indique un joueur. Il apprend s’il s’agit d’un des Amoureux. Si c’est le cas, cet Amoureux sera touché pour découvrir son nouvel amant, qui remplacera l’autre Amoureux.`,
-          `Le Sauveur se réveille et choisit qui sera immune durant une nuit et un jour.`,
-          `Le Pyromane se réveille / ne se réveille pas. Les personnes innocentées au dernier Tribunal lui sont montrées. Il décide, en pointant ou par un pousse vers le bas, s’il veut brûler la maison d’un d’entre eux.`,
-          `L’Enfant se réveille (toutes les nuits). S’il a accusé quelqu’un au dernier Tribunal, il apprend s’il s’aggissait d’un Loup-garou. Je rappelle que l’Enfant ne peut pas accuser une même personne au Tribunal deux fois.`,
-          `Les Loups-garous se réveillent / ne se réveillent pas si empoisonnés. Ils choisissent ensemble leurs victime pour cette nuit.`,
-          `Le Méchant Loup-garou se réveille et indique di pouce s’il veut ou on se déguiser en Grand-maman aujourd’hui. Il ne peut utiliser ce pouvoir que deux fois par jeu.`,
-          `Le Loup-garou Voyant se réveillent / ne se réveillent pas si empoisonnés. Il indique du pouce s’il veut sauver la victime pour savoir son rôle ou la laisser mourir.`,
-          `Le Loup-garou Vampire se réveillent / ne se réveillent pas si empoisonnés ou victime sauvé par Loup-garou Voyant. Il indique du pouce s’il veut sauver la victime ou non.  Si oui, la victime sera touchée, ne se réveillera pas, et passera à se réveiller avec les Loups-garous. La victime indique du pouce si elle souhaite ou non garder ses pouvoirs.`,
-          `(Chaque troisième nuit) Le Loup-garou Blanc se réveille et chosit un Loup-garou qu’il souhaite tuer. Le Loup-garou Blanc se réveille et chosit un autre joueur qu’il souhaite tuer.`,
-          `Le Maître des Lapins entend les lapins effrayés cette nuit / [rien] (/ les Lapins sont confus)`,
-          `Le Chaman se réveille  (/ ne se réveille pas s’il n’y a pas de victimes) et les victimes de cette nuit lui sont révélées. Il choisit s’il souhaite sauver une des victimes. Il ne peut utiliser ce pouvoir que deux fois par jeu.`,
-          `Le Falotier se réveille et apprend d’une carte en jeu avec un pouvoir limité et découvre combien d’utilisations restent encore au pouvoir.`,
-          `Le Mime se réveille et voit la carte d’un rôle en jeu. Il agit silencieusement selon le pouvoir de la carte ou reçoit les informations.`,
-          `(Si le Chevalier Rouillé est mort cette nuit, tuer le Loup-garou le plus proche.)`,
-          `Le Pilleur de Tombes se réveille (/ ne se réveille pas s’il n’y a pas de victimes) et les victimes lui sont présentées. Il décide, en pointant ou par le pouce vers le bas, s’il veut prendre la place d’une d’entre elles.  S’il chosit une d’elles, le Pilleur de Tombes change de rôle avec le Fantôme de la victime.`,
-          `La Petite Fille se réveille (/ ne se réveille pas s’il n’y a pas de victime) et découvre comment les victimes de cette nuit sont mortes.`,
-          `Le Prophète se réveille (/ ne se réveille pas s’il n’y a pas de victimes) et les victimes lui sont présentées. Il indique en pointant un joueur qu’il croit avoir été tué cette nuit. S’il est correct, le joueur sera touché pour savoir qu’il pourra, même en tant que Fantôme, utiliser son pouvoir pendant encore un jour et une nuit.`,
-          `Le Maître de l’Araignée se réveille (/ ne se réveille pas si nécessaire). Les rôles de tous les joueurs qui ont été pris dans la toile cette nuit lui sont alors révélés.`,
         ] },
     ],
   },
@@ -2349,7 +2201,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
 export const RULEBOOK_NIGHT_SCRIPT = {
   firstNight: [
     {
-      id: "first-general-no-deaths",
+      id: "first-general.1",
       refs: ["general"],
       text: {
         pt: `Esta noite não terá mortos.`,
@@ -2357,7 +2209,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-general-d12",
+      id: "first-general.2",
       refs: ["general"],
       text: {
         pt: `Lançar um d12.`,
@@ -2365,7 +2217,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-s01-lovers",
+      id: "first-s01",
       refs: ["s01"],
       text: {
         pt: `O Cupido acorda e escolhe dois jogadores que serão Namorados. O Cupido adormece e os Namorados serão agora tocados e podem se conhecer. Se um Namorado morre, o outro se suicida. O objetivo dos Namorados e do Cupido é que os Namorados sejam os últimos sobreviventes. Enquanto os Namorados estiverem vivos, o jogo continua.`,
@@ -2373,7 +2225,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-m05-enemies",
+      id: "first-m05",
       refs: ["m05"],
       text: {
         pt: `O Cupido Malvado acorda e escolhe dois jogadores que serão Inimigos. O Cupido Malvado adormece e os Inimigos serão tocados e podem se conhecer. Se um Inimigo consegue condenar o outro a execução, o primeiro recebe imunidade na próxima tentativa de assassinato.`,
@@ -2381,7 +2233,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-l03-sisters",
+      id: "first-l03",
       refs: ["l03"],
       text: {
         pt: `As Irmãs acordam para se conhecerem.`,
@@ -2389,7 +2241,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-l04-brothers",
+      id: "first-l04",
       refs: ["l04"],
       text: {
         pt: `Os Irmãos acordam para se conhecerem.`,
@@ -2397,7 +2249,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-a04-idol",
+      id: "first-a04",
       refs: ["a04"],
       text: {
         pt: `O Ator acorda e escolhe um Ídolo cujo poder copiará quando o Ídolo morrer. Só lhe será revelado o poder do Ídolo, na noite a seguir à morte do Ídolo.`,
@@ -2405,7 +2257,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-v23-web",
+      id: "first-v23",
       refs: ["v23"],
       text: {
         pt: `O Domador da Aranha acorda e escolhe um jogador no qual tece uma teia de aranha. O Domador da Aranha, a cada noite, descobre quais personagens apontaram para esse jogador naquela noite.`,
@@ -2413,7 +2265,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-v03-crow",
+      id: "first-v03",
       refs: ["v03"],
       text: {
         pt: `O Domador do Corvo acorda e é-lhe revelado o número de Criaturas Malvadas que vivem na Aldeia.`,
@@ -2421,7 +2273,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-v04-fox",
+      id: "first-v04",
       refs: ["v04"],
       text: {
         pt: `O Domador da Raposa acorda e indica três vizinhos. Será-lhe revelado, com o polegar, se um desses três jogadores é uma Criatura Malvada.`,
@@ -2429,7 +2281,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-v02-bear",
+      id: "first-v02",
       refs: ["v02"],
       text: {
         pt: `O Urso rosna/não rosna.`,
@@ -2437,7 +2289,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-v11-chief",
+      id: "first-v11",
       refs: ["v11"],
       text: {
         pt: `O Chefe da Aldeia acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.`,
@@ -2445,7 +2297,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "first-general-howl",
+      id: "first-general.3",
       refs: ["general"],
       text: {
         pt: `No fim desta noite ouve-se um uivar. A Aldeia sabe então que os Lobisomens se revelaram e estão com fome. A Aldeia acorda desconfiada de toda a gente.`,
@@ -2455,7 +2307,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
   ],
   secondNight: [
     {
-      id: "second-f01-thief",
+      id: "second-f01",
       refs: ["f01"],
       text: {
         pt: `O Ladrão acorda e escolhe com o polegar se quer jogar do lado dos Aldeões ou do lado dos Lobisomens.`,
@@ -2463,7 +2315,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "second-f02-spy",
+      id: "second-f02",
       refs: ["f02"],
       text: {
         pt: `O Espião acorda e escolhe com o polegar se quer jogar do lado dos Aldeões ou do lado dos Lobisomens.`,
@@ -2471,7 +2323,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "second-a02-wolfdog",
+      id: "second-a02",
       refs: ["a02"],
       text: {
         pt: `O Cão-Lobo acorda e diz com o polegar se quer ser um Cão ou um Lobisomem. Se escolher ser um Cão vai indicar um dono, que vai ser tocado e que poderá acordar para conhecer o seu cachorro. É revelado ao Cão o papel do seu dono. A partir deste momento, o Cão acorda sempre com o seu dono e deve também usar o seu poder independentemente do dono. Se escolher ser um Lobisomem, pode voltar a dormir.`,
@@ -2479,7 +2331,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "second-l02-wild-child",
+      id: "second-l02",
       refs: ["l02"],
       text: {
         pt: `A Criança Selvagem acorda e escolhe o seu Pai Adotivo. Se este morrer durante o jogo, a Criança Selvagem se tornará um Lobisomem.`,
@@ -2487,7 +2339,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "second-general-evil-reveal",
+      id: "second-general",
       refs: ["general"],
       text: {
         pt: `Os Lobisomens acordam e são-lhe apresentados as Criaturas Malvadas.`,
@@ -2497,7 +2349,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
   ],
   normalNight: [
     {
-      id: "normal-general-d12",
+      id: "normal-general",
       refs: ["general"],
       text: {
         pt: `Lançar um d12.`,
@@ -2505,7 +2357,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v18-resurrect",
+      id: "normal-v18",
       refs: ["v18"],
       text: {
         pt: `Ressuscitar o jogador salvo pelo Anjo, se aplicável.`,
@@ -2513,7 +2365,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v07-day-reminder",
+      id: "normal-v07.1",
       refs: ["v07"],
       text: {
         pt: `SOUVIENS-TOI (Se o Cavaleiro Enferrujado morreu durante o dia, matar o Lobisomem mais próximo durante o próximo dia).`,
@@ -2521,7 +2373,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v23-reweb",
+      id: "normal-v23.1",
       refs: ["v23"],
       text: {
         pt: `(Se o jogador com a teia morreu) O Domador da Aranha acorda e escolhe um novo jogador no qual tece uma teia.`,
@@ -2529,7 +2381,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v08-redhood",
+      id: "normal-v08.1",
       refs: ["v08", "v08b"],
       text: {
         pt: `(Se o Capuchinho Vermelho foi executado) O Caçador acorda furioso e escolhe quem quer assassinar.`,
@@ -2537,7 +2389,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v08-ghost",
+      id: "normal-v08.2",
       refs: ["v08"],
       text: {
         pt: `(Se o Caçador morreu) O Fantasma do Caçador acorda e escolhe quem quer assassinar.`,
@@ -2545,7 +2397,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v09-soldier-ghost",
+      id: "normal-v09.1",
       refs: ["v09"],
       text: {
         pt: `(Se o SOLDADO morreu) O Fantasma do Soldado acorda e escolhe quem quer assassinar.`,
@@ -2553,7 +2405,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-a04-actor",
+      id: "normal-a04",
       refs: ["a04"],
       text: {
         pt: `O Ator acorda. Se o seu Ídolo morreu, é-lhe mostrado o papel ao qual irá responder de agora em diante, senão o Ator indica ao apontar outra pessoa se quer trocar de Ídolo.`,
@@ -2561,7 +2413,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-m05-enemy",
+      id: "normal-m05",
       refs: ["m05"],
       text: {
         pt: `(Se um Inimigo morrer) O Cupido Malvado acorda e escolhe um segundo Inimigo.`,
@@ -2569,7 +2421,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v16-sleepwalker",
+      id: "normal-v16",
       refs: ["v16"],
       text: {
         pt: `O Sonâmbulo acorda e escolhe um jogador para visitar, uma vez a escolha feita, adormece na casa dessa pessoa. Essa pessoa vai ser tocada e sabe que mesmo se for chamada, não acordará.`,
@@ -2577,7 +2429,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-e02-witch",
+      id: "normal-e02",
       refs: ["e02"],
       text: {
         pt: `A Bruxa Malvada acorda e escolhe um jogador que irá envenenar esta noite.`,
@@ -2585,7 +2437,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v20-maid",
+      id: "normal-v20",
       refs: ["v20"],
       text: {
         pt: `A Empregada acorda e é-lhe revelada a distância até a pessoa envenenada.`,
@@ -2593,7 +2445,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v12-gypsy",
+      id: "normal-v12",
       refs: ["v12"],
       text: {
         pt: `A Cigana acorda e indica 3 vizinhos. Se um deles estiver envenenado, ele perde o veneno e a Cigana passa a estar envenenada.`,
@@ -2601,7 +2453,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-a06-illusionist",
+      id: "normal-a06",
       refs: ["a06"],
       text: {
         pt: `O Ilusionista acorda e indica o jogador cuja a identidade será obstruída.`,
@@ -2609,7 +2461,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-e04-fortune",
+      id: "normal-e04",
       refs: ["e04"],
       text: {
         pt: `(Se alguém morreu) A Vidente acorda e é-lhe revelado o papel dos mortos de ontem.`,
@@ -2617,7 +2469,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-f02-spy",
+      id: "normal-f02",
       refs: ["f02"],
       text: {
         pt: `O Espião acorda e é-lhe revelado um papel em jogo.`,
@@ -2625,7 +2477,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v03-crow",
+      id: "normal-v03",
       refs: ["v03"],
       text: {
         pt: `O Domador do Corvo acorda e é-lhe revelado o número de Criaturas Malvadas que ainda vivem na Aldeia (ou o Corvo está confuso).`,
@@ -2633,7 +2485,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v04-fox",
+      id: "normal-v04",
       refs: ["v04"],
       text: {
         pt: `O Domador da Raposa acorda e indica três vizinhos. Será-lhe revelado, com o polegar, se um desses três jogadores é uma Criatura Malvada (ou se a Raposa está confusa).`,
@@ -2641,7 +2493,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v02-bear",
+      id: "normal-v02",
       refs: ["v02"],
       text: {
         pt: `O Urso rosna/não rosna (/está confuso).`,
@@ -2649,7 +2501,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v11-chief",
+      id: "normal-v11",
       refs: ["v11"],
       text: {
         pt: `O Chefe da Aldeia acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.`,
@@ -2657,7 +2509,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-f01-thief",
+      id: "normal-f01",
       refs: ["f01"],
       text: {
         pt: `O Ladrão acorda e indica a quem quer retirar o voto no próximo Tribunal.`,
@@ -2665,7 +2517,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v09-captain",
+      id: "normal-v09.2",
       refs: ["v09"],
       text: {
         pt: `O Capitão acorda e escolhe um jogador que será um SOLDADO durante esta noite e o próximo dia.`,
@@ -2673,7 +2525,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-s01-cupid",
+      id: "normal-s01",
       refs: ["s01"],
       text: {
         pt: `O Cupido acorda e decide com o polegar se quer usar uma das suas duas flechas de proteção para dar imunidade aos Namorados esta noite.`,
@@ -2681,7 +2533,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-as01b-secret-lover",
+      id: "normal-as01b",
       refs: ["as01b"],
       text: {
         pt: `O Amante Secreto acorda e aponta para um jogador, e será revelado se é um dos Namorados.`,
@@ -2689,7 +2541,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v17-saviour",
+      id: "normal-v17",
       refs: ["v17"],
       text: {
         pt: `O Salvador acorda e indica quem será imune durante esta noite e o dia.`,
@@ -2697,7 +2549,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v15-pyro",
+      id: "normal-v15",
       refs: ["v15"],
       text: {
         pt: `O Piromaníaco acorda/não acorda. São-lhe mostradas as pessoas inocentadas no último tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.`,
@@ -2705,7 +2557,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v22-pedro",
+      id: "normal-v22",
       refs: ["v22"],
       text: {
         pt: `O Pedro acorda (todas as noites). Se ele acusou alguém em Tribunal, é-lhe indicado se essas pessoas são Lobisomens. Relembro que o Pedro não pode levar a mesma pessoa a Tribunal duas vezes.`,
@@ -2713,7 +2565,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-wolves",
+      id: "normal-e01",
       refs: ["e01", "m01", "m02", "m03", "s02"],
       text: {
         pt: `Os Lobisomens acordam/não acordam se envenenados e escolhem em conjunto uma vítima que irão assassinar esta noite.`,
@@ -2721,7 +2573,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-m01-bad-wolf",
+      id: "normal-m01",
       refs: ["m01"],
       text: {
         pt: `O Lobisomem Mau acorda e escolhe com o polegar se quer se mascarar de Avózinha esta noite e dia, ou não. Pode usar esse poder duas vezes durante todo o jogo.`,
@@ -2729,7 +2581,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-m02-seer-wolf",
+      id: "normal-m02",
       refs: ["m02"],
       text: {
         pt: `O Lobisomem Vidente acorda/não acorda se envenenado e decide com o polegar se quer salvar a vítima para ver o seu papel ou deixá-la morrer.`,
@@ -2737,7 +2589,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-m03-vampire",
+      id: "normal-m03",
       refs: ["m03"],
       text: {
         pt: `O Lobisomem Vampiro acorda/não acorda se salvo pela Vidente ou se envenenado e diz com o polegar se quer transformar a vítima em Lobisomem.`,
@@ -2745,7 +2597,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-s02-white-wolf",
+      id: "normal-s02",
       refs: ["s02"],
       text: {
         pt: `(A cada 3 noites) O Lobisomem Branco acorda e escolhe o Lobisomem que quer matar. / O Lobisomem Branco acorda e escolhe mais um jogador que quer matar.`,
@@ -2753,7 +2605,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v05-rabbits",
+      id: "normal-v05",
       refs: ["v05"],
       text: {
         pt: `O Domador dos Coelhos ouviu os Coelhos assustados esta noite / [nada] (/os Coelhos estão confusos).`,
@@ -2761,7 +2613,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-e03-shaman",
+      id: "normal-e03",
       refs: ["e03"],
       text: {
         pt: `O Chaman acorda/não acorda se não houver vítimas e são-lhe apresentadas as vítimas. Ele escolhe então com o polegar se as quer salvar ou não. Relembro que pode salvar duas pessoas durante o jogo todo.`,
@@ -2769,7 +2621,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v21-lamplighter",
+      id: "normal-v21",
       refs: ["v21"],
       text: {
         pt: `O Faroleiro acorda e é-lhe mostrado um personagem em jogo com um poder limitado e é informado de quantos usos esse personagem ainda tem.`,
@@ -2777,7 +2629,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-a03-mime",
+      id: "normal-a03",
       refs: ["a03"],
       text: {
         pt: `O Mimo acorda e é-lhe mostrado um papel em jogo. Ele age silenciosamente segundo esse papel ou recebe as informações que esse papel receberia.`,
@@ -2785,7 +2637,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v07-night-reminder",
+      id: "normal-v07.2",
       refs: ["v07"],
       text: {
         pt: `(Se o Cavaleiro Enferrujado morreu durante a noite, matar o Lobisomem mais próximo.)`,
@@ -2793,7 +2645,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-a05-grave-robber",
+      id: "normal-a05",
       refs: ["a05"],
       text: {
         pt: `O Rouba-Túmulos acorda/não acorda se não houver vítimas e lhe são apresentadas as vítimas. Ele decide, ao indicar ou mostrar com o polegar para baixo, se quer ou não tomar o lugar de uma delas.`,
@@ -2801,7 +2653,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v01-little-girl",
+      id: "normal-v01",
       refs: ["v01"],
       text: {
         pt: `A Menina acorda/não acorda se não houver vítimas e vê como as vítimas desta noite morreram.`,
@@ -2809,7 +2661,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v19-prophet",
+      id: "normal-v19",
       refs: ["v19"],
       text: {
         pt: `O Profeta acorda/não acorda se não houver vítimas e indica, ao apontar um jogador que acha que morreu esta noite. Se estiver correto, o jogador será tocado, para saber que pode guardar o seu poder, mesmo como Fantasma, durante o próximo dia e a noite.`,
@@ -2817,7 +2669,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
-      id: "normal-v23-caught",
+      id: "normal-v23.2",
       refs: ["v23"],
       text: {
         pt: `O Domador da Aranha acorda/não acorda se não houver necessidade e é-lhe mostrado todos os papéis dos jogadores que foram apanhados pela teia esta noite.`,

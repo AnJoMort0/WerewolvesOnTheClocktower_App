@@ -102,7 +102,7 @@ export const fr: Translation = {
       { text: "Le {Méchant Loup-garou} se réveille et choisit avec le pouce s'il veut se déguiser en Grand-mère cette nuit et ce jour, ou non. Il peut utiliser ce pouvoir deux fois pendant toute la partie.", requires: ["m01"], conditionKey: "lobisomemMauHasCharges" },
       { text: "L'{Enfant} se réveille (toutes les nuits). S'il a accusé quelqu'un au Tribunal, il lui est indiqué si ces personnes sont des Loups-garous. Je rappelle que l'{Enfant} ne peut pas amener la même personne au Tribunal deux fois.", requires: ["v22"] },
       { text: "Les {Loups-garous} se réveillent et choisissent ensemble une victime qu'ils assassineront cette nuit.", requires: ["e01", "m01", "m02", "m03", "s02"] },
-      { text: "Le {Loup-garou Voyant} se réveille et décide avec le pouce s'il veut sauver la victime pour voir son rôle ou la laisser mourir.", requires: ["m02"] },
+      { text: "Le {Loup-garou Voyant} se réveille et décide avec le pouce s'il veut sauver la victime pour voir son rôle ou la laisser mourir.", requires: ["m02"], conditionKey: "lobisomemVidenteHasCharges" },
       { text: "Le {Loup-garou Vampire} se réveille et indique avec le pouce s'il veut transformer la victime en Loup-garou. Si c'est le cas, la victime sera touchée et commencera à se réveiller toujours avec les Loups-garous. La victime indique avec le pouce si elle veut garder ses pouvoirs ou non.", requires: ["m03"], conditionKey: "vampiroHasCharges" },
       { text: "(Toutes les 3 nuits) Le {Loup-garou Blanc} se réveille et choisit le Loup-garou qu'il veut tuer.", requires: ["s02"], conditionKey: "whitewolfNight" },
       { text: "Le {Maîtres des Lapins} a entendu les {Lapins} effrayés cette nuit. / [rien] (/ les {Lapins} sont confus)", requires: ["v05"] },
@@ -371,5 +371,6 @@ export const fr: Translation = {
     objectiveWhiteWolf: "rester le dernier survivant en tant que Loup-garou Blanc",
     objectiveSecretLover: "rester parmi les deux derniers survivants en tant qu'Amant Secret",
     dogCopyLabel: "Chien",
+    dogActorChooseIdolNotice: "Le {Meneur} indique discrètement au {Chien} qu'il doit choisir une Idole.",
   },
 };

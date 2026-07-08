@@ -9,7 +9,7 @@ import {
 } from "@/lib/nightScript";
 import { useLanguage, getScripts, getDynamic, getRoleLabel, t, getToast } from "@/lib/i18n";
 import { ROLES, type RoleId } from "@/lib/roles";
-import { getGuaranteedWrongCount } from "@/lib/gameRules";
+import { getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import { toast } from "sonner";
 import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
@@ -183,11 +183,11 @@ function replaceRoleWithDog(text: string, lang: "pt" | "fr", copiedRole?: RoleId
     const roleWithArticlePattern = lang === "fr"
       ? new RegExp(`(?:La|Le)\\s+\\{${escapedLabel}\\}|L['’]\\{${escapedLabel}\\}`)
       : new RegExp(`(?:A|O)\\s+\\{${escapedLabel}\\}`);
-    if (roleWithArticlePattern.test(text)) {
-      return text.replace(roleWithArticlePattern, `${lang === "fr" ? "Le" : "O"} ${dogToken}`);
-    }
-    const rolePattern = new RegExp(`\\{${escapedLabel}\\}`);
-    if (rolePattern.test(text)) return text.replace(rolePattern, dogToken);
+    const roleWithArticleGlobal = new RegExp(roleWithArticlePattern.source, "g");
+    const rolePattern = new RegExp(`\\{${escapedLabel}\\}`, "g");
+    return text
+      .replace(roleWithArticleGlobal, `${lang === "fr" ? "Le" : "O"} ${dogToken}`)
+      .replace(rolePattern, dogToken);
   }
   const articlePattern = lang === "fr"
     ? /(?:La|Le)\s+\{[^}]+\}|L['’]\{[^}]+\}/
@@ -318,7 +318,7 @@ function ScriptLineDisplay({
     : actingPoisoned !== undefined
     ? actingPoisoned
     : line.requires?.some((r) => poisonedRoles.has(r));
-  const dragAction = disableDrag ? null : getRawLineDragAction(line);
+  const candidateDragAction = disableDrag ? null : getRawLineDragAction(line);
   const isWerewolfLine = line.requires?.includes("e01" as RoleId) && line.requires?.includes("m01" as RoleId);
   const isChamanLine = line.requires?.length === 1 && line.requires[0] === ("e03" as RoleId);
   const isVidenteLine = line.requires?.length === 1 && line.requires[0] === ("e04" as RoleId);
@@ -351,6 +351,7 @@ function ScriptLineDisplay({
     const r = roleAssignments[poisonedPlayerId];
     return (["e01", "m01", "m02", "m03"] as RoleId[]).includes(r);
   }, [isPoisonedLine, isWerewolfLine, poisonedPlayerId, roleAssignments, sourcePlayerId]);
+  const dragAction = isWerewolfLine && isWerewolfPoisoned ? null : candidateDragAction;
 
   const handleNativeDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragAction) {
@@ -792,6 +793,12 @@ export const NightScript = ({
 
   const getDogDynamicText = (line: ScriptLine, dogPlayerId: string): string | undefined => {
     const role = line.requires?.length === 1 ? line.requires[0] : null;
+    if (role === "a04") {
+      const state = dogWolfStates[dogPlayerId];
+      if (state && !state.actorModeActive && !state.actorIdolPlayerId) {
+        return t("dogActorChooseIdolNotice", lang);
+      }
+    }
     if (role === "v02") {
       const neighbors = getLivingNeighbors(dogPlayerId);
       const hasEvilNeighbor = neighbors.some((neighbor) => countsAsEvilBeing(neighbor.id));
@@ -823,22 +830,24 @@ export const NightScript = ({
         .filter((player) => player.seat_position !== null && !_permanentlyDeadPlayerIds.has(player.id))
         .sort((a, b) => a.seat_position! - b.seat_position!);
       const dogIndex = sorted.findIndex((player) => player.id === dogPlayerId);
-      let distance: number | null = null;
+      let distances: number[] = [];
       if (isPlayerActingPoisoned(dogPlayerId)) {
-        distance = Math.floor(Math.random() * Math.max(1, Math.floor(sorted.length / 2))) + 1;
+        const resultCount = Math.max(1, poisonedPlayerIds.size);
+        distances = Array.from({ length: resultCount }, () => (
+          Math.floor(Math.random() * Math.max(1, Math.floor(sorted.length / 2))) + 1
+        )).sort((left, right) => left - right);
       } else if (dogIndex !== -1) {
-        const distances = sorted.flatMap((player, poisonIndex) => {
-          if (!poisonedPlayerIds.has(player.id)) return [];
-          const difference = Math.abs(dogIndex - poisonIndex);
-          return [Math.min(difference, sorted.length - difference)];
-        });
-        if (distances.length > 0) distance = Math.min(...distances);
+        distances = getCircularDistances(
+          dogPlayerId,
+          sorted.map((player) => player.id),
+          poisonedPlayerIds,
+        );
       }
-      if (distance === null) return undefined;
+      if (distances.length === 0) return undefined;
       const baseLine = lang === "fr"
         ? "Le {Chien} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée"
         : "O {Cão} acorda e é-lhe revelada a distância até à pessoa envenenada";
-      return `${baseLine}: ${distance}`;
+      return `${baseLine}: ${distances.join(", ")}`;
     }
     return undefined;
   };
@@ -1017,9 +1026,11 @@ export const NightScript = ({
 
       const dogPlayerIdsForLine = dogWolfPlayerIds.filter((dogPlayerId) => {
         if (_permanentlyDeadPlayerIds.has(dogPlayerId) && !profeciaGhostPlayerIds.has(dogPlayerId)) return false;
-        const ownerPlayerId = dogWolfStates[dogPlayerId]?.ownerPlayerId;
+        const state = dogWolfStates[dogPlayerId];
+        const ownerPlayerId = state?.ownerPlayerId;
         if (!ownerPlayerId) return false;
-        if (_permanentlyDeadPlayerIds.has(ownerPlayerId) && !dogWolfStates[dogPlayerId]?.actorModeActive) return false;
+        if (state.ownerSelectedNight === nightNumber) return false;
+        if (_permanentlyDeadPlayerIds.has(ownerPlayerId) && !state.actorModeActive) return false;
         const abilityRole = abilityRoleAssignments[dogPlayerId];
         if (!abilityRole || !line.requires?.includes(abilityRole)) return false;
         if (line.conditionKey === "enemyDied" && abilityRole === "m05") {

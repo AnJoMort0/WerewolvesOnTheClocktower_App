@@ -12,6 +12,7 @@ import xm05Card from "@/assets/extras/xm05_card.png";
 import {
   RULEBOOK_CHARACTERS,
   RULEBOOK_CHARACTER_ORDER,
+  RULEBOOK_NIGHT_SCRIPT,
   RULEBOOK_TEXT,
   type RulebookCharacter,
   type RulebookCharacterId,
@@ -49,7 +50,25 @@ const TEAM_FACTION_CLASS: Record<RulebookTeam, string> = {
   extra: "faction-extra",
 };
 
-const NIGHT_SECTION_IDS = new Set(["a-noite", "la-nuit"]);
+const NIGHT_SCRIPT_LABELS: Record<Language, {
+  title: string;
+  firstNight: string;
+  secondNight: string;
+  normalNight: string;
+}> = {
+  pt: {
+    title: "A Noite",
+    firstNight: "Primeira Noite",
+    secondNight: "Início da Segunda Noite",
+    normalNight: "Noite Normal",
+  },
+  fr: {
+    title: "La Nuit",
+    firstNight: "Première Nuit",
+    secondNight: "Début de la Deuxième Nuit",
+    normalNight: "Nuit Normale",
+  },
+};
 
 function escapeHtml(value: string): string {
   return value
@@ -108,22 +127,6 @@ function renderSectionBlocks(blocks: readonly RulebookSectionBlock[]): string {
   return blocks.map((block) => renderSectionBlock(block)).join("\n");
 }
 
-function splitSectionsForFullRulebook(lang: Language): {
-  beforeNight: readonly RulebookSectionBlock[];
-  nightAndAfter: readonly RulebookSectionBlock[];
-} {
-  const sections = RULEBOOK_TEXT.sections[lang];
-  const nightIndex = sections.findIndex((block) => block.type === "h2" && NIGHT_SECTION_IDS.has(block.id));
-  if (nightIndex < 0) {
-    return { beforeNight: sections, nightAndAfter: [] };
-  }
-
-  return {
-    beforeNight: sections.slice(0, nightIndex),
-    nightAndAfter: sections.slice(nightIndex),
-  };
-}
-
 function renderSectionBlock(block: RulebookSectionBlock): string {
   if (block.type === "p") {
     return renderTextBlock(block.text);
@@ -139,6 +142,26 @@ function renderSectionBlock(block: RulebookSectionBlock): string {
   }
 
   return `<${block.type} id="${escapeAttribute(block.id)}">${renderInline(block.text)}</${block.type}>`;
+}
+
+function renderNightScript(lang: Language): string {
+  const labels = NIGHT_SCRIPT_LABELS[lang];
+  const phases = [
+    ["firstNight", labels.firstNight],
+    ["secondNight", labels.secondNight],
+    ["normalNight", labels.normalNight],
+  ] as const;
+  return `
+    <h2 id="rulebook-night-script">${renderInline(labels.title)}</h2>
+    ${phases.map(([phase, label]) => `
+      <h3 id="rulebook-${phase}">${renderInline(label)}</h3>
+      <ul>
+        ${RULEBOOK_NIGHT_SCRIPT[phase]
+          .map((line) => `<li id="${escapeAttribute(line.id)}">${renderInline(line.text[lang])}</li>`)
+          .join("")}
+      </ul>
+    `).join("")}
+  `;
 }
 
 function renderCharacterIndex(lang: Language): string {
@@ -237,13 +260,12 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language): strin
 }
 
 function renderFullRulebook(lang: Language): string {
-  const { beforeNight, nightAndAfter } = splitSectionsForFullRulebook(lang);
   return `
     <h1 id="${RULEBOOK_TOP_ID}">${renderInline(RULEBOOK_TEXT.title[lang])}</h1>
     ${renderCharacterIndex(lang)}
-    ${renderSectionBlocks(beforeNight)}
+    ${renderSectionBlocks(RULEBOOK_TEXT.sections[lang])}
     ${renderCharacterTables(lang)}
-    ${renderSectionBlocks(nightAndAfter)}
+    ${renderNightScript(lang)}
   `;
 }
 

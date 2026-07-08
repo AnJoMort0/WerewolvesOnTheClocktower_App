@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { canWhiteWolfTarget, getGuaranteedWrongCount, getMeninaAnswerKind, hasOtherLivingWerewolf, MENINA_POISONED_ANSWERS, type WhiteWolfPlayerState } from "./gameRules";
+import {
+  canWhiteWolfTarget,
+  getCircularDistances,
+  getGuaranteedWrongCount,
+  getMeninaAnswerKind,
+  hasOtherLivingWerewolf,
+  MENINA_POISONED_ANSWERS,
+  shouldTransformEvilPoisonedSister,
+  type WhiteWolfPlayerState,
+} from "./gameRules";
 
 describe("poisoned information rules", () => {
   it("maps every supported Menina source to its answer category", () => {
@@ -47,5 +56,19 @@ describe("White Werewolf targeting", () => {
     const players = [player("white", "s02"), player("turned", "v02", true, true), player("villager", "v03")];
     expect(hasOtherLivingWerewolf(players, "white")).toBe(true);
     expect(canWhiteWolfTarget(players, "white", "turned")).toBe(true);
+  });
+});
+
+describe("multi-target and transformation rules", () => {
+  it("returns every circular distance in stable nearest-first order", () => {
+    expect(getCircularDistances("maid", ["maid", "a", "b", "c", "d", "e"], ["b", "e", "c"]))
+      .toEqual([1, 2, 3]);
+  });
+
+  it("only transforms a poisoned Sister who is an Evil Being", () => {
+    expect(shouldTransformEvilPoisonedSister("l03", ["evil_being"], true)).toBe(true);
+    expect(shouldTransformEvilPoisonedSister("l03", ["evil_being"], false)).toBe(false);
+    expect(shouldTransformEvilPoisonedSister("l03", [], true)).toBe(false);
+    expect(shouldTransformEvilPoisonedSister("l04", ["evil_being"], true)).toBe(false);
   });
 });

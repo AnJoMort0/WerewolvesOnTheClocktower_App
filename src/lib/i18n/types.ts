@@ -270,6 +270,7 @@ export interface UIStrings {
   objectiveWhiteWolf: string;
   objectiveSecretLover: string;
   dogCopyLabel: string;
+  dogActorChooseIdolNotice: string;
 }
 
 export interface ScriptDynamicStrings {

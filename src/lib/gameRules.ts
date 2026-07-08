@@ -68,3 +68,29 @@ export function getMeninaAnswerKind(source: string | undefined): MeninaAnswerKin
 export function getGuaranteedWrongCount(actual: number): number {
   return actual === 0 ? 1 : actual - 1;
 }
+
+export function getCircularDistances(
+  observerPlayerId: string,
+  orderedPlayerIds: string[],
+  targetPlayerIds: Iterable<string>,
+): number[] {
+  const observerIndex = orderedPlayerIds.indexOf(observerPlayerId);
+  if (observerIndex === -1 || orderedPlayerIds.length === 0) return [];
+
+  return Array.from(targetPlayerIds)
+    .flatMap((targetPlayerId) => {
+      const targetIndex = orderedPlayerIds.indexOf(targetPlayerId);
+      if (targetIndex === -1) return [];
+      const difference = Math.abs(observerIndex - targetIndex);
+      return [Math.min(difference, orderedPlayerIds.length - difference)];
+    })
+    .sort((left, right) => left - right);
+}
+
+export function shouldTransformEvilPoisonedSister(
+  role: RoleId | undefined,
+  effects: Iterable<string>,
+  poisoned: boolean,
+): boolean {
+  return role === "l03" && poisoned && new Set(effects).has("evil_being");
+}

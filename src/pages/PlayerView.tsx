@@ -434,10 +434,11 @@ const PlayerView = () => {
 
 
   const parsedCharacter = parsePlayerCharacter(player?.character);
-  const displayRole = parsedCharacter.displayRole;
+  const characterMetadata = parsePlayerCharacterMetadata(player?.character);
+  const isDogActorCopying = !!characterMetadata.dogActorCopiedRole;
+  const displayRole = characterMetadata.dogActorCopiedRole ?? parsedCharacter.displayRole;
   const roleDef = displayRole ? ROLES[displayRole] ?? null : null;
   const isActorCopying = shouldShowActorBadge(player?.character);
-  const characterMetadata = parsePlayerCharacterMetadata(player?.character);
   const ownerRoleDef = characterMetadata.ownerRole ? ROLES[characterMetadata.ownerRole] : null;
   const objectiveRoleDef = characterMetadata.objectiveRole ? ROLES[characterMetadata.objectiveRole] : ownerRoleDef;
   const objectiveIndicators = (() => {
@@ -652,7 +653,7 @@ const PlayerView = () => {
                           alt={roleDef.label}
                           className={`w-full h-full object-cover ${isDead ? "grayscale" : ""}`}
                         />
-                        {isActorCopying && (
+                        {isActorCopying && !isDogActorCopying && (
                           <img
                             src={ROLES.a04.image}
                             alt={getRoleLabel("a04", language)}
@@ -664,7 +665,7 @@ const PlayerView = () => {
                             className="absolute bottom-2 right-2 h-14 w-14 cursor-pointer rounded-md border-2 border-primary object-cover shadow-lg"
                           />
                         )}
-                        {ownerRoleDef && (
+                        {ownerRoleDef && !isDogActorCopying && (
                           <img
                             src={ownerRoleDef.image}
                             alt={getRoleLabel(ownerRoleDef.id, language)}
@@ -675,6 +676,30 @@ const PlayerView = () => {
                             }}
                             className="absolute bottom-2 left-2 h-14 w-14 rounded-md border-2 border-amber-400 object-cover shadow-lg"
                           />
+                        )}
+                        {isDogActorCopying && (
+                          <div className="absolute bottom-2 left-2 h-14 w-14">
+                            <img
+                              src={ROLES.a02.image}
+                              alt={getRoleLabel("a02", language)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openRulebook("a02");
+                              }}
+                              className="block h-full w-full cursor-pointer rounded-md border-2 border-amber-400 object-cover shadow-lg"
+                              title={getRoleLabel("a02", language)}
+                            />
+                            <img
+                              src={ROLES.a04.image}
+                              alt={getRoleLabel("a04", language)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openRulebook("a04");
+                              }}
+                              className="absolute -bottom-1 -right-1 h-7 w-7 cursor-pointer rounded border-2 border-primary object-cover shadow"
+                              title={getRoleLabel("a04", language)}
+                            />
+                          </div>
                         )}
                         {isDead && (
                           <div className="absolute inset-0 flex items-center justify-center">

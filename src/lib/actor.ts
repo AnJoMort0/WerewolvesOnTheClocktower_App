@@ -37,6 +37,15 @@ export const EMPTY_ACTOR_POWER_STATE: ActorPowerState = {
   chefeLastTarget: null,
 };
 
+export function getActorIdolUsesAfterSelection(
+  currentIdolPlayerId: string | null,
+  selectedPlayerId: string,
+  currentUses: number,
+): number {
+  if (!currentIdolPlayerId || currentIdolPlayerId === selectedPlayerId) return currentUses;
+  return Math.min(currentUses + 1, 2);
+}
+
 export function encodeActorCharacter(copiedRole: RoleId | null, drunkardReplacementRole: RoleId | null = null): string {
   if (copiedRole === "a01" && drunkardReplacementRole) {
     return `${ACTOR_DRUNKARD_CHARACTER_PREFIX}${drunkardReplacementRole}`;

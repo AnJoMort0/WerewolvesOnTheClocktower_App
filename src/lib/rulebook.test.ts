@@ -9,6 +9,9 @@ describe("in-app rulebook rendering", () => {
     expect(html).toContain('class="role-row faction-evil" id="e01"');
     expect(html).toContain("rule-red");
     expect(html).toContain("x.as01b.1_card.png");
+    expect(html).toContain('id="rulebook-night-script"');
+    expect(html).toContain('id="normal-v20"');
+    expect(html.match(/id="rulebook-night-script"/g)).toHaveLength(1);
     expect(html).not.toContain("Rulebook_PT.md");
   });
 

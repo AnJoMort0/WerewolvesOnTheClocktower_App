@@ -13,6 +13,7 @@ describe("private player character metadata", () => {
       ownerPlayerId: "owner-player",
       objectiveRole: "a01",
       objectiveEffects: ["evil_being", "namorado"],
+      dogActorCopiedRole: "v16",
     });
     expect(stripPlayerCharacterMetadata(character)).toBe("a02");
     expect(parsePlayerCharacterMetadata(character)).toEqual({
@@ -20,6 +21,7 @@ describe("private player character metadata", () => {
       ownerPlayerId: "owner-player",
       objectiveRole: "a01",
       objectiveEffects: ["evil_being", "namorado"],
+      dogActorCopiedRole: "v16",
     });
     expect(parsePlayerCharacter(character).baseRole).toBe("a02");
   });
@@ -29,6 +31,7 @@ describe("private player character metadata", () => {
       ownerRole: "v03",
       ownerPlayerId: "owner",
       objectiveRole: "v03",
+      dogActorCopiedRole: null,
     });
     expect(parsePlayerCharacter(character)).toMatchObject({
       baseRole: "a04",

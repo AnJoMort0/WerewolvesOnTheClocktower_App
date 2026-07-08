@@ -658,4 +658,107 @@ describe("NightScript Dog-Wolf copy", () => {
     expect(dogLine).toBeTruthy();
     expect(dogLine?.textContent?.trim().startsWith("(")).toBe(false);
   });
+
+  it("replaces every repeated owner-role name in a Dog line", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          nightNumber={1}
+          activeRoles={new Set(["v23", "a02"])}
+          roleAssignments={{ owner: "v23", dog: "a02" }}
+          baseRoleAssignments={{ owner: "v23", dog: "a02" }}
+          abilityRoleAssignments={{ owner: "v23", dog: "v23" }}
+          dogWolfPlayerIds={["dog"]}
+          dogWolfStates={{ dog: createDogWolfState("owner") }}
+          players={[
+            { id: "owner", name: "Owner", seat_position: 0 },
+            { id: "dog", name: "Dog", seat_position: 1 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const dogLine = Array.from(container.querySelectorAll('[draggable="true"]'))
+      .find((line) => line.textContent?.trim().startsWith("(O C\u00e3o"));
+    expect(dogLine?.textContent?.match(/C\u00e3o/g)).toHaveLength(2);
+    expect(dogLine?.textContent).not.toContain("Domador da Aranha");
+  });
+
+  it("gives Dog-as-Actor a discreet Narrator prompt before its first Idol", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["a04", "a02"])}
+          roleAssignments={{ owner: "a04", dog: "a02" }}
+          baseRoleAssignments={{ owner: "a04", dog: "a02" }}
+          abilityRoleAssignments={{ owner: "a04", dog: "a04" }}
+          dogWolfPlayerIds={["dog"]}
+          dogWolfStates={{ dog: createDogWolfState("owner") }}
+          players={[
+            { id: "owner", name: "Owner", seat_position: 0 },
+            { id: "dog", name: "Dog", seat_position: 1 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Narrador");
+    expect(container.textContent).toContain("precisa de escolher um \u00cddolo");
+  });
+
+  it("waits until the night after owner selection before prompting Dog-as-Actor", () => {
+    const state = createDogWolfState("owner");
+    state.ownerSelectedNight = 2;
+    const props = {
+      ...baseProps,
+      activeRoles: new Set(["a04" as const, "a02" as const]),
+      roleAssignments: { owner: "a04" as const, dog: "a02" as const },
+      baseRoleAssignments: { owner: "a04" as const, dog: "a02" as const },
+      abilityRoleAssignments: { owner: "a04" as const, dog: "a04" as const },
+      dogWolfPlayerIds: ["dog"],
+      dogWolfStates: { dog: state },
+      players: [
+        { id: "owner", name: "Owner", seat_position: 0 },
+        { id: "dog", name: "Dog", seat_position: 1 },
+      ],
+    };
+    const { container, rerender } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} nightNumber={2} />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).not.toContain("precisa de escolher um \u00cddolo");
+
+    rerender(
+      <LanguageContext.Provider value="pt">
+        <NightScript {...props} nightNumber={3} />
+      </LanguageContext.Provider>,
+    );
+    expect(container.textContent).toContain("precisa de escolher um \u00cddolo");
+  });
+
+  it("does not expose a draggable werewolf line when the pack is poisoned", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["e01", "m01"])}
+          roleAssignments={{ wolf: "e01", badWolf: "m01" }}
+          abilityRoleAssignments={{ wolf: "e01", badWolf: "m01" }}
+          poisonedPlayerIds={new Set(["badWolf"])}
+          players={[
+            { id: "wolf", name: "Wolf", seat_position: 0 },
+            { id: "badWolf", name: "Bad Wolf", seat_position: 1 },
+          ]}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const draggableWerewolfLine = Array.from(container.querySelectorAll('[draggable="true"]'))
+      .find((line) => line.textContent?.includes("escolhem em conjunto"));
+    expect(draggableWerewolfLine).toBeUndefined();
+  });
 });

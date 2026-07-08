@@ -63,6 +63,7 @@ interface PlayerCircleProps {
   poisonedPlayerId?: string | null;
   poisonedPlayerIds?: Set<string>;
   actingPoisonedPlayerIds?: Set<string>;
+  werewolfPackPoisoned?: boolean;
   illusionPlayerId?: string | null;
   illusionPlayerIds?: Set<string>;
   onSetIllusion?: (playerId: string) => void;
@@ -128,6 +129,7 @@ export const PlayerCircle = ({
   poisonedPlayerId,
   poisonedPlayerIds = poisonedPlayerId ? new Set([poisonedPlayerId]) : new Set(),
   actingPoisonedPlayerIds = poisonedPlayerIds,
+  werewolfPackPoisoned = false,
   illusionPlayerId,
   illusionPlayerIds = illusionPlayerId ? new Set([illusionPlayerId]) : new Set(),
   onSetIllusion,
@@ -293,13 +295,12 @@ export const PlayerCircle = ({
     if (role === POISON_DRAG_ROLE && !isPDead) {
       dragActions.poison = { action: "poison" };
     }
-    if (role === KILL_DRAG_ROLE) {
+    const werewolfActionBlocked = dogState
+      ? actingPoisonedPlayerIds.has(playerId)
+      : werewolfPackPoisoned;
+    if (role === KILL_DRAG_ROLE && !werewolfActionBlocked) {
       dragActions.kill = {
         action: "kill",
-        check: () => {
-          if (actingPoisonedPlayerIds.has(playerId)) return getToast("warnWolvesPoisoned", lang);
-          return null;
-        },
       };
     }
     if (role === CHAMAN_ROLE && !isPDead) {
