@@ -906,11 +906,11 @@ export const RULEBOOK_CHARACTERS = {
     },
     mainDescription: {
       pt: [
-        `<red>Cada noite</red>, escolhe um jogador que será imune <red>durante essa noite e esse dia</red>.`,
+        `<red>Cada noite</red>, escolhe um jogador que será imune <red>durante essa noite</red>.`,
         `Também se pode escolher a si próprio.`,
       ],
       fr: [
-        `<red>Chaque nuit</red>, il choisit un joueur qui sera immune <red>pendant une nuit et un jour</red>.`,
+        `<red>Chaque nuit</red>, il choisit un joueur qui sera immune <red>pendant cette nuit</red>.`,
         `Il peut aussi se choisir soi-même.`,
       ],
     },
@@ -1147,6 +1147,76 @@ export const RULEBOOK_CHARACTERS = {
       fr: `Tuer tous les Loups-garous.`,
     },
   },
+  "v24": {
+    id: "v24",
+    group: "villager",
+    team: "villagers",
+    name: {
+      pt: `Vinicultor`,
+      fr: `Vigneron`,
+    },
+    mainDescription: {
+      pt: [
+        `<red>Cada noite</red>, o Vinicultor <red>escolhe se quer</red> envenenar um jogador durante um dia e uma noite, mas esse jogador também será imune.`,
+        `O jogador afetado terá problemas ao usar os seus poderes (receberá informações erradas).`,
+      ],
+      fr: [
+        `<red>Chaque nuit</red>, le Vigneron <red>choisit s’il souhaite</red> empoisonner un joueur pendant un jour et une nuit. Ce joueur sera également immune.`,
+        `Le joueur affecté aura de la difficulté à contrôler ses pouvoirs (recevra de fausses informations).`,
+      ],
+    },
+    details: [
+      {
+        title: {
+          pt: `Se envenenado:`,
+          fr: `Si empoisonné :`,
+        },
+        description: {
+          pt: `Sem efeito.`,
+          fr: `Sans effet.`,
+        },
+      },
+    ],
+    objective: {
+      pt: `Matar todos os Lobisomens.`,
+      fr: `Tuer tous les Loups-garous.`,
+    },
+  },
+  "v25": {
+    id: "v25",
+    group: "villager",
+    team: "villagers",
+    name: {
+      pt: `Padre`,
+      fr: `Prêtre`,
+    },
+    mainDescription: {
+      pt: [
+        `<red>Cada noite</red>, o Padre é chamado e <red>qualquer outro jogador</red> pode levantar a mão para se confessar.`,
+        `O Padre escolhe um jogador com a mão levantada e pode ver o papel desse jogador. Em troca, o jogador escolhido pode acordar e ver quem é o Padre.`,
+      ],
+      fr: [
+        `<red>Chaque nuit</red>, quand le Prêtre est réveillé, <red>tout autre joueur</red> peut lever la main pour se confesser.`,
+        `Le Prêtre choisit un joueur qui a levé la main et peut voir le rôle de ce joueur. En échange, le joueur choisi peut se réveiller et découvrir qui est le Prêtre.`,
+      ],
+    },
+    details: [
+      {
+        title: {
+          pt: `Se envenenado:`,
+          fr: `Si empoisonné :`,
+        },
+        description: {
+          pt: `Não acorda.`,
+          fr: `Ne se réveille pas.`,
+        },
+      },
+    ],
+    objective: {
+      pt: `Matar todos os Lobisomens.`,
+      fr: `Tuer tous les Loups-garous.`,
+    },
+  },
   "m01": {
     id: "m01",
     group: "evil",
@@ -1326,6 +1396,39 @@ export const RULEBOOK_CHARACTERS = {
         description: {
           pt: `Sem efeito.`,
           fr: `Sem efeito.`,
+        },
+      },
+    ],
+    objective: {
+      pt: `Matar todos os Aldeões.`,
+      fr: `Tuer tous les Villageois.`,
+    },
+  },
+  "m06": {
+    id: "m06",
+    group: "evil",
+    team: "evilBeing",
+    name: {
+      pt: `Mestre do Lobo(isomem)`,
+      fr: `Maître du Loup(-garou)`,
+    },
+    mainDescription: {
+      pt: [
+        `Age como um Lobisomem normal, mas é identificado como sendo um Aldeão e não uma Criatura Malvada por outros papéis (por exemplo o Domador do Urso).`,
+      ],
+      fr: [
+        `Il agit comme un Loup-garou normal, mais il est identifié comme étant un Villageois et non une Créature Maléfique par d’autres rôles (par exemple le Maître de l’Ours).`,
+      ],
+    },
+    details: [
+      {
+        title: {
+          pt: `Se qualquer Lobisomem estiver envenenado:`,
+          fr: `Si n’importe quel Loup-garou est empoisonné :`,
+        },
+        description: {
+          pt: `Não podem matar.`,
+          fr: `Ils ne peuvent pas tuer.`,
         },
       },
     ],
@@ -1888,6 +1991,74 @@ export const RULEBOOK_CHARACTERS = {
       fr: `Tuer tous les Loups-garous.`,
     },
   },
+  "l05": {
+    id: "l05",
+    group: "lame",
+    team: "villagers",
+    name: {
+      pt: `Astrônomo`,
+      fr: `Astronome`,
+    },
+    mainDescription: {
+      pt: [
+        `Na noite seguinte à morte do Astrônomo, os Lobisomens não acordam, pois a Lua está triste.`,
+      ],
+      fr: [
+        `La nuit qui suit la mort de l'Astronome, les Loups-garous ne se réveillent pas, car la Lune est triste.`,
+      ],
+    },
+    details: [
+      {
+        title: {
+          pt: `Se envenenado:`,
+          fr: `Si empoisonné :`,
+        },
+        description: {
+          pt: `Sem efeito.`,
+          fr: `Sans effet.`,
+        },
+      },
+    ],
+    objective: {
+      pt: `Matar todos os Lobisomens.`,
+      fr: `Tuer tous les Loups-garous.`,
+    },
+  },
+  "l06": {
+    id: "l06",
+    group: "lame",
+    team: "villagers",
+    name: {
+      pt: `Serva Devota`,
+      fr: `Servante Dévouée`,
+    },
+    mainDescription: {
+      pt: [
+        `<red>Cada noite</red> é avisado sobre os jogadores <red>assassinados</red> e pode escolher salvar um deles.`,
+        `Ao fazer isso, a Serva Devota <red>suicida-se</red>.`,
+      ],
+      fr: [
+        `<red>Chaque nuit</red> est montré les joueurs <red>assassinés</red> et peut choisir de sauver l’un d’entre eux.`,
+        `Pour le faire, la Servante Dévouée <red>se suicide</red>.`,
+      ],
+    },
+    details: [
+      {
+        title: {
+          pt: `Se envenenado:`,
+          fr: `Si empoisonné :`,
+        },
+        description: {
+          pt: `Não salva o jogador.`,
+          fr: `Ne sauve pas le joueur.`,
+        },
+      },
+    ],
+    objective: {
+      pt: `Matar todos os Lobisomens.`,
+      fr: `Tuer tous les Loups-garous.`,
+    },
+  },
   "x01": {
     id: "x01",
     group: "extra",
@@ -2437,6 +2608,14 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
+      id: "normal-v24",
+      refs: ["v24"],
+      text: {
+        pt: `O Vinicultor acorda e escolhe um jogador que irá envenenar mas que receberá imunidade.`,
+        fr: `Le Vigneron se réveille et indique quel joueur il souhaite empoisonner. Le joueur recevra également immunité.`,
+      },
+    },
+    {
       id: "normal-v20",
       refs: ["v20"],
       text: {
@@ -2544,8 +2723,8 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       id: "normal-v17",
       refs: ["v17"],
       text: {
-        pt: `O Salvador acorda e indica quem será imune durante esta noite e o dia.`,
-        fr: `Le Sauveur se réveille et choisit qui sera immune durant une nuit et un jour.`,
+        pt: `O Salvador acorda e indica quem será imune durante esta noite.`,
+        fr: `Le Sauveur se réveille et choisit qui sera immune durant cette nuit.`,
       },
     },
     {
@@ -2568,8 +2747,8 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       id: "normal-e01",
       refs: ["e01", "m01", "m02", "m03", "s02"],
       text: {
-        pt: `Os Lobisomens acordam/não acordam se envenenados e escolhem em conjunto uma vítima que irão assassinar esta noite.`,
-        fr: `Les Loups-garous se réveillent / ne se réveillent pas si empoisonnés. Ils choisissent ensemble leur victime pour cette nuit.`,
+        pt: `Os Lobisomens acordam/não acordam se envenenados (não acordam se o Astrônomo morreu na última noite) e escolhem em conjunto uma vítima que irão assassinar esta noite.`,
+        fr: `Les Loups-garous se réveillent / ne se réveillent pas si empoisonnés. (Ils ne se réveillent pas si l'Astronome est mort la nuit précédente) Ils choisissent ensemble leur victime pour cette nuit.`,
       },
     },
     {
@@ -2613,11 +2792,27 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       },
     },
     {
+      id: "normal-v25",
+      refs: ["v05"],
+      text: {
+        pt: `O Padre acorda. Se algum jogador quiser se confessar, revelando a sua carta ao Padre, pode levantar a mão. O Padre escolhe um desses jogadores, que será tocado para acordar. Ele vê quem é o Padre e mostra o seu papel.`,
+        fr: `Le Prêtre se réveille. Si un joueur souhaite se confesser, révélant ainsi son rôle au Prêtre, il peut lever la main. Le Prêtre choisit l'un de ces joueurs, qui sera touché pour se réveiller. Il voit qui est le Prêtre et montre son rôle.`,
+      },
+    },
+    {
       id: "normal-e03",
       refs: ["e03"],
       text: {
         pt: `O Chaman acorda/não acorda se não houver vítimas e são-lhe apresentadas as vítimas. Ele escolhe então com o polegar se as quer salvar ou não. Relembro que pode salvar duas pessoas durante o jogo todo.`,
         fr: `Le Chaman se réveille / ne se réveille pas s’il n’y a pas de victimes. Les victimes lui sont présentées, puis il choisit avec le pouce s’il veut les sauver ou non. Je rappelle qu’il peut sauver deux personnes pendant toute la partie.`,
+      },
+    },
+    {
+      id: "normal-l06",
+      refs: ["l06"],
+      text: {
+        pt: `A Serva Devota acorda/não acorda se não houver vítimas e são-lhe apresentadas as vítimas. Ela escolhe então com o polegar se as quer salvar ou não. Ao salvar uma vítima, a Serva Devota suicida-se.`,
+        fr: `La Servante Dévouée se réveille  / ne se réveille pas s’il n’y a pas de victimes et les victimes de cette nuit lui sont révélées. Elle choisit s’il souhaite sauver une des victimes. En sauvant une victime, la Servante Dévouée se suicide.`,
       },
     },
     {
