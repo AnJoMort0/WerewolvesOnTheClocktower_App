@@ -1,6 +1,6 @@
 # Roadmap
 
-This file is intentionally human-owned. Codex can add items, reorganize items, or add notes, but only the human owner should remove items after real playtests or direct confirmation.
+This file is intentionally human-owned. Codex can add items, reorganize items, or add notes, but only the human owner should remove items after real playtests or direct confirmation. Only human should add things to "Human Tests to Do", "Other changes Outside of the Repo" and "Future Plans".
 
 ## Human Tests to Do
 
@@ -9,14 +9,6 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 * [ ] Human-test hosted mode with at least one phone.
 * [ ] Confirm QR codes use the correct hosted or LAN URL.
 * [ ] Find out what "Clear previous rooms" button does.
-* [ ] Check the README file.
-* [ ] Playtest the Dog-Wolf with a normal action owner, an information owner, the Drunkard, and an Actor copying the Dog-Wolf.
-* [ ] Confirm the Dog-Wolf owner card and objective popovers remain correct after reconnecting and after the owner changes role.
-* [ ] Playtest Dog-as-Actor, Dog-as-Wild-Kid, Dog-as-Grave-Robber, Dog-as-Cupid, and Dog-as-Evil-Cupid through death and resurrection.
-* [ ] Playtest an original Dog-Wolf and Actor-as-Dog together, confirming their Dog-specific status icons and charges remain independent.
-* [ ] Confirm the Dog-as-Actor nested card stack on a phone after reconnecting: copied role as the large card, Dog-Wolf badge, then Actor badge.
-* [ ] Confirm a poisoned Werewolf pack cannot wake or drag a victim, while an independently acting Dog-as-Werewolf remains governed by the Dog's own poison state.
-* [ ] Confirm an Evil Being Sister becomes a normal Werewolf on every connected screen when she is poisoned.
 * [ ] Lovable version: Some players who initially joined through the iPhone Camera app could not reconnect after disconnecting. The Camera app sometimes did not open the link in the default browser I guess, so the reconnecting session did not have access to the original persistent `localStorage` data (I don't know if there's a possibility to fix this somehow, if there isn't just tell me)
   * Codex note 2026-06-27: Separate iPhone browser contexts cannot share `localStorage`. The join screen now recovers an existing player by matching the same room and player name when the local session is unavailable.
 
@@ -26,15 +18,11 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] 
+* [ ] Make the rulebook script lines more readable by making them a proper list with "-" or a dot before
 
 ## Fixes
 
-* [x] If the Dog is playing the Actor that is actively copying a card (for example the Little Girl), in the player's device, the big card becomes the copied role (the Little Girl), with the small Dog-Wolf card on the corner, which has itself a even smaller Actor card to it's corner.
-  * Codex note 2026-07-09: Verified in `PlayerView`; phone/reconnect confirmation remains covered under Human Tests to Do.
-  * Codex note 2026-07-10: Real-device test showed the GM only sent the Actor copy as the Dog's owner badge. Updated private Dog-Wolf metadata so a Dog following an active Actor copy sends that copied role as `dogActorCopy`.
-* [x] Add a small button to jump to the night scripts under the character quick list in the rulebook.
-  * Codex note 2026-07-09: Added a localized quick-list jump link to the generated night-script section.
+* [ ] 
 
 ## Balance Changes
 
@@ -46,8 +34,6 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Future Plans
 
-* [ ] Add new character `m06` to app
-* [ ] Add new character `v24` to app
 * [ ] Add the fonctionnality for the complex characters not yet deployed
 * [ ] Add skin packs
 * [ ] Adding phone interactions:
