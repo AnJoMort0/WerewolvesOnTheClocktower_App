@@ -59,6 +59,7 @@ export const RULEBOOK_TEXT = {
   title: { pt: `Lobisomens da Torre Sangrenta`, fr: `Loups-garous de la Tour Sanglante` },
   quickListTitle: { pt: `Lista rápida de personagens`, fr: `Liste rapide de personnages` },
   quickListIntro: { pt: `Usa esta lista como mapa de navegação para saltar diretamente para uma ficha na tabela.`, fr: `Utilises cette liste comme carte de navigation pour sauter directement à une fiche dans le tableau.` },
+  nightScriptJump: { pt: `Ir para os guiões da noite`, fr: `Aller aux scripts de nuit` },
   singleCardAllCharacters: { pt: `Ver todas as personagens`, fr: `Voir tous les personnages` },
   backToIndex: { pt: `Voltar à lista`, fr: `Retour à la liste` },
   groups: [

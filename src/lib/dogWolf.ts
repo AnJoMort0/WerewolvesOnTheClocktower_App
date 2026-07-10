@@ -37,6 +37,24 @@ export function createInheritedDogWolfState(sourceState?: DogWolfState): DogWolf
   return createDogWolfState(sourceState?.ownerPlayerId ?? null);
 }
 
+export function getDogActorCopiedRoleForDisplay(
+  state: DogWolfState | null | undefined,
+  actorPlayerId: string | null,
+  actorCopiedRole: RoleId | null,
+  drunkardReplacementRole: RoleId | null = null,
+): RoleId | null {
+  if (!state) return null;
+  if (state.actorCopiedRole) {
+    return state.actorCopiedRole === "a01"
+      ? state.independentRole ?? drunkardReplacementRole ?? null
+      : state.actorCopiedRole;
+  }
+  if (state.ownerPlayerId && state.ownerPlayerId === actorPlayerId && actorCopiedRole) {
+    return actorCopiedRole === "a01" ? drunkardReplacementRole : actorCopiedRole;
+  }
+  return null;
+}
+
 export function getDogWolfPlayerIds(
   baseRoleAssignments: Record<string, RoleId>,
   actorPlayerId: string | null,

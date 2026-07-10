@@ -22,25 +22,19 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Other Changes Outside of the Repo
 
-* [ ] DOCS + ALMANAC: Add the new (Were)Wolf Tamer card
-* [ ] DOCS + ALMANAC: Add the new Vintner card
-* [ ] DOCS + ALMANAC: Rearrange cards by affinity instead of ID; place the Spider Tamer beside the other Tamers and separate Werewolves from their allies
+* [ ] RULEBOOK: Rearrange cards by affinity instead of ID; place the Spider Tamer beside the other Tamers and separate Werewolves from their allies
 
 ## Critical Fixes
 
-* [x] In case the Dog Wolf or the Fortune Teller is poisoned, the player side modal is acting correctly, but not the GM side
-* [x] The first time the Actor choses an idol doens't count for his checkboxes (he can change idol twice once the choice is made)
-* [x] If there are multiple poisoned characters the House Maid gets the distance to all of them
-* [x] Vampire Werewolf and Werewolf Seer should not wake up when the Werewolves are poisoned, because there's no victim
+* [ ] 
 
 ## Fixes
 
-* [x] If the Dog-as-Actor copies a card, in the player's device, the big card becomes the copied role, with the small Dog-Wolf card, which as itself a even smaller Actor (the current owner) card to it's corner.
-* [x] Dog scipt lines that have two times the original role name called, only has the name replaced once
-* [x] Change to Case 1: The Actor, the Dog and the Actor's idol are alive -> when woken up with the Actor in the following night, the dog chooses his own idol, for that change the script line to be "(The Narrator (Narrador/Meneur) discretly tells the {Dog} that he needs to chose an idol). In this case the Owner tag should never disappear.
-* [x] In rulebookContents there's basically the script written twice (in a list up in the file and then the dynamic one with the ids, make it only have the id based one, also reduce the id's to just be first/second/normal-role.id and have no name afterwards)
-  * Codex note 2026-07-09: Rulebook script text now has one source, `RULEBOOK_NIGHT_SCRIPT`. IDs use `first-role`, `second-role`, or `normal-role`, with a numeric suffix only when the same role has multiple lines in one phase.
-* [x] Normal Werewolves line should not be drag-dropeable nor Normal Werewolf should be drag-droppable when the Werewolves are poisoned (don't wake up)
+* [x] If the Dog is playing the Actor that is actively copying a card (for example the Little Girl), in the player's device, the big card becomes the copied role (the Little Girl), with the small Dog-Wolf card on the corner, which has itself a even smaller Actor card to it's corner.
+  * Codex note 2026-07-09: Verified in `PlayerView`; phone/reconnect confirmation remains covered under Human Tests to Do.
+  * Codex note 2026-07-10: Real-device test showed the GM only sent the Actor copy as the Dog's owner badge. Updated private Dog-Wolf metadata so a Dog following an active Actor copy sends that copied role as `dogActorCopy`.
+* [x] Add a small button to jump to the night scripts under the character quick list in the rulebook.
+  * Codex note 2026-07-09: Added a localized quick-list jump link to the generated night-script section.
 
 ## Balance Changes
 
@@ -48,12 +42,12 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [x] If a Sister is Evil Being and Poisoned, she changes roles to become e01
+* [ ] 
 
 ## Future Plans
 
-* [ ] Add new character `m06` to app and docs
-* [ ] Add new character `v24` to app and docs
+* [ ] Add new character `m06` to app
+* [ ] Add new character `v24` to app
 * [ ] Add the fonctionnality for the complex characters not yet deployed
 * [ ] Add skin packs
 * [ ] Adding phone interactions:

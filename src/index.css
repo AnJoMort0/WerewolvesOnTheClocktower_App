@@ -258,6 +258,35 @@
     background: #eeeeee;
   }
 
+  .rulebook-content .rulebook-night-script-jump {
+    display: flex;
+    justify-content: center;
+    margin: 1.2rem 0 0.2rem;
+  }
+
+  .rulebook-content .rulebook-night-script-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.28rem 0.72rem;
+    border: 1px solid hsl(var(--gold) / 0.58);
+    border-radius: 0.45rem;
+    background: hsl(var(--background) / 0.38);
+    color: hsl(var(--gold));
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+  }
+
+  .rulebook-content .rulebook-night-script-link:hover,
+  .rulebook-content .rulebook-night-script-link:focus-visible {
+    outline: 2px solid hsl(var(--gold));
+    outline-offset: 2px;
+    background: hsl(var(--accent) / 0.5);
+  }
+
   .rulebook-content .rulebook-character-group {
     scroll-margin-top: 1rem;
   }

@@ -3,6 +3,7 @@ import {
   advanceDogWolfStateForNight,
   createDogWolfState,
   createInheritedDogWolfState,
+  getDogActorCopiedRoleForDisplay,
   getDogsFollowingOwner,
   getDogWolfAbilityRoleAssignments,
   getDogWolfObjectiveRole,
@@ -30,6 +31,23 @@ describe("Dog-Wolf role model", () => {
       owner: "e02",
     });
     expect(getDogWolfObjectiveRole("dog", { dog: "a02", owner: "e02" }, states)).toBe("e02");
+  });
+
+  it("marks a Dog following an active Actor copy for the nested player card", () => {
+    const state = createDogWolfState("actor");
+    expect(getDogActorCopiedRoleForDisplay(state, "actor", "v01")).toBe("v01");
+  });
+
+  it("uses the hidden replacement when a Dog follows an Actor copying the Drunkard", () => {
+    const state = createDogWolfState("actor");
+    expect(getDogActorCopiedRoleForDisplay(state, "actor", "a01", "v16")).toBe("v16");
+  });
+
+  it("uses a Dog-as-Actor's own copied role before the owner's Actor copy", () => {
+    const state = createDogWolfState("actor");
+    state.actorCopiedRole = "e02";
+    state.independentRole = "e02";
+    expect(getDogActorCopiedRoleForDisplay(state, "actor", "v01")).toBe("e02");
   });
 
   it("stops copied actions while the owner is dead but preserves the objective", () => {

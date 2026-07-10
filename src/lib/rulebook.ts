@@ -1,4 +1,4 @@
-﻿import { ROLES, type RoleId } from "@/lib/roles";
+import { ROLES, type RoleId } from "@/lib/roles";
 import type { Language } from "@/lib/i18n";
 import x01Card from "@/assets/extras/x01_card.png";
 import x02Card from "@/assets/extras/x02_card.png";
@@ -202,6 +202,11 @@ function renderCharacterIndex(lang: Language): string {
       <h2>${renderInline(RULEBOOK_TEXT.quickListTitle[lang])}</h2>
       <p>${renderInline(RULEBOOK_TEXT.quickListIntro[lang])}</p>
       ${groups}
+      <div class="rulebook-night-script-jump">
+        <a class="rulebook-night-script-link" href="#rulebook-night-script">
+          ${renderInline(RULEBOOK_TEXT.nightScriptJump[lang])}
+        </a>
+      </div>
     </section>
   `;
 }

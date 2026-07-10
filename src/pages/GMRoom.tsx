@@ -56,6 +56,7 @@ import {
   advanceDogWolfStateForNight,
   createDogWolfState,
   createInheritedDogWolfState,
+  getDogActorCopiedRoleForDisplay,
   getDogWolfAbilityRoleAssignments,
   getDogWolfPlayerIds,
   getDogWolfObjectiveRoleAssignments,
@@ -1905,9 +1906,12 @@ const GMRoom = () => {
         ? objectiveRole
         : null,
       objectiveEffects: getObjectiveEffectsForPlayer(playerId),
-      dogActorCopiedRole: dogWolfStates[playerId]?.actorCopiedRole === "a01"
-        ? dogWolfStates[playerId]?.independentRole ?? null
-        : dogWolfStates[playerId]?.actorCopiedRole ?? null,
+      dogActorCopiedRole: getDogActorCopiedRoleForDisplay(
+        dogWolfStates[playerId],
+        actorPlayerId,
+        actorCopiedRole,
+        drunkardReplacementRole,
+      ),
     });
   }, [actorCopiedRole, actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, objectiveRoleAssignments]);
 
@@ -1924,9 +1928,12 @@ const GMRoom = () => {
         ? objectiveRole
         : null,
       objectiveEffects: getObjectiveEffectsForPlayer(actorPlayerId),
-      dogActorCopiedRole: dogWolfStates[actorPlayerId]?.actorCopiedRole === "a01"
-        ? dogWolfStates[actorPlayerId]?.independentRole ?? null
-        : dogWolfStates[actorPlayerId]?.actorCopiedRole ?? null,
+      dogActorCopiedRole: getDogActorCopiedRoleForDisplay(
+        dogWolfStates[actorPlayerId],
+        actorPlayerId,
+        copiedRole,
+        drunkardReplacementRole,
+      ),
     });
     setPlayers((prev) => prev.map((player) => player.id === actorPlayerId ? { ...player, character } : player));
     void supabase.from("players").update({ character }).eq("id", actorPlayerId).then(() => {
