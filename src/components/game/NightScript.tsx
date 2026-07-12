@@ -8,7 +8,7 @@ import {
   type ScriptLine,
 } from "@/lib/nightScript";
 import { useLanguage, getScripts, getDynamic, getRoleLabel, t, getToast } from "@/lib/i18n";
-import { ROLES, type RoleId } from "@/lib/roles";
+import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import { toast } from "sonner";
@@ -17,9 +17,6 @@ import { EMPTY_ACTOR_POWER_STATE, type ActorPowerState } from "@/lib/actor";
 import { isDrunkardActingPoisoned } from "@/lib/drunkard";
 import type { DogWolfStates } from "@/lib/dogWolf";
 
-/** Evil roles for bear/crow mechanics */
-const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05"];
-const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "s02"];
 const EMPTY_COMPLETED_LINE_KEYS = new Set<string>();
 
 const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {

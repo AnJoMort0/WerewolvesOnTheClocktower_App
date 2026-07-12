@@ -15,6 +15,7 @@ const hasEffect = (player: VictoryPlayer, effect: string) =>
 
 const isEvil = (player: VictoryPlayer) =>
   EVIL_ROLES.includes(player.role)
+  || WEREWOLF_ROLES.includes(player.role)
   || hasEffect(player, "evil_being")
   || hasEffect(player, "werewolf_turned");
 

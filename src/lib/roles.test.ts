@@ -2,15 +2,31 @@ import { describe, expect, it } from "vitest";
 import { assignRoles, ROLES, WEREWOLF_ROLES, type RoleId } from "./roles";
 
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "s02"];
+const MANUAL_ONLY_NEW_ROLES: RoleId[] = ["v24", "v25", "m06", "l05", "l06"];
 
 function wolfRolesFor(playerCount: number) {
   return assignRoles(playerCount, true).filter((role) => WEREWOLF_ROLES.includes(role));
 }
 
 describe("assignRoles werewolf balance", () => {
-  it("does not expose unfinished placeholder roles", () => {
-    expect(ROLES).not.toHaveProperty("v24");
-    expect(ROLES).not.toHaveProperty("m06");
+  it("registers new rulebook roles for manual assignment", () => {
+    for (const roleId of MANUAL_ONLY_NEW_ROLES) {
+      expect(ROLES).toHaveProperty(roleId);
+    }
+
+    expect(WEREWOLF_ROLES).toContain("m06");
+  });
+
+  it("keeps new rulebook roles out of automatic assignment until their mechanics are ready", () => {
+    for (const playerCount of [8, 12, 20, 40]) {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const assignedRoles = assignRoles(playerCount, true);
+
+        for (const roleId of MANUAL_ONLY_NEW_ROLES) {
+          expect(assignedRoles).not.toContain(roleId);
+        }
+      }
+    }
   });
 
   it("uses exactly two normal werewolves for 8 to 11 players", () => {

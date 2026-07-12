@@ -60,7 +60,7 @@ export function getMeninaAnswerKind(source: string | undefined): MeninaAnswerKin
   if (source === "v07" || source === "v07-poisoned") return "rustedKnight";
   if (source === "a03") return "mime";
   if (source === "a04") return "actor";
-  if (source === "e01" || source === "m01" || source === "m02" || source === "m03") return "werewolves";
+  if (source === "e01" || source === "m01" || source === "m02" || source === "m03" || source === "m06") return "werewolves";
   if (source === "s02") return "whiteWerewolf";
   return null;
 }

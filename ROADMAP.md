@@ -22,7 +22,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
-* [ ] 
+* [ ] Is it possible to change in fr.ts and pt.ts the lines : "requires: ["e01", "m01", "m02", "m03", "m06", "s02"]" to "requires: WEREWOLF_ROLES" from roles.ts? And also in rulebookContents.ts "refs: ["e01", "m01", "m02", "m03", "m06", "s02"]"
 
 ## Balance Changes
 
@@ -30,7 +30,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] 
+* [x] A few new characters were added to the Rulebook, before adding any functionnality can you add them to the general game. Right now rulebookContent is trhowing an error. This repo is still supposed to let humans easily manually add stuff, can you make changes if needed for it to be more human-friendly and also add complete the rulebookContent description to explain exactly the steps to do to add a new character
+  * Codex note 2026-07-10: Registered `v24`, `v25`, `m06`, `l05`, and `l06` for manual assignment; kept them out of random assignment until their mechanics are implemented; expanded the rulebook editing guide and consistency tests.
 
 ## Future Plans
 

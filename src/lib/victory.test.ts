@@ -26,6 +26,13 @@ describe("detectAutomaticVictory", () => {
     ])).toBe("werewolves");
   });
 
+  it("treats the Wolf Master as a werewolf for victory", () => {
+    expect(detectAutomaticVictory([
+      player("master", "m06"),
+      player("villager", "v02", false),
+    ])).toBe("werewolves");
+  });
+
   it("detects lovers and Cupid victory", () => {
     expect(detectAutomaticVictory([
       player("lover-a", "v02", true, ["namorado"]),

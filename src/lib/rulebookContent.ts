@@ -2,16 +2,41 @@ import type { RoleId } from "@/lib/roles";
 import type { Language } from "@/lib/i18n";
 
 /*
-  Rulebook editing guide:
+  Rulebook editing and character-adding guide:
+
+  To add a playable character:
+  1. Choose a unique id. Existing prefixes are e (essential), v (villager),
+     m (evil), s (solo), f (flexible), a (advanced), and l (lame/simple).
+  2. Add the card image as src/assets/roles/<id>.png.
+  3. In src/lib/roles.ts, import that image and add one ROLE_DEFINITIONS entry.
+     RoleId is derived automatically. Add the id to EVIL_ROLES, WEREWOLF_ROLES,
+     WEB_IMMUNE_ROLES, or INFO_ROLES only when its rules require that behavior.
+     New roles are manually selectable as soon as they are registered. Add them
+     to an assignment pool only when they are ready for automatic random games.
+  4. Add the Portuguese and French display names to roleLabels in
+     src/lib/i18n/pt.ts and src/lib/i18n/fr.ts.
+  5. Add the full card to RULEBOOK_CHARACTERS below. Its key and id must match
+     the playable id, then add that id to RULEBOOK_CHARACTER_ORDER.
+  6. If the character wakes at night, add its printed/analog instructions to
+     RULEBOOK_NIGHT_SCRIPT. Add the same playable behavior to the in-app scripts
+     in both i18n files only when its game functionality is being implemented.
+  7. Add role-specific state or interactions in the relevant game modules and
+     cover them with focused tests. Run: npm test, npx tsc --noEmit, npm run lint,
+     and npm run build.
+
+  To add a rulebook-only extra card:
+  - Use an x-prefixed RulebookCharacterId, add its image import and mapping in
+    src/lib/rulebook.ts, then add its card and display order here. Do not add it
+    to src/lib/roles.ts unless players can actually be assigned that card.
+
+  Content field notes:
   - Edit RULEBOOK_TEXT.sections for general rulebook text.
-  - Edit RULEBOOK_CHARACTERS[id] for character cards.
   - Use <red>...</red> inside text when a word should render red.
-  - The character id picks the image from src/assets/roles or src/assets/extras.
-  - The team field controls the background color in the in-app rulebook.
-  - For rulebook paragraphs, blank lines inside a `text` template string become paragraph breaks.
+  - The team field controls the in-app rulebook background color.
+  - Blank lines inside a section text template string create paragraphs.
   - RULEBOOK_NIGHT_SCRIPT feeds the analog character generator's filtered script.
-  - Night-script ids use only phase + role id; repeated role lines use .1, .2, etc.
-  - Keep night-script wording only in RULEBOOK_NIGHT_SCRIPT, not in RULEBOOK_TEXT.sections.
+  - Night-script ids use phase + role id; repeated role lines use .1, .2, etc.
+  - Keep night-script wording in RULEBOOK_NIGHT_SCRIPT, not RULEBOOK_TEXT.sections.
 */
 
 export type RulebookCharacterId = RoleId
@@ -2320,7 +2345,12 @@ export const RULEBOOK_CHARACTER_ORDER = [
   "v03",
   "v04",
   "v05",
+  "v23",
   "v06",
+  "v20",
+  "v21",
+  "v25",
+  "v16",
   "v07",
   "v08",
   "v08b",
@@ -2331,17 +2361,15 @@ export const RULEBOOK_CHARACTER_ORDER = [
   "v13",
   "v14",
   "v15",
-  "v16",
+  "v22",
   "v17",
   "v18",
   "v19",
-  "v20",
-  "v21",
-  "v22",
-  "v23",
+  "v24",
   "m01",
   "m02",
   "m03",
+  "m06",
   "m04",
   "m05",
   "s01",
@@ -2359,6 +2387,8 @@ export const RULEBOOK_CHARACTER_ORDER = [
   "l02",
   "l03",
   "l04",
+  "l05",
+  "l06",
   "x01",
   "x02",
   "x02.1",
@@ -2746,7 +2776,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
     },
     {
       id: "normal-e01",
-      refs: ["e01", "m01", "m02", "m03", "s02"],
+      refs: ["e01", "m01", "m02", "m03", "m06", "s02"],
       text: {
         pt: `Os Lobisomens acordam/não acordam se envenenados (não acordam se o Astrônomo morreu na última noite) e escolhem em conjunto uma vítima que irão assassinar esta noite.`,
         fr: `Les Loups-garous se réveillent / ne se réveillent pas si empoisonnés. (Ils ne se réveillent pas si l'Astronome est mort la nuit précédente) Ils choisissent ensemble leur victime pour cette nuit.`,
@@ -2794,7 +2824,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
     },
     {
       id: "normal-v25",
-      refs: ["v05"],
+      refs: ["v25"],
       text: {
         pt: `O Padre acorda. Se algum jogador quiser se confessar, revelando a sua carta ao Padre, pode levantar a mão. O Padre escolhe um desses jogadores, que será tocado para acordar. Ele vê quem é o Padre e mostra o seu papel.`,
         fr: `Le Prêtre se réveille. Si un joueur souhaite se confesser, révélant ainsi son rôle au Prêtre, il peut lever la main. Le Prêtre choisit l'un de ces joueurs, qui sera touché pour se réveiller. Il voit qui est le Prêtre et montre son rôle.`,

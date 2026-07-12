@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { ALL_ROLE_IDS } from "@/lib/roles";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID } from "@/lib/rulebook";
+import { RULEBOOK_CHARACTERS, RULEBOOK_CHARACTER_ORDER } from "@/lib/rulebookContent";
 
 describe("in-app rulebook rendering", () => {
   it("renders the full rulebook from structured local content with styled character rows", () => {
@@ -23,5 +25,16 @@ describe("in-app rulebook rendering", () => {
     expect(html).toContain('id="v01"');
     expect(html).toContain("character-table-single");
     expect(html).not.toContain('id="e01"');
+  });
+
+  it("keeps every playable role represented in the rulebook order", () => {
+    const orderedIds = new Set(RULEBOOK_CHARACTER_ORDER);
+
+    expect(orderedIds.size).toBe(RULEBOOK_CHARACTER_ORDER.length);
+
+    for (const roleId of ALL_ROLE_IDS) {
+      expect(RULEBOOK_CHARACTERS).toHaveProperty(roleId);
+      expect(orderedIds.has(roleId)).toBe(true);
+    }
   });
 });

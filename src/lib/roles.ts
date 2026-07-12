@@ -26,15 +26,20 @@ import v20Img from "@/assets/roles/v20.png";
 import v21Img from "@/assets/roles/v21.png";
 import v22Img from "@/assets/roles/v22.png";
 import v23Img from "@/assets/roles/v23.png";
+import v24Img from "@/assets/roles/v24.png";
+import v25Img from "@/assets/roles/v25.png";
 import l01Img from "@/assets/roles/l01.png";
 import l02Img from "@/assets/roles/l02.png";
 import l03Img from "@/assets/roles/l03.png";
 import l04Img from "@/assets/roles/l04.png";
+import l05Img from "@/assets/roles/l05.png";
+import l06Img from "@/assets/roles/l06.png";
 import m01Img from "@/assets/roles/m01.png";
 import m02Img from "@/assets/roles/m02.png";
 import m03Img from "@/assets/roles/m03.png";
 import m04Img from "@/assets/roles/m04.png";
 import m05Img from "@/assets/roles/m05.png";
+import m06Img from "@/assets/roles/m06.png";
 import s01Img from "@/assets/roles/s01.png";
 import s02Img from "@/assets/roles/s02.png";
 import f01Img from "@/assets/roles/f01.png";
@@ -47,28 +52,18 @@ import a05Img from "@/assets/roles/a05.png";
 import a06Img from "@/assets/roles/a06.png";
 import as01bImg from "@/assets/roles/as01b.png";
 
-export type RoleId =
-  | "e01" | "e02" | "e03" | "e04"
-  | "v01" | "v02" | "v03" | "v04" | "v05" | "v06" | "v07" | "v08" | "v08b" | "v09" | "v10"
-  | "v11" | "v12" | "v13" | "v14" | "v15" | "v16" | "v17" | "v18" | "v19" | "v20" | "v21" | "v22" | "v23"
-  | "m01" | "m02" | "m03" | "m04" | "m05"
-  | "s01" | "s02"
-  | "f01" | "f02"
-  | "a01" | "a02" | "a03" | "a04" | "a05" | "a06" | "as01b"
-  | "l01" | "l02" | "l03" | "l04";
-
 export type RoleCategory = "e" | "v" | "m" | "s" | "f" | "a" | "l";
 
-export interface RoleDef {
-  id: RoleId;
+type RoleDefinition = {
+  id: string;
   label: string;
   image: string;
   category: RoleCategory;
-  requires?: RoleId;
+  requires?: string;
   groupSize?: number;
-}
+};
 
-export const ROLES: Record<RoleId, RoleDef> = {
+const ROLE_DEFINITIONS = {
   e01: { id: "e01", label: "Lobisomem", image: e01Img, category: "e" },
   e02: { id: "e02", label: "Bruxa Malvada", image: e02Img, category: "e" },
   e03: { id: "e03", label: "Chaman", image: e03Img, category: "e" },
@@ -97,11 +92,14 @@ export const ROLES: Record<RoleId, RoleDef> = {
   v21: { id: "v21", label: "Faroleiro", image: v21Img, category: "v" },
   v22: { id: "v22", label: "Pedro", image: v22Img, category: "v" },
   v23: { id: "v23", label: "Domador da Aranha", image: v23Img, category: "v" },
+  v24: { id: "v24", label: "Vinicultor", image: v24Img, category: "v" },
+  v25: { id: "v25", label: "Padre", image: v25Img, category: "v" },
   m01: { id: "m01", label: "Lobisomem Mau", image: m01Img, category: "m" },
   m02: { id: "m02", label: "Lobisomem Vidente", image: m02Img, category: "m" },
   m03: { id: "m03", label: "Lobisomem Vampiro", image: m03Img, category: "m" },
   m04: { id: "m04", label: "Ankou", image: m04Img, category: "m" },
   m05: { id: "m05", label: "Cupido Malvado", image: m05Img, category: "m" },
+  m06: { id: "m06", label: "Mestre do Lobo(isomem)", image: m06Img, category: "m" },
   s01: { id: "s01", label: "Cupido", image: s01Img, category: "s" },
   s02: { id: "s02", label: "Lobisomem Branco", image: s02Img, category: "s" },
   f01: { id: "f01", label: "Ladrão", image: f01Img, category: "f" },
@@ -117,7 +115,23 @@ export const ROLES: Record<RoleId, RoleDef> = {
   l02: { id: "l02", label: "Criança Selvagem", image: l02Img, category: "l" },
   l03: { id: "l03", label: "Irmãs", image: l03Img, category: "l", groupSize: 2 },
   l04: { id: "l04", label: "Irmãos", image: l04Img, category: "l", groupSize: 3 },
-};
+  l05: { id: "l05", label: "Astrônomo", image: l05Img, category: "l" },
+  l06: { id: "l06", label: "Serva Devota", image: l06Img, category: "l" },
+} as const satisfies Record<string, RoleDefinition>;
+
+/** Playable role IDs are derived from the registry so a new role is declared only once. */
+export type RoleId = keyof typeof ROLE_DEFINITIONS;
+
+export interface RoleDef {
+  id: RoleId;
+  label: string;
+  image: string;
+  category: RoleCategory;
+  requires?: RoleId;
+  groupSize?: number;
+}
+
+export const ROLES: Record<RoleId, RoleDef> = ROLE_DEFINITIONS;
 
 export const ALL_ROLE_IDS: RoleId[] = Object.keys(ROLES) as RoleId[];
 
@@ -127,22 +141,21 @@ export function isUniqueRole(id: RoleId): boolean {
 
 export const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05"];
 
-export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "s02"];
+export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "m06", "s02"];
 
-export const WEB_IMMUNE_ROLES: RoleId[] = ["v22"];
+export const WEB_IMMUNE_ROLES: RoleId[] = ["v10", "v18", "v22"];
 
 /** Information characters — randomizer tries to include at least one of these. */
-export const INFO_ROLES: RoleId[] = ["v02", "v03", "v04", "v05", "v06", "v22", "v23"];
+export const INFO_ROLES: RoleId[] = ["v02", "v03", "v04", "v05", "v06", "v22", "v23", "v25"];
 
 const ESSENTIAL_SINGLES: RoleId[] = ["e02", "e03", "e04"];
-const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "s02"];
+const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "s02"];
 const VILLAGER_UNIQUE: RoleId[] = [
-  "v01", "v02", "v03", "v04", "v05", "v06", "v07", "v08", "v08b", "v09", "v10",
-  "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
+  "v01", "v02", "v03", "v04", "v05", "v06", "v07", "v08", "v08b", "v09", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25"
 ];
 const ADVANCED_ROLES: RoleId[] = ["a01", "a02", "a03", "a04", "a05", "a06", "as01b"];
 const OTHER_UNIQUE: RoleId[] = ["m04", "m05", "s01", "f01", "f02"];
-const LAME_SINGLES: RoleId[] = ["l02"];
+const LAME_SINGLES: RoleId[] = ["l02", "l05", "l06"];
 
 function getWerewolfCount(playerCount: number): number {
   // 1 werewolf per 4 players; under 12 players, always exactly 2 wolves.
