@@ -65,8 +65,6 @@ const PlayerView = () => {
   const [spiderCards, setSpiderCards] = useState<RevealCard[]>([]);
   const [spyReveal, setSpyReveal] = useState(false);
   const [spyCards, setSpyCards] = useState<RevealCard[]>([]);
-  const [mimeReveal, setMimeReveal] = useState(false);
-  const [mimeCards, setMimeCards] = useState<RevealCard[]>([]);
   const [phaseInfo, setPhaseInfo] = useState<{ phase: "night" | "day" | "tribunal"; number: number } | null>(null);
   const [timerState, setTimerState] = useState<{ phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null>(null);
   const [language, setLanguage] = useState<Language>("pt");
@@ -374,17 +372,6 @@ const PlayerView = () => {
           else if (!d.show || result) { setSpyReveal(false); }
         }).subscribe();
 
-      const mimeCh = supabase.channel(`mime-reveal-${roomId}`)
-        .on("broadcast", { event: "mime-reveal" }, (payload) => {
-          const d = payload.payload;
-          const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "a03";
-          const result = d.byPlayerId?.[playerId] ?? (legacyViewer ? d : null);
-          if (d.show && result) {
-            setMimeCards(result.cards || []);
-            setMimeReveal(true);
-          }
-        }).subscribe();
-
       // Phase sync from GM (Noite/Dia/Tribunal X)
       const phaseCh = supabase.channel(`room-phase-${roomId}`)
         .on("broadcast", { event: "phase" }, (payload) => {
@@ -424,7 +411,6 @@ const PlayerView = () => {
         supabase.removeChannel(lvCh);
         supabase.removeChannel(spiderCh);
         supabase.removeChannel(spyCh);
-        supabase.removeChannel(mimeCh);
         supabase.removeChannel(phaseCh);
         supabase.removeChannel(timerCh);
         supabase.removeChannel(gameOverCh);
@@ -450,8 +436,7 @@ const PlayerView = () => {
   const parsedCharacter = parsePlayerCharacter(player?.character);
   const characterMetadata = parsePlayerCharacterMetadata(player?.character);
   const isDogActorCopying = !!characterMetadata.dogActorCopiedRole;
-  const isMimeCopying = !!characterMetadata.mimeCopiedRole;
-  const displayRole = characterMetadata.mimeCopiedRole ?? characterMetadata.dogActorCopiedRole ?? parsedCharacter.displayRole;
+  const displayRole = characterMetadata.dogActorCopiedRole ?? parsedCharacter.displayRole;
   const roleDef = displayRole ? ROLES[displayRole] ?? null : null;
   const isActorCopying = shouldShowActorBadge(player?.character);
   const ownerRoleDef = characterMetadata.ownerRole ? ROLES[characterMetadata.ownerRole] : null;
@@ -492,7 +477,6 @@ const PlayerView = () => {
   const isWerewolfSeer = displayRole === "m02";
   const isSpider = displayRole === "v23";
   const isSpy = displayRole === "f02";
-  const isMime = parsedCharacter.baseRole === "a03";
 
   if (removed) {
     return (
@@ -681,18 +665,6 @@ const PlayerView = () => {
                             className="absolute bottom-2 right-2 h-14 w-14 cursor-pointer rounded-md border-2 border-primary object-cover shadow-lg"
                           />
                         )}
-                        {isMimeCopying && (
-                          <img
-                            src={ROLES.a03.image}
-                            alt={getRoleLabel("a03", language)}
-                            title={getRoleLabel("a03", language)}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              openRulebook("a03");
-                            }}
-                            className="absolute bottom-2 right-2 h-14 w-14 cursor-pointer rounded-md border-2 border-cyan-300 object-cover shadow-lg"
-                          />
-                        )}
                         {ownerRoleDef && !isDogActorCopying && (
                           <img
                             src={ownerRoleDef.image}
@@ -822,9 +794,6 @@ const PlayerView = () => {
       )}
       {(isSpy || spyReveal) && (
         <RevealModal language={language} open={spyReveal} onClose={() => setSpyReveal(false)} title={t("spyEyeReveal", language)} cards={spyCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
-      )}
-      {(isMime || mimeReveal) && (
-        <RevealModal language={language} open={mimeReveal} onClose={() => setMimeReveal(false)} title={getRoleLabel("a03", language)} cards={mimeCards} dismissible={false} actionLabel="OK" onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       <RulebookModal
         open={rulebookOpen}

@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { assignRoles, MIME_COPY_ROLES, ROLES, isUniqueRole, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, type RoleId } from "@/lib/roles";
+import { assignRoles, ROLES, isUniqueRole, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, type RoleId } from "@/lib/roles";
 import { LanguageContext, getEffectLabel, getRoleLabel, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
@@ -197,13 +197,6 @@ type GMSnapshot = {
   actorCopyNoticeNight?: number | null;
   actorPowerState?: ActorPowerState;
   drunkardReplacementRole?: RoleId | null;
-  mimeCopiedRole?: RoleId | null;
-  mimeReplacementRole?: RoleId | null;
-  mimeOwnerRole?: RoleId | null;
-  mimeCopyNoticeNight?: number | null;
-  mimePowerState?: ActorPowerState;
-  mimeAngelSavedPlayerId?: string | null;
-  mimeFullImmunityPlayerId?: string | null;
   dogWolfStates?: DogWolfStates;
   sourcedEffectTargets?: Record<string, Partial<Record<StatusEffect, string>>>;
   spiderCaughtBySource?: Record<string, string[]>;
@@ -349,7 +342,6 @@ const EFFECT_SOURCE_ROLES: Partial<Record<StatusEffect, RoleId>> = {
   caught: "v23",
   spied_on: "f02",
   dug_up: "a05",
-  dug_up_mime: "a03",
   idol_dog: "a02",
   adoptive_dad_dog: "a02",
   enemy_dog: "a02",
@@ -369,7 +361,6 @@ const SOURCE_SCOPED_EFFECTS = new Set<StatusEffect>([
   "incendiado",
   "webbed",
   "dug_up",
-  "dug_up_mime",
   "adoptive_dad_dog",
   "dug_up_dog",
 ]);
@@ -529,15 +520,6 @@ const GMRoom = () => {
   const [actorCopyNoticeNight, setActorCopyNoticeNight] = useState<number | null>(null);
   const [actorPowerState, setActorPowerState] = useState<ActorPowerState>(() => ({ ...EMPTY_ACTOR_POWER_STATE }));
   const [drunkardReplacementRole, setDrunkardReplacementRole] = useState<RoleId | null>(null);
-  const [mimeCopiedRole, setMimeCopiedRole] = useState<RoleId | null>(null);
-  const [mimeReplacementRole, setMimeReplacementRole] = useState<RoleId | null>(null);
-  const [mimeOwnerRole, setMimeOwnerRole] = useState<RoleId | null>(null);
-  const [mimeCopyNoticeNight, setMimeCopyNoticeNight] = useState<number | null>(null);
-  const [mimePowerState, setMimePowerState] = useState<ActorPowerState>(() => ({ ...EMPTY_ACTOR_POWER_STATE }));
-  const [mimeAngelSavedPlayerId, setMimeAngelSavedPlayerId] = useState<string | null>(null);
-  const [mimeFullImmunityPlayerId, setMimeFullImmunityPlayerId] = useState<string | null>(null);
-  const [mimeRevealOpen, setMimeRevealOpen] = useState(false);
-  const [mimeRevealCards, setMimeRevealCards] = useState<RevealCard[]>([]);
   const [dogWolfStates, setDogWolfStates] = useState<DogWolfStates>({});
   const [sourcedEffectTargets, setSourcedEffectTargets] = useState<Record<string, Partial<Record<StatusEffect, string>>>>({});
   const [spiderCaughtBySource, setSpiderCaughtBySource] = useState<Record<string, string[]>>({});
@@ -556,30 +538,14 @@ const GMRoom = () => {
     () => Object.entries(roleAssignments).find(([, role]) => role === "a01")?.[0] ?? null,
     [roleAssignments],
   );
-  const mimePlayerId = useMemo(
-    () => Object.entries(roleAssignments).find(([, role]) => role === "a03")?.[0] ?? null,
-    [roleAssignments],
-  );
   const actorIdolPlayerId = useMemo(
     () => Object.entries(playerEffects).find(([, effects]) => effects.has("idol"))?.[0] ?? null,
     [playerEffects],
   );
-  const mimeMechanicalRole = useMemo(() => {
-    if (!mimeCopiedRole) return null;
-    if (mimeCopiedRole === "a01") return mimeReplacementRole;
-    if (mimeCopiedRole === "a02") return mimeOwnerRole;
-    return mimeCopiedRole;
-  }, [mimeCopiedRole, mimeOwnerRole, mimeReplacementRole]);
-  const effectiveRoleAssignments = useMemo(() => {
-    const assignments = getEffectiveRoleAssignments(roleAssignments, actorCopiedRole, drunkardReplacementRole);
-    if (mimePlayerId && mimeMechanicalRole) assignments[mimePlayerId] = mimeMechanicalRole;
-    return assignments;
-  }, [actorCopiedRole, drunkardReplacementRole, mimeMechanicalRole, mimePlayerId, roleAssignments]);
-  const displayRoleAssignments = useMemo(() => {
-    const assignments = { ...effectiveRoleAssignments };
-    if (mimePlayerId && mimeCopiedRole) assignments[mimePlayerId] = mimeCopiedRole;
-    return assignments;
-  }, [effectiveRoleAssignments, mimeCopiedRole, mimePlayerId]);
+  const effectiveRoleAssignments = useMemo(
+    () => getEffectiveRoleAssignments(roleAssignments, actorCopiedRole, drunkardReplacementRole),
+    [actorCopiedRole, drunkardReplacementRole, roleAssignments],
+  );
   const dogWolfPlayerIds = useMemo(
     () => getDogWolfPlayerIds(roleAssignments, actorPlayerId, actorCopiedRole),
     [actorCopiedRole, actorPlayerId, roleAssignments],
@@ -608,9 +574,8 @@ const GMRoom = () => {
     const assignments = { ...effectiveRoleAssignments };
     if (drunkardPlayerId) assignments[drunkardPlayerId] = "a01";
     if (actorPlayerId && actorCopiedRole === "a01") assignments[actorPlayerId] = "a01";
-    if (mimePlayerId) assignments[mimePlayerId] = "a03";
     return getDogWolfObjectiveRoleAssignments(assignments, dogWolfStates);
-  }, [actorCopiedRole, actorPlayerId, dogWolfStates, drunkardPlayerId, effectiveRoleAssignments, mimePlayerId]);
+  }, [actorCopiedRole, actorPlayerId, dogWolfStates, drunkardPlayerId, effectiveRoleAssignments]);
   const poisonedPlayerIds = useMemo(
     () => new Set(Object.values(poisonTargetsBySource)),
     [poisonTargetsBySource],
@@ -629,7 +594,6 @@ const GMRoom = () => {
     const playerIds = new Set<string>();
     if (drunkardPlayerId) playerIds.add(drunkardPlayerId);
     if (actorCopiedRole === "a01" && actorPlayerId) playerIds.add(actorPlayerId);
-    if (mimeCopiedRole === "a01" && mimePlayerId) playerIds.add(mimePlayerId);
     for (const dogPlayerId of dogWolfPlayerIds) {
       if (dogWolfStates[dogPlayerId]?.actorCopiedRole === "a01") {
         playerIds.add(dogPlayerId);
@@ -642,7 +606,7 @@ const GMRoom = () => {
       if (ownerIsDrunkard) playerIds.add(dogPlayerId);
     }
     return playerIds;
-  }, [actorCopiedRole, actorPlayerId, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, mimeCopiedRole, mimePlayerId, roleAssignments]);
+  }, [actorCopiedRole, actorPlayerId, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, roleAssignments]);
   const isPlayerActingPoisoned = useCallback((playerId: string | null | undefined) => (
     isDrunkardActingPoisoned(playerId, drunkardMechanicPlayerIds, poisonedPlayerIds)
   ), [drunkardMechanicPlayerIds, poisonedPlayerIds]);
@@ -664,29 +628,15 @@ const GMRoom = () => {
       return displayedRole ? [[dogPlayerId, displayedRole]] : [];
     }),
   ) as Record<string, RoleId>, [abilityRoleAssignments, dogWolfPlayerIds, dogWolfStates, effectiveRoleAssignments]);
-  const mimeCornerRoles = useMemo(() => {
-    if (!mimePlayerId) return {};
-    const cornerRole = mimeCopiedRole === "a01"
-      ? mimeReplacementRole
-      : mimeCopiedRole === "a02"
-      ? mimeOwnerRole
-      : null;
-    return cornerRole ? { [mimePlayerId]: cornerRole } : {};
-  }, [mimeCopiedRole, mimeOwnerRole, mimePlayerId, mimeReplacementRole]);
-  const displayOwnerRoles = useMemo(
-    () => ({ ...dogWolfOwnerRoles, ...mimeCornerRoles }),
-    [dogWolfOwnerRoles, mimeCornerRoles],
-  );
   const independentPowerStates = useMemo(() => {
     const states: Record<string, ActorPowerState> = {};
     if (actorPlayerId && actorCopiedRole && actorCopiedRole !== "a02") states[actorPlayerId] = actorPowerState;
-    if (mimePlayerId && mimeCopiedRole) states[mimePlayerId] = mimePowerState;
     for (const dogPlayerId of dogWolfPlayerIds) {
       const dogState = dogWolfStates[dogPlayerId];
       if (dogState) states[dogPlayerId] = dogState.powerState;
     }
     return states;
-  }, [actorCopiedRole, actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, mimeCopiedRole, mimePlayerId, mimePowerState]);
+  }, [actorCopiedRole, actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates]);
 
   useEffect(() => {
     if (!drunkardPlayerId) {
@@ -1092,12 +1042,10 @@ const GMRoom = () => {
 
   const handleIndependentPowerStateChange = useCallback((playerId: string, next: ActorPowerState) => {
     const current = dogWolfStates[playerId]?.powerState
-      ?? (playerId === mimePlayerId ? mimePowerState : null)
       ?? (playerId === actorPlayerId ? actorPowerState : null);
     if (!current) return;
     if (next.bigBadWolfCharges > current.bigBadWolfCharges && !playerEffects[playerId]?.has("immunity_full")) {
       toggleEffect(playerId, "immunity_full", playerId);
-      if (playerId === mimePlayerId) setMimeFullImmunityPlayerId(playerId);
     }
     if (next.cupidCharges !== current.cupidCharges) {
       if (isPlayerActingPoisoned(playerId)) {
@@ -1127,12 +1075,10 @@ const GMRoom = () => {
         ...previous,
         [playerId]: { ...previous[playerId], powerState: next },
       }));
-    } else if (playerId === mimePlayerId) {
-      setMimePowerState(next);
     } else if (playerId === actorPlayerId) {
       setActorPowerState(next);
     }
-  }, [actorPlayerId, actorPowerState, dogWolfStates, isPlayerActingPoisoned, isWerewolfAttackSource, killSourcePlayerIds, killSources, mimePlayerId, mimePowerState, playerEffects, playerStatuses, room?.language, toggleEffect]);
+  }, [actorPlayerId, actorPowerState, dogWolfStates, isPlayerActingPoisoned, isWerewolfAttackSource, killSourcePlayerIds, killSources, playerEffects, playerStatuses, room?.language, toggleEffect]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !roomId) return;
@@ -1217,13 +1163,6 @@ const GMRoom = () => {
       setActorCopyNoticeNight(snapshot.actorCopyNoticeNight ?? null);
       setActorPowerState(restoreActorPowerState(snapshot.actorPowerState as LegacyActorPowerState | undefined));
       setDrunkardReplacementRole(snapshot.drunkardReplacementRole ?? null);
-      setMimeCopiedRole(snapshot.mimeCopiedRole ?? null);
-      setMimeReplacementRole(snapshot.mimeReplacementRole ?? null);
-      setMimeOwnerRole(snapshot.mimeOwnerRole ?? null);
-      setMimeCopyNoticeNight(snapshot.mimeCopyNoticeNight ?? null);
-      setMimePowerState(restoreActorPowerState(snapshot.mimePowerState as LegacyActorPowerState | undefined));
-      setMimeAngelSavedPlayerId(snapshot.mimeAngelSavedPlayerId ?? null);
-      setMimeFullImmunityPlayerId(snapshot.mimeFullImmunityPlayerId ?? null);
       setDogWolfStates(restoreDogWolfStates(snapshot.dogWolfStates));
       setSourcedEffectTargets(snapshot.sourcedEffectTargets ?? {});
       setSpiderCaughtBySource(snapshot.spiderCaughtBySource ?? {});
@@ -1290,13 +1229,6 @@ const GMRoom = () => {
       actorCopyNoticeNight,
       actorPowerState,
       drunkardReplacementRole,
-      mimeCopiedRole,
-      mimeReplacementRole,
-      mimeOwnerRole,
-      mimeCopyNoticeNight,
-      mimePowerState,
-      mimeAngelSavedPlayerId,
-      mimeFullImmunityPlayerId,
       dogWolfStates,
       sourcedEffectTargets,
       spiderCaughtBySource,
@@ -1357,13 +1289,6 @@ const GMRoom = () => {
     actorCopyNoticeNight,
     actorPowerState,
     drunkardReplacementRole,
-    mimeCopiedRole,
-    mimeReplacementRole,
-    mimeOwnerRole,
-    mimeCopyNoticeNight,
-    mimePowerState,
-    mimeAngelSavedPlayerId,
-    mimeFullImmunityPlayerId,
     dogWolfStates,
     sourcedEffectTargets,
     spiderCaughtBySource,
@@ -1721,15 +1646,6 @@ const GMRoom = () => {
     setActorCopyNoticeNight(null);
     setActorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
     setDrunkardReplacementRole(null);
-    setMimeCopiedRole(null);
-    setMimeReplacementRole(null);
-    setMimeOwnerRole(null);
-    setMimeCopyNoticeNight(null);
-    setMimePowerState({ ...EMPTY_ACTOR_POWER_STATE });
-    setMimeAngelSavedPlayerId(null);
-    setMimeFullImmunityPlayerId(null);
-    setMimeRevealOpen(false);
-    setMimeRevealCards([]);
     setDogWolfStates({});
     setSourcedEffectTargets({});
     setSpiderCaughtBySource({});
@@ -1955,17 +1871,6 @@ const GMRoom = () => {
       ));
     }
     if (oldRole === "a01" && role !== "a01") setDrunkardReplacementRole(null);
-    if (oldRole === "a03" && role !== "a03") {
-      setMimeCopiedRole(null);
-      setMimeReplacementRole(null);
-      setMimeOwnerRole(null);
-      setMimeCopyNoticeNight(null);
-      setMimePowerState({ ...EMPTY_ACTOR_POWER_STATE });
-      setMimeAngelSavedPlayerId(null);
-      setMimeFullImmunityPlayerId(null);
-      setMimeRevealOpen(false);
-      setMimeRevealCards([]);
-    }
 
     setRoleAssignments((prev) => ({ ...prev, [playerId]: role }));
     if (room?.status === "playing") setPendingChanges(true);
@@ -2064,14 +1969,8 @@ const GMRoom = () => {
     const ownerRole = dogWolfOwnerRoles[playerId]
       ?? (ownerPlayerId ? effectiveRoleAssignments[ownerPlayerId] ?? null : null);
     const objectiveRole = objectiveRoleAssignments[playerId] ?? null;
-    const isMimePlayer = playerId === mimePlayerId;
-    const mimeCornerRole = mimeCopiedRole === "a01"
-      ? mimeReplacementRole
-      : mimeCopiedRole === "a02"
-      ? mimeOwnerRole
-      : null;
     return encodePlayerCharacterMetadata(identity, {
-      ownerRole: isMimePlayer && mimeCornerRole ? mimeCornerRole : ownerRole,
+      ownerRole,
       ownerPlayerId,
       objectiveRole: ownerPlayerId || (objectiveRole && SOLO_OBJECTIVE_ROLES.includes(objectiveRole))
         ? objectiveRole
@@ -2083,9 +1982,8 @@ const GMRoom = () => {
         actorCopiedRole,
         drunkardReplacementRole,
       ),
-      mimeCopiedRole: isMimePlayer ? mimeCopiedRole : null,
     });
-  }, [actorCopiedRole, actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, mimeCopiedRole, mimeOwnerRole, mimePlayerId, mimeReplacementRole, objectiveRoleAssignments]);
+  }, [actorCopiedRole, actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, objectiveRoleAssignments]);
 
   const syncActorCharacter = useCallback((copiedRole: RoleId | null) => {
     if (!actorPlayerId) return;
@@ -2499,8 +2397,7 @@ const GMRoom = () => {
   const handleShamanDrop = useCallback((targetPlayerId: string, sourcePlayerId?: string | null) => {
     const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
     const charges = independentPowerState?.shamanCharges ?? shamanCharges;
-    const isMimeSource = !!sourcePlayerId && roleAssignments[sourcePlayerId] === "a03";
-    if (!isMimeSource && charges >= 2) {
+    if (charges >= 2) {
       toast.warning(getToast("warnShamanUsedAll", (room?.language as Language) || "pt"));
       return;
     }
@@ -2519,7 +2416,7 @@ const GMRoom = () => {
     } else {
       toast.error(getToast("errShamanDragOnlyDead", (room?.language as Language) || "pt"));
     }
-  }, [shamanCharges, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, playerStatuses, roleAssignments, room?.language]);
+  }, [shamanCharges, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, playerStatuses, room?.language]);
 
   const endNight = async () => {
     const newPermanentlyDead = new Set(permanentlyDead);
@@ -2729,66 +2626,12 @@ const GMRoom = () => {
       newEffects[targetPlayerId] = effects;
     }
 
-    const mimeDugUpDeathId = mimePlayerId && mimeCopiedRole === "a05"
-      ? newlyDead.find((pid) => pid !== mimePlayerId && newEffects[pid]?.has("dug_up_mime")) ?? null
-      : null;
-    if (mimePlayerId && mimeDugUpDeathId) {
-      const targetRole = roleAssignments[mimeDugUpDeathId];
-      if (targetRole) {
-        pendingRoleChangeSourcesRef.current.set(mimePlayerId, { sourcePlayerId: mimePlayerId, sourceRole: "a03" });
-        pendingRoleChangeSourcesRef.current.set(mimeDugUpDeathId, { sourcePlayerId: mimePlayerId, sourceRole: "a03" });
-        setRoleAssignments((previous) => ({
-          ...previous,
-          [mimePlayerId]: targetRole,
-          [mimeDugUpDeathId]: "a03",
-        }));
-        setPlayers((previous) => previous.map((player) => {
-          if (player.id === mimePlayerId) return { ...player, character: targetRole };
-          if (player.id === mimeDugUpDeathId) return { ...player, character: "a03" };
-          return player;
-        }));
-        characterUpdates.push(
-          supabase.from("players").update({ character: targetRole }).eq("id", mimePlayerId),
-          supabase.from("players").update({ character: "a03" }).eq("id", mimeDugUpDeathId),
-        );
-        const effects = new Set(newEffects[mimeDugUpDeathId] || []);
-        effects.delete("dug_up_mime");
-        newEffects[mimeDugUpDeathId] = effects;
-        setMimeCopiedRole(null);
-        setMimeReplacementRole(null);
-        setMimeOwnerRole(null);
-        setMimeCopyNoticeNight(null);
-        setMimePowerState({ ...EMPTY_ACTOR_POWER_STATE });
-        setMimeRevealOpen(false);
-        setMimeRevealCards([]);
-      }
-    }
-
-    const mimeAngelResurrectId = mimePlayerId && mimeCopiedRole === "v18" && mimeAngelSavedPlayerId
-      ? mimeAngelSavedPlayerId
-      : null;
-    const resurrectedByMimeAngel: string[] = [];
-    if (mimePlayerId && mimeAngelResurrectId && newPermanentlyDead.has(mimeAngelResurrectId)) {
-      newPermanentlyDead.delete(mimeAngelResurrectId);
-      newStatuses[mimeAngelResurrectId] = "alive";
-      pendingGameActionLogSourcesRef.current.set(`resurrect:${mimeAngelResurrectId}`, mimePlayerId);
-      resetUsesForRole(mimeAngelResurrectId);
-      resurrectedByMimeAngel.push(mimeAngelResurrectId);
-      setPlayers((previous) => previous.map((player) => (
-        player.id === mimeAngelResurrectId ? { ...player, is_alive: true } : player
-      )));
-      characterUpdates.push(
-        supabase.from("players").update({ is_alive: true }).eq("id", mimeAngelResurrectId),
-      );
-    }
-
     // Temporary night markers and Cupid protection end at dawn.
     for (const [pid, effects] of Object.entries(newEffects)) {
-      if (effects.has("dug_up") || effects.has("dug_up_dog") || effects.has("dug_up_mime") || effects.has("immunity_cupid")) {
+      if (effects.has("dug_up") || effects.has("dug_up_dog") || effects.has("immunity_cupid")) {
         const cleaned = new Set(effects);
         cleaned.delete("dug_up");
         cleaned.delete("dug_up_dog");
-        cleaned.delete("dug_up_mime");
         cleaned.delete("immunity_cupid");
         newEffects[pid] = cleaned;
       }
@@ -2799,7 +2642,6 @@ const GMRoom = () => {
       const nextTargets = { ...targets };
       delete nextTargets.dug_up;
       delete nextTargets.dug_up_dog;
-      delete nextTargets.dug_up_mime;
       return [sourcePlayerId, nextTargets];
     })));
     setSpiderCaughtBySource({});
@@ -2811,14 +2653,6 @@ const GMRoom = () => {
     setFortuneTellerFakeMap(null);
     setWerewolfSeerRevealedVictim(null);
     setParanoidKillName(null);
-    setMimeCopiedRole(null);
-    setMimeReplacementRole(null);
-    setMimeOwnerRole(null);
-    setMimeCopyNoticeNight(null);
-    setMimePowerState({ ...EMPTY_ACTOR_POWER_STATE });
-    setMimeAngelSavedPlayerId(null);
-    setMimeRevealOpen(false);
-    setMimeRevealCards([]);
 
     if (newlyDead.length > 0) {
       await Promise.all(
@@ -2831,13 +2665,11 @@ const GMRoom = () => {
     if (characterUpdates.length > 0) {
       await Promise.all(characterUpdates);
     }
-    if (newlyDead.length > 0 || dugUpDeathId || dogGraveSwaps.length > 0 || mimeDugUpDeathId || resurrectedByMimeAngel.length > 0) {
+    if (newlyDead.length > 0 || dugUpDeathId || dogGraveSwaps.length > 0) {
       broadcastPlayerSync([...new Set([
         ...newlyDead,
-        ...resurrectedByMimeAngel,
         ...(dugUpDeathId && a05Id ? [dugUpDeathId, a05Id] : []),
         ...dogGraveSwaps.flatMap(({ dogPlayerId, targetPlayerId }) => [dogPlayerId, targetPlayerId]),
-        ...(mimeDugUpDeathId && mimePlayerId ? [mimeDugUpDeathId, mimePlayerId] : []),
       ])]);
     }
 
@@ -3036,10 +2868,8 @@ const GMRoom = () => {
       const cleaned = new Set(effects);
       if (abilityRoleAssignments[pid] === "m01") cleaned.delete("immunity_full");
       if (vintnerImmunityTargetIds.has(pid)) cleaned.delete("immunity_full");
-      if (pid === mimeFullImmunityPlayerId) cleaned.delete("immunity_full");
       newEffects[pid] = cleaned;
     }
-    if (mimeFullImmunityPlayerId) setMimeFullImmunityPlayerId(null);
     if (vintnerImmunityTargetIds.size > 0) {
       setSourcedEffectTargets((previous) => {
         let changed = false;
@@ -3813,7 +3643,6 @@ const GMRoom = () => {
       handleSetIllusion(targetPlayerId, sourcePlayerId);
     } else if (action.startsWith("role-")) {
       const roleSource = action.replace("role-", "");
-      const isMimeSource = !!sourcePlayerId && roleAssignments[sourcePlayerId] === "a03";
       // Role-specific drag actions that add effects instead of killing
       if (roleSource === "a02") {
         const dogPlayerId = sourcePlayerId && dogWolfPlayerIds.includes(sourcePlayerId)
@@ -4029,7 +3858,7 @@ const GMRoom = () => {
       else if (roleSource === "v18") {
         // Angel: needs to be perma-dead target. If poisoned → random other perma-dead.
         const charges = independentPowerState?.angelCharges ?? angelCharges;
-        if (!isMimeSource && charges >= 2) {
+        if (charges >= 2) {
           toast.warning(getToast("warnAngelUsedAll", (room?.language as Language) || "pt"));
           return;
         }
@@ -4046,14 +3875,10 @@ const GMRoom = () => {
           }
         }
         if (resurrectId && permanentlyDead.has(resurrectId)) {
-          if (isMimeSource) {
-            setMimeAngelSavedPlayerId(resurrectId);
-          } else {
-            handlePlayerStatusChange(resurrectId, "alive", undefined, sourcePlayerId);
-            resetUsesForRole(resurrectId);
-            if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, angelCharges: Math.min(independentPowerState.angelCharges + 1, 2) });
-            else setAngelCharges((c) => Math.min(c + 1, 2));
-          }
+          handlePlayerStatusChange(resurrectId, "alive", undefined, sourcePlayerId);
+          resetUsesForRole(resurrectId);
+          if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, angelCharges: Math.min(independentPowerState.angelCharges + 1, 2) });
+          else setAngelCharges((c) => Math.min(c + 1, 2));
         } else if (resurrectId) {
           toast.warning(getToast("warnAngelUsedAll", (room?.language as Language) || "pt"));
         }
@@ -4111,7 +3936,7 @@ const GMRoom = () => {
       }
       else if (roleSource === "v10" || roleSource === "v10-poisoned") {
         const charges = independentPowerState?.paranoidCharges ?? paranoidCharges;
-        if (!isMimeSource && charges >= 2) {
+        if (charges >= 2) {
           toast.warning(getToast("warnParanoidUsedAll", (room?.language as Language) || "pt"));
           return;
         }
@@ -4124,10 +3949,8 @@ const GMRoom = () => {
           toast.info(format(getToast("infoParanoidPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
         }
         handlePlayerStatusChange(killId, "dead-this-night", publicSourceRole ?? "v10", sourcePlayerId);
-        if (!isMimeSource) {
-          if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, paranoidCharges: Math.min(independentPowerState.paranoidCharges + 1, 2) });
-          else setParanoidCharges((c) => Math.min(c + 1, 2));
-        }
+        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, paranoidCharges: Math.min(independentPowerState.paranoidCharges + 1, 2) });
+        else setParanoidCharges((c) => Math.min(c + 1, 2));
         setParanoidKillName(players.find(p => p.id === killId)?.name || null);
         setDayKilledPlayerIds((prev) => [...prev, killId]);
       }
@@ -4157,8 +3980,7 @@ const GMRoom = () => {
           return;
         }
         const dogGraveRobber = !!dogWolfStates[a05Id];
-        const mimeGraveRobber = roleAssignments[a05Id] === "a03";
-        const effectKey: StatusEffect = mimeGraveRobber ? "dug_up_mime" : dogGraveRobber ? "dug_up_dog" : "dug_up";
+        const effectKey: StatusEffect = dogGraveRobber ? "dug_up_dog" : "dug_up";
         applySourcedEffect(a05Id, targetPlayerId, effectKey);
         toast.success(getToast("okGraveRobber", (room?.language as Language) || "pt"));
       }
@@ -4306,58 +4128,6 @@ const GMRoom = () => {
     return activeRecipients;
   }, [abilityRoleAssignments, activeDogWolfPlayerIds, dogWolfStates, getRolePlayerId, isPlayerActingPoisoned, permanentlyDead]);
 
-  const getMimeCopyCandidate = useCallback((): { role: RoleId; cornerRole: RoleId | null; mechanicRole: RoleId | null } | null => {
-    const rolesInGame = new Set(
-      Object.values(roleAssignments).filter((role): role is RoleId => (
-        role !== "a03" && MIME_COPY_ROLES.includes(role)
-      )),
-    );
-    const hasRedX = Object.values(playerStatuses).some((status) => status === "dead-this-night");
-    const hasPermaDead = permanentlyDead.size > 0;
-    const hasInnocentVote = Object.values(playerEffects).some((effects) => effects.has("inocentado"));
-    const dogCopies = activeDogWolfPlayerIds.flatMap((dogPlayerId) => {
-      const state = dogWolfStates[dogPlayerId];
-      const ownerRole = state?.ownerPlayerId && !state.independentRole && !state.actorModeActive
-        ? abilityRoleAssignments[dogPlayerId]
-        : null;
-      return ownerRole && ownerRole !== "a02" ? [{ dogPlayerId, ownerRole }] : [];
-    });
-
-    const redXRequiredRoles = new Set<RoleId>(["e03", "v01", "m02", "a05", "l06"]);
-    const candidates = Array.from(rolesInGame).filter((role) => {
-      if (redXRequiredRoles.has(role) && !hasRedX) return false;
-      if (role === "v18" && !hasPermaDead) return false;
-      if (role === "v15" && !hasInnocentVote) return false;
-      if (role === "a02" && dogCopies.length === 0) return false;
-      return true;
-    });
-    if (candidates.length === 0) return null;
-    const role = candidates[Math.floor(Math.random() * candidates.length)];
-    if (role === "a01") {
-      const replacement = drunkardReplacementRole
-        ?? pickDrunkardReplacement(Object.values(roleAssignments).filter((candidate) => candidate !== "a01" && candidate !== "a03"));
-      return { role, cornerRole: replacement, mechanicRole: replacement };
-    }
-    if (role === "a02") {
-      const dogCopy = dogCopies[Math.floor(Math.random() * dogCopies.length)];
-      return { role, cornerRole: dogCopy.ownerRole, mechanicRole: dogCopy.ownerRole };
-    }
-    return { role, cornerRole: null, mechanicRole: role };
-  }, [abilityRoleAssignments, activeDogWolfPlayerIds, dogWolfStates, drunkardReplacementRole, permanentlyDead.size, playerEffects, playerStatuses, roleAssignments]);
-
-  const buildMimeRevealCard = useCallback((role: RoleId, cornerRole: RoleId | null): RevealCard => {
-    const localLang = (room?.language as Language) || "pt";
-    const label = cornerRole
-      ? `${getRoleLabel(role, localLang)} (+ ${getRoleLabel(cornerRole, localLang)})`
-      : getRoleLabel(role, localLang);
-    return {
-      image: ROLES[role].image,
-      label,
-      roleId: role,
-      cornerRoleId: cornerRole ?? undefined,
-    };
-  }, [room?.language]);
-
   const generateFakeMap = useCallback((viewerPlayerId: string | null) => {
     if (!isPlayerActingPoisoned(viewerPlayerId ?? "") || lastNightDeadPlayerIds.length === 0) return null;
     const inPlayRoles = Object.values(roleAssignments).filter((r) => r !== "e04");
@@ -4377,36 +4147,6 @@ const GMRoom = () => {
     }
     return map;
   }, [isPlayerActingPoisoned, lastNightDeadPlayerIds, roleAssignments]);
-
-  const handleMimeReveal = useCallback((sourcePlayerId?: string | null) => {
-    const mimeId = sourcePlayerId && roleAssignments[sourcePlayerId] === "a03" ? sourcePlayerId : mimePlayerId;
-    if (!mimeId) return;
-    const candidate = getMimeCopyCandidate();
-    if (!candidate?.mechanicRole) {
-      toast.warning(getToast("warnNoTargets", (room?.language as Language) || "pt"));
-      return;
-    }
-    const card = buildMimeRevealCard(candidate.role, candidate.cornerRole);
-    setMimeCopiedRole(candidate.role);
-    setMimeReplacementRole(candidate.role === "a01" ? candidate.mechanicRole : null);
-    setMimeOwnerRole(candidate.role === "a02" ? candidate.mechanicRole : null);
-    setMimeCopyNoticeNight(nightNumber);
-    setMimePowerState({ ...EMPTY_ACTOR_POWER_STATE });
-    setMimeRevealCards([card]);
-    setMimeRevealOpen(true);
-    markScriptRoleAction("a03", mimeId);
-    if (!roomId) return;
-    supabase.channel(`mime-reveal-${roomId}`).send({
-      type: "broadcast",
-      event: "mime-reveal",
-      payload: {
-        show: true,
-        byPlayerId: {
-          [mimeId]: { cards: [card] },
-        },
-      },
-    });
-  }, [buildMimeRevealCard, getMimeCopyCandidate, markScriptRoleAction, mimePlayerId, nightNumber, roleAssignments, room?.language, roomId]);
 
   const handleFortuneTellerReveal = useCallback(async (sourcePlayerId?: string | null) => {
     const recipients = getRevealRecipientIds("e04", sourcePlayerId, "poison-sensitive");
@@ -4575,10 +4315,10 @@ const GMRoom = () => {
   const werewolfSeerVictim = useMemo(() => {
     const victimId = Object.entries(playerStatuses).find(([pid, s]) => {
       const src = killSources[pid];
-      return s === "dead-this-night" && !!src && isWerewolfAttackSource(src, killSourcePlayerIds[pid]);
+      return s === "dead-this-night" && (src === "e01" || (src && WEREWOLF_ROLES.includes(src as RoleId)) || (src === "a04" && !!actorCopiedRole && WEREWOLF_ROLES.includes(actorCopiedRole)));
     })?.[0];
     return victimId ? players.find((p) => p.id === victimId) : null;
-  }, [isWerewolfAttackSource, killSourcePlayerIds, playerStatuses, killSources, players]);
+  }, [actorCopiedRole, playerStatuses, killSources, players]);
 
   const handleWerewolfSeerReveal = useCallback((sourcePlayerId?: string | null) => {
     if (!werewolfSeerVictim) return;
@@ -4811,7 +4551,7 @@ const GMRoom = () => {
 
     for (const poisonedId of poisonedPlayerIds) {
       const poisonedRole = abilityRoleAssignments[poisonedId];
-      if (poisonedRole === "v12" && roleAssignments[poisonedId] !== "a03") {
+      if (poisonedRole === "v12") {
         const name = players.find(p => p.id === poisonedId)?.name;
         if (name && !(playerEffects[poisonedId]?.has("vote_double"))) {
           lines.push(`{${name}} ${votesDouble}`);
@@ -5185,7 +4925,7 @@ const GMRoom = () => {
                   totalSlots={seatedPlayersCount}
                   onDropPlayer={updateSeatPosition}
                   isGM
-                  roleAssignments={rolesAssigned ? displayRoleAssignments : undefined}
+                  roleAssignments={rolesAssigned ? effectiveRoleAssignments : undefined}
                   abilityRoleAssignments={rolesAssigned ? abilityRoleAssignments : undefined}
                   baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                   playerStatuses={playerStatuses}
@@ -5257,7 +4997,7 @@ const GMRoom = () => {
                     const role = abilityRoleAssignments[playerId];
                     if (role) markScriptRoleAction(role, playerId);
                   }}
-                  dogWolfOwnerRoles={displayOwnerRoles}
+                  dogWolfOwnerRoles={dogWolfOwnerRoles}
                   dogWolfStates={dogWolfStates}
                   onDogActorIdolUseToggle={(playerId, idx) => {
                     setDogWolfStates((previous) => {
@@ -5356,7 +5096,6 @@ const GMRoom = () => {
                     onLittleGirlReveal={handleLittleGirlReveal}
                     onLamplighterReveal={handleLamplighterReveal}
                     onWerewolfSeerReveal={werewolfSeerVictim ? handleWerewolfSeerReveal : undefined}
-                    onMimeReveal={handleMimeReveal}
                     houseMaidDynamicText={houseMaidDynamicText}
                     playerStatuses={playerStatuses}
                     foxDisabled={foxDisabled}
@@ -5393,10 +5132,6 @@ const GMRoom = () => {
                     actorCopyNoticeNight={actorCopyNoticeNight}
                     actorPowerState={actorPowerState}
                     onActorPowerStateChange={handleActorPowerStateChange}
-                    mimePlayerId={mimePlayerId}
-                    mimeCopiedRole={mimeCopiedRole}
-                    mimeMechanicalRole={mimeMechanicalRole}
-                    mimeCopyNoticeNight={mimeCopyNoticeNight}
                     deathTriggeredSourcePlayerIds={deathTriggeredSourcePlayerIds}
                     dogWolfStates={dogWolfStates}
                     dogWolfPlayerIds={dogWolfPlayerIds}
@@ -5832,13 +5567,13 @@ const GMRoom = () => {
                     totalSlots={players.length}
                     onDropPlayer={updateSeatPosition}
                     isGM
-                    roleAssignments={rolesAssigned ? displayRoleAssignments : undefined}
+                    roleAssignments={rolesAssigned ? effectiveRoleAssignments : undefined}
                     abilityRoleAssignments={rolesAssigned ? abilityRoleAssignments : undefined}
                     baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                     compact
                     onDragAction={handleDragAction}
                     actorCopiesDrunkard={actorCopiedRole === "a01"}
-                    dogWolfOwnerRoles={displayOwnerRoles}
+                    dogWolfOwnerRoles={dogWolfOwnerRoles}
                     dogWolfStates={dogWolfStates}
                   />
                 </div>
@@ -5979,15 +5714,6 @@ const GMRoom = () => {
         players={players}
         isFortuneTellerPoisoned={fortuneTellerModalPoisoned}
         precomputedFakeMap={fortuneTellerFakeMap}
-        onRoleClick={(roleId) => openRulebook(roleId)}
-      />
-
-      <RevealModal
-        language={lang}
-        open={mimeRevealOpen}
-        onClose={() => setMimeRevealOpen(false)}
-        title={roleLabel("a03")}
-        cards={mimeRevealCards}
         onRoleClick={(roleId) => openRulebook(roleId)}
       />
 

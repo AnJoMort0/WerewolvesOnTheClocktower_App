@@ -6,7 +6,6 @@ const OWNER_PLAYER_KEY = "ownerPlayer";
 const OBJECTIVE_ROLE_KEY = "objectiveRole";
 const OBJECTIVE_EFFECTS_KEY = "objectives";
 const DOG_ACTOR_COPY_KEY = "dogActorCopy";
-const MIME_COPY_KEY = "mimeCopy";
 
 export const OBJECTIVE_EFFECT_IDS = ["namorado", "evil_being", "werewolf_turned"] as const;
 export type ObjectiveEffectId = typeof OBJECTIVE_EFFECT_IDS[number];
@@ -17,7 +16,6 @@ export type PlayerCharacterMetadata = {
   objectiveRole: RoleId | null;
   objectiveEffects: ObjectiveEffectId[];
   dogActorCopiedRole: RoleId | null;
-  mimeCopiedRole?: RoleId | null;
 };
 
 export function stripPlayerCharacterMetadata(character: string | null | undefined): string | null {
@@ -47,8 +45,6 @@ export function parsePlayerCharacterMetadata(character: string | null | undefine
   );
   const dogActorCopiedRole = params.get(DOG_ACTOR_COPY_KEY) as RoleId | null;
   if (dogActorCopiedRole && ROLES[dogActorCopiedRole]) metadata.dogActorCopiedRole = dogActorCopiedRole;
-  const mimeCopiedRole = params.get(MIME_COPY_KEY) as RoleId | null;
-  if (mimeCopiedRole && ROLES[mimeCopiedRole]) metadata.mimeCopiedRole = mimeCopiedRole;
   return metadata;
 }
 
@@ -61,7 +57,6 @@ export function encodePlayerCharacterMetadata(
   if (metadata.ownerPlayerId) params.set(OWNER_PLAYER_KEY, metadata.ownerPlayerId);
   if (metadata.objectiveRole) params.set(OBJECTIVE_ROLE_KEY, metadata.objectiveRole);
   if (metadata.dogActorCopiedRole) params.set(DOG_ACTOR_COPY_KEY, metadata.dogActorCopiedRole);
-  if (metadata.mimeCopiedRole) params.set(MIME_COPY_KEY, metadata.mimeCopiedRole);
   const objectiveEffects = metadata.objectiveEffects?.filter(
     (effect): effect is ObjectiveEffectId => OBJECTIVE_EFFECT_IDS.includes(effect),
   );

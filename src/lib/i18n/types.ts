@@ -44,7 +44,6 @@ export type EffectKey =
   | "adoptive_dad_dog"
   | "enemy_dog"
   | "dug_up_dog"
-  | "dug_up_mime"
   | "owner";
 
 export type WinKind = "village" | "werewolves" | "lovers" | "whiteWolf" | "secretLover" | "tie";

@@ -18,24 +18,21 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] 
-
-## Fixes
-
 * [ ] v24 and l06 cannot be drag-dropped from the player list (I have maybe not be checking all the drag-drops options, but drag-drops should be able to be done from:
   script -> circle || player list
   circle -> circle || player list
   player list -> circle || player list
 so make sure that's the case for every drag-drop action)
 
+## Fixes
+
+* [ ] 
+
 ## Balance Changes
 
 * [ ] 
 
 ## Additions
-
-* [x] Add functionality a03: Mime copy reveal and copied-power handling in the GM script and player device.
-  * Note: implemented with GM/player reveal modals, temporary copied-card display, copied script lines/actions, and the listed special cases. TypeScript validation still needs to be run when tool approvals are available again.
 
 * [ ] Add functionality a03:
   * [ ] In his script line he has an eye icon. The eye icon makes a modal in the GM and player device with a random card in game, dead or alive from the MIME_COPY_ROLES list.
