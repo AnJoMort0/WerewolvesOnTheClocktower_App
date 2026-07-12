@@ -159,6 +159,10 @@ export function isDetectableWerewolfRole(roleId: RoleId): boolean {
 
 export const WEB_IMMUNE_ROLES: RoleId[] = ["v10", "v18", "v22"];
 
+export const MIME_COPY_ROLES: RoleId[] = [
+  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03",  "v04",  "v05",  "v08",  "v09",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06",  "l06"
+];
+
 /** Information characters — randomizer tries to include at least one of these. */
 export const INFO_ROLES: RoleId[] = ["v02", "v03", "v04", "v05", "v06", "v22", "v23", "v25"];
 

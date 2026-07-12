@@ -18,16 +18,15 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [x] Make the rulebook script lines more readable by making them a proper list with "-" or a dot before
-  * Codex note 2026-07-12: Rulebook night-script lines now render as a proper bulleted list.
+* [ ] v24 and l06 cannot be drag-dropped from the player list (I have maybe not be checking all the drag-drops options, but drag-drops should be able to be done from:
+  script -> circle || player list
+  circle -> circle || player list
+  player list -> circle || player list
+so make sure that's the case for every drag-drop action)
 
 ## Fixes
 
-* [x] Is it possible to change in fr.ts and pt.ts the lines : "requires: ["e01", "m01", "m02", "m03", "m06", "s02"]" to "requires: WEREWOLF_ROLES" from roles.ts? And also in rulebookContents.ts "refs: ["e01", "m01", "m02", "m03", "m06", "s02"]"
-  * Codex note 2026-07-12: Shared werewolf refs now use WEREWOLF_ROLES.
-* [x] For consistency all the names for the characters used in code should use the english names not the portuguese names, for example: onMeninaReveal --> onLittleGirlReveal. (for long names, abbreviations can be used, like Little Red Riding Hood --> RedHood). I added en.ts that just include the character names for now, for reference.
-  * Codex note 2026-07-12: Role-facing identifiers, callbacks, condition keys, reveal channels, actor power fields, and the FortuneTeller modal file were renamed to English. Legacy Portuguese snapshot aliases are retained only in restore helpers for compatibility.
-* [x] If possible, make it so the manual character selection list follows the RULEBOOK_CHARACTER_ORDER
+* [ ] 
 
 ## Balance Changes
 
@@ -35,19 +34,31 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [x] Implement the new characters features (add their script lines present in Rulebookcontent to the GM script too, in the correct placement):
-  * Codex note 2026-07-12: Implemented v24 poison/immunity, v25 asleep script state, l05 werewolf-night block, l06 red-X resurrection/sacrifice, and m06 hidden werewolf behavior.
-  * [ ] v24: Every night can poison someone (same rules for poison removal after death like the witch). The target also get full immunity for that night and the next day (unlike the Saviour that only lasts for that night). If poisoned another random player gets the effect instead.
-  * [ ] v25: Just add the script line. When poisoned, he doesn't wake up, so strickthrogh and priestAsleep
-  * [ ] l05: No script line, the werewolves just don't wake up the night after his death. Same effect as werewolves poisoned.
-  * [ ] l06: Can be drag-dropped on a redX player, if so, the redX player will ressurect, but the l06 will become redX. If poisoned this doensn't work.
-  * [ ] m06: Acts as a normal werewolf character but every character that knows about evil beings and werewolves will never count this card (example, the bear will not roar, the crow will not count him, etc)
+* [ ] Add functionality a03:
+  * [ ] In his script line he has an eye icon. The eye icon makes a modal in the GM and player device with a random card in game, dead or alive from the MIME_COPY_ROLES list.
+    If the GM closes the modal, it stays on in the player device because, the player's device modal as a check or "ok" button, when they press that button, the modal closes, their card gets replaced with the shown card until dawn with a small mime card at the bottom (like the Actor does), same in GM device.
+    A difference with the Actor is that the Mime keeps his objective (always villager).
+    The mime script line is replaced with the script line of the shown character but in paranthesis, drag-drop actions, eye icon actions, etc will trigger the powers of the copied card.
+    Here's a few special case scenarios:
+      There's no limited uses for any power and the Mime can copy powers that have been fully used up
+      e03 and other characters that have their script line tied to redX characters can only appear to the Mime when there are redX characters
+      a01: shows the a01 card with a small corner card for the role he is replacing. The mime will act as the replaced role receiving poisoned results excatly like the drunkard would
+      a02: Only shows when the dog is copying an owner. Shows the a02 card with a corner owner card. Mime acts as the owner.
+      a05: Targets a redX character and changes cards with them (the redX becomes a mime, the mime becomes the target). Use the dug_up_mime.png for the switch.
+      e01/v08: must just kill a player of the mime's choice straight away
+      v10: can choose to kill a player straight away
+      m01: the mime can choose to get full immunity for a day and night
+      m02: can choose to save the victim of the werewolves and sees their card
+      s01: can give the immunity to the lovers
+      v02/v05/v20: receives the information as if he is the tamer/maid
+      v12: just poisons himself if he steals the poison, no double vote abilities tied to it
+      v15: can only show if it there is a vote_innocent player
+      v18: can only appear if there are permadead players. can choose to save one of them that gets ressurected at dawn
+    If the Mime kills someone regardless of the power he is copying, the little girl will see the Mime card.
+    If poisoned act as the copied abilities poisoned effect.
   
-
-
 ## Future Plans
 
-* [ ] Add the fonctionnality for the complex characters not yet deployed
 * [ ] Add skin packs
 * [ ] Adding phone interactions:
     * [ ] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device screen changes to the player circle and a poison button option appears, when the player clicks that button, he is in poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script.
