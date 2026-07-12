@@ -381,6 +381,7 @@ export const PlayerCircle = ({
         const baseRole = seated && !hideSensitiveInfo ? baseRoleAssignments?.[seated.id] : undefined;
         const isActor = baseRole === "a04";
         const isDrunkard = baseRole === "a01";
+        const isMime = baseRole === "a03";
         const roleDef = role ? ROLES[role] : null;
         const rawStatus = seated ? (playerStatuses[seated.id] || "alive") : "alive";
         const rawIsPermanentlyDead = seated ? permanentlyDead.has(seated.id) : false;
@@ -497,6 +498,13 @@ export const PlayerCircle = ({
                     src={ROLES.a01.image}
                     alt={roleLabel("a01")}
                     className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-green-400 object-cover shadow"
+                  />
+                )}
+                {isMime && role !== "a03" && (
+                  <img
+                    src={ROLES.a03.image}
+                    alt={roleLabel("a03")}
+                    className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-cyan-300 object-cover shadow"
                   />
                 )}
                 {seated && dogWolfOwnerRoles[seated.id] && (

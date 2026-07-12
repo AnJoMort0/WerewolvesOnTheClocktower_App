@@ -75,6 +75,7 @@ interface NightScriptProps {
   onLittleGirlReveal?: (sourcePlayerId?: string | null) => void;
   onLamplighterReveal?: (sourcePlayerId?: string | null) => void;
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
+  onMimeReveal?: (sourcePlayerId?: string | null) => void;
   // Inline checkbox state for roles with limited uses
   paranoidCharges?: number;
   onParanoidChargeToggle?: (idx: number) => void;
@@ -103,6 +104,10 @@ interface NightScriptProps {
   actorCopyNoticeNight?: number | null;
   actorPowerState?: ActorPowerState;
   onActorPowerStateChange?: (state: ActorPowerState) => void;
+  mimePlayerId?: string | null;
+  mimeCopiedRole?: RoleId | null;
+  mimeMechanicalRole?: RoleId | null;
+  mimeCopyNoticeNight?: number | null;
   deathTriggeredSourcePlayerIds?: Record<string, string[]>;
   dogWolfStates?: DogWolfStates;
   dogWolfPlayerIds?: string[];
@@ -128,6 +133,7 @@ type ScriptRenderItem = {
   dogWolfStandalone?: boolean;
   dogWolfActingPoisoned?: boolean;
   actingPoisoned?: boolean;
+  mimeLine?: boolean;
   sourcePlayerId?: string | null;
 };
 
@@ -209,6 +215,7 @@ function ScriptLineDisplay({
   onLittleGirlReveal,
   onLamplighterReveal,
   onWerewolfSeerReveal,
+  onMimeReveal,
   dynamicText,
   foxDisabled,
   onFoxDisabledToggle,
@@ -247,6 +254,7 @@ function ScriptLineDisplay({
   dogWolfCopiedRole,
   dogWolfActingPoisoned,
   actingPoisoned,
+  mimeLine,
 }: {
   line: ScriptLine;
   poisonedRoles: Set<RoleId>;
@@ -260,6 +268,7 @@ function ScriptLineDisplay({
   onLittleGirlReveal?: (sourcePlayerId?: string | null) => void;
   onLamplighterReveal?: (sourcePlayerId?: string | null) => void;
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
+  onMimeReveal?: (sourcePlayerId?: string | null) => void;
   dynamicText?: string;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
@@ -298,6 +307,7 @@ function ScriptLineDisplay({
   dogWolfCopiedRole?: RoleId | null;
   dogWolfActingPoisoned?: boolean;
   actingPoisoned?: boolean;
+  mimeLine?: boolean;
 }) {
   const lang = useLanguage();
   const originalText = dynamicText ?? line.text;
@@ -307,6 +317,8 @@ function ScriptLineDisplay({
     ? originalText.replace(/(\{[^}]+\})/, `$1 (+ {${getRoleLabel("a04", lang)}})`)
     : actorLine && actorCopiedRole
     ? originalText.replace(replaceAllRoleTokens ? /\{[^}]+\}/g : /\{[^}]+\}/, `{${getRoleLabel("a04", lang)}}`)
+    : mimeLine
+    ? `(${originalText})`
     : originalText;
   const isStrikethrough = rawDisplayText.startsWith("~~") && rawDisplayText.endsWith("~~");
   const displayText = isStrikethrough ? rawDisplayText.slice(2, -2) : rawDisplayText;
@@ -335,6 +347,7 @@ function ScriptLineDisplay({
   const isAccuserLine = line.requires?.length === 1 && line.requires[0] === ("v14" as RoleId);
   const isSpiderCaughtLine = line.requires?.length === 1 && line.requires[0] === ("v23" as RoleId) && line.conditionKey === "spiderHasCaught";
   const isSpyLine = line.requires?.length === 1 && line.requires[0] === ("f02" as RoleId) && line.conditionKey === "spyHasUnseen";
+  const isMimeRevealLine = line.requires?.length === 1 && line.requires[0] === ("a03" as RoleId);
   const isA05Line = line.requires?.length === 1 && line.requires[0] === ("a05" as RoleId);
   const isA05Poisoned = sourcePlayerId ? isPoisonedLine : !!poisonedPlayerId && roleAssignments[poisonedPlayerId] === "a05";
   const a05Strike = isA05Line && isA05Poisoned;
@@ -523,6 +536,9 @@ function ScriptLineDisplay({
         {isWerewolfSeerLine && onWerewolfSeerReveal && (
           <button onClick={(e) => { e.stopPropagation(); onWerewolfSeerReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
+        {isMimeRevealLine && onMimeReveal && (
+          <button onClick={(e) => { e.stopPropagation(); onMimeReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
+        )}
         {isSpiderCaughtLine && !dynamicText && onSpiderReveal && (
           <button onClick={(e) => { e.stopPropagation(); onSpiderReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
@@ -589,6 +605,10 @@ export const NightScript = ({
   actorCopyNoticeNight = null,
   actorPowerState = EMPTY_ACTOR_POWER_STATE,
   onActorPowerStateChange,
+  mimePlayerId = null,
+  mimeCopiedRole = null,
+  mimeMechanicalRole = null,
+  mimeCopyNoticeNight = null,
   deathTriggeredSourcePlayerIds = {},
   dogWolfStates = {},
   dogWolfPlayerIds = [],
@@ -1031,6 +1051,30 @@ export const NightScript = ({
         });
       }
 
+      const isMimeCopiedRoleLine = !!mimePlayerId
+        && !!mimeMechanicalRole
+        && line.requires?.includes(mimeMechanicalRole);
+      const mimeCanPerform = !!mimePlayerId
+        && (!_permanentlyDeadPlayerIds.has(mimePlayerId) || prophecyGhostPlayerIds.has(mimePlayerId));
+      if (isMimeCopiedRoleLine && mimeCanPerform) {
+        const mimeImmediateHunterKill = mimeMechanicalRole === "v08"
+          && (line.conditionKey === "hunterDied" || line.conditionKey === "redHoodExecuted");
+        const conditionMatches = mimeImmediateHunterKill
+          || (!line.conditionKey || !!conditionKeys[line.conditionKey])
+          && (line.conditionKey !== "spiderHasCaught" || (spiderCaughtBySource[mimePlayerId]?.length ?? 0) > 0);
+        const mimeFortuneTellerVisible = !(line.requires?.length === 1 && line.requires[0] === "e04" && !shouldShowFortuneTellerLine);
+        if (conditionMatches && mimeFortuneTellerVisible) {
+          items.push({
+            line,
+            key: `${nightNumber}:${source}:${index}:mime:${mimePlayerId}`,
+            progressOrder,
+            sourcePlayerId: mimePlayerId,
+            mimeLine: true,
+            actingPoisoned: isPlayerActingPoisoned(mimePlayerId),
+          });
+        }
+      }
+
       const dogPlayerIdsForLine = dogWolfPlayerIds.filter((dogPlayerId) => {
         if (_permanentlyDeadPlayerIds.has(dogPlayerId) && !prophecyGhostPlayerIds.has(dogPlayerId)) return false;
         const state = dogWolfStates[dogPlayerId];
@@ -1127,7 +1171,7 @@ export const NightScript = ({
     }
 
     return lines;
-  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource, mimeMechanicalRole, mimePlayerId]);
 
   useEffect(() => {
     if (!onScriptRolesVisible) return;
@@ -1224,6 +1268,7 @@ export const NightScript = ({
                 onLittleGirlReveal={onLittleGirlReveal}
                 onLamplighterReveal={onLamplighterReveal}
                 onWerewolfSeerReveal={onWerewolfSeerReveal}
+                onMimeReveal={onMimeReveal}
                 dynamicText={getDynamicText(item.line, sourcePlayerId, !!item.dogWolfLine)}
                 foxDisabled={usesIndependentPowerState ? powerState.foxDisabled : foxDisabled}
                 onFoxDisabledToggle={usesIndependentPowerState ? () => toggleBoolean("foxDisabled") : onFoxDisabledToggle}
@@ -1270,6 +1315,7 @@ export const NightScript = ({
                 dogWolfCopiedRole={item.dogWolfLine && sourcePlayerId ? abilityRoleAssignments[sourcePlayerId] : null}
                 dogWolfActingPoisoned={item.dogWolfActingPoisoned}
                 actingPoisoned={item.actingPoisoned}
+                mimeLine={item.mimeLine}
               />
               );
             })}
