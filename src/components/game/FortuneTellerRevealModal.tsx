@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { ROLES, type RoleId } from "@/lib/roles";
 import { useLanguage, getRoleLabel, useT } from "@/lib/i18n";
 
-interface VidenteRevealModalProps {
+interface FortuneTellerRevealModalProps {
   open: boolean;
   onClose: () => void;
   deadPlayerIds: string[];
@@ -12,13 +12,13 @@ interface VidenteRevealModalProps {
   illusionPlayerIds?: Iterable<string>;
   roleAssignments: Record<string, RoleId>;
   players: Array<{ id: string; name: string }>;
-  isVidentePoisoned?: boolean;
+  isFortuneTellerPoisoned?: boolean;
   precomputedFakeMap?: Record<string, string> | null;
   dismissible?: boolean;
   onRoleClick?: (roleId: RoleId) => void;
 }
 
-export const VidenteRevealModal = ({
+export const FortuneTellerRevealModal = ({
   open,
   onClose,
   deadPlayerIds,
@@ -26,11 +26,11 @@ export const VidenteRevealModal = ({
   illusionPlayerIds,
   roleAssignments,
   players,
-  isVidentePoisoned = false,
+  isFortuneTellerPoisoned = false,
   precomputedFakeMap = null,
   dismissible = true,
   onRoleClick,
-}: VidenteRevealModalProps) => {
+}: FortuneTellerRevealModalProps) => {
   const lang = useLanguage();
   const t = useT();
   const illusionIds = useMemo(
@@ -40,7 +40,7 @@ export const VidenteRevealModal = ({
 
   const fakeRoleMap = useMemo(() => {
     if (precomputedFakeMap) return precomputedFakeMap as Record<string, RoleId>;
-    if (!isVidentePoisoned || deadPlayerIds.length === 0) return null;
+    if (!isFortuneTellerPoisoned || deadPlayerIds.length === 0) return null;
 
     const inPlayRoles = Object.values(roleAssignments).filter((r) => r !== "e04");
     const uniqueInPlay = [...new Set(inPlayRoles)];
@@ -60,7 +60,7 @@ export const VidenteRevealModal = ({
       map[pid] = candidateRoles[idx];
     }
     return map;
-  }, [isVidentePoisoned, deadPlayerIds, roleAssignments, precomputedFakeMap]);
+  }, [isFortuneTellerPoisoned, deadPlayerIds, roleAssignments, precomputedFakeMap]);
 
   if (!open) return null;
 
@@ -98,7 +98,7 @@ export const VidenteRevealModal = ({
                 const actualRole = roleAssignments[pid];
 
                 let displayRole: RoleId;
-                if (isVidentePoisoned && fakeRoleMap?.[pid]) {
+                if (isFortuneTellerPoisoned && fakeRoleMap?.[pid]) {
                   displayRole = fakeRoleMap[pid] as RoleId;
                 } else if (illusionIds.has(pid)) {
                   displayRole = "a06" as RoleId;

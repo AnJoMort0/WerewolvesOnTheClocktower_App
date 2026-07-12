@@ -135,6 +135,20 @@
     padding-left: 1.4rem;
   }
 
+  .rulebook-content .rulebook-night-script-list {
+    list-style: disc;
+    padding-left: 1.5rem;
+  }
+
+  .rulebook-content .rulebook-night-script-list li {
+    margin: 0.45rem 0;
+    padding-left: 0.15rem;
+  }
+
+  .rulebook-content .rulebook-night-script-list li::marker {
+    color: hsl(var(--gold));
+  }
+
   .rulebook-content blockquote {
     border-left: 3px solid hsl(var(--gold));
     background: hsl(var(--card) / 0.7);

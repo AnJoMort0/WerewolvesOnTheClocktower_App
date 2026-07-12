@@ -6,7 +6,7 @@ import { Clock, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
-import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
+import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealModal";
 import { RevealModal, type RevealCard } from "@/components/game/RevealModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
@@ -46,19 +46,19 @@ const PlayerView = () => {
   });
   const [roomPlayers, setRoomPlayers] = useState<RoomPlayer[]>([]);
   const [characterKey, setCharacterKey] = useState(0);
-  const [videnteReveal, setVidenteReveal] = useState(false);
-  const [videnteData, setVidenteData] = useState<{
+  const [fortuneTellerReveal, setFortuneTellerReveal] = useState(false);
+  const [fortuneTellerData, setFortuneTellerData] = useState<{
     deadPlayerIds: string[];
     illusionPlayerId: string | null;
     illusionPlayerIds?: string[];
-    isVidentePoisoned: boolean;
+    isFortuneTellerPoisoned: boolean;
     fakeMap: Record<string, string> | null;
     roleAssignments: Record<string, RoleId>;
   } | null>(null);
-  const [meninaReveal, setMeninaReveal] = useState(false);
-  const [meninaCards, setMeninaCards] = useState<RevealCard[]>([]);
-  const [faroleiroReveal, setFaroleiroReveal] = useState(false);
-  const [faroleiroCards, setFaroleiroCards] = useState<RevealCard[]>([]);
+  const [littleGirlReveal, setLittleGirlReveal] = useState(false);
+  const [littleGirlCards, setLittleGirlCards] = useState<RevealCard[]>([]);
+  const [lamplighterReveal, setLamplighterReveal] = useState(false);
+  const [lamplighterCards, setLamplighterCards] = useState<RevealCard[]>([]);
   const [lvReveal, setLvReveal] = useState(false);
   const [lvCards, setLvCards] = useState<RevealCard[]>([]);
   const [spiderReveal, setSpiderReveal] = useState(false);
@@ -250,7 +250,7 @@ const PlayerView = () => {
     const roomId = player?.room_id ?? getPlayerSession()?.roomId ?? null;
     let roomChannel: ReturnType<typeof supabase.channel> | null = null;
     let playersChannel: ReturnType<typeof supabase.channel> | null = null;
-    let videnteChannel: ReturnType<typeof supabase.channel> | null = null;
+    let fortuneTellerChannel: ReturnType<typeof supabase.channel> | null = null;
 
     if (roomId) {
       roomChannel = supabase
@@ -297,51 +297,51 @@ const PlayerView = () => {
         )
         .subscribe();
 
-      // Listen for Vidente reveal broadcasts
-      videnteChannel = supabase
-        .channel(`vidente-reveal-${roomId}`)
-        .on("broadcast", { event: "vidente-reveal" }, (payload) => {
+      // Listen for FortuneTeller reveal broadcasts
+      fortuneTellerChannel = supabase
+        .channel(`fortune-teller-reveal-${roomId}`)
+        .on("broadcast", { event: "fortune-teller-reveal" }, (payload) => {
           const broadcast = payload.payload;
           const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "e04";
           const data = broadcast.byPlayerId?.[playerId] ?? (legacyViewer ? broadcast : null);
           if (broadcast.show && data) {
-            setVidenteData({
+            setFortuneTellerData({
               deadPlayerIds: data.deadPlayerIds,
               illusionPlayerId: data.illusionPlayerId,
               illusionPlayerIds: data.illusionPlayerIds,
-              isVidentePoisoned: !!data.isVidentePoisoned,
+              isFortuneTellerPoisoned: !!data.isFortuneTellerPoisoned,
               fakeMap: data.fakeMap || null,
               roleAssignments: data.roleAssignments || {},
             });
-            setVidenteReveal(true);
+            setFortuneTellerReveal(true);
           } else if (!broadcast.show || data) {
-            setVidenteReveal(false);
+            setFortuneTellerReveal(false);
           }
         })
         .subscribe();
 
-      // Reveal channels: menina, faroleiro, lobisomem-vidente
-      const meninaCh = supabase.channel(`menina-reveal-${roomId}`)
-        .on("broadcast", { event: "menina-reveal" }, (payload) => {
+      // Reveal channels: Little Girl, Lamplighter, Werewolf Seer
+      const littleGirlCh = supabase.channel(`little-girl-reveal-${roomId}`)
+        .on("broadcast", { event: "little-girl-reveal" }, (payload) => {
           const d = payload.payload;
           const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "v01";
           const result = d.byPlayerId?.[playerId] ?? (legacyViewer ? d : null);
-          if (d.show && result) { setMeninaCards(result.cards || []); setMeninaReveal(true); }
-          else if (!d.show || result) { setMeninaReveal(false); }
+          if (d.show && result) { setLittleGirlCards(result.cards || []); setLittleGirlReveal(true); }
+          else if (!d.show || result) { setLittleGirlReveal(false); }
         }).subscribe();
-      const faroleiroCh = supabase.channel(`faroleiro-reveal-${roomId}`)
-        .on("broadcast", { event: "faroleiro-reveal" }, (payload) => {
+      const lamplighterCh = supabase.channel(`lamplighter-reveal-${roomId}`)
+        .on("broadcast", { event: "lamplighter-reveal" }, (payload) => {
           const d = payload.payload;
           const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "v21";
           const result = d.byPlayerId?.[playerId] ?? (legacyViewer ? d : null);
           if (d.show && result?.role && ROLES[result.role as RoleId]) {
             const def = ROLES[result.role as RoleId];
             const checkboxes = Array.isArray(result.charges) && result.charges.length > 0 ? result.charges : undefined;
-            setFaroleiroCards([{ image: def.image, label: def.label, roleId: result.role as RoleId, checkboxes }]);
-            setFaroleiroReveal(true);
-          } else if (!d.show || result) { setFaroleiroReveal(false); }
+            setLamplighterCards([{ image: def.image, label: def.label, roleId: result.role as RoleId, checkboxes }]);
+            setLamplighterReveal(true);
+          } else if (!d.show || result) { setLamplighterReveal(false); }
         }).subscribe();
-      const lvCh = supabase.channel(`lobisomem-vidente-reveal-${roomId}`)
+      const lvCh = supabase.channel(`werewolf-seer-reveal-${roomId}`)
         .on("broadcast", { event: "lv-reveal" }, async (payload) => {
           const d = payload.payload;
           const legacyViewer = parsePlayerCharacter(playerRef.current?.character).displayRole === "m02";
@@ -405,9 +405,9 @@ const PlayerView = () => {
         supabase.removeChannel(playerChannel);
         if (roomChannel) supabase.removeChannel(roomChannel);
         if (playersChannel) supabase.removeChannel(playersChannel);
-        if (videnteChannel) supabase.removeChannel(videnteChannel);
-        supabase.removeChannel(meninaCh);
-        supabase.removeChannel(faroleiroCh);
+        if (fortuneTellerChannel) supabase.removeChannel(fortuneTellerChannel);
+        supabase.removeChannel(littleGirlCh);
+        supabase.removeChannel(lamplighterCh);
         supabase.removeChannel(lvCh);
         supabase.removeChannel(spiderCh);
         supabase.removeChannel(spyCh);
@@ -421,7 +421,7 @@ const PlayerView = () => {
       supabase.removeChannel(playerChannel);
       if (roomChannel) supabase.removeChannel(roomChannel);
       if (playersChannel) supabase.removeChannel(playersChannel);
-      if (videnteChannel) supabase.removeChannel(videnteChannel);
+      if (fortuneTellerChannel) supabase.removeChannel(fortuneTellerChannel);
     };
   }, [playerId, navigate, player?.room_id]);
 
@@ -471,10 +471,10 @@ const PlayerView = () => {
     return indicators;
   })();
 
-  const isVidente = displayRole === "e04";
-  const isMenina = displayRole === "v01";
-  const isFaroleiro = displayRole === "v21";
-  const isLobisomemVidente = displayRole === "m02";
+  const isFortuneTeller = displayRole === "e04";
+  const isLittleGirl = displayRole === "v01";
+  const isLamplighter = displayRole === "v21";
+  const isWerewolfSeer = displayRole === "m02";
   const isSpider = displayRole === "v23";
   const isSpy = displayRole === "f02";
 
@@ -763,30 +763,30 @@ const PlayerView = () => {
         )}
       </motion.div>
 
-      {/* Vidente Reveal Modal - only for Vidente player */}
-      {(isVidente || videnteReveal) && videnteData && (
-        <VidenteRevealModal
-          open={videnteReveal}
-          onClose={() => setVidenteReveal(false)}
-          deadPlayerIds={videnteData.deadPlayerIds}
-          illusionPlayerId={videnteData.illusionPlayerId}
-          illusionPlayerIds={videnteData.illusionPlayerIds}
-          roleAssignments={videnteData.roleAssignments}
+      {/* FortuneTeller Reveal Modal - only for FortuneTeller player */}
+      {(isFortuneTeller || fortuneTellerReveal) && fortuneTellerData && (
+        <FortuneTellerRevealModal
+          open={fortuneTellerReveal}
+          onClose={() => setFortuneTellerReveal(false)}
+          deadPlayerIds={fortuneTellerData.deadPlayerIds}
+          illusionPlayerId={fortuneTellerData.illusionPlayerId}
+          illusionPlayerIds={fortuneTellerData.illusionPlayerIds}
+          roleAssignments={fortuneTellerData.roleAssignments}
           players={roomPlayers}
-          isVidentePoisoned={videnteData.isVidentePoisoned}
-          precomputedFakeMap={videnteData.fakeMap}
+          isFortuneTellerPoisoned={fortuneTellerData.isFortuneTellerPoisoned}
+          precomputedFakeMap={fortuneTellerData.fakeMap}
           dismissible={false}
           onRoleClick={(roleId) => openRulebook(roleId)}
         />
       )}
 
-      {(isMenina || meninaReveal) && (
-        <RevealModal language={language} open={meninaReveal} onClose={() => setMeninaReveal(false)} title={t("revealLittleGirlTitle", language)} subtitle={t("revealLittleGirlSubtitle", language)} cards={meninaCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
+      {(isLittleGirl || littleGirlReveal) && (
+        <RevealModal language={language} open={littleGirlReveal} onClose={() => setLittleGirlReveal(false)} title={t("revealLittleGirlTitle", language)} subtitle={t("revealLittleGirlSubtitle", language)} cards={littleGirlCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {(isFaroleiro || faroleiroReveal) && (
-        <RevealModal language={language} open={faroleiroReveal} onClose={() => setFaroleiroReveal(false)} title={t("revealLamplighterTitle", language)} subtitle={t("revealLamplighterSubtitle", language)} cards={faroleiroCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
+      {(isLamplighter || lamplighterReveal) && (
+        <RevealModal language={language} open={lamplighterReveal} onClose={() => setLamplighterReveal(false)} title={t("revealLamplighterTitle", language)} subtitle={t("revealLamplighterSubtitle", language)} cards={lamplighterCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {(isLobisomemVidente || lvReveal) && (
+      {(isWerewolfSeer || lvReveal) && (
         <RevealModal language={language} open={lvReveal} onClose={() => setLvReveal(false)} title={t("revealVampireWolfTitle", language)} subtitle={t("revealVampireWolfSubtitle", language)} cards={lvCards} dismissible={false} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       {(isSpider || spiderReveal) && (

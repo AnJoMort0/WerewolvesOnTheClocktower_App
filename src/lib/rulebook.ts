@@ -155,7 +155,7 @@ function renderNightScript(lang: Language): string {
     <h2 id="rulebook-night-script">${renderInline(labels.title)}</h2>
     ${phases.map(([phase, label]) => `
       <h3 id="rulebook-${phase}">${renderInline(label)}</h3>
-      <ul>
+      <ul class="rulebook-night-script-list">
         ${RULEBOOK_NIGHT_SCRIPT[phase]
           .map((line) => `<li id="${escapeAttribute(line.id)}">${renderInline(line.text[lang])}</li>`)
           .join("")}

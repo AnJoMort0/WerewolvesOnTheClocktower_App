@@ -13,8 +13,8 @@ const baseProps = {
   roleAssignments: { witch: "e02" as const },
   nightNumber: 2,
   onEndNight: vi.fn(),
-  chamanCharges: 0,
-  onChamanChargeToggle: vi.fn(),
+  shamanCharges: 0,
+  onShamanChargeToggle: vi.fn(),
   lastNightDeadPlayerIds: [],
   players: [{ id: "witch", name: "Witch", seat_position: 0 }],
   foxDisabled: false,
@@ -179,7 +179,7 @@ describe("NightScript conditional behavior", () => {
       activeRoles: new Set(["s01" as const]),
       roleAssignments: { cupid: "s01" as const },
       players: [{ id: "cupid", name: "Cupid", seat_position: 0 }],
-      conditionKeys: { cupidoHasCharges: true },
+      conditionKeys: { cupidHasCharges: true },
     };
     const { container, rerender } = render(
       <LanguageContext.Provider value="pt">
@@ -328,7 +328,7 @@ describe("NightScript Actor copy", () => {
       ],
       actorPlayerId: "actor",
       actorCopiedRole: "m01" as const,
-      conditionKeys: { lobisomemMauHasCharges: true },
+      conditionKeys: { bigBadWolfHasCharges: true },
     };
     const { container } = render(
       <LanguageContext.Provider value="pt">
@@ -380,7 +380,7 @@ describe("NightScript Actor copy", () => {
           ]}
           actorPlayerId="actor"
           actorCopiedRole="e02"
-          profeciaGhostPlayerIds={new Set(["idol"])}
+          prophecyGhostPlayerIds={new Set(["idol"])}
         />
       </LanguageContext.Provider>,
     );
@@ -413,8 +413,8 @@ describe("NightScript Actor copy", () => {
           actorPlayerId="actor"
           actorCopiedRole="v08"
           actorCopyNoticeNight={2}
-          conditionKeys={{ cacadorDied: true }}
-          deathTriggeredSourcePlayerIds={{ cacadorDied: ["hunter"] }}
+          conditionKeys={{ hunterDied: true }}
+          deathTriggeredSourcePlayerIds={{ hunterDied: ["hunter"] }}
         />
       </LanguageContext.Provider>,
     );
@@ -443,8 +443,8 @@ describe("NightScript Actor copy", () => {
           ]}
           actorPlayerId="actor"
           actorCopiedRole="v08"
-          conditionKeys={{ cacadorDied: true }}
-          deathTriggeredSourcePlayerIds={{ cacadorDied: ["actor"] }}
+          conditionKeys={{ hunterDied: true }}
+          deathTriggeredSourcePlayerIds={{ hunterDied: ["actor"] }}
         />
       </LanguageContext.Provider>,
     );
@@ -467,7 +467,7 @@ describe("NightScript Actor copy", () => {
           ]}
           actorPlayerId="actor"
           actorCopiedRole="e02"
-          profeciaGhostPlayerIds={new Set(["actor"])}
+          prophecyGhostPlayerIds={new Set(["actor"])}
         />
       </LanguageContext.Provider>,
     );
@@ -482,8 +482,8 @@ describe("NightScript Actor copy", () => {
       <LanguageContext.Provider value="pt">
         <NightScript
           {...baseProps}
-          conditionKeys={{ soldadoDied: true }}
-          deathTriggeredSourcePlayerIds={{ soldadoDied: ["soldier"] }}
+          conditionKeys={{ soldierDied: true }}
+          deathTriggeredSourcePlayerIds={{ soldierDied: ["soldier"] }}
         />
       </LanguageContext.Provider>,
     );

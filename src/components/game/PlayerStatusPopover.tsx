@@ -124,7 +124,7 @@ interface PlayerStatusPopoverProps {
   activeEffects?: Set<StatusEffect>;
   availableEffects?: StatusEffect[];
   showExecutado?: boolean;
-  /** When true, hide the Envenenar option (Bruxa Malvada is perma-dead) */
+  /** When true, hide the poison option (Evil Witch is perma-dead) */
   poisonDisabled?: boolean;
 }
 
@@ -237,7 +237,7 @@ export const PlayerStatusPopover = ({
           </Button>
         )}
 
-        {/* Allow poison toggle on perma-dead too (for dead Bruxa exception cases) */}
+        {/* Allow poison toggle on perma-dead too (for dead Witch exception cases) */}
         {(isPermanentlyDead || status === "dead-this-night") && canPoison && !isPoisoned && (
           <Button size="sm" variant="ghost" className="justify-start gap-2 text-muted-foreground hover:text-green-300" onClick={onSetPoisoned}>
             <img src={poisonedIcon} alt="" className="h-4 w-4" />

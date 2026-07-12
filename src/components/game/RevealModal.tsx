@@ -7,13 +7,13 @@ import villagerIcon from "@/assets/icons/villager.png";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export type RevealCard = {
-  /** Optional player name (Menina shows; Faroleiro hides) */
+  /** Optional player name (LittleGirl shows; Lamplighter hides) */
   name?: string;
   /** Image URL to display */
   image: string;
   /** Label under the image */
   label: string;
-  /** Optional checkbox state for Faroleiro reveal */
+  /** Optional checkbox state for Lamplighter reveal */
   checkboxes?: boolean[];
   /** Optional roleId so the card image can link to the rulebook anchor */
   roleId?: RoleId;
@@ -112,7 +112,7 @@ export function resolveKillerCard(
   if (source === "executado") {
     return { image: ghostExecutedIcon, label: t("execution", lang) };
   }
-  if (source === "soldado") {
+  if (source === "soldier" || source === "soldado") {
     const role = ROLES["v09"];
     return { image: role.image, label: t("littleGirlSoldier", lang), roleId: "v09" };
   }

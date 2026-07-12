@@ -9,7 +9,7 @@ import { RoleSelector } from "@/components/game/RoleSelector";
 import { NightScript } from "@/components/game/NightScript";
 import { DayTribunalPanel, type DayTribunalPanelHandle } from "@/components/game/DayTribunalPanel";
 import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
-import { VidenteRevealModal } from "@/components/game/VidenteRevealModal";
+import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
@@ -27,11 +27,11 @@ import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib
 import {
   canWhiteWolfTarget,
   getCircularDistances,
-  getMeninaAnswerKind,
+  getLittleGirlAnswerKind,
   hasOtherLivingWerewolf,
-  MENINA_POISONED_ANSWERS,
+  LITTLE_GIRL_POISONED_ANSWERS,
   shouldTransformEvilPoisonedSister,
-  type MeninaAnswerKind,
+  type LittleGirlAnswerKind,
   type WhiteWolfPlayerState,
 } from "@/lib/gameRules";
 import { detectAutomaticVictory, getVictoryStateSignature, playerWinsAnyVictoryGroup, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
@@ -158,34 +158,35 @@ type GMSnapshot = {
   poisonTargetsBySource?: Record<string, string>;
   illusionPlayerId: string | null;
   illusionTargetsBySource?: Record<string, string>;
-  chamanCharges: number;
+  shamanCharges: number;
   lastNightDeadPlayerIds: string[];
   foxDisabled: boolean;
   nightTargetedPlayerIds: string[];
-  cavalerioLinkedDeath: string | null;
+  rustedKnightLinkedDeath: string | null;
   tetanusSourcePlayerIds?: Record<string, string>;
   gameCyclePhase: "night" | "day" | "tribunal";
   dayPhase: "day" | "tribunal";
   killSources: Record<string, string>;
   killSourcePlayerIds?: Record<string, string>;
-  videnteFakeMap: Record<string, string> | null;
-  bruxaDeathNight: number | null;
+  fortuneTellerFakeMap: Record<string, string> | null;
+  witchDeathNight: number | null;
   playerEffects: Record<string, StatusEffect[]>;
-  paranoicoCharges: number;
-  anjoCharges: number;
-  lobisomemMauCharges: number;
-  cupidoCharges: number;
-  lobisomemVidenteUsed: boolean;
-  lobisomemVampiroUsed: boolean;
+  paranoidCharges: number;
+  angelCharges: number;
+  bigBadWolfCharges: number;
+  cupidCharges: number;
+  werewolfSeerUsed: boolean;
+  vampireWolfUsed: boolean;
   dayKilledPlayerIds: string[];
-  paranoicoKillName: string | null;
-  profeciaDeadAtNight: Record<string, number>;
-  juizCharges: number;
-  acusadorCharges: number;
-  salvadorLastTarget: string | null;
-  chefeLastTarget: string | null;
+  paranoidKillName: string | null;
+  prophecyDeadAtNight: Record<string, number>;
+  judgeCharges: number;
+  accuserCharges: number;
+  saviourLastTarget: string | null;
+  villageElderLastTarget: string | null;
   vampireVictimKeepsPower: boolean;
   spiderDayChangeUsed: boolean;
+  astronomerBlocksWerewolvesTonight: boolean;
   hideScreenMode: boolean;
   syncedTimerState: TimerSyncState | null;
   completedScriptLineKeys: string[];
@@ -201,10 +202,73 @@ type GMSnapshot = {
   spiderCaughtBySource?: Record<string, string[]>;
 };
 
+type LegacyActorPowerState = Partial<ActorPowerState> & {
+  chamanCharges?: number;
+  paranoicoCharges?: number;
+  anjoCharges?: number;
+  lobisomemMauCharges?: number;
+  cupidoCharges?: number;
+  lobisomemVidenteUsed?: boolean;
+  lobisomemVampiroUsed?: boolean;
+  juizCharges?: number;
+  acusadorCharges?: number;
+  salvadorLastTarget?: string | null;
+  chefeLastTarget?: string | null;
+};
+
+type LegacyGMSnapshotFields = Partial<GMSnapshot> & {
+  chamanCharges?: number;
+  cavalerioLinkedDeath?: string | null;
+  videnteFakeMap?: Record<string, string> | null;
+  bruxaDeathNight?: number | null;
+  paranoicoCharges?: number;
+  anjoCharges?: number;
+  lobisomemMauCharges?: number;
+  cupidoCharges?: number;
+  lobisomemVidenteUsed?: boolean;
+  lobisomemVampiroUsed?: boolean;
+  paranoicoKillName?: string | null;
+  profeciaDeadAtNight?: Record<string, number>;
+  juizCharges?: number;
+  acusadorCharges?: number;
+  salvadorLastTarget?: string | null;
+  chefeLastTarget?: string | null;
+};
+
 const getGMSnapshotStorageKey = (roomId: string) => `${GM_SNAPSHOT_STORAGE_PREFIX}${roomId}`;
 
 function serializeEffects(effects: Record<string, Set<StatusEffect>>): Record<string, StatusEffect[]> {
   return Object.fromEntries(Object.entries(effects).map(([playerId, set]) => [playerId, Array.from(set)]));
+}
+
+function restoreActorPowerState(value: LegacyActorPowerState | null | undefined): ActorPowerState {
+  const state = value ?? {};
+  return {
+    ...EMPTY_ACTOR_POWER_STATE,
+    ...state,
+    shamanCharges: state.shamanCharges ?? state.chamanCharges ?? EMPTY_ACTOR_POWER_STATE.shamanCharges,
+    paranoidCharges: state.paranoidCharges ?? state.paranoicoCharges ?? EMPTY_ACTOR_POWER_STATE.paranoidCharges,
+    angelCharges: state.angelCharges ?? state.anjoCharges ?? EMPTY_ACTOR_POWER_STATE.angelCharges,
+    bigBadWolfCharges: state.bigBadWolfCharges ?? state.lobisomemMauCharges ?? EMPTY_ACTOR_POWER_STATE.bigBadWolfCharges,
+    cupidCharges: state.cupidCharges ?? state.cupidoCharges ?? EMPTY_ACTOR_POWER_STATE.cupidCharges,
+    werewolfSeerUsed: state.werewolfSeerUsed ?? state.lobisomemVidenteUsed ?? EMPTY_ACTOR_POWER_STATE.werewolfSeerUsed,
+    vampireWolfUsed: state.vampireWolfUsed ?? state.lobisomemVampiroUsed ?? EMPTY_ACTOR_POWER_STATE.vampireWolfUsed,
+    judgeCharges: state.judgeCharges ?? state.juizCharges ?? EMPTY_ACTOR_POWER_STATE.judgeCharges,
+    accuserCharges: state.accuserCharges ?? state.acusadorCharges ?? EMPTY_ACTOR_POWER_STATE.accuserCharges,
+    saviourLastTarget: state.saviourLastTarget ?? state.salvadorLastTarget ?? EMPTY_ACTOR_POWER_STATE.saviourLastTarget,
+    villageElderLastTarget: state.villageElderLastTarget ?? state.chefeLastTarget ?? EMPTY_ACTOR_POWER_STATE.villageElderLastTarget,
+  };
+}
+
+function restoreDogWolfStates(states: DogWolfStates | undefined): DogWolfStates {
+  if (!states) return {};
+  return Object.fromEntries(Object.entries(states).map(([playerId, state]) => [
+    playerId,
+    {
+      ...state,
+      powerState: restoreActorPowerState(state.powerState as LegacyActorPowerState),
+    },
+  ])) as DogWolfStates;
 }
 
 function restoreEffects(effects: Record<string, StatusEffect[]> | undefined): Record<string, Set<StatusEffect>> {
@@ -238,9 +302,9 @@ function pruneOldGMSnapshots() {
 const ESSENTIAL_ROLES: RoleId[] = ["e02", "e03", "e04"];
 const POISON_DRAG_ROLE: RoleId = "e02";
 const KILL_DRAG_ROLE: RoleId = "e01";
-const CHAMAN_ROLE: RoleId = "e03";
+const SHAMAN_ROLE: RoleId = "e03";
 const ILLUSION_DRAG_ROLE: RoleId = "a06";
-const CAVALEIRO_ROLE: RoleId = "v07";
+const RUSTED_KNIGHT_ROLE: RoleId = "v07";
 const DEAD_SOURCE_EFFECTS: Partial<Record<RoleId, StatusEffect[]>> = {
   v09: ["soldado"],
   v11: ["vote_against", "vote_double"],
@@ -331,13 +395,13 @@ const GMRoom = () => {
   const [poisonTargetsBySource, setPoisonTargetsBySource] = useState<Record<string, string>>({});
   const [illusionTargetsBySource, setIllusionTargetsBySource] = useState<Record<string, string>>({});
   const [listPopoverId, setListPopoverId] = useState<string | null>(null);
-  const [chamanCharges, setChamanCharges] = useState(0);
+  const [shamanCharges, setShamanCharges] = useState(0);
   const [lastNightDeadPlayerIds, setLastNightDeadPlayerIds] = useState<string[]>([]);
-  const [videnteModalOpen, setVidenteModalOpen] = useState(false);
-  const [videnteModalPoisoned, setVidenteModalPoisoned] = useState(false);
+  const [fortuneTellerModalOpen, setFortuneTellerModalOpen] = useState(false);
+  const [fortuneTellerModalPoisoned, setFortuneTellerModalPoisoned] = useState(false);
   const [foxDisabled, setFoxDisabled] = useState(false);
   const [nightTargetedPlayerIds, setNightTargetedPlayerIds] = useState<Set<string>>(new Set());
-  const [cavalerioLinkedDeath, setCavalerioLinkedDeath] = useState<string | null>(null);
+  const [rustedKnightLinkedDeath, setRustedKnightLinkedDeath] = useState<string | null>(null);
   const [tetanusSourcePlayerIds, setTetanusSourcePlayerIds] = useState<Record<string, string>>({});
 
   // Game cycle
@@ -348,56 +412,57 @@ const GMRoom = () => {
   const [killSources, setKillSources] = useState<Record<string, string>>({});
   const [killSourcePlayerIds, setKillSourcePlayerIds] = useState<Record<string, string>>({});
 
-  // Vidente fake map
-  const [videnteFakeMap, setVidenteFakeMap] = useState<Record<string, string> | null>(null);
+  // FortuneTeller fake map
+  const [fortuneTellerFakeMap, setFortuneTellerFakeMap] = useState<Record<string, string> | null>(null);
 
   // Poison auto-removal tracking
-  const [bruxaDeathNight, setBruxaDeathNight] = useState<number | null>(null);
+  const [witchDeathNight, setWitchDeathNight] = useState<number | null>(null);
 
   // Status effects per player
   const [playerEffects, setPlayerEffects] = useState<Record<string, Set<StatusEffect>>>({});
 
   // Role charges
-  const [paranoicoCharges, setParanoicoCharges] = useState(0);
-  const [anjoCharges, setAnjoCharges] = useState(0);
-  const [lobisomemMauCharges, setLobisomemMauCharges] = useState(0);
-  const [cupidoCharges, setCupidoCharges] = useState(0);
-  const [lobisomemVidenteUsed, setLobisomemVidenteUsed] = useState(false);
-  const [lobisomemVampiroUsed, setLobisomemVampiroUsed] = useState(false);
+  const [paranoidCharges, setParanoidCharges] = useState(0);
+  const [angelCharges, setAngelCharges] = useState(0);
+  const [bigBadWolfCharges, setBigBadWolfCharges] = useState(0);
+  const [cupidCharges, setCupidCharges] = useState(0);
+  const [werewolfSeerUsed, setWerewolfSeerUsed] = useState(false);
+  const [vampireWolfUsed, setVampireWolfUsed] = useState(false);
 
   // Executado tracking for day kills
   const [dayKilledPlayerIds, setDayKilledPlayerIds] = useState<string[]>([]);
   const [timerDefaults, setTimerDefaults] = useState<TimerDefaults>(FALLBACK_TIMER_DEFAULTS);
 
-  // Paranoico kill announcement for tribunal
-  const [paranoicoKillName, setParanoicoKillName] = useState<string | null>(null);
+  // Paranoid kill announcement for tribunal
+  const [paranoidKillName, setParanoidKillName] = useState<string | null>(null);
 
-  // Reveal modals (Menina, Faroleiro, Lobisomem Vidente)
+  // Reveal modals (Little Girl, Lamplighter, Werewolf Seer)
   const [qrPopupOpen, setQrPopupOpen] = useState(false);
-  const [meninaRevealOpen, setMeninaRevealOpen] = useState(false);
-  const [meninaRevealCards, setMeninaRevealCards] = useState<RevealCard[]>([]);
-  const [faroleiroRevealOpen, setFaroleiroRevealOpen] = useState(false);
-  const [lobisomemVidenteRevealOpen, setLobisomemVidenteRevealOpen] = useState(false);
-  const [lobisomemVidenteRevealedVictim, setLobisomemVidenteRevealedVictim] = useState<{ id: string; name: string; role: RoleId } | null>(null);
-  const [faroleiroPickedRole, setFaroleiroPickedRole] = useState<RoleId | null>(null);
-  const [faroleiroPickedCharges, setFaroleiroPickedCharges] = useState<boolean[]>([]);
+  const [littleGirlRevealOpen, setLittleGirlRevealOpen] = useState(false);
+  const [littleGirlRevealCards, setLittleGirlRevealCards] = useState<RevealCard[]>([]);
+  const [lamplighterRevealOpen, setLamplighterRevealOpen] = useState(false);
+  const [werewolfSeerRevealOpen, setWerewolfSeerRevealOpen] = useState(false);
+  const [werewolfSeerRevealedVictim, setWerewolfSeerRevealedVictim] = useState<{ id: string; name: string; role: RoleId } | null>(null);
+  const [lamplighterPickedRole, setLamplighterPickedRole] = useState<RoleId | null>(null);
+  const [lamplighterPickedCharges, setLamplighterPickedCharges] = useState<boolean[]>([]);
 
   // Track when profecia-tagged player became perma-dead (for +1 night persistence)
   // Key: playerId. Value: nightNumber the player perma-died with profecia status.
   // The player's role line still appears during nightNumber === storedNight + 1.
-  const [profeciaDeadAtNight, setProfeciaDeadAtNight] = useState<Record<string, number>>({});
+  const [prophecyDeadAtNight, setProphecyDeadAtNight] = useState<Record<string, number>>({});
 
-  // Track Juiz/Acusador checkboxes (live action only)
-  const [juizCharges, setJuizCharges] = useState(0);
-  const [acusadorCharges, setAcusadorCharges] = useState(0);
+  // Track Judge/Accuser checkboxes (live action only)
+  const [judgeCharges, setJudgeCharges] = useState(0);
+  const [accuserCharges, setAccuserCharges] = useState(0);
 
-  // Track last targets for Salvador / Chefe da Aldeia (so retarget removes the previous effect)
-  const [salvadorLastTarget, setSalvadorLastTarget] = useState<string | null>(null);
-  const [chefeLastTarget, setChefeLastTarget] = useState<string | null>(null);
+  // Track last targets for Saviour / VillageElder da Aldeia (so retarget removes the previous effect)
+  const [saviourLastTarget, setSaviourLastTarget] = useState<string | null>(null);
+  const [villageElderLastTarget, setVillageElderLastTarget] = useState<string | null>(null);
 
   // Vampire victim "keeps power" toggle (default true once turned). Square checkbox.
   const [vampireVictimKeepsPower, setVampireVictimKeepsPower] = useState(true);
   const [spiderDayChangeUsed, setSpiderDayChangeUsed] = useState(false);
+  const [astronomerBlocksWerewolvesTonight, setAstronomerBlocksWerewolvesTonight] = useState(false);
   const [hideScreenMode, setHideScreenMode] = useState(false);
   const [syncedTimerState, setSyncedTimerState] = useState<TimerSyncState | null>(null);
   const [hiddenTimerEditing, setHiddenTimerEditing] = useState(false);
@@ -489,21 +554,21 @@ const GMRoom = () => {
     () => dogWolfPlayerIds.filter((playerId) => !permanentlyDead.has(playerId)),
     [dogWolfPlayerIds, permanentlyDead],
   );
-  const profeciaGhostPlayerIds = useMemo(() => {
+  const prophecyGhostPlayerIds = useMemo(() => {
     const playerIds = new Set<string>();
-    for (const [playerId, deathNight] of Object.entries(profeciaDeadAtNight)) {
+    for (const [playerId, deathNight] of Object.entries(prophecyDeadAtNight)) {
       if (nightNumber === deathNight + 1) playerIds.add(playerId);
     }
     return playerIds;
-  }, [profeciaDeadAtNight, nightNumber]);
+  }, [prophecyDeadAtNight, nightNumber]);
   const abilityRoleAssignments = useMemo(
     () => getDogWolfAbilityRoleAssignments(
       effectiveRoleAssignments,
       dogWolfStates,
       permanentlyDead,
-      profeciaGhostPlayerIds,
+      prophecyGhostPlayerIds,
     ),
-    [dogWolfStates, effectiveRoleAssignments, permanentlyDead, profeciaGhostPlayerIds],
+    [dogWolfStates, effectiveRoleAssignments, permanentlyDead, prophecyGhostPlayerIds],
   );
   const objectiveRoleAssignments = useMemo(() => {
     const assignments = { ...effectiveRoleAssignments };
@@ -552,7 +617,7 @@ const GMRoom = () => {
     .some(([playerId, role]) => {
       if (dogWolfPlayerIds.includes(playerId) || !isPlayerActingPoisoned(playerId)) return false;
       return WEREWOLF_ROLES.includes(role) || playerEffects[playerId]?.has("werewolf_turned");
-    }), [abilityRoleAssignments, dogWolfPlayerIds, isPlayerActingPoisoned, playerEffects]);
+    }) || astronomerBlocksWerewolvesTonight, [abilityRoleAssignments, astronomerBlocksWerewolvesTonight, dogWolfPlayerIds, isPlayerActingPoisoned, playerEffects]);
   const dogWolfOwnerRoles = useMemo(() => Object.fromEntries(
     dogWolfPlayerIds.flatMap((dogPlayerId) => {
       const ownerPlayerId = dogWolfStates[dogPlayerId]?.ownerPlayerId;
@@ -649,19 +714,19 @@ const GMRoom = () => {
     || (!!sourcePlayerId && WEREWOLF_ROLES.includes(abilityRoleAssignments[sourcePlayerId]))
   ), [abilityRoleAssignments, actorCopiedRole]);
   // Derived states
-  const isBruxaPermaDead = useMemo(() => {
+  const isWitchPermaDead = useMemo(() => {
     const witchPlayerIds = Object.entries(abilityRoleAssignments)
       .filter(([, role]) => role === "e02")
       .map(([playerId]) => playerId);
     return witchPlayerIds.length > 0 && witchPlayerIds.every((playerId) => permanentlyDead.has(playerId));
   }, [abilityRoleAssignments, permanentlyDead]);
 
-  const isBruxaPoisoned = useMemo(() => {
+  const isWitchPoisoned = useMemo(() => {
     return Object.entries(abilityRoleAssignments)
       .some(([playerId, role]) => role === "e02" && isPlayerPoisoned(playerId));
   }, [abilityRoleAssignments, isPlayerPoisoned]);
 
-  const isMarionetista = useMemo(() => {
+  const isPuppeteer = useMemo(() => {
     for (const [pid, role] of Object.entries(effectiveRoleAssignments)) {
       if (role === ("a06" as RoleId) && !permanentlyDead.has(pid)) return true;
     }
@@ -801,7 +866,7 @@ const GMRoom = () => {
     if (assignedRoles.has("v22") && !playerEffectsSet.has("acusado")) effects.push("acusado_next");
     if (assignedRoles.has("a05") && playerStatuses[playerId] === "dead-this-night" && playerRole !== "a05") effects.push("dug_up");
     // Vampiro: only available to red X victims of werewolves
-    if (assignedRoles.has("m03") && !lobisomemVampiroUsed) {
+    if (assignedRoles.has("m03") && !vampireWolfUsed) {
       const status = playerStatuses[playerId];
       if (status === "dead-this-night") {
         const source = killSources[playerId];
@@ -844,7 +909,7 @@ const GMRoom = () => {
     }
 
     return effects;
-  }, [activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, effectiveRoleAssignments, killSources, lobisomemVampiroUsed, permanentlyDead, playerEffects, playerStatuses]);
+  }, [activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, effectiveRoleAssignments, killSources, vampireWolfUsed, permanentlyDead, playerEffects, playerStatuses]);
 
   const toggleEffect = useCallback((playerId: string, effect: StatusEffect, sourcePlayerId?: string | null) => {
     if (effect === "owner") {
@@ -908,11 +973,11 @@ const GMRoom = () => {
         }
       }
 
-      // Cupido checkbox sync: when immunity_cupid is given to one namorado, apply to both
+      // Cupid checkbox sync: when immunity_cupid is given to one namorado, apply to both
       if (effect === "immunity_cupid") {
-        // Check if cupido is poisoned
-        const cupidoId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "s01")?.[0];
-        if (cupidoId && isPlayerPoisoned(cupidoId)) {
+        // Check if cupid is poisoned
+        const cupidId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "s01")?.[0];
+        if (cupidId && isPlayerPoisoned(cupidId)) {
           toast.warning(getToast("warnCupidPoisoned", (room?.language as Language) || "pt"));
           return prev;
         }
@@ -925,14 +990,14 @@ const GMRoom = () => {
             if (sourcePlayerId) pendingGameActionLogSourcesRef.current.set(`effect:${pid}:immunity_cupid`, sourcePlayerId);
           }
         }
-        // Also tick a cupido charge
-        setCupidoCharges((c) => Math.min(c + 1, 2));
+        // Also tick a cupid charge
+        setCupidCharges((c) => Math.min(c + 1, 2));
         return newEffects;
       }
 
       // Vampiro: tick checkbox on apply
       if (effect === "werewolf_turned") {
-        setLobisomemVampiroUsed(true);
+        setVampireWolfUsed(true);
       }
 
       if (effect === "idol") {
@@ -951,7 +1016,7 @@ const GMRoom = () => {
         }
       }
 
-      // Profecia: check profeta not poisoned
+      // Prophecy: check Prophet not poisoned
       if (effect === "profecia") {
         const profetaId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "v19")?.[0];
         if (profetaId && isPlayerPoisoned(profetaId)) {
@@ -979,10 +1044,10 @@ const GMRoom = () => {
     const current = dogWolfStates[playerId]?.powerState
       ?? (playerId === actorPlayerId ? actorPowerState : null);
     if (!current) return;
-    if (next.lobisomemMauCharges > current.lobisomemMauCharges && !playerEffects[playerId]?.has("immunity_full")) {
+    if (next.bigBadWolfCharges > current.bigBadWolfCharges && !playerEffects[playerId]?.has("immunity_full")) {
       toggleEffect(playerId, "immunity_full", playerId);
     }
-    if (next.cupidoCharges !== current.cupidoCharges) {
+    if (next.cupidCharges !== current.cupidCharges) {
       if (isPlayerActingPoisoned(playerId)) {
         toast.warning(getToast("warnCupidPoisoned", (room?.language as Language) || "pt"));
         return;
@@ -990,12 +1055,12 @@ const GMRoom = () => {
       setPlayerEffects((previous) => Object.fromEntries(Object.entries(previous).map(([targetPlayerId, effects]) => {
         if (!effects.has("namorado")) return [targetPlayerId, effects];
         const updated = new Set(effects);
-        if (next.cupidoCharges > 0) updated.add("immunity_cupid");
+        if (next.cupidCharges > 0) updated.add("immunity_cupid");
         else updated.delete("immunity_cupid");
         return [targetPlayerId, updated];
       })));
     }
-    if (next.lobisomemVampiroUsed && !current.lobisomemVampiroUsed) {
+    if (next.vampireWolfUsed && !current.vampireWolfUsed) {
       const victimId = Object.entries(playerStatuses).find(([targetPlayerId, status]) => {
         const source = killSources[targetPlayerId];
         return status === "dead-this-night" && !!source && isWerewolfAttackSource(source, killSourcePlayerIds[targetPlayerId]);
@@ -1046,6 +1111,7 @@ const GMRoom = () => {
         setGmSnapshotLoaded(true);
         return;
       }
+      const legacySnapshot = snapshot as LegacyGMSnapshotFields;
 
       setRoleAssignments(snapshot.roleAssignments ?? {});
       setRolesAssigned(!!snapshot.rolesAssigned);
@@ -1058,34 +1124,35 @@ const GMRoom = () => {
         ?? (snapshot.poisonedPlayerId ? { manual: snapshot.poisonedPlayerId } : {}));
       setIllusionTargetsBySource(snapshot.illusionTargetsBySource
         ?? (snapshot.illusionPlayerId ? { manual: snapshot.illusionPlayerId } : {}));
-      setChamanCharges(snapshot.chamanCharges ?? 0);
+      setShamanCharges(snapshot.shamanCharges ?? legacySnapshot.chamanCharges ?? 0);
       setLastNightDeadPlayerIds(snapshot.lastNightDeadPlayerIds ?? []);
       setFoxDisabled(!!snapshot.foxDisabled);
       setNightTargetedPlayerIds(new Set(snapshot.nightTargetedPlayerIds ?? []));
-      setCavalerioLinkedDeath(snapshot.cavalerioLinkedDeath ?? null);
+      setRustedKnightLinkedDeath(snapshot.rustedKnightLinkedDeath ?? legacySnapshot.cavalerioLinkedDeath ?? null);
       setTetanusSourcePlayerIds(snapshot.tetanusSourcePlayerIds ?? {});
       setGameCyclePhase(snapshot.gameCyclePhase ?? "night");
       setDayPhase(snapshot.dayPhase ?? "day");
       setKillSources(snapshot.killSources ?? {});
       setKillSourcePlayerIds(snapshot.killSourcePlayerIds ?? {});
-      setVidenteFakeMap(snapshot.videnteFakeMap ?? null);
-      setBruxaDeathNight(snapshot.bruxaDeathNight ?? null);
+      setFortuneTellerFakeMap(snapshot.fortuneTellerFakeMap ?? legacySnapshot.videnteFakeMap ?? null);
+      setWitchDeathNight(snapshot.witchDeathNight ?? legacySnapshot.bruxaDeathNight ?? null);
       setPlayerEffects(restoreEffects(snapshot.playerEffects));
-      setParanoicoCharges(snapshot.paranoicoCharges ?? 0);
-      setAnjoCharges(snapshot.anjoCharges ?? 0);
-      setLobisomemMauCharges(snapshot.lobisomemMauCharges ?? 0);
-      setCupidoCharges(snapshot.cupidoCharges ?? 0);
-      setLobisomemVidenteUsed(!!snapshot.lobisomemVidenteUsed);
-      setLobisomemVampiroUsed(!!snapshot.lobisomemVampiroUsed);
+      setParanoidCharges(snapshot.paranoidCharges ?? legacySnapshot.paranoicoCharges ?? 0);
+      setAngelCharges(snapshot.angelCharges ?? legacySnapshot.anjoCharges ?? 0);
+      setBigBadWolfCharges(snapshot.bigBadWolfCharges ?? legacySnapshot.lobisomemMauCharges ?? 0);
+      setCupidCharges(snapshot.cupidCharges ?? legacySnapshot.cupidoCharges ?? 0);
+      setWerewolfSeerUsed(!!(snapshot.werewolfSeerUsed ?? legacySnapshot.lobisomemVidenteUsed));
+      setVampireWolfUsed(!!(snapshot.vampireWolfUsed ?? legacySnapshot.lobisomemVampiroUsed));
       setDayKilledPlayerIds(snapshot.dayKilledPlayerIds ?? []);
-      setParanoicoKillName(snapshot.paranoicoKillName ?? null);
-      setProfeciaDeadAtNight(snapshot.profeciaDeadAtNight ?? {});
-      setJuizCharges(snapshot.juizCharges ?? 0);
-      setAcusadorCharges(snapshot.acusadorCharges ?? 0);
-      setSalvadorLastTarget(snapshot.salvadorLastTarget ?? null);
-      setChefeLastTarget(snapshot.chefeLastTarget ?? null);
+      setParanoidKillName(snapshot.paranoidKillName ?? legacySnapshot.paranoicoKillName ?? null);
+      setProphecyDeadAtNight(snapshot.prophecyDeadAtNight ?? legacySnapshot.profeciaDeadAtNight ?? {});
+      setJudgeCharges(snapshot.judgeCharges ?? legacySnapshot.juizCharges ?? 0);
+      setAccuserCharges(snapshot.accuserCharges ?? legacySnapshot.acusadorCharges ?? 0);
+      setSaviourLastTarget(snapshot.saviourLastTarget ?? legacySnapshot.salvadorLastTarget ?? null);
+      setVillageElderLastTarget(snapshot.villageElderLastTarget ?? legacySnapshot.chefeLastTarget ?? null);
       setVampireVictimKeepsPower(snapshot.vampireVictimKeepsPower ?? true);
       setSpiderDayChangeUsed(!!snapshot.spiderDayChangeUsed);
+      setAstronomerBlocksWerewolvesTonight(!!snapshot.astronomerBlocksWerewolvesTonight);
       setHideScreenMode(!!snapshot.hideScreenMode);
       setSyncedTimerState(snapshot.syncedTimerState ?? null);
       setCompletedScriptLineKeys(new Set(snapshot.completedScriptLineKeys ?? []));
@@ -1094,9 +1161,9 @@ const GMRoom = () => {
       setActorIdolUses(snapshot.actorIdolUses ?? 0);
       setActorCopiedRole(snapshot.actorCopiedRole ?? null);
       setActorCopyNoticeNight(snapshot.actorCopyNoticeNight ?? null);
-      setActorPowerState({ ...EMPTY_ACTOR_POWER_STATE, ...snapshot.actorPowerState });
+      setActorPowerState(restoreActorPowerState(snapshot.actorPowerState as LegacyActorPowerState | undefined));
       setDrunkardReplacementRole(snapshot.drunkardReplacementRole ?? null);
-      setDogWolfStates(snapshot.dogWolfStates ?? {});
+      setDogWolfStates(restoreDogWolfStates(snapshot.dogWolfStates));
       setSourcedEffectTargets(snapshot.sourcedEffectTargets ?? {});
       setSpiderCaughtBySource(snapshot.spiderCaughtBySource ?? {});
     } catch {
@@ -1123,34 +1190,35 @@ const GMRoom = () => {
       poisonTargetsBySource,
       illusionPlayerIds: new Set(illusionPlayerIds),
       illusionTargetsBySource,
-      chamanCharges,
+      shamanCharges,
       lastNightDeadPlayerIds,
       foxDisabled,
       nightTargetedPlayerIds: Array.from(nightTargetedPlayerIds),
-      cavalerioLinkedDeath,
+      rustedKnightLinkedDeath,
       tetanusSourcePlayerIds,
       gameCyclePhase,
       dayPhase,
       killSources,
       killSourcePlayerIds,
-      videnteFakeMap,
-      bruxaDeathNight,
+      fortuneTellerFakeMap,
+      witchDeathNight,
       playerEffects: serializeEffects(playerEffects),
-      paranoicoCharges,
-      anjoCharges,
-      lobisomemMauCharges,
-      cupidoCharges,
-      lobisomemVidenteUsed,
-      lobisomemVampiroUsed,
+      paranoidCharges,
+      angelCharges,
+      bigBadWolfCharges,
+      cupidCharges,
+      werewolfSeerUsed,
+      vampireWolfUsed,
       dayKilledPlayerIds,
-      paranoicoKillName,
-      profeciaDeadAtNight,
-      juizCharges,
-      acusadorCharges,
-      salvadorLastTarget,
-      chefeLastTarget,
+      paranoidKillName,
+      prophecyDeadAtNight,
+      judgeCharges,
+      accuserCharges,
+      saviourLastTarget,
+      villageElderLastTarget,
       vampireVictimKeepsPower,
       spiderDayChangeUsed,
+      astronomerBlocksWerewolvesTonight,
       hideScreenMode,
       syncedTimerState,
       completedScriptLineKeys: Array.from(completedScriptLineKeys),
@@ -1182,34 +1250,35 @@ const GMRoom = () => {
     illusionPlayerId,
     illusionPlayerIds,
     illusionTargetsBySource,
-    chamanCharges,
+    shamanCharges,
     lastNightDeadPlayerIds,
     foxDisabled,
     nightTargetedPlayerIds,
-    cavalerioLinkedDeath,
+    rustedKnightLinkedDeath,
     tetanusSourcePlayerIds,
     gameCyclePhase,
     dayPhase,
     killSources,
     killSourcePlayerIds,
-    videnteFakeMap,
-    bruxaDeathNight,
+    fortuneTellerFakeMap,
+    witchDeathNight,
     playerEffects,
-    paranoicoCharges,
-    anjoCharges,
-    lobisomemMauCharges,
-    cupidoCharges,
-    lobisomemVidenteUsed,
-    lobisomemVampiroUsed,
+    paranoidCharges,
+    angelCharges,
+    bigBadWolfCharges,
+    cupidCharges,
+    werewolfSeerUsed,
+    vampireWolfUsed,
     dayKilledPlayerIds,
-    paranoicoKillName,
-    profeciaDeadAtNight,
-    juizCharges,
-    acusadorCharges,
-    salvadorLastTarget,
-    chefeLastTarget,
+    paranoidKillName,
+    prophecyDeadAtNight,
+    judgeCharges,
+    accuserCharges,
+    saviourLastTarget,
+    villageElderLastTarget,
     vampireVictimKeepsPower,
     spiderDayChangeUsed,
+    astronomerBlocksWerewolvesTonight,
     hideScreenMode,
     syncedTimerState,
     completedScriptLineKeys,
@@ -1286,15 +1355,15 @@ const GMRoom = () => {
     gameLogEvents,
   ]);
 
-  // Auto-apply vote_double effect for Juiz (dead non-execution) and Ankou (executed)
+  // Auto-apply vote_double effect for Judge (dead non-execution) and Ankou (executed)
   useEffect(() => {
     setPlayerEffects((prev) => {
       const next = { ...prev };
       let changed = false;
       for (const [pid, role] of Object.entries(abilityRoleAssignments)) {
-        const isJuizDouble = role === "v13" && permanentlyDead.has(pid) && killSources[pid] !== "executado";
+        const isJudgeDouble = role === "v13" && permanentlyDead.has(pid) && killSources[pid] !== "executado";
         const isAnkouDouble = role === "m04" && permanentlyDead.has(pid) && killSources[pid] === "executado";
-        if (isJuizDouble || isAnkouDouble) {
+        if (isJudgeDouble || isAnkouDouble) {
           const cur = next[pid] || new Set<StatusEffect>();
           if (!cur.has("vote_double")) {
             const updated = new Set(cur);
@@ -1511,43 +1580,44 @@ const GMRoom = () => {
     setPoisonTargetsBySource({});
     setIllusionTargetsBySource({});
     setListPopoverId(null);
-    setChamanCharges(0);
+    setShamanCharges(0);
     setLastNightDeadPlayerIds([]);
-    setVidenteModalOpen(false);
-    setVidenteModalPoisoned(false);
+    setFortuneTellerModalOpen(false);
+    setFortuneTellerModalPoisoned(false);
     setFoxDisabled(false);
     setNightTargetedPlayerIds(new Set());
-    setCavalerioLinkedDeath(null);
+    setRustedKnightLinkedDeath(null);
     setTetanusSourcePlayerIds({});
     setGameCyclePhase("night");
     setDayPhase("day");
     setKillSources({});
     setKillSourcePlayerIds({});
-    setVidenteFakeMap(null);
-    setBruxaDeathNight(null);
+    setFortuneTellerFakeMap(null);
+    setWitchDeathNight(null);
     setPlayerEffects({});
-    setParanoicoCharges(0);
-    setAnjoCharges(0);
-    setLobisomemMauCharges(0);
-    setCupidoCharges(0);
-    setLobisomemVidenteUsed(false);
-    setLobisomemVampiroUsed(false);
+    setParanoidCharges(0);
+    setAngelCharges(0);
+    setBigBadWolfCharges(0);
+    setCupidCharges(0);
+    setWerewolfSeerUsed(false);
+    setVampireWolfUsed(false);
     setDayKilledPlayerIds([]);
-    setParanoicoKillName(null);
-    setMeninaRevealOpen(false);
-    setMeninaRevealCards([]);
-    setFaroleiroRevealOpen(false);
-    setLobisomemVidenteRevealOpen(false);
-    setLobisomemVidenteRevealedVictim(null);
-    setFaroleiroPickedRole(null);
-    setFaroleiroPickedCharges([]);
-    setProfeciaDeadAtNight({});
-    setJuizCharges(0);
-    setAcusadorCharges(0);
-    setSalvadorLastTarget(null);
-    setChefeLastTarget(null);
+    setParanoidKillName(null);
+    setLittleGirlRevealOpen(false);
+    setLittleGirlRevealCards([]);
+    setLamplighterRevealOpen(false);
+    setWerewolfSeerRevealOpen(false);
+    setWerewolfSeerRevealedVictim(null);
+    setLamplighterPickedRole(null);
+    setLamplighterPickedCharges([]);
+    setProphecyDeadAtNight({});
+    setJudgeCharges(0);
+    setAccuserCharges(0);
+    setSaviourLastTarget(null);
+    setVillageElderLastTarget(null);
     setVampireVictimKeepsPower(true);
     setSpiderDayChangeUsed(false);
+    setAstronomerBlocksWerewolvesTonight(false);
     setHideScreenMode(false);
     setSyncedTimerState(null);
     setSpiderRevealOpen(false);
@@ -1775,17 +1845,17 @@ const GMRoom = () => {
       if (!hasHunter) toast.warning(getToast("warnHunterMissing", (room?.language as Language) || "pt"));
     }
     if (role === "as01b") {
-      const hasCupido = Object.values(roleAssignments).some((r) => r === "s01");
-      if (!hasCupido) toast.warning(getToast("warnSecretLoverMissing", (room?.language as Language) || "pt"));
+      const hasCupid = Object.values(roleAssignments).some((r) => r === "s01");
+      if (!hasCupid) toast.warning(getToast("warnSecretLoverMissing", (room?.language as Language) || "pt"));
     }
     const oldRole = roleAssignments[playerId];
     if (oldRole === "v08" && role !== "v08") {
-      const hasCapuchinho = Object.entries(roleAssignments).some(([pid, r]) => r === "v08b" && pid !== playerId);
-      if (hasCapuchinho) toast.warning(getToast("warnLittleRedWithoutHunter", (room?.language as Language) || "pt"));
+      const hasRedHood = Object.entries(roleAssignments).some(([pid, r]) => r === "v08b" && pid !== playerId);
+      if (hasRedHood) toast.warning(getToast("warnLittleRedWithoutHunter", (room?.language as Language) || "pt"));
     }
     if (oldRole === "s01" && role !== "s01") {
-      const hasAmante = Object.entries(roleAssignments).some(([pid, r]) => r === "as01b" && pid !== playerId);
-      if (hasAmante) toast.warning(getToast("warnSecretLoverWithoutCupid", (room?.language as Language) || "pt"));
+      const hasSecretLover = Object.entries(roleAssignments).some(([pid, r]) => r === "as01b" && pid !== playerId);
+      if (hasSecretLover) toast.warning(getToast("warnSecretLoverWithoutCupid", (room?.language as Language) || "pt"));
     }
     if (oldRole === "a04" && role !== "a04") {
       setActorIdolUses(0);
@@ -1998,19 +2068,19 @@ const GMRoom = () => {
     toast.success(getToast("okRolesSent", (room?.language as Language) || "pt"));
   };
 
-  // Helper: find closest werewolf to cavaleiro
-  const findClosestWerewolf = useCallback((cavalerioId: string) => {
+  // Helper: find closest werewolf to rustedKnight
+  const findClosestWerewolf = useCallback((rustedKnightId: string) => {
     const sorted = players
       .filter((p) => p.seat_position !== null)
       .sort((a, b) => a.seat_position! - b.seat_position!);
-    const cavIdx = sorted.findIndex((p) => p.id === cavalerioId);
+    const cavIdx = sorted.findIndex((p) => p.id === rustedKnightId);
     if (cavIdx === -1) return null;
 
     for (let dist = 1; dist < sorted.length; dist++) {
       for (const dir of [1, -1]) {
         const idx = (cavIdx + dir * dist + sorted.length) % sorted.length;
         const p = sorted[idx];
-        if (p.id === cavalerioId) continue;
+        if (p.id === rustedKnightId) continue;
         const r = abilityRoleAssignments[p.id];
         if (WEREWOLF_ROLES.includes(r) && !permanentlyDead.has(p.id) && playerStatuses[p.id] !== "dead-this-night") return p;
       }
@@ -2024,7 +2094,7 @@ const GMRoom = () => {
     if (effects.has("immunity_full")) return true;
     if (effects.has("immunity_cupid")) return true;
     if (effects.has("immunity_onetime")) return true;
-    // Werewolf immunity (capuchinho)
+    // Werewolf immunity (redHood)
     if (isWerewolfAttackSource(source)) {
       if (effects.has("immunity_werewolf")) return true;
     }
@@ -2075,13 +2145,13 @@ const GMRoom = () => {
         return;
       }
 
-      // Check Capuchinho werewolf immunity
+      // Check RedHood werewolf immunity
       if (isWerewolfTargeting) {
-        const capuchinhoId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "v08b")?.[0];
-        if (capuchinhoId === playerId) {
-          const cacadorAlive = Object.entries(effectiveRoleAssignments).some(([pid, r]) => r === "v08" && !permanentlyDead.has(pid));
-          const capuchinhoPoisoned = isPlayerPoisoned(playerId);
-          if (cacadorAlive && !capuchinhoPoisoned) {
+        const redHoodId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "v08b")?.[0];
+        if (redHoodId === playerId) {
+          const hunterAlive = Object.entries(effectiveRoleAssignments).some(([pid, r]) => r === "v08" && !permanentlyDead.has(pid));
+          const redHoodPoisoned = isPlayerPoisoned(playerId);
+          if (hunterAlive && !redHoodPoisoned) {
             toast.warning(getToast("warnLittleRedImmune", (room?.language as Language) || "pt"));
             return;
           }
@@ -2102,10 +2172,10 @@ const GMRoom = () => {
         return next;
       });
 
-      // Cavaleiro Enferrujado mechanic: apply Tetanus (deferred death) instead of instant kill
-      if (abilityRoleAssignments[playerId] === CAVALEIRO_ROLE && _source !== "cavaleiro-linked") {
-        const isCavaleiroPoisoned = isPlayerActingPoisoned(playerId);
-        if (isCavaleiroPoisoned) {
+      // RustedKnight Enferrujado mechanic: apply Tetanus (deferred death) instead of instant kill
+      if (abilityRoleAssignments[playerId] === RUSTED_KNIGHT_ROLE && _source !== "rustedKnight-linked") {
+        const isRustedKnightPoisoned = isPlayerActingPoisoned(playerId);
+        if (isRustedKnightPoisoned) {
           const nonWWAlive = players.filter(
             (p) => p.id !== playerId && !permanentlyDead.has(p.id) && !WEREWOLF_ROLES.includes(abilityRoleAssignments[p.id]) && playerStatuses[p.id] !== "dead-this-night"
           );
@@ -2116,7 +2186,7 @@ const GMRoom = () => {
               cur.add("tetanus");
               return { ...prev, [victim.id]: cur };
             });
-            setCavalerioLinkedDeath(victim.id);
+            setRustedKnightLinkedDeath(victim.id);
             setTetanusSourcePlayerIds((prev) => ({ ...prev, [victim.id]: playerId }));
             toast.info(format(getToast("infoKnightPoisoned", (room?.language as Language) || "pt"), { name: victim.name }));
           }
@@ -2128,7 +2198,7 @@ const GMRoom = () => {
               cur.add("tetanus");
               return { ...prev, [closestWW.id]: cur };
             });
-            setCavalerioLinkedDeath(closestWW.id);
+            setRustedKnightLinkedDeath(closestWW.id);
             setTetanusSourcePlayerIds((prev) => ({ ...prev, [closestWW.id]: playerId }));
             toast.info(format(getToast("infoKnightDied", (room?.language as Language) || "pt"), { name: closestWW.name }));
           }
@@ -2153,13 +2223,13 @@ const GMRoom = () => {
             cur.delete("dug_up");
             return { ...prev, [playerId]: cur };
           });
-          if (targetRole === "e03") setChamanCharges(0);
-          if (targetRole === "v10") setParanoicoCharges(0);
-          if (targetRole === "v18") setAnjoCharges(0);
-          if (targetRole === "m01") setLobisomemMauCharges(0);
-          if (targetRole === "s01") setCupidoCharges(0);
-          if (targetRole === "m02") setLobisomemVidenteUsed(false);
-          if (targetRole === "m03") setLobisomemVampiroUsed(false);
+          if (targetRole === "e03") setShamanCharges(0);
+          if (targetRole === "v10") setParanoidCharges(0);
+          if (targetRole === "v18") setAngelCharges(0);
+          if (targetRole === "m01") setBigBadWolfCharges(0);
+          if (targetRole === "s01") setCupidCharges(0);
+          if (targetRole === "m02") setWerewolfSeerUsed(false);
+          if (targetRole === "m03") setVampireWolfUsed(false);
           if (targetRole === "v04") setFoxDisabled(false);
           if (targetRole === "v23") setSpiderDayChangeUsed(false);
           Promise.all([
@@ -2210,9 +2280,9 @@ const GMRoom = () => {
         return changed ? next : previous;
       });
 
-      // Cavaleiro resurrection does NOT remove Tetanus from the linked victim (by design).
-      if (abilityRoleAssignments[playerId] === CAVALEIRO_ROLE && cavalerioLinkedDeath) {
-        setCavalerioLinkedDeath(null);
+      // RustedKnight resurrection does NOT remove Tetanus from the linked victim (by design).
+      if (abilityRoleAssignments[playerId] === RUSTED_KNIGHT_ROLE && rustedKnightLinkedDeath) {
+        setRustedKnightLinkedDeath(null);
       }
     }
   }, [
@@ -2220,7 +2290,7 @@ const GMRoom = () => {
     actorIdolPlayerId,
     abilityRoleAssignments,
     broadcastPlayerSync,
-    cavalerioLinkedDeath,
+    rustedKnightLinkedDeath,
     effectiveRoleAssignments,
     findClosestWerewolf,
     hasImmunity,
@@ -2265,20 +2335,20 @@ const GMRoom = () => {
     });
   }, [hasImmunity, permanentlyDead, playerEffects, playerStatuses]);
 
-  // Executado handler (during tribunal). Lobisomem Mau is always executable when Capuchinho is in game.
+  // Executed handler (during tribunal). Big Bad Wolf is always executable when Red Hood is in game.
   const handleExecute = useCallback((playerId: string) => {
     const role = abilityRoleAssignments[playerId];
-    const capuchinhoInGame = Object.values(abilityRoleAssignments).some((r) => r === "v08b");
-    const bypassImmunity = role === "m01" && capuchinhoInGame;
+    const redHoodInGame = Object.values(abilityRoleAssignments).some((r) => r === "v08b");
+    const bypassImmunity = role === "m01" && redHoodInGame;
     if (!bypassImmunity && hasImmunity(playerId, "executado")) return;
     setPlayerStatuses((prev) => ({ ...prev, [playerId]: "dead-this-night" }));
     setKillSources((prev) => ({ ...prev, [playerId]: "executado" }));
     setDayKilledPlayerIds((prev) => (prev.includes(playerId) ? prev : [...prev, playerId]));
     toast.info(format(getToast("infoExecuted", (room?.language as Language) || "pt"), { name: players.find(p => p.id === playerId)?.name || "" }));
-    // Cavaleiro Enferrujado: any death (including execution) triggers Tetanus on closest werewolf.
-    if (role === CAVALEIRO_ROLE) {
-      const isCavaleiroPoisoned = isPlayerActingPoisoned(playerId);
-      if (!isCavaleiroPoisoned) {
+    // RustedKnight Enferrujado: any death (including execution) triggers Tetanus on closest werewolf.
+    if (role === RUSTED_KNIGHT_ROLE) {
+      const isRustedKnightPoisoned = isPlayerActingPoisoned(playerId);
+      if (!isRustedKnightPoisoned) {
         const closestWW = findClosestWerewolf(playerId);
         if (closestWW) {
           setPlayerEffects((prev) => {
@@ -2286,7 +2356,7 @@ const GMRoom = () => {
             cur.add("tetanus");
             return { ...prev, [closestWW.id]: cur };
           });
-          setCavalerioLinkedDeath(closestWW.id);
+          setRustedKnightLinkedDeath(closestWW.id);
           setTetanusSourcePlayerIds((prev) => ({ ...prev, [closestWW.id]: playerId }));
           toast.info(format(getToast("infoKnightExecuted", (room?.language as Language) || "pt"), { name: closestWW.name }));
         }
@@ -2314,21 +2384,21 @@ const GMRoom = () => {
     }
   }, [illusionPlayerIds]);
 
-  const handleChamanChargeToggle = (index: number) => {
-    // Chaman can always tick/untick the checkbox to track usage manually,
+  const handleShamanChargeToggle = (index: number) => {
+    // Shaman can always tick/untick the checkbox to track usage manually,
     // even while poisoned. Only the drag-drop resurrect is gated by poison.
-    if (chamanCharges > index) {
-      setChamanCharges(index);
+    if (shamanCharges > index) {
+      setShamanCharges(index);
     } else {
-      setChamanCharges(index + 1);
+      setShamanCharges(index + 1);
     }
   };
 
-  const handleChamanDrop = useCallback((targetPlayerId: string, sourcePlayerId?: string | null) => {
+  const handleShamanDrop = useCallback((targetPlayerId: string, sourcePlayerId?: string | null) => {
     const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
-    const charges = independentPowerState?.chamanCharges ?? chamanCharges;
+    const charges = independentPowerState?.shamanCharges ?? shamanCharges;
     if (charges >= 2) {
-      toast.warning(getToast("warnChamanUsedAll", (room?.language as Language) || "pt"));
+      toast.warning(getToast("warnShamanUsedAll", (room?.language as Language) || "pt"));
       return;
     }
     const status = playerStatuses[targetPlayerId];
@@ -2337,16 +2407,16 @@ const GMRoom = () => {
       if (sourcePlayerId && independentPowerState) {
         handleIndependentPowerStateChange(sourcePlayerId, {
           ...independentPowerState,
-          chamanCharges: Math.min(independentPowerState.chamanCharges + 1, 2),
+          shamanCharges: Math.min(independentPowerState.shamanCharges + 1, 2),
         });
       } else {
-        setChamanCharges((c) => Math.min(c + 1, 2));
+        setShamanCharges((c) => Math.min(c + 1, 2));
       }
-      toast.success(getToast("okChamanRessurected", (room?.language as Language) || "pt"));
+      toast.success(getToast("okShamanRessurected", (room?.language as Language) || "pt"));
     } else {
-      toast.error(getToast("errChamanDragOnlyDead", (room?.language as Language) || "pt"));
+      toast.error(getToast("errShamanDragOnlyDead", (room?.language as Language) || "pt"));
     }
-  }, [chamanCharges, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, playerStatuses, room?.language]);
+  }, [shamanCharges, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, playerStatuses, room?.language]);
 
   const endNight = async () => {
     const newPermanentlyDead = new Set(permanentlyDead);
@@ -2369,7 +2439,7 @@ const GMRoom = () => {
       }
     }
 
-    // Tetanus is no longer resolved here — moved to startTribunal (red X like Paranoico),
+    // Tetanus is no longer resolved here — moved to startTribunal (red X like Paranoid),
     // so it perma-dies at "Próxima Noite" via the normal dead-this-night → perma flow.
     const newKillSources: Record<string, string> = { ...killSources };
     const newEffectsForTetanus = { ...playerEffects };
@@ -2393,6 +2463,9 @@ const GMRoom = () => {
       .filter(([, status]) => status === "dead-this-night")
       .map(([pid]) => pid);
     setLastNightDeadPlayerIds(currentDeadThisNight);
+    setAstronomerBlocksWerewolvesTonight(currentDeadThisNight.some((pid) => (
+      abilityRoleAssignments[pid] === "l05" && !isPlayerActingPoisoned(pid)
+    )));
 
     Object.entries(newStatuses).forEach(([pid, status]) => {
       if (status === "dead-this-night") {
@@ -2401,6 +2474,12 @@ const GMRoom = () => {
         newlyDead.push(pid);
       }
     });
+
+    const hasVintnerImmunityTarget = (playerId: string) => Object.entries(sourcedEffectTargets)
+      .some(([sourcePlayerId, targets]) => (
+        abilityRoleAssignments[sourcePlayerId] === "v24"
+        && targets.immunity_full === playerId
+      ));
 
     // Resolve temporary night markers on day start (Terminar Noite).
     const newEffects = { ...newEffectsForTetanus };
@@ -2414,17 +2493,17 @@ const GMRoom = () => {
       // 'caught' is a per-night marker — clear at night end
       cleaned.delete("caught");
       const dogSaviourTargeted = Object.values(dogWolfStates)
-        .some((state) => state.powerState.salvadorLastTarget === pid);
-      if (salvadorLastTarget === pid || actorPowerState.salvadorLastTarget === pid || dogSaviourTargeted) {
+        .some((state) => state.powerState.saviourLastTarget === pid);
+      if ((saviourLastTarget === pid || actorPowerState.saviourLastTarget === pid || dogSaviourTargeted) && !hasVintnerImmunityTarget(pid)) {
         cleaned.delete("immunity_full");
       }
       newEffects[pid] = cleaned;
     }
-    setSalvadorLastTarget(null);
-    setActorPowerState((state) => ({ ...state, salvadorLastTarget: null }));
+    setSaviourLastTarget(null);
+    setActorPowerState((state) => ({ ...state, saviourLastTarget: null }));
     setDogWolfStates((previous) => Object.fromEntries(Object.entries(previous).map(([playerId, state]) => [
       playerId,
-      { ...state, powerState: { ...state.powerState, salvadorLastTarget: null } },
+      { ...state, powerState: { ...state.powerState, saviourLastTarget: null } },
     ])));
 
     // Werewolf incendiado victims die (red X) — also covers werewolf_turned victims, respecting immunities.
@@ -2448,7 +2527,7 @@ const GMRoom = () => {
     }
 
     // Track profecia perma-deaths for +1 night persistence
-    setProfeciaDeadAtNight((prev) => {
+    setProphecyDeadAtNight((prev) => {
       const next = { ...prev };
       for (const pid of newlyDead) {
         if (newEffects[pid]?.has("profecia")) {
@@ -2570,10 +2649,10 @@ const GMRoom = () => {
     setPermanentlyDead(newPermanentlyDead);
     setPlayerStatuses(newStatuses);
     setNightTargetedPlayerIds(new Set());
-    setCavalerioLinkedDeath(null);
-    setVidenteFakeMap(null);
-    setLobisomemVidenteRevealedVictim(null);
-    setParanoicoKillName(null);
+    setRustedKnightLinkedDeath(null);
+    setFortuneTellerFakeMap(null);
+    setWerewolfSeerRevealedVictim(null);
+    setParanoidKillName(null);
 
     if (newlyDead.length > 0) {
       await Promise.all(
@@ -2599,7 +2678,7 @@ const GMRoom = () => {
     if (criancaId && !newPermanentlyDead.has(criancaId)) {
       const paiAdotivoId = Object.entries(newEffects).find(([, e]) => e.has("adoptive_dad"))?.[0];
       if (paiAdotivoId && newPermanentlyDead.has(paiAdotivoId)) {
-        // Transform Criança Selvagem into Lobisomem
+        // Transform Wild Child into Werewolf
         if (criancaId === actorPlayerId) {
           setActorCopiedRole("e01");
           syncActorCharacter("e01");
@@ -2647,7 +2726,7 @@ const GMRoom = () => {
 
   const startTribunal = () => {
     // Tetanus resolution: any player still tagged with 'tetanus' gets a red X
-    // (dead-this-night, source 'v07'), like Paranoico. They perma-die at "Próxima Noite".
+    // (dead-this-night, source 'v07'), like Paranoid. They perma-die at "Próxima Noite".
     const tetanusTargetIds = Object.entries(playerEffects)
       .filter(([, effects]) => effects.has("tetanus"))
       .map(([playerId]) => playerId);
@@ -2707,8 +2786,12 @@ const GMRoom = () => {
         newlyDead.push(pid);
       }
     }
+    const astronomerDiedDuringDay = newlyDead.some((pid) => (
+      abilityRoleAssignments[pid] === "l05" && !isPlayerActingPoisoned(pid)
+    ));
+    if (astronomerDiedDuringDay) setAstronomerBlocksWerewolvesTonight(true);
 
-    // Add day killed to lastNightDeadPlayerIds so Vidente sees them
+    // Add day killed to lastNightDeadPlayerIds so FortuneTeller sees them
     setLastNightDeadPlayerIds((prev) => [...prev, ...newlyDead.filter(pid => !prev.includes(pid))]);
 
     if (newlyDead.length > 0) {
@@ -2770,17 +2853,41 @@ const GMRoom = () => {
     }
     if (dogStateChanged) setDogWolfStates(advancedDogStates);
 
-    // At night start, remove m01's disguise immunity.
-    // Salvador immunity is cleared at dawn in endNight.
+    const vintnerImmunityTargetIds = new Set(
+      Object.entries(sourcedEffectTargets).flatMap(([sourcePlayerId, targets]) => (
+        abilityRoleAssignments[sourcePlayerId] === "v24" && targets.immunity_full
+          ? [targets.immunity_full]
+          : []
+      )),
+    );
+
+    // At night start, remove m01's disguise immunity and Vintner's day-long immunity.
+    // Saviour immunity is cleared at dawn in endNight.
     const newEffects = { ...playerEffects };
     for (const [pid, effects] of Object.entries(newEffects)) {
       const cleaned = new Set(effects);
       if (abilityRoleAssignments[pid] === "m01") cleaned.delete("immunity_full");
+      if (vintnerImmunityTargetIds.has(pid)) cleaned.delete("immunity_full");
       newEffects[pid] = cleaned;
+    }
+    if (vintnerImmunityTargetIds.size > 0) {
+      setSourcedEffectTargets((previous) => {
+        let changed = false;
+        const next = Object.fromEntries(Object.entries(previous).map(([sourcePlayerId, targets]) => {
+          if (abilityRoleAssignments[sourcePlayerId] !== "v24" || !targets.immunity_full) {
+            return [sourcePlayerId, targets];
+          }
+          changed = true;
+          const nextTargets = { ...targets };
+          delete nextTargets.immunity_full;
+          return [sourcePlayerId, nextTargets];
+        }));
+        return changed ? next : previous;
+      });
     }
 
     // Track profecia perma-deaths for +1 night persistence
-    setProfeciaDeadAtNight((prev) => {
+    setProphecyDeadAtNight((prev) => {
       const next = { ...prev };
       for (const pid of newlyDead) {
         if (newEffects[pid]?.has("profecia")) {
@@ -2807,9 +2914,9 @@ const GMRoom = () => {
     setGameCyclePhase("night");
     setNightNumber((n) => n + 1);
     setNightTargetedPlayerIds(new Set());
-    setCavalerioLinkedDeath(null);
-    setVidenteFakeMap(null);
-    setLobisomemVidenteRevealedVictim(null);
+    setRustedKnightLinkedDeath(null);
+    setFortuneTellerFakeMap(null);
+    setWerewolfSeerRevealedVictim(null);
   };
 
   // Helper: pick a random player matching a predicate (excluding source if provided)
@@ -2830,7 +2937,7 @@ const GMRoom = () => {
   const getSourceRole = useCallback((source: string | null | undefined): RoleId | null => {
     if (!source) return null;
     if (source === "s01-suicide") return "s01";
-    if (source === "soldado") return "v09";
+    if (source === "soldier" || source === "soldado") return "v09";
     if (ROLES[source as RoleId]) return source as RoleId;
     return null;
   }, []);
@@ -3107,7 +3214,12 @@ const GMRoom = () => {
             source,
           });
         } else if (currentStatus === "alive" && (previousStatus === "dead" || previousStatus === "dead-this-night" || previousState.permanentlyDead.has(playerId))) {
-          const sourceRole: RoleId | null = previousState.permanentlyDead.has(playerId) ? "v18" : "e03";
+          const pendingSourcePlayerId = pendingGameActionLogSourcesRef.current.get(`resurrect:${playerId}`);
+          const sourceRole: RoleId | null = pendingSourcePlayerId
+            ? abilityRoleAssignments[pendingSourcePlayerId] ?? null
+            : previousState.permanentlyDead.has(playerId)
+            ? "v18"
+            : "e03";
           recordGameEvent({
             action: "resurrect",
             actor: actorForTransition(`resurrect:${playerId}`, sourceRole),
@@ -3167,6 +3279,7 @@ const GMRoom = () => {
     illusionPlayerIds,
     playerEffects,
     roleAssignments,
+    abilityRoleAssignments,
     gameCyclePhase,
     dayPhase,
     nightNumber,
@@ -3265,8 +3378,8 @@ const GMRoom = () => {
         }),
       ));
     }
-    if (deadSourceRoles.includes("v11")) setChefeLastTarget(null);
-    if (deadSourceRoles.includes("v17")) setSalvadorLastTarget(null);
+    if (deadSourceRoles.includes("v11")) setVillageElderLastTarget(null);
+    if (deadSourceRoles.includes("v17")) setSaviourLastTarget(null);
 
     const effectsToRemove = new Set<StatusEffect>();
     deadSourceRoles.forEach((role) => DEAD_SOURCE_EFFECTS[role]?.forEach((effect) => effectsToRemove.add(effect)));
@@ -3296,26 +3409,26 @@ const GMRoom = () => {
     if (completed && progressOrder !== null) clearEffectsFromDeadSources(progressOrder);
   }, [clearEffectsFromDeadSources]);
 
-  const handleLobisomemMauChargeToggle = useCallback((idx: number) => {
-    const newCharges = lobisomemMauCharges > idx ? idx : idx + 1;
-    setLobisomemMauCharges(newCharges);
-    if (newCharges > lobisomemMauCharges) {
+  const handleBigBadWolfChargeToggle = useCallback((idx: number) => {
+    const newCharges = bigBadWolfCharges > idx ? idx : idx + 1;
+    setBigBadWolfCharges(newCharges);
+    if (newCharges > bigBadWolfCharges) {
       const m01Id = getRolePlayerId("m01");
       if (m01Id && !playerEffects[m01Id]?.has("immunity_full")) {
         toggleEffect(m01Id, "immunity_full");
       }
     }
-  }, [getRolePlayerId, lobisomemMauCharges, playerEffects, toggleEffect]);
+  }, [getRolePlayerId, bigBadWolfCharges, playerEffects, toggleEffect]);
 
-  const handleCupidoChargeToggle = useCallback((idx: number) => {
-    const cupidoId = getRolePlayerId("s01");
-    if (cupidoId && isPlayerActingPoisoned(cupidoId)) {
+  const handleCupidChargeToggle = useCallback((idx: number) => {
+    const cupidId = getRolePlayerId("s01");
+    if (cupidId && isPlayerActingPoisoned(cupidId)) {
       toast.warning(getToast("warnCupidPoisoned", (room?.language as Language) || "pt"));
       return;
     }
 
-    const newCharges = cupidoCharges > idx ? idx : idx + 1;
-    setCupidoCharges(newCharges);
+    const newCharges = cupidCharges > idx ? idx : idx + 1;
+    setCupidCharges(newCharges);
     setPlayerEffects((prev) => {
       const next = { ...prev };
       for (const [playerId, effects] of Object.entries(next)) {
@@ -3327,7 +3440,7 @@ const GMRoom = () => {
       }
       return next;
     });
-  }, [cupidoCharges, getRolePlayerId, isPlayerActingPoisoned, room?.language]);
+  }, [cupidCharges, getRolePlayerId, isPlayerActingPoisoned, room?.language]);
 
   const handleActorPowerStateChange = useCallback((next: ActorPowerState) => {
     if (!actorPlayerId) return;
@@ -3354,7 +3467,7 @@ const GMRoom = () => {
     });
   }, [abilityRoleAssignments, actorPlayerId, drunkardPlayerId]);
 
-  // Vampire victim id (player with werewolf_turned effect, transformed by Lobisomem Vampiro)
+  // Vampire victim id (player with werewolf_turned effect, transformed by Vampire Wolf)
   const vampireVictimId = useMemo(() => {
     for (const [pid, eff] of Object.entries(playerEffects)) {
       if (eff.has("werewolf_turned")) return pid;
@@ -3371,13 +3484,13 @@ const GMRoom = () => {
 
   const resetUsesForRoleId = useCallback((role: RoleId | undefined) => {
     if (!role) return;
-    if (role === "e03") setChamanCharges(0);
-    if (role === "v10") setParanoicoCharges(0);
-    if (role === "v18") setAnjoCharges(0);
-    if (role === "m01") setLobisomemMauCharges(0);
-    if (role === "s01") setCupidoCharges(0);
-    if (role === "m02") setLobisomemVidenteUsed(false);
-    if (role === "m03") setLobisomemVampiroUsed(false);
+    if (role === "e03") setShamanCharges(0);
+    if (role === "v10") setParanoidCharges(0);
+    if (role === "v18") setAngelCharges(0);
+    if (role === "m01") setBigBadWolfCharges(0);
+    if (role === "s01") setCupidCharges(0);
+    if (role === "m02") setWerewolfSeerUsed(false);
+    if (role === "m03") setVampireWolfUsed(false);
     if (role === "v04") setFoxDisabled(false);
     if (role === "v23") setSpiderDayChangeUsed(false);
   }, []);
@@ -3478,7 +3591,7 @@ const GMRoom = () => {
       ? "e02"
       : action === "kill"
       ? "e01"
-      : action === "chaman"
+      : action === "shaman"
       ? "e03"
       : action === "illusion"
       ? "a06"
@@ -3522,8 +3635,8 @@ const GMRoom = () => {
       setNightTargetedPlayerIds((prev) => { const n = new Set(prev); n.add(targetPlayerId); return n; });
     } else if (action === "kill") {
       handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? "e01", sourcePlayerId);
-    } else if (action === "chaman") {
-      handleChamanDrop(targetPlayerId, sourcePlayerId);
+    } else if (action === "shaman") {
+      handleShamanDrop(targetPlayerId, sourcePlayerId);
     } else if (action === "illusion") {
       const illusionistId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "a06" ? sourcePlayerId : getRolePlayerId("a06");
       if (illusionistId && isPlayerActingPoisoned(illusionistId)) return;
@@ -3576,10 +3689,10 @@ const GMRoom = () => {
         if (!playerEffects[targetPlayerId]?.has("acusado")) toggleActionEffect(targetPlayerId, "acusado_next");
       }
       else if (roleSource === "v16") {
-        // Sonâmbulo: if poisoned → random (excluding intended target & sonambulo)
-        const sonambuloId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v16" ? sourcePlayerId : getRolePlayerId("v16");
-        if (sonambuloId && isPlayerActingPoisoned(sonambuloId)) {
-          const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== sonambuloId);
+        // Sonâmbulo: if poisoned → random (excluding intended target & sleepwalker)
+        const sleepwalkerId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v16" ? sourcePlayerId : getRolePlayerId("v16");
+        if (sleepwalkerId && isPlayerActingPoisoned(sleepwalkerId)) {
+          const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== sleepwalkerId);
           if (random) {
             toggleActionEffect(random.id, "hospede");
             toast.info(format(getToast("infoSleepwalkerPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
@@ -3589,25 +3702,47 @@ const GMRoom = () => {
         }
       }
       else if (roleSource === "v17") {
-        // Salvador: if poisoned → random (excluding intended target & salvador)
-        const salvadorId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v17" ? sourcePlayerId : getRolePlayerId("v17");
-        const previousTarget = independentPowerState?.salvadorLastTarget ?? salvadorLastTarget;
+        // Saviour: if poisoned → random (excluding intended target & saviour)
+        const saviourId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v17" ? sourcePlayerId : getRolePlayerId("v17");
+        const previousTarget = independentPowerState?.saviourLastTarget ?? saviourLastTarget;
         let actualTarget = targetPlayerId;
-        if (salvadorId && isPlayerActingPoisoned(salvadorId)) {
-          const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== salvadorId);
+        if (saviourId && isPlayerActingPoisoned(saviourId)) {
+          const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== saviourId);
           if (random) {
             actualTarget = random.id;
             toast.info(format(getToast("infoSaviourPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
           }
         }
-        // Remove immunity from previous Salvador target if different
+        // Remove immunity from previous Saviour target if different
         if (previousTarget && previousTarget !== actualTarget) {
           const prevEff = playerEffects[previousTarget] || new Set();
           if (prevEff.has("immunity_full")) toggleActionEffect(previousTarget, "immunity_full");
         }
         toggleActionEffect(actualTarget, "immunity_full");
-        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, salvadorLastTarget: actualTarget });
-        else setSalvadorLastTarget(actualTarget);
+        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, saviourLastTarget: actualTarget });
+        else setSaviourLastTarget(actualTarget);
+      }
+      else if (roleSource === "v24") {
+        const vintnerId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v24" ? sourcePlayerId : getRolePlayerId("v24");
+        if (!vintnerId) return;
+        let actualTarget = targetPlayerId;
+        if (isPlayerActingPoisoned(vintnerId)) {
+          const random = pickRandomPlayer((p) =>
+            !permanentlyDead.has(p.id)
+            && playerStatuses[p.id] !== "dead-this-night"
+            && p.id !== vintnerId
+            && p.id !== targetPlayerId
+          );
+          if (!random) {
+            toast.warning(getToast("warnNoTargets", (room?.language as Language) || "pt"));
+            return;
+          }
+          actualTarget = random.id;
+          toast.info(format(getToast("infoVintnerPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
+        }
+        handlePlayerStatusChange(actualTarget, "poisoned", undefined, vintnerId);
+        applySourcedEffect(vintnerId, actualTarget, "immunity_full");
+        setNightTargetedPlayerIds((prev) => { const next = new Set(prev); next.add(actualTarget); return next; });
       }
       else if (roleSource === "v09") {
         const captainId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v09" ? sourcePlayerId : getRolePlayerId("v09");
@@ -3625,11 +3760,11 @@ const GMRoom = () => {
         toggleActionEffect(soldierId, "soldado");
       }
       else if (roleSource === "v11") {
-        const chefeId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v11" ? sourcePlayerId : getRolePlayerId("v11");
-        const isPoisoned = chefeId && isPlayerActingPoisoned(chefeId);
+        const villageElderId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v11" ? sourcePlayerId : getRolePlayerId("v11");
+        const isPoisoned = villageElderId && isPlayerActingPoisoned(villageElderId);
         const effectKey: StatusEffect = isPoisoned ? "vote_double" : "vote_against";
-        const previousTarget = independentPowerState?.chefeLastTarget ?? chefeLastTarget;
-        // Remove from previous chefe target if different
+        const previousTarget = independentPowerState?.villageElderLastTarget ?? villageElderLastTarget;
+        // Remove from previous villageElder target if different
         if (previousTarget && previousTarget !== targetPlayerId) {
           const prevEff = playerEffects[previousTarget] || new Set();
           if (prevEff.has(effectKey)) toggleActionEffect(previousTarget, effectKey);
@@ -3638,8 +3773,8 @@ const GMRoom = () => {
           if (prevEff.has(otherKey)) toggleActionEffect(previousTarget, otherKey);
         }
         toggleActionEffect(targetPlayerId, effectKey);
-        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, chefeLastTarget: targetPlayerId });
-        else setChefeLastTarget(targetPlayerId);
+        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, villageElderLastTarget: targetPlayerId });
+        else setVillageElderLastTarget(targetPlayerId);
       }
       else if (roleSource === "f01") {
         const thiefId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "f01" ? sourcePlayerId : getRolePlayerId("f01");
@@ -3721,17 +3856,17 @@ const GMRoom = () => {
         }
       }
       else if (roleSource === "v18") {
-        // Anjo: needs to be perma-dead target. If poisoned → random other perma-dead.
-        const charges = independentPowerState?.anjoCharges ?? anjoCharges;
+        // Angel: needs to be perma-dead target. If poisoned → random other perma-dead.
+        const charges = independentPowerState?.angelCharges ?? angelCharges;
         if (charges >= 2) {
           toast.warning(getToast("warnAngelUsedAll", (room?.language as Language) || "pt"));
           return;
         }
-        const anjoId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v18" ? sourcePlayerId : getRolePlayerId("v18");
-        const isPoisoned = anjoId && isPlayerActingPoisoned(anjoId);
+        const angelId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v18" ? sourcePlayerId : getRolePlayerId("v18");
+        const isPoisoned = angelId && isPlayerActingPoisoned(angelId);
         let resurrectId: string | null = targetPlayerId;
         if (isPoisoned) {
-          const random = pickRandomPlayer((p) => permanentlyDead.has(p.id) && p.id !== targetPlayerId, anjoId || undefined);
+          const random = pickRandomPlayer((p) => permanentlyDead.has(p.id) && p.id !== targetPlayerId, angelId || undefined);
           if (random) {
             resurrectId = random.id;
             toast.info(format(getToast("infoAngelPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
@@ -3742,8 +3877,8 @@ const GMRoom = () => {
         if (resurrectId && permanentlyDead.has(resurrectId)) {
           handlePlayerStatusChange(resurrectId, "alive", undefined, sourcePlayerId);
           resetUsesForRole(resurrectId);
-          if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, anjoCharges: Math.min(independentPowerState.anjoCharges + 1, 2) });
-          else setAnjoCharges((c) => Math.min(c + 1, 2));
+          if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, angelCharges: Math.min(independentPowerState.angelCharges + 1, 2) });
+          else setAngelCharges((c) => Math.min(c + 1, 2));
         } else if (resurrectId) {
           toast.warning(getToast("warnAngelUsedAll", (room?.language as Language) || "pt"));
         }
@@ -3794,29 +3929,29 @@ const GMRoom = () => {
             return { ...prev, [targetPlayerId]: current };
           });
           setPlayerStatuses((prev) => ({ ...prev, [targetPlayerId]: "alive" }));
-          updateIndependentPowerState({ ...independentPowerState, lobisomemVampiroUsed: true });
+          updateIndependentPowerState({ ...independentPowerState, vampireWolfUsed: true });
         } else {
           toggleActionEffect(targetPlayerId, "werewolf_turned");
         }
       }
       else if (roleSource === "v10" || roleSource === "v10-poisoned") {
-        const charges = independentPowerState?.paranoicoCharges ?? paranoicoCharges;
+        const charges = independentPowerState?.paranoidCharges ?? paranoidCharges;
         if (charges >= 2) {
           toast.warning(getToast("warnParanoidUsedAll", (room?.language as Language) || "pt"));
           return;
         }
-        const paranoicoId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v10" ? sourcePlayerId : getRolePlayerId("v10");
+        const paranoidId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v10" ? sourcePlayerId : getRolePlayerId("v10");
         let killId = targetPlayerId;
-        if (paranoicoId && isPlayerActingPoisoned(paranoicoId)) {
-          const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== paranoicoId && p.id !== targetPlayerId);
+        if (paranoidId && isPlayerActingPoisoned(paranoidId)) {
+          const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== paranoidId && p.id !== targetPlayerId);
           if (!random) { toast.warning(getToast("warnNoTargets", (room?.language as Language) || "pt")); return; }
           killId = random.id;
           toast.info(format(getToast("infoParanoidPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
         }
         handlePlayerStatusChange(killId, "dead-this-night", publicSourceRole ?? "v10", sourcePlayerId);
-        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, paranoicoCharges: Math.min(independentPowerState.paranoicoCharges + 1, 2) });
-        else setParanoicoCharges((c) => Math.min(c + 1, 2));
-        setParanoicoKillName(players.find(p => p.id === killId)?.name || null);
+        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, paranoidCharges: Math.min(independentPowerState.paranoidCharges + 1, 2) });
+        else setParanoidCharges((c) => Math.min(c + 1, 2));
+        setParanoidKillName(players.find(p => p.id === killId)?.name || null);
         setDayKilledPlayerIds((prev) => [...prev, killId]);
       }
       else if (roleSource === "v23") {
@@ -3849,15 +3984,32 @@ const GMRoom = () => {
         applySourcedEffect(a05Id, targetPlayerId, effectKey);
         toast.success(getToast("okGraveRobber", (room?.language as Language) || "pt"));
       }
-      else if (roleSource === "soldado-kill") {
-        // Soldado ghost kill
-        handlePlayerStatusChange(targetPlayerId, "dead-this-night", "soldado", sourcePlayerId);
+      else if (roleSource === "l06") {
+        const servantId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "l06" ? sourcePlayerId : getRolePlayerId("l06");
+        if (!servantId || targetPlayerId === servantId) return;
+        if (isPlayerActingPoisoned(servantId)) {
+          toast.warning(getToast("warnDevoutServantPoisoned", (room?.language as Language) || "pt"));
+          return;
+        }
+        if (playerStatuses[targetPlayerId] !== "dead-this-night") {
+          toast.error(getToast("errDevoutServantDragOnlyDead", (room?.language as Language) || "pt"));
+          return;
+        }
+        handlePlayerStatusChange(targetPlayerId, "alive", undefined, servantId);
+        setPlayerStatuses((prev) => ({ ...prev, [servantId]: "dead-this-night" }));
+        setKillSources((prev) => ({ ...prev, [servantId]: "l06" }));
+        setKillSourcePlayerIds((prev) => ({ ...prev, [servantId]: servantId }));
+        toast.success(getToast("okDevoutServantRessurected", (room?.language as Language) || "pt"));
+      }
+      else if (roleSource === "soldier-kill") {
+        // Soldier ghost kill
+        handlePlayerStatusChange(targetPlayerId, "dead-this-night", "soldier", sourcePlayerId);
       }
       else {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, handleIndependentPowerStateChange, handlePlayerStatusChange, handleChamanDrop, handleSetIllusion, independentPowerStates, toggleEffect, players, playerEffects, gameCyclePhase, anjoCharges, getRolePlayerId, isPlayerActingPoisoned, pickRandomPlayer, permanentlyDead, resetUsesForRole, roleAssignments, salvadorLastTarget, chefeLastTarget, playerStatuses, paranoicoCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, toggleEffect, players, playerEffects, gameCyclePhase, angelCharges, getRolePlayerId, isPlayerActingPoisoned, pickRandomPlayer, permanentlyDead, resetUsesForRole, roleAssignments, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
@@ -3910,16 +4062,16 @@ const GMRoom = () => {
         },
       };
     }
-    if (role === CHAMAN_ROLE && !permanentlyDead.has(playerId)) {
+    if (role === SHAMAN_ROLE && !permanentlyDead.has(playerId)) {
       return {
         draggable: true,
         onDragStart: (e: React.DragEvent) => {
           if (isPlayerActingPoisoned(playerId)) {
             e.preventDefault();
-            toast.warning(getToast("warnChamanPoisoned", (room?.language as Language) || "pt"));
+            toast.warning(getToast("warnShamanPoisoned", (room?.language as Language) || "pt"));
             return;
           }
-          e.dataTransfer.setData("action", "chaman");
+          e.dataTransfer.setData("action", "shaman");
           e.dataTransfer.setData("sourcePlayerId", playerId);
           e.dataTransfer.effectAllowed = "move";
         },
@@ -3935,8 +4087,8 @@ const GMRoom = () => {
         },
       };
     }
-    // Paranoico drag
-    if (role === "v10" && !permanentlyDead.has(playerId) && paranoicoCharges < 2) {
+    // Paranoid drag
+    if (role === "v10" && !permanentlyDead.has(playerId) && paranoidCharges < 2) {
       return {
         draggable: true,
         onDragStart: (e: React.DragEvent) => {
@@ -3996,7 +4148,7 @@ const GMRoom = () => {
     return map;
   }, [isPlayerActingPoisoned, lastNightDeadPlayerIds, roleAssignments]);
 
-  const handleVidenteReveal = useCallback(async (sourcePlayerId?: string | null) => {
+  const handleFortuneTellerReveal = useCallback(async (sourcePlayerId?: string | null) => {
     const recipients = getRevealRecipientIds("e04", sourcePlayerId, "poison-sensitive");
     const deadRoleAssignments = Object.fromEntries(
       lastNightDeadPlayerIds
@@ -4009,21 +4161,21 @@ const GMRoom = () => {
       deadPlayerIds: lastNightDeadPlayerIds,
       illusionPlayerId,
       illusionPlayerIds: Array.from(illusionPlayerIds),
-      isVidentePoisoned: viewerPoisoned,
+      isFortuneTellerPoisoned: viewerPoisoned,
       fakeMap: viewerPoisoned ? generateFakeMap(viewerPlayerId) : null,
       roleAssignments: deadRoleAssignments,
     };
     const byPlayerId = Object.fromEntries(recipients.map((recipientId) => [recipientId, sharedResult]));
     const gmResult = Object.values(byPlayerId)[0];
-    setVidenteFakeMap(gmResult?.fakeMap ?? null);
-    setVidenteModalPoisoned(gmResult?.isVidentePoisoned ?? viewerPoisoned);
-    setVidenteModalOpen(true);
+    setFortuneTellerFakeMap(gmResult?.fakeMap ?? null);
+    setFortuneTellerModalPoisoned(gmResult?.isFortuneTellerPoisoned ?? viewerPoisoned);
+    setFortuneTellerModalOpen(true);
     markScriptRoleAction("e04", sourcePlayerId, recipients);
     if (!roomId) return;
-    const channel = supabase.channel(`vidente-reveal-${roomId}`);
+    const channel = supabase.channel(`fortune-teller-reveal-${roomId}`);
     channel.send({
       type: "broadcast",
-      event: "vidente-reveal",
+      event: "fortune-teller-reveal",
       payload: {
         show: true,
         byPlayerId,
@@ -4031,35 +4183,35 @@ const GMRoom = () => {
     });
   }, [generateFakeMap, getRevealRecipientIds, illusionPlayerId, illusionPlayerIds, isPlayerActingPoisoned, lastNightDeadPlayerIds, markScriptRoleAction, roleAssignments, roomId]);
 
-  const handleCloseVidenteModal = useCallback(() => {
-    setVidenteModalOpen(false);
-    setVidenteModalPoisoned(false);
+  const handleCloseFortuneTellerModal = useCallback(() => {
+    setFortuneTellerModalOpen(false);
+    setFortuneTellerModalPoisoned(false);
     if (roomId) {
-      const channel = supabase.channel(`vidente-reveal-${roomId}`);
+      const channel = supabase.channel(`fortune-teller-reveal-${roomId}`);
       channel.send({
         type: "broadcast",
-        event: "vidente-reveal",
+        event: "fortune-teller-reveal",
         payload: { show: false },
       });
     }
   }, [roomId]);
 
-  // Menina reveal: cards = killer of each red-X player
-  const buildMeninaCards = useCallback((viewerPlayerId: string | null): RevealCard[] => {
+  // LittleGirl reveal: cards = killer of each red-X player
+  const buildLittleGirlCards = useCallback((viewerPlayerId: string | null): RevealCard[] => {
     const localLang: Language = (room?.language as Language) || "pt";
-    const meninaPoisoned = isPlayerActingPoisoned(viewerPlayerId ?? "");
+    const littleGirlPoisoned = isPlayerActingPoisoned(viewerPlayerId ?? "");
     const redX = Object.entries(playerStatuses)
       .filter(([, s]) => s === "dead-this-night")
       .map(([pid]) => pid);
-    if (meninaPoisoned) {
+    if (littleGirlPoisoned) {
       return redX.map((pid) => {
         const actualSrc = killSources[pid];
-        const actualKind = getMeninaAnswerKind(actualSrc);
-        const pool = MENINA_POISONED_ANSWERS.filter(({ kind }) => kind !== actualKind);
+        const actualKind = getLittleGirlAnswerKind(actualSrc);
+        const pool = LITTLE_GIRL_POISONED_ANSWERS.filter(({ kind }) => kind !== actualKind);
         const answer = pool[Math.floor(Math.random() * pool.length)];
         const def = ROLES[answer.roleId];
         const name = players.find((p) => p.id === pid)?.name;
-        const customLabels: Partial<Record<MeninaAnswerKind, string>> = {
+        const customLabels: Partial<Record<LittleGirlAnswerKind, string>> = {
           soldier: t("littleGirlSoldier", localLang),
           suicide: t("littleGirlSuicide", localLang),
           werewolves: t("littleGirlWerewolves", localLang),
@@ -4079,35 +4231,35 @@ const GMRoom = () => {
     });
   }, [isPlayerActingPoisoned, room, roleAssignments, playerStatuses, killSources, illusionPlayerIds, players]);
 
-  const defaultMeninaCards = useMemo<RevealCard[]>(() => (
-    buildMeninaCards(getRolePlayerId("v01"))
-  ), [buildMeninaCards, getRolePlayerId]);
+  const defaultLittleGirlCards = useMemo<RevealCard[]>(() => (
+    buildLittleGirlCards(getRolePlayerId("v01"))
+  ), [buildLittleGirlCards, getRolePlayerId]);
 
-  const handleMeninaReveal = useCallback((sourcePlayerId?: string | null) => {
+  const handleLittleGirlReveal = useCallback((sourcePlayerId?: string | null) => {
     const recipients = getRevealRecipientIds("v01", sourcePlayerId, "poison-sensitive");
-    const sharedResult = { cards: buildMeninaCards(recipients[0] ?? sourcePlayerId ?? null) };
+    const sharedResult = { cards: buildLittleGirlCards(recipients[0] ?? sourcePlayerId ?? null) };
     const byPlayerId = Object.fromEntries(recipients.map((recipientId) => [recipientId, sharedResult]));
-    setMeninaRevealCards(Object.values(byPlayerId)[0]?.cards ?? defaultMeninaCards);
-    setMeninaRevealOpen(true);
+    setLittleGirlRevealCards(Object.values(byPlayerId)[0]?.cards ?? defaultLittleGirlCards);
+    setLittleGirlRevealOpen(true);
     markScriptRoleAction("v01", sourcePlayerId, recipients);
     if (!roomId) return;
-    supabase.channel(`menina-reveal-${roomId}`).send({
-      type: "broadcast", event: "menina-reveal",
+    supabase.channel(`little-girl-reveal-${roomId}`).send({
+      type: "broadcast", event: "little-girl-reveal",
       payload: { show: true, byPlayerId },
     });
-  }, [buildMeninaCards, defaultMeninaCards, getRevealRecipientIds, markScriptRoleAction, roomId]);
+  }, [buildLittleGirlCards, defaultLittleGirlCards, getRevealRecipientIds, markScriptRoleAction, roomId]);
 
-  const handleCloseMeninaModal = useCallback(() => {
-    setMeninaRevealOpen(false);
+  const handleCloseLittleGirlModal = useCallback(() => {
+    setLittleGirlRevealOpen(false);
     if (roomId) {
-      supabase.channel(`menina-reveal-${roomId}`).send({
-        type: "broadcast", event: "menina-reveal", payload: { show: false },
+      supabase.channel(`little-girl-reveal-${roomId}`).send({
+        type: "broadcast", event: "little-girl-reveal", payload: { show: false },
       });
     }
   }, [roomId]);
 
-  // Faroleiro reveal: random alive limited-use char
-  const handleFaroleiroReveal = useCallback((sourcePlayerId?: string | null) => {
+  // Lamplighter reveal: random alive limited-use char
+  const handleLamplighterReveal = useCallback((sourcePlayerId?: string | null) => {
     const limitedUseRoles: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "m03", "v13", "v14", "v23"];
     const candidates = players.filter((p) => !permanentlyDead.has(p.id) && limitedUseRoles.includes(abilityRoleAssignments[p.id]));
     if (candidates.length === 0) {
@@ -4121,14 +4273,14 @@ const GMRoom = () => {
       const role = roleAssignments[pick.id];
       const powerState = independentPowerStates[pick.id];
       let charges: boolean[] = [false, false];
-      if (mechanicalRole === "e03") charges = powerState ? [powerState.chamanCharges > 0, powerState.chamanCharges > 1] : [chamanCharges > 0, chamanCharges > 1];
-      else if (mechanicalRole === "v10") charges = powerState ? [powerState.paranoicoCharges > 0, powerState.paranoicoCharges > 1] : [paranoicoCharges > 0, paranoicoCharges > 1];
-      else if (mechanicalRole === "v18") charges = powerState ? [powerState.anjoCharges > 0, powerState.anjoCharges > 1] : [anjoCharges > 0, anjoCharges > 1];
-      else if (mechanicalRole === "m01") charges = powerState ? [powerState.lobisomemMauCharges > 0, powerState.lobisomemMauCharges > 1] : [lobisomemMauCharges > 0, lobisomemMauCharges > 1];
-      else if (mechanicalRole === "s01") charges = powerState ? [powerState.cupidoCharges > 0, powerState.cupidoCharges > 1] : [cupidoCharges > 0, cupidoCharges > 1];
-      else if (mechanicalRole === "m03") charges = [powerState ? powerState.lobisomemVampiroUsed : lobisomemVampiroUsed];
-      else if (mechanicalRole === "v13") charges = powerState ? [powerState.juizCharges > 0, powerState.juizCharges > 1] : [juizCharges > 0, juizCharges > 1];
-      else if (mechanicalRole === "v14") charges = powerState ? [powerState.acusadorCharges > 0, powerState.acusadorCharges > 1] : [acusadorCharges > 0, acusadorCharges > 1];
+      if (mechanicalRole === "e03") charges = powerState ? [powerState.shamanCharges > 0, powerState.shamanCharges > 1] : [shamanCharges > 0, shamanCharges > 1];
+      else if (mechanicalRole === "v10") charges = powerState ? [powerState.paranoidCharges > 0, powerState.paranoidCharges > 1] : [paranoidCharges > 0, paranoidCharges > 1];
+      else if (mechanicalRole === "v18") charges = powerState ? [powerState.angelCharges > 0, powerState.angelCharges > 1] : [angelCharges > 0, angelCharges > 1];
+      else if (mechanicalRole === "m01") charges = powerState ? [powerState.bigBadWolfCharges > 0, powerState.bigBadWolfCharges > 1] : [bigBadWolfCharges > 0, bigBadWolfCharges > 1];
+      else if (mechanicalRole === "s01") charges = powerState ? [powerState.cupidCharges > 0, powerState.cupidCharges > 1] : [cupidCharges > 0, cupidCharges > 1];
+      else if (mechanicalRole === "m03") charges = [powerState ? powerState.vampireWolfUsed : vampireWolfUsed];
+      else if (mechanicalRole === "v13") charges = powerState ? [powerState.judgeCharges > 0, powerState.judgeCharges > 1] : [judgeCharges > 0, judgeCharges > 1];
+      else if (mechanicalRole === "v14") charges = powerState ? [powerState.accuserCharges > 0, powerState.accuserCharges > 1] : [accuserCharges > 0, accuserCharges > 1];
       else if (mechanicalRole === "v23") charges = [powerState ? powerState.spiderDayChangeUsed : spiderDayChangeUsed];
       if (isPlayerActingPoisoned(viewerPlayerId) && charges.length > 0) {
         const flipIndex = Math.floor(Math.random() * charges.length);
@@ -4138,29 +4290,29 @@ const GMRoom = () => {
     }));
     const gmResult = Object.values(byPlayerId)[0];
     if (gmResult) {
-      setFaroleiroPickedRole(gmResult.role);
-      setFaroleiroPickedCharges(gmResult.charges);
+      setLamplighterPickedRole(gmResult.role);
+      setLamplighterPickedCharges(gmResult.charges);
     }
-    setFaroleiroRevealOpen(true);
+    setLamplighterRevealOpen(true);
     markScriptRoleAction("v21", sourcePlayerId, recipients);
     if (!roomId) return;
-    supabase.channel(`faroleiro-reveal-${roomId}`).send({
-      type: "broadcast", event: "faroleiro-reveal",
+    supabase.channel(`lamplighter-reveal-${roomId}`).send({
+      type: "broadcast", event: "lamplighter-reveal",
       payload: { show: true, byPlayerId },
     });
-  }, [abilityRoleAssignments, players, permanentlyDead, getRevealRecipientIds, roleAssignments, independentPowerStates, chamanCharges, paranoicoCharges, anjoCharges, lobisomemMauCharges, cupidoCharges, lobisomemVampiroUsed, juizCharges, acusadorCharges, spiderDayChangeUsed, isPlayerActingPoisoned, markScriptRoleAction, roomId, room?.language]);
+  }, [abilityRoleAssignments, players, permanentlyDead, getRevealRecipientIds, roleAssignments, independentPowerStates, shamanCharges, paranoidCharges, angelCharges, bigBadWolfCharges, cupidCharges, vampireWolfUsed, judgeCharges, accuserCharges, spiderDayChangeUsed, isPlayerActingPoisoned, markScriptRoleAction, roomId, room?.language]);
 
-  const handleCloseFaroleiroModal = useCallback(() => {
-    setFaroleiroRevealOpen(false);
+  const handleCloseLamplighterModal = useCallback(() => {
+    setLamplighterRevealOpen(false);
     if (roomId) {
-      supabase.channel(`faroleiro-reveal-${roomId}`).send({
-        type: "broadcast", event: "faroleiro-reveal", payload: { show: false },
+      supabase.channel(`lamplighter-reveal-${roomId}`).send({
+        type: "broadcast", event: "lamplighter-reveal", payload: { show: false },
       });
     }
   }, [roomId]);
 
-  // Lobisomem Vidente reveal: resurrect victim, show their card
-  const lobisomemVidenteVictim = useMemo(() => {
+  // Werewolf Seer reveal: resurrect victim, show their card
+  const werewolfSeerVictim = useMemo(() => {
     const victimId = Object.entries(playerStatuses).find(([pid, s]) => {
       const src = killSources[pid];
       return s === "dead-this-night" && (src === "e01" || (src && WEREWOLF_ROLES.includes(src as RoleId)) || (src === "a04" && !!actorCopiedRole && WEREWOLF_ROLES.includes(actorCopiedRole)));
@@ -4168,9 +4320,9 @@ const GMRoom = () => {
     return victimId ? players.find((p) => p.id === victimId) : null;
   }, [actorCopiedRole, playerStatuses, killSources, players]);
 
-  const handleLobisomemVidenteReveal = useCallback((sourcePlayerId?: string | null) => {
-    if (!lobisomemVidenteVictim) return;
-    const actualRole = roleAssignments[lobisomemVidenteVictim.id];
+  const handleWerewolfSeerReveal = useCallback((sourcePlayerId?: string | null) => {
+    if (!werewolfSeerVictim) return;
+    const actualRole = roleAssignments[werewolfSeerVictim.id];
     const recipients = getRevealRecipientIds("m02", sourcePlayerId);
     const inPlayRoles = [...new Set(Object.values(roleAssignments))];
     const byPlayerId = Object.fromEntries(recipients.map((viewerPlayerId) => {
@@ -4179,33 +4331,33 @@ const GMRoom = () => {
         const wrongRoles = inPlayRoles.filter((candidateRole) => candidateRole !== actualRole);
         if (wrongRoles.length > 0) role = wrongRoles[Math.floor(Math.random() * wrongRoles.length)];
       }
-      return [viewerPlayerId, { victimId: lobisomemVidenteVictim.id, role }];
+      return [viewerPlayerId, { victimId: werewolfSeerVictim.id, role }];
     }));
     const gmResult = Object.values(byPlayerId)[0];
-    setLobisomemVidenteRevealedVictim({
-      id: lobisomemVidenteVictim.id,
-      name: lobisomemVidenteVictim.name,
+    setWerewolfSeerRevealedVictim({
+      id: werewolfSeerVictim.id,
+      name: werewolfSeerVictim.name,
       role: gmResult?.role ?? actualRole,
     });
-    handlePlayerStatusChange(lobisomemVidenteVictim.id, "alive");
+    handlePlayerStatusChange(werewolfSeerVictim.id, "alive");
     for (const viewerPlayerId of recipients) {
       const powerState = independentPowerStates[viewerPlayerId];
-      if (powerState) handleIndependentPowerStateChange(viewerPlayerId, { ...powerState, lobisomemVidenteUsed: true });
-      else setLobisomemVidenteUsed(true);
+      if (powerState) handleIndependentPowerStateChange(viewerPlayerId, { ...powerState, werewolfSeerUsed: true });
+      else setWerewolfSeerUsed(true);
     }
-    setLobisomemVidenteRevealOpen(true);
+    setWerewolfSeerRevealOpen(true);
     markScriptRoleAction("m02", sourcePlayerId, recipients);
     if (!roomId) return;
-    supabase.channel(`lobisomem-vidente-reveal-${roomId}`).send({
+    supabase.channel(`werewolf-seer-reveal-${roomId}`).send({
       type: "broadcast", event: "lv-reveal",
       payload: { show: true, byPlayerId },
     });
-  }, [getRevealRecipientIds, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, isPlayerActingPoisoned, lobisomemVidenteVictim, markScriptRoleAction, roleAssignments, roomId]);
+  }, [getRevealRecipientIds, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, isPlayerActingPoisoned, werewolfSeerVictim, markScriptRoleAction, roleAssignments, roomId]);
 
-  const handleCloseLobisomemVidenteModal = useCallback(() => {
-    setLobisomemVidenteRevealOpen(false);
+  const handleCloseWerewolfSeerModal = useCallback(() => {
+    setWerewolfSeerRevealOpen(false);
     if (roomId) {
-      supabase.channel(`lobisomem-vidente-reveal-${roomId}`).send({
+      supabase.channel(`werewolf-seer-reveal-${roomId}`).send({
         type: "broadcast", event: "lv-reveal", payload: { show: false },
       });
     }
@@ -4336,25 +4488,25 @@ const GMRoom = () => {
   }, [roomId]);
 
 
-  // Empregada distance text (dynamic). Ignores perma-dead players for the seat-distance count.
-  const empregadaDynamicText = useMemo(() => {
-    const empregadaId = Object.entries(effectiveRoleAssignments).find(([playerId, role]) => role === "v20" && !permanentlyDead.has(playerId))?.[0];
-    if (!empregadaId) return undefined;
-    const empregadaPoisoned = isPlayerPoisoned(empregadaId);
+  // HouseMaid distance text (dynamic). Ignores perma-dead players for the seat-distance count.
+  const houseMaidDynamicText = useMemo(() => {
+    const houseMaidId = Object.entries(effectiveRoleAssignments).find(([playerId, role]) => role === "v20" && !permanentlyDead.has(playerId))?.[0];
+    if (!houseMaidId) return undefined;
+    const houseMaidPoisoned = isPlayerPoisoned(houseMaidId);
     const sorted = players
       .filter((p) => p.seat_position !== null && !permanentlyDead.has(p.id))
       .sort((a, b) => a.seat_position! - b.seat_position!);
-    const empIdx = sorted.findIndex((p) => p.id === empregadaId);
+    const empIdx = sorted.findIndex((p) => p.id === houseMaidId);
 
     let distances: number[] = [];
-    if (empregadaPoisoned) {
+    if (houseMaidPoisoned) {
       const resultCount = Math.max(1, poisonedPlayerIds.size);
       distances = Array.from({ length: resultCount }, () => (
         Math.floor(Math.random() * Math.max(1, Math.floor(sorted.length / 2))) + 1
       )).sort((left, right) => left - right);
     } else if (poisonedPlayerIds.size > 0 && empIdx !== -1) {
       distances = getCircularDistances(
-        empregadaId,
+        houseMaidId,
         sorted.map((player) => player.id),
         poisonedPlayerIds,
       );
@@ -4363,7 +4515,7 @@ const GMRoom = () => {
     const lng2: Language = (room?.language as Language) || "pt";
     const baseLine = (lng2 === "fr"
       ? "La {Domestique} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée"
-      : "A {Empregada} acorda e é-lhe revelada a distância até a pessoa envenenada");
+      : "A {HouseMaid} acorda e é-lhe revelada a distância até a pessoa envenenada");
     return `${baseLine}: ${distances.join(", ")}`;
   }, [effectiveRoleAssignments, players, poisonedPlayerIds, permanentlyDead, room?.language, isPlayerPoisoned]);
 
@@ -4378,8 +4530,8 @@ const GMRoom = () => {
     const votesDouble = t("votesDouble", lng);
     const noVote = t("noVote", lng);
 
-    if (paranoicoKillName) {
-      lines.push(`{${paranoicoKillName}} ${diedSimple}`);
+    if (paranoidKillName) {
+      lines.push(`{${paranoidKillName}} ${diedSimple}`);
     }
 
     for (const [pid, src] of Object.entries(killSources)) {
@@ -4428,7 +4580,7 @@ const GMRoom = () => {
     }
 
     return lines;
-  }, [abilityRoleAssignments, effectiveRoleAssignments, playerEffects, players, poisonedPlayerIds, permanentlyDead, killSources, paranoicoKillName, playerStatuses, room?.language]);
+  }, [abilityRoleAssignments, effectiveRoleAssignments, playerEffects, players, poisonedPlayerIds, permanentlyDead, killSources, paranoidKillName, playerStatuses, room?.language]);
 
   // Day dead names
   const dayDeadNames = useMemo(() => {
@@ -4438,32 +4590,32 @@ const GMRoom = () => {
   }, [lastNightDeadPlayerIds, players]);
 
   const deathTriggeredSourcePlayerIds = useMemo(() => ({
-    cacadorDied: lastNightDeadPlayerIds.filter((playerId) => (
+    hunterDied: lastNightDeadPlayerIds.filter((playerId) => (
       roleAssignments[playerId] === "v08"
       || abilityRoleAssignments[playerId] === "v08"
       || (playerId === actorPlayerId && actorCopiedRole === "v08")
     )),
-    soldadoDied: lastNightDeadPlayerIds.filter((playerId) => playerEffects[playerId]?.has("soldado")),
+    soldierDied: lastNightDeadPlayerIds.filter((playerId) => playerEffects[playerId]?.has("soldado")),
   }), [abilityRoleAssignments, actorCopiedRole, actorPlayerId, lastNightDeadPlayerIds, playerEffects, roleAssignments]);
 
   // Condition keys for conditional script lines
   const conditionKeys = useMemo(() => {
     const keys: Record<string, boolean> = {};
 
-    const cavaleiroDied = Object.entries(playerStatuses).some(
+    const rustedKnightDied = Object.entries(playerStatuses).some(
       ([pid, s]) => s === "dead-this-night" && abilityRoleAssignments[pid] === "v07"
     );
-    keys["cavaleiroDied"] = cavaleiroDied;
+    keys["rustedKnightDied"] = rustedKnightDied;
 
-    const cacadorId = getRolePlayerId("v08");
-    keys["cacadorDied"] = deathTriggeredSourcePlayerIds.cacadorDied.length > 0;
+    const hunterId = getRolePlayerId("v08");
+    keys["hunterDied"] = deathTriggeredSourcePlayerIds.hunterDied.length > 0;
 
-    const capuchinhoId = Object.entries(abilityRoleAssignments).find(([, r]) => r === "v08b")?.[0];
-    const cacadorAlive = cacadorId && !permanentlyDead.has(cacadorId);
-    keys["capuchinhoExecuted"] = !!(capuchinhoId && killSources[capuchinhoId] === "executado" &&
-      lastNightDeadPlayerIds.includes(capuchinhoId) && cacadorAlive);
+    const redHoodId = Object.entries(abilityRoleAssignments).find(([, r]) => r === "v08b")?.[0];
+    const hunterAlive = hunterId && !permanentlyDead.has(hunterId);
+    keys["redHoodExecuted"] = !!(redHoodId && killSources[redHoodId] === "executado" &&
+      lastNightDeadPlayerIds.includes(redHoodId) && hunterAlive);
 
-    keys["soldadoDied"] = deathTriggeredSourcePlayerIds.soldadoDied.length > 0;
+    keys["soldierDied"] = deathTriggeredSourcePlayerIds.soldierDied.length > 0;
 
     keys["whitewolfNight"] = nightNumber % 3 === 0;
     const whiteWolfId = Object.entries(abilityRoleAssignments).find(([, role]) => role === "s02")?.[0];
@@ -4476,6 +4628,7 @@ const GMRoom = () => {
       werewolfTurned: !!playerEffects[player.id]?.has("werewolf_turned"),
     }));
     keys["whitewolfSolo"] = !!whiteWolfId && !hasOtherLivingWerewolf(whiteWolfPlayers, whiteWolfId);
+    keys["astronomerBlocksWerewolvesTonight"] = astronomerBlocksWerewolvesTonight;
 
     const enemyPlayerIds = Object.entries(playerEffects)
       .filter(([, e]) => e.has("enemy"))
@@ -4485,31 +4638,31 @@ const GMRoom = () => {
     // Has red X players
     keys["hasRedXPlayers"] = Object.entries(playerStatuses).some(([, s]) => s === "dead-this-night");
 
-    keys["roubaTumulosHasTargets"] = Object.entries(playerStatuses).some(
+    keys["graveRobberHasTargets"] = Object.entries(playerStatuses).some(
       ([pid, status]) => status === "dead-this-night" && effectiveRoleAssignments[pid] !== "a05",
     );
 
-    // Empregada visible: only when someone is poisoned
-    keys["empregadaVisible"] = poisonedPlayerIds.size > 0;
+    // HouseMaid visible: only when someone is poisoned
+    keys["houseMaidVisible"] = poisonedPlayerIds.size > 0;
     keys["poisonedCharacterPresent"] = poisonedPlayerIds.size > 0;
 
     // Piromaníaco visible: only when someone has Inocentado status
-    keys["piromaniacoVisible"] = Object.values(playerEffects).some((e) => e.has("inocentado"));
+    keys["pyromaniacVisible"] = Object.values(playerEffects).some((e) => e.has("inocentado"));
 
-    // Cupido has charges left
-    keys["cupidoHasCharges"] = cupidoCharges < 2 || Object.entries(independentPowerStates)
-      .some(([playerId, state]) => abilityRoleAssignments[playerId] === "s01" && state.cupidoCharges < 2);
+    // Cupid has charges left
+    keys["cupidHasCharges"] = cupidCharges < 2 || Object.entries(independentPowerStates)
+      .some(([playerId, state]) => abilityRoleAssignments[playerId] === "s01" && state.cupidCharges < 2);
 
-    // Lobisomem Mau has charges
-    keys["lobisomemMauHasCharges"] = lobisomemMauCharges < 2 || Object.entries(independentPowerStates)
-      .some(([playerId, state]) => abilityRoleAssignments[playerId] === "m01" && state.lobisomemMauCharges < 2);
+    // Big Bad Wolf has charges
+    keys["bigBadWolfHasCharges"] = bigBadWolfCharges < 2 || Object.entries(independentPowerStates)
+      .some(([playerId, state]) => abilityRoleAssignments[playerId] === "m01" && state.bigBadWolfCharges < 2);
 
-    const hasWerewolfVictim = !!lobisomemVidenteVictim || !!lobisomemVidenteRevealedVictim;
-    keys["vampiroHasCharges"] = hasWerewolfVictim && (
-      !lobisomemVampiroUsed || Object.entries(independentPowerStates)
-        .some(([playerId, state]) => abilityRoleAssignments[playerId] === "m03" && !state.lobisomemVampiroUsed)
+    const hasWerewolfVictim = !!werewolfSeerVictim || !!werewolfSeerRevealedVictim;
+    keys["vampireWolfHasCharges"] = hasWerewolfVictim && (
+      !vampireWolfUsed || Object.entries(independentPowerStates)
+        .some(([playerId, state]) => abilityRoleAssignments[playerId] === "m03" && !state.vampireWolfUsed)
     );
-    keys["lobisomemVidenteHasCharges"] = hasWerewolfVictim;
+    keys["werewolfSeerHasCharges"] = hasWerewolfVictim;
 
     // v23 Domador da Aranha — webbed target became perma-dead (need to choose a new one)
     keys["spiderWebbedDied"] = Object.entries(playerEffects)
@@ -4521,12 +4674,12 @@ const GMRoom = () => {
     const inGamePlayerIds = players.filter((p) => p.seat_position !== null).map((p) => p.id);
     keys["spyHasUnseen"] = inGamePlayerIds.some((pid) => !(playerEffects[pid]?.has("spied_on")));
 
-    // Amante Secreto traído: as01b is in game, poisoned, AND has namorado effect
-    const amanteId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "as01b")?.[0];
-    keys["amanteTraido"] = !!(amanteId && isPlayerPoisoned(amanteId) && playerEffects[amanteId]?.has("namorado"));
+    // SecretLover Secreto traído: as01b is in game, poisoned, AND has namorado effect
+    const secretLoverId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "as01b")?.[0];
+    keys["secretLoverBetrayed"] = !!(secretLoverId && isPlayerPoisoned(secretLoverId) && playerEffects[secretLoverId]?.has("namorado"));
 
     return keys;
-  }, [abilityRoleAssignments, deathTriggeredSourcePlayerIds, effectiveRoleAssignments, getRolePlayerId, independentPowerStates, playerStatuses, lastNightDeadPlayerIds, permanentlyDead, killSources, playerEffects, nightNumber, poisonedPlayerIds, cupidoCharges, lobisomemMauCharges, lobisomemVampiroUsed, lobisomemVidenteRevealedVictim, lobisomemVidenteVictim, players, isPlayerPoisoned]);
+  }, [abilityRoleAssignments, astronomerBlocksWerewolvesTonight, deathTriggeredSourcePlayerIds, effectiveRoleAssignments, getRolePlayerId, independentPowerStates, playerStatuses, lastNightDeadPlayerIds, permanentlyDead, killSources, playerEffects, nightNumber, poisonedPlayerIds, cupidCharges, bigBadWolfCharges, vampireWolfUsed, werewolfSeerRevealedVictim, werewolfSeerVictim, players, isPlayerPoisoned]);
 
   const lang: Language = (room?.language as Language) || "pt";
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
@@ -4786,12 +4939,12 @@ const GMRoom = () => {
                   illusionPlayerId={illusionPlayerId}
                   illusionPlayerIds={illusionPlayerIds}
                   onSetIllusion={handleSetIllusion}
-                  isBruxaPermaDead={isBruxaPermaDead}
-                  isMarionetista={isMarionetista}
-                  chamanCharges={chamanCharges}
-                  onChamanChargeToggle={(index) => { handleChamanChargeToggle(index); markScriptRoleAction("e03"); }}
-                  onChamanDrop={handleChamanDrop}
-                  isBruxaPoisoned={isBruxaPoisoned}
+                  isWitchPermaDead={isWitchPermaDead}
+                  isPuppeteer={isPuppeteer}
+                  shamanCharges={shamanCharges}
+                  onShamanChargeToggle={(index) => { handleShamanChargeToggle(index); markScriptRoleAction("e03"); }}
+                  onShamanDrop={handleShamanDrop}
+                  isWitchPoisoned={isWitchPoisoned}
                   foxDisabled={foxDisabled}
                   onFoxDisabledToggle={() => { setFoxDisabled((v) => !v); markScriptRoleAction("v04"); }}
                   showFoxCheckbox={nightNumber > 1}
@@ -4801,22 +4954,22 @@ const GMRoom = () => {
                   onToggleEffect={toggleEffect}
                   onExecute={handleExecute}
                   onDragAction={handleDragAction}
-                  juizCharges={juizCharges}
-                  onJuizChargeToggle={(idx) => { setJuizCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v13"); }}
-                  acusadorCharges={acusadorCharges}
-                  onAcusadorChargeToggle={(idx) => { setAcusadorCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v14"); }}
-                  lobisomemMauCharges={lobisomemMauCharges}
-                  onLobisomemMauChargeToggle={(idx) => { handleLobisomemMauChargeToggle(idx); markScriptRoleAction("m01"); }}
-                  cupidoCharges={cupidoCharges}
-                  onCupidoChargeToggle={(idx) => { handleCupidoChargeToggle(idx); markScriptRoleAction("s01"); }}
-                  showCupidoCheckboxes={nightNumber > 1}
+                  judgeCharges={judgeCharges}
+                  onJudgeChargeToggle={(idx) => { setJudgeCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v13"); }}
+                  accuserCharges={accuserCharges}
+                  onAccuserChargeToggle={(idx) => { setAccuserCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v14"); }}
+                  bigBadWolfCharges={bigBadWolfCharges}
+                  onBigBadWolfChargeToggle={(idx) => { handleBigBadWolfChargeToggle(idx); markScriptRoleAction("m01"); }}
+                  cupidCharges={cupidCharges}
+                  onCupidChargeToggle={(idx) => { handleCupidChargeToggle(idx); markScriptRoleAction("s01"); }}
+                  showCupidCheckboxes={nightNumber > 1}
                   spiderDayChangeUsed={spiderDayChangeUsed}
                   onSpiderDayChangeToggle={() => { setSpiderDayChangeUsed((value) => !value); markScriptRoleAction("v23"); }}
-                  lobisomemVampiroUsed={lobisomemVampiroUsed}
-                  onLobisomemVampiroToggle={() => {
+                  vampireWolfUsed={vampireWolfUsed}
+                  onVampireWolfToggle={() => {
                     markScriptRoleAction("m03");
-                    const nextValue = !lobisomemVampiroUsed;
-                    setLobisomemVampiroUsed(nextValue);
+                    const nextValue = !vampireWolfUsed;
+                    setVampireWolfUsed(nextValue);
                     if (nextValue) {
                       const victimId = Object.entries(playerStatuses).find(([pid, status]) => {
                         const source = killSources[pid];
@@ -4935,37 +5088,37 @@ const GMRoom = () => {
                     baseRoleAssignments={roleAssignments}
                     nightNumber={nightNumber}
                     onEndNight={endNight}
-                    chamanCharges={chamanCharges}
-                    onChamanChargeToggle={handleChamanChargeToggle}
+                    shamanCharges={shamanCharges}
+                    onShamanChargeToggle={handleShamanChargeToggle}
                     lastNightDeadPlayerIds={lastNightDeadPlayerIds}
                     players={players}
-                    onVidenteReveal={handleVidenteReveal}
-                    onMeninaReveal={handleMeninaReveal}
-                    onFaroleiroReveal={handleFaroleiroReveal}
-                    onLobisomemVidenteReveal={lobisomemVidenteVictim ? handleLobisomemVidenteReveal : undefined}
-                    empregadaDynamicText={empregadaDynamicText}
+                    onFortuneTellerReveal={handleFortuneTellerReveal}
+                    onLittleGirlReveal={handleLittleGirlReveal}
+                    onLamplighterReveal={handleLamplighterReveal}
+                    onWerewolfSeerReveal={werewolfSeerVictim ? handleWerewolfSeerReveal : undefined}
+                    houseMaidDynamicText={houseMaidDynamicText}
                     playerStatuses={playerStatuses}
                     foxDisabled={foxDisabled}
                     onFoxDisabledToggle={() => setFoxDisabled((v) => !v)}
                     nightTargetedPlayerIds={nightTargetedPlayerIds}
                     conditionKeys={conditionKeys}
                     playerEffects={playerEffects}
-                    profeciaGhostPlayerIds={profeciaGhostPlayerIds}
+                    prophecyGhostPlayerIds={prophecyGhostPlayerIds}
                     powerlessPlayerIds={powerlessPlayerIds}
-                    paranoicoCharges={paranoicoCharges}
-                    onParanoicoChargeToggle={(idx) => setParanoicoCharges(prev => prev > idx ? idx : idx + 1)}
-                    anjoCharges={anjoCharges}
-                    onAnjoChargeToggle={(idx) => setAnjoCharges(prev => prev > idx ? idx : idx + 1)}
-                    lobisomemMauCharges={lobisomemMauCharges}
-                    onLobisomemMauChargeToggle={handleLobisomemMauChargeToggle}
-                    cupidoCharges={cupidoCharges}
-                    onCupidoChargeToggle={handleCupidoChargeToggle}
-                    lobisomemVampiroUsed={lobisomemVampiroUsed}
-                    onLobisomemVampiroToggle={() => setLobisomemVampiroUsed(v => !v)}
-                    juizCharges={juizCharges}
-                    onJuizChargeToggle={(idx) => setJuizCharges(prev => prev > idx ? idx : idx + 1)}
-                    acusadorCharges={acusadorCharges}
-                    onAcusadorChargeToggle={(idx) => setAcusadorCharges(prev => prev > idx ? idx : idx + 1)}
+                    paranoidCharges={paranoidCharges}
+                    onParanoidChargeToggle={(idx) => setParanoidCharges(prev => prev > idx ? idx : idx + 1)}
+                    angelCharges={angelCharges}
+                    onAngelChargeToggle={(idx) => setAngelCharges(prev => prev > idx ? idx : idx + 1)}
+                    bigBadWolfCharges={bigBadWolfCharges}
+                    onBigBadWolfChargeToggle={handleBigBadWolfChargeToggle}
+                    cupidCharges={cupidCharges}
+                    onCupidChargeToggle={handleCupidChargeToggle}
+                    vampireWolfUsed={vampireWolfUsed}
+                    onVampireWolfToggle={() => setVampireWolfUsed(v => !v)}
+                    judgeCharges={judgeCharges}
+                    onJudgeChargeToggle={(idx) => setJudgeCharges(prev => prev > idx ? idx : idx + 1)}
+                    accuserCharges={accuserCharges}
+                    onAccuserChargeToggle={(idx) => setAccuserCharges(prev => prev > idx ? idx : idx + 1)}
                     onSpiderReveal={handleSpiderReveal}
                     onSpyReveal={handleSpyReveal}
                     onScriptRolesVisible={handleScriptRolesVisible}
@@ -5038,10 +5191,10 @@ const GMRoom = () => {
                       const listDragProps = getListDragProps(player.id);
                       const isThisIllusion = illusionPlayerIds.has(player.id);
                       const isThisPoisoned = isPlayerPoisoned(player.id);
-                      const isThisBruxaPoisoned = mechanicalRoleId === "e02" && isThisPoisoned;
-                      const isChaman = mechanicalRoleId === CHAMAN_ROLE;
+                      const isThisWitchPoisoned = mechanicalRoleId === "e02" && isThisPoisoned;
+                      const isShaman = mechanicalRoleId === SHAMAN_ROLE;
                       const isFox = mechanicalRoleId === ("v04" as RoleId);
-                      const isChamanPoisoned = mechanicalRoleId === CHAMAN_ROLE && isPlayerActingPoisoned(player.id);
+                      const isShamanPoisoned = mechanicalRoleId === SHAMAN_ROLE && isPlayerActingPoisoned(player.id);
                       const independentPowerState = independentPowerStates[player.id];
                       const updateIndependentPowerState = (powerState: ActorPowerState) => (
                         handleIndependentPowerStateChange(player.id, powerState)
@@ -5079,10 +5232,10 @@ const GMRoom = () => {
                               {isThisIllusion && (
                                 <img src={illusionIcon} alt="ilusão" className="absolute -top-1 -right-1 w-4 h-4" />
                               )}
-                              {isThisPoisoned && !isThisBruxaPoisoned && (
+                              {isThisPoisoned && !isThisWitchPoisoned && (
                                 <img src={poisonedIcon} alt="envenenado" className="absolute -bottom-1 -right-1 w-4 h-4" />
                               )}
-                               {isThisBruxaPoisoned && (
+                               {isThisWitchPoisoned && (
                                  <img src={imunityIcon} alt="imunidade" className="absolute -top-1 -left-1 w-4 h-4" />
                                )}
                                {isActor && roleId !== "a04" && (
@@ -5109,21 +5262,21 @@ const GMRoom = () => {
                             </div>
                           )}
                           {isDuplicate && <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />}
-                          {isChaman && !isPermanentDead && (
+                          {isShaman && !isPermanentDead && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
                                   key={idx}
-                                  checked={(independentPowerState?.chamanCharges ?? chamanCharges) > idx}
+                                  checked={(independentPowerState?.shamanCharges ?? shamanCharges) > idx}
                                   onCheckedChange={() => {
-                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, chamanCharges: independentPowerState.chamanCharges > idx ? idx : idx + 1 });
-                                    else handleChamanChargeToggle(idx);
+                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, shamanCharges: independentPowerState.shamanCharges > idx ? idx : idx + 1 });
+                                    else handleShamanChargeToggle(idx);
                                     markScriptRoleAction("e03", player.id);
                                   }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                                 />
                               ))}
-                              {isChamanPoisoned && (
+                              {isShamanPoisoned && (
                                 <img src={poisonedIcon} alt="" className="h-4 w-4" />
                               )}
                             </div>
@@ -5142,16 +5295,16 @@ const GMRoom = () => {
                               <span className="text-[9px] text-muted-foreground">{tt("powerExhausted")}</span>
                             </div>
                           )}
-                          {/* Paranoico charges */}
+                          {/* Paranoid charges */}
                           {mechanicalRoleId === "v10" && !isPermanentDead && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
                                   key={idx}
-                                  checked={(independentPowerState?.paranoicoCharges ?? paranoicoCharges) > idx}
+                                  checked={(independentPowerState?.paranoidCharges ?? paranoidCharges) > idx}
                                   onCheckedChange={() => {
-                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, paranoicoCharges: independentPowerState.paranoicoCharges > idx ? idx : idx + 1 });
-                                    else setParanoicoCharges(prev => prev > idx ? idx : idx + 1);
+                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, paranoidCharges: independentPowerState.paranoidCharges > idx ? idx : idx + 1 });
+                                    else setParanoidCharges(prev => prev > idx ? idx : idx + 1);
                                     markScriptRoleAction("v10", player.id);
                                   }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -5159,16 +5312,16 @@ const GMRoom = () => {
                               ))}
                             </div>
                           )}
-                          {/* Anjo charges */}
+                          {/* Angel charges */}
                           {mechanicalRoleId === "v18" && !isPermanentDead && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
                                   key={idx}
-                                  checked={(independentPowerState?.anjoCharges ?? anjoCharges) > idx}
+                                  checked={(independentPowerState?.angelCharges ?? angelCharges) > idx}
                                   onCheckedChange={() => {
-                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, anjoCharges: independentPowerState.anjoCharges > idx ? idx : idx + 1 });
-                                    else setAnjoCharges(prev => prev > idx ? idx : idx + 1);
+                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, angelCharges: independentPowerState.angelCharges > idx ? idx : idx + 1 });
+                                    else setAngelCharges(prev => prev > idx ? idx : idx + 1);
                                     markScriptRoleAction("v18", player.id);
                                   }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -5176,16 +5329,16 @@ const GMRoom = () => {
                               ))}
                             </div>
                           )}
-                          {/* Lobisomem Mau charges */}
+                          {/* Big Bad Wolf charges */}
                           {mechanicalRoleId === "m01" && !isPermanentDead && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
                                   key={idx}
-                                  checked={(independentPowerState?.lobisomemMauCharges ?? lobisomemMauCharges) > idx}
+                                  checked={(independentPowerState?.bigBadWolfCharges ?? bigBadWolfCharges) > idx}
                                   onCheckedChange={() => {
-                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, lobisomemMauCharges: independentPowerState.lobisomemMauCharges > idx ? idx : idx + 1 });
-                                    else handleLobisomemMauChargeToggle(idx);
+                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, bigBadWolfCharges: independentPowerState.bigBadWolfCharges > idx ? idx : idx + 1 });
+                                    else handleBigBadWolfChargeToggle(idx);
                                     markScriptRoleAction("m01", player.id);
                                   }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -5207,17 +5360,17 @@ const GMRoom = () => {
                               />
                             </div>
                           )}
-                          {/* Lobisomem Vidente: no checkbox (unlimited uses) */}
-                          {/* Cupido charges */}
+                          {/* Werewolf Seer: no checkbox (unlimited uses) */}
+                          {/* Cupid charges */}
                           {mechanicalRoleId === "s01" && nightNumber > 1 && !isPermanentDead && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
                                   key={idx}
-                                  checked={(independentPowerState?.cupidoCharges ?? cupidoCharges) > idx}
+                                  checked={(independentPowerState?.cupidCharges ?? cupidCharges) > idx}
                                   onCheckedChange={() => {
-                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, cupidoCharges: independentPowerState.cupidoCharges > idx ? idx : idx + 1 });
-                                    else handleCupidoChargeToggle(idx);
+                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, cupidCharges: independentPowerState.cupidCharges > idx ? idx : idx + 1 });
+                                    else handleCupidChargeToggle(idx);
                                     markScriptRoleAction("s01", player.id);
                                   }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -5229,12 +5382,12 @@ const GMRoom = () => {
           {mechanicalRoleId === "m03" && !isPermanentDead && (
             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               <Checkbox
-                checked={independentPowerState?.lobisomemVampiroUsed ?? lobisomemVampiroUsed}
+                checked={independentPowerState?.vampireWolfUsed ?? vampireWolfUsed}
                 onCheckedChange={() => {
                   markScriptRoleAction("m03", player.id);
-                  const nextValue = independentPowerState ? !independentPowerState.lobisomemVampiroUsed : !lobisomemVampiroUsed;
-                  if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, lobisomemVampiroUsed: nextValue });
-                  else setLobisomemVampiroUsed(nextValue);
+                  const nextValue = independentPowerState ? !independentPowerState.vampireWolfUsed : !vampireWolfUsed;
+                  if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, vampireWolfUsed: nextValue });
+                  else setVampireWolfUsed(nextValue);
                   if (nextValue && !independentPowerState) {
                     const victimId = Object.entries(playerStatuses).find(([pid, status]) => {
                       const source = killSources[pid];
@@ -5263,16 +5416,16 @@ const GMRoom = () => {
               />
             </div>
           )}
-                          {/* Juiz uses (2) */}
+                          {/* Judge uses (2) */}
                           {mechanicalRoleId === "v13" && !isPermanentDead && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
                                   key={idx}
-                                  checked={(independentPowerState?.juizCharges ?? juizCharges) > idx}
+                                  checked={(independentPowerState?.judgeCharges ?? judgeCharges) > idx}
                                   onCheckedChange={() => {
-                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, juizCharges: independentPowerState.juizCharges > idx ? idx : idx + 1 });
-                                    else setJuizCharges(prev => prev > idx ? idx : idx + 1);
+                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, judgeCharges: independentPowerState.judgeCharges > idx ? idx : idx + 1 });
+                                    else setJudgeCharges(prev => prev > idx ? idx : idx + 1);
                                     markScriptRoleAction("v13", player.id);
                                   }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -5280,16 +5433,16 @@ const GMRoom = () => {
                               ))}
                             </div>
                           )}
-                          {/* Acusador (v14) uses (2) */}
+                          {/* Accuser (v14) uses (2) */}
                           {mechanicalRoleId === "v14" && !isPermanentDead && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
                                   key={idx}
-                                  checked={(independentPowerState?.acusadorCharges ?? acusadorCharges) > idx}
+                                  checked={(independentPowerState?.accuserCharges ?? accuserCharges) > idx}
                                   onCheckedChange={() => {
-                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, acusadorCharges: independentPowerState.acusadorCharges > idx ? idx : idx + 1 });
-                                    else setAcusadorCharges(prev => prev > idx ? idx : idx + 1);
+                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, accuserCharges: independentPowerState.accuserCharges > idx ? idx : idx + 1 });
+                                    else setAccuserCharges(prev => prev > idx ? idx : idx + 1);
                                     markScriptRoleAction("v14", player.id);
                                   }}
                                   className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
@@ -5331,7 +5484,7 @@ const GMRoom = () => {
                       );
 
                       const showPoison = true;
-                      const showIllusion = isMarionetista;
+                      const showIllusion = isPuppeteer;
                       const showExecutado = gameCyclePhase === "tribunal";
                       const availableEffectsForPlayer = getAvailableEffects(player.id);
 
@@ -5349,7 +5502,7 @@ const GMRoom = () => {
                           activeEffects={effects}
                           availableEffects={availableEffectsForPlayer}
                           showExecutado={showExecutado}
-                          poisonDisabled={isBruxaPermaDead}
+                          poisonDisabled={isWitchPermaDead}
                           onSetPoisoned={() => {
                             handlePlayerStatusChange(player.id, "poisoned");
                             setListPopoverId(null);
@@ -5551,55 +5704,55 @@ const GMRoom = () => {
         )}
       </div>
 
-      <VidenteRevealModal
-        open={videnteModalOpen}
-        onClose={handleCloseVidenteModal}
+      <FortuneTellerRevealModal
+        open={fortuneTellerModalOpen}
+        onClose={handleCloseFortuneTellerModal}
         deadPlayerIds={lastNightDeadPlayerIds}
         illusionPlayerId={illusionPlayerId}
         illusionPlayerIds={illusionPlayerIds}
         roleAssignments={roleAssignments}
         players={players}
-        isVidentePoisoned={videnteModalPoisoned}
-        precomputedFakeMap={videnteFakeMap}
+        isFortuneTellerPoisoned={fortuneTellerModalPoisoned}
+        precomputedFakeMap={fortuneTellerFakeMap}
         onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
       <RevealModal
         language={lang}
-        open={meninaRevealOpen}
-        onClose={handleCloseMeninaModal}
+        open={littleGirlRevealOpen}
+        onClose={handleCloseLittleGirlModal}
         title={tt("revealLittleGirlTitle")}
         subtitle={tt("revealLittleGirlSubtitle")}
-        cards={meninaRevealCards}
+        cards={littleGirlRevealCards}
         onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
       <RevealModal
         language={lang}
-        open={faroleiroRevealOpen}
-        onClose={handleCloseFaroleiroModal}
+        open={lamplighterRevealOpen}
+        onClose={handleCloseLamplighterModal}
         title={tt("revealLamplighterTitle")}
         subtitle={tt("revealLamplighterSubtitle")}
-        cards={faroleiroPickedRole ? [{
-          image: ROLES[faroleiroPickedRole].image,
-          label: roleLabel(faroleiroPickedRole),
-          roleId: faroleiroPickedRole,
-          checkboxes: faroleiroPickedCharges.length > 0 ? faroleiroPickedCharges : undefined,
+        cards={lamplighterPickedRole ? [{
+          image: ROLES[lamplighterPickedRole].image,
+          label: roleLabel(lamplighterPickedRole),
+          roleId: lamplighterPickedRole,
+          checkboxes: lamplighterPickedCharges.length > 0 ? lamplighterPickedCharges : undefined,
         }] : []}
         onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
       <RevealModal
         language={lang}
-        open={lobisomemVidenteRevealOpen}
-        onClose={handleCloseLobisomemVidenteModal}
+        open={werewolfSeerRevealOpen}
+        onClose={handleCloseWerewolfSeerModal}
         title={tt("revealVampireWolfTitle")}
         subtitle={tt("revealVampireWolfSubtitle")}
-        cards={lobisomemVidenteRevealedVictim ? [{
-          name: lobisomemVidenteRevealedVictim.name,
-          image: ROLES[lobisomemVidenteRevealedVictim.role]?.image || villagerIcon,
-          label: roleLabel(lobisomemVidenteRevealedVictim.role),
-          roleId: lobisomemVidenteRevealedVictim.role,
+        cards={werewolfSeerRevealedVictim ? [{
+          name: werewolfSeerRevealedVictim.name,
+          image: ROLES[werewolfSeerRevealedVictim.role]?.image || villagerIcon,
+          label: roleLabel(werewolfSeerRevealedVictim.role),
+          roleId: werewolfSeerRevealedVictim.role,
         }] : []}
         onRoleClick={(roleId) => openRulebook(roleId)}
       />

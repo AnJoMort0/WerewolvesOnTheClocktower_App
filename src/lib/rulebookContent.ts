@@ -1,4 +1,4 @@
-import type { RoleId } from "@/lib/roles";
+import { WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { Language } from "@/lib/i18n";
 
 /*
@@ -1198,8 +1198,8 @@ export const RULEBOOK_CHARACTERS = {
           fr: `Si empoisonné :`,
         },
         description: {
-          pt: `Sem efeito.`,
-          fr: `Sans effet.`,
+          pt: `Dá imunidade ao jogador errado.`,
+          fr: `Donne immunité au mauvais joueur.`,
         },
       },
     ],
@@ -2776,7 +2776,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
     },
     {
       id: "normal-e01",
-      refs: ["e01", "m01", "m02", "m03", "m06", "s02"],
+      refs: WEREWOLF_ROLES,
       text: {
         pt: `Os Lobisomens acordam/não acordam se envenenados (não acordam se o Astrônomo morreu na última noite) e escolhem em conjunto uma vítima que irão assassinar esta noite.`,
         fr: `Les Loups-garous se réveillent / ne se réveillent pas si empoisonnés. (Ils ne se réveillent pas si l'Astronome est mort la nuit précédente) Ils choisissent ensemble leur victime pour cette nuit.`,

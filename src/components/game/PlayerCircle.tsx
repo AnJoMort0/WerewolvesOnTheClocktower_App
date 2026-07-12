@@ -23,13 +23,15 @@ type Player = {
 
 const POISON_DRAG_ROLE: RoleId = "e02";
 const KILL_DRAG_ROLE: RoleId = "e01";
-const CHAMAN_ROLE: RoleId = "e03";
+const SHAMAN_ROLE: RoleId = "e03";
 const ILLUSION_DRAG_ROLE: RoleId = "a06";
 const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   v19: "role-v19",
   v22: "role-v22",
   v16: "role-v16",
   v17: "role-v17",
+  v24: "role-v24",
+  m06: "kill",
   v09: "role-v09",
   v11: "role-v11",
   f01: "role-f01",
@@ -46,6 +48,7 @@ const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   a04: "role-a04",
   a02: "role-a02",
   m05: "role-m05",
+  l06: "role-l06",
 };
 
 interface PlayerCircleProps {
@@ -67,29 +70,29 @@ interface PlayerCircleProps {
   illusionPlayerId?: string | null;
   illusionPlayerIds?: Set<string>;
   onSetIllusion?: (playerId: string) => void;
-  isBruxaPermaDead?: boolean;
-  isMarionetista?: boolean;
-  chamanCharges?: number;
-  onChamanChargeToggle?: (index: number) => void;
-  onChamanDrop?: (targetPlayerId: string) => void;
-  isBruxaPoisoned?: boolean;
+  isWitchPermaDead?: boolean;
+  isPuppeteer?: boolean;
+  shamanCharges?: number;
+  onShamanChargeToggle?: (index: number) => void;
+  onShamanDrop?: (targetPlayerId: string) => void;
+  isWitchPoisoned?: boolean;
   compact?: boolean;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
   showFoxCheckbox?: boolean;
-  juizCharges?: number;
-  onJuizChargeToggle?: (idx: number) => void;
-  acusadorCharges?: number;
-  onAcusadorChargeToggle?: (idx: number) => void;
-  lobisomemMauCharges?: number;
-  onLobisomemMauChargeToggle?: (idx: number) => void;
-  cupidoCharges?: number;
-  onCupidoChargeToggle?: (idx: number) => void;
-  showCupidoCheckboxes?: boolean;
+  judgeCharges?: number;
+  onJudgeChargeToggle?: (idx: number) => void;
+  accuserCharges?: number;
+  onAccuserChargeToggle?: (idx: number) => void;
+  bigBadWolfCharges?: number;
+  onBigBadWolfChargeToggle?: (idx: number) => void;
+  cupidCharges?: number;
+  onCupidChargeToggle?: (idx: number) => void;
+  showCupidCheckboxes?: boolean;
   spiderDayChangeUsed?: boolean;
   onSpiderDayChangeToggle?: () => void;
-  lobisomemVampiroUsed?: boolean;
-  onLobisomemVampiroToggle?: () => void;
+  vampireWolfUsed?: boolean;
+  onVampireWolfToggle?: () => void;
   vampireVictimKeepsPower?: boolean;
   onVampireVictimToggle?: () => void;
   playerEffects?: Record<string, Set<StatusEffect>>;
@@ -133,29 +136,29 @@ export const PlayerCircle = ({
   illusionPlayerId,
   illusionPlayerIds = illusionPlayerId ? new Set([illusionPlayerId]) : new Set(),
   onSetIllusion,
-  isBruxaPermaDead = false,
-  isMarionetista = false,
-  chamanCharges = 0,
-  onChamanChargeToggle,
-  onChamanDrop,
-  isBruxaPoisoned = false,
+  isWitchPermaDead = false,
+  isPuppeteer = false,
+  shamanCharges = 0,
+  onShamanChargeToggle,
+  onShamanDrop,
+  isWitchPoisoned = false,
   compact = false,
   foxDisabled = false,
   onFoxDisabledToggle,
   showFoxCheckbox = true,
-  juizCharges = 0,
-  onJuizChargeToggle,
-  acusadorCharges = 0,
-  onAcusadorChargeToggle,
-  lobisomemMauCharges = 0,
-  onLobisomemMauChargeToggle,
-  cupidoCharges = 0,
-  onCupidoChargeToggle,
-  showCupidoCheckboxes = true,
+  judgeCharges = 0,
+  onJudgeChargeToggle,
+  accuserCharges = 0,
+  onAccuserChargeToggle,
+  bigBadWolfCharges = 0,
+  onBigBadWolfChargeToggle,
+  cupidCharges = 0,
+  onCupidChargeToggle,
+  showCupidCheckboxes = true,
   spiderDayChangeUsed = false,
   onSpiderDayChangeToggle,
-  lobisomemVampiroUsed = false,
-  onLobisomemVampiroToggle,
+  vampireWolfUsed = false,
+  onVampireWolfToggle,
   vampireVictimKeepsPower = true,
   onVampireVictimToggle,
   playerEffects: _playerEffects = {},
@@ -190,11 +193,11 @@ export const PlayerCircle = ({
   const radiusX = Math.min(520, baseSize * 2.0) * scale;
   const radiusY = Math.min(280, baseSize * 0.95) * scale;
 
-  const isChamanPoisoned = useMemo(() => {
+  const isShamanPoisoned = useMemo(() => {
     const assignments = abilityRoleAssignments ?? roleAssignments;
     if (!assignments) return false;
     return Object.entries(assignments)
-      .some(([playerId, role]) => role === CHAMAN_ROLE && actingPoisonedPlayerIds.has(playerId));
+      .some(([playerId, role]) => role === SHAMAN_ROLE && actingPoisonedPlayerIds.has(playerId));
   }, [abilityRoleAssignments, actingPoisonedPlayerIds, roleAssignments]);
 
   const handleDrop = (e: React.DragEvent, position: number) => {
@@ -215,12 +218,12 @@ export const PlayerCircle = ({
       } else if (action === "kill") {
         onPlayerStatusChange(seated.id, "dead-this-night", "e01");
         onDragAction?.("__catch__", seated.id, sourcePlayerId);
-      } else if (action === "chaman") {
-        if (isChamanPoisoned) {
-          toast.warning(getToast("warnChamanPoisoned", lang));
+      } else if (action === "shaman") {
+        if (isShamanPoisoned) {
+          toast.warning(getToast("warnShamanPoisoned", lang));
           return;
         }
-        onChamanDrop?.(seated.id);
+        onShamanDrop?.(seated.id);
         onDragAction?.("__catch__", seated.id, sourcePlayerId);
       } else if (action === "illusion") {
         if (onDragAction) onDragAction(action, seated.id, sourcePlayerId);
@@ -303,10 +306,10 @@ export const PlayerCircle = ({
         action: "kill",
       };
     }
-    if (role === CHAMAN_ROLE && !isPDead) {
-      dragActions.chaman = {
-        action: "chaman",
-        check: () => actingPoisonedPlayerIds.has(playerId) ? getToast("warnChamanPoisoned", lang) : null,
+    if (role === SHAMAN_ROLE && !isPDead) {
+      dragActions.shaman = {
+        action: "shaman",
+        check: () => actingPoisonedPlayerIds.has(playerId) ? getToast("warnShamanPoisoned", lang) : null,
       };
     }
     if (role === ILLUSION_DRAG_ROLE && !isPDead) {
@@ -387,8 +390,8 @@ export const PlayerCircle = ({
         const hasDrag = !!dragProps.draggable;
         const isThisIllusion = seated && !hideSensitiveInfo ? illusionPlayerIds.has(seated.id) : false;
         const isThisPoisoned = seated && !hideSensitiveInfo ? poisonedPlayerIds.has(seated.id) : false;
-        const isThisBruxaPoisoned = seated ? (mechanicalRole === "e02" && isThisPoisoned) : false;
-        const isChaman = mechanicalRole === CHAMAN_ROLE;
+        const isThisWitchPoisoned = seated ? (mechanicalRole === "e02" && isThisPoisoned) : false;
+        const isShaman = mechanicalRole === SHAMAN_ROLE;
         const isFox = mechanicalRole === ("v04" as RoleId);
         const independentPowerState = seated ? independentPowerStates[seated.id] : undefined;
         const dogState = seated ? dogWolfStates[seated.id] : undefined;
@@ -461,17 +464,17 @@ export const PlayerCircle = ({
                   <img src={illusionIcon} alt="ilusão" className="absolute -top-1 -right-1 w-5 h-5" />
                 )}
                 {/* Poison icon */}
-                {isThisPoisoned && !isThisBruxaPoisoned && (
+                {isThisPoisoned && !isThisWitchPoisoned && (
                   <img src={poisonedIcon} alt="envenenado" className="absolute -bottom-1 -right-1 w-5 h-5" />
                 )}
-                {/* Bruxa immunity icon when poisoned */}
-                {isThisBruxaPoisoned && (
+                {/* Witch immunity icon when poisoned */}
+                {isThisWitchPoisoned && (
                   <>
                     <img src={imunityIcon} alt="imunidade" className="absolute -top-1 -left-1 w-5 h-5" />
                     <img src={poisonedIcon} alt="envenenado" className="absolute -bottom-1 -right-1 w-5 h-5" />
                   </>
                 )}
-                {/* Capuchinho werewolf immunity icon */}
+                {/* RedHood werewolf immunity icon */}
                 {effects.has("immunity_werewolf") && (
                   <img src={immunityWerewolfIcon} alt="imunidade lobisomens" className="absolute -top-1 -left-1 w-5 h-5" />
                 )}
@@ -512,17 +515,17 @@ export const PlayerCircle = ({
                   {role ? roleLabel(role) : ""}
                 </span>
               )}
-              {/* Chaman charge boxes */}
-              {isGM && isChaman && !isPermanentlyDead && onChamanChargeToggle && (
+              {/* Shaman charge boxes */}
+              {isGM && isShaman && !isPermanentlyDead && onShamanChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(independentPowerState?.chamanCharges ?? chamanCharges ?? 0) > idx}
+                      checked={(independentPowerState?.shamanCharges ?? shamanCharges ?? 0) > idx}
                       onCheckedChange={() => {
                         if (independentPowerState) {
-                          updateIndependentPowerState({ ...independentPowerState, chamanCharges: independentPowerState.chamanCharges > idx ? idx : idx + 1 });
-                        } else onChamanChargeToggle(idx);
+                          updateIndependentPowerState({ ...independentPowerState, shamanCharges: independentPowerState.shamanCharges > idx ? idx : idx + 1 });
+                        } else onShamanChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
@@ -567,32 +570,32 @@ export const PlayerCircle = ({
                   <span className="text-[9px] text-muted-foreground">⚡</span>
                 </div>
               )}
-              {/* Cupido (s01) protection charges */}
-              {isGM && mechanicalRole === ("s01" as RoleId) && showCupidoCheckboxes && !isPermanentlyDead && onCupidoChargeToggle && (
+              {/* Cupid (s01) protection charges */}
+              {isGM && mechanicalRole === ("s01" as RoleId) && showCupidCheckboxes && !isPermanentlyDead && onCupidChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(independentPowerState?.cupidoCharges ?? cupidoCharges) > idx}
+                      checked={(independentPowerState?.cupidCharges ?? cupidCharges) > idx}
                       onCheckedChange={() => {
-                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, cupidoCharges: independentPowerState.cupidoCharges > idx ? idx : idx + 1 });
-                        else onCupidoChargeToggle(idx);
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, cupidCharges: independentPowerState.cupidCharges > idx ? idx : idx + 1 });
+                        else onCupidChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
                   ))}
                 </div>
               )}
-              {/* Lobisomem Mau (m01) checkboxes */}
-              {isGM && mechanicalRole === ("m01" as RoleId) && !isPermanentlyDead && onLobisomemMauChargeToggle && (
+              {/* Big Bad Wolf (m01) checkboxes */}
+              {isGM && mechanicalRole === ("m01" as RoleId) && !isPermanentlyDead && onBigBadWolfChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(independentPowerState?.lobisomemMauCharges ?? lobisomemMauCharges ?? 0) > idx}
+                      checked={(independentPowerState?.bigBadWolfCharges ?? bigBadWolfCharges ?? 0) > idx}
                       onCheckedChange={() => {
-                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, lobisomemMauCharges: independentPowerState.lobisomemMauCharges > idx ? idx : idx + 1 });
-                        else onLobisomemMauChargeToggle(idx);
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, bigBadWolfCharges: independentPowerState.bigBadWolfCharges > idx ? idx : idx + 1 });
+                        else onBigBadWolfChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
@@ -612,46 +615,46 @@ export const PlayerCircle = ({
                   />
                 </div>
               )}
-              {/* Juiz (v13) checkboxes */}
-              {isGM && mechanicalRole === ("v13" as RoleId) && !isPermanentlyDead && onJuizChargeToggle && (
+              {/* Judge (v13) checkboxes */}
+              {isGM && mechanicalRole === ("v13" as RoleId) && !isPermanentlyDead && onJudgeChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(independentPowerState?.juizCharges ?? juizCharges ?? 0) > idx}
+                      checked={(independentPowerState?.judgeCharges ?? judgeCharges ?? 0) > idx}
                       onCheckedChange={() => {
-                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, juizCharges: independentPowerState.juizCharges > idx ? idx : idx + 1 });
-                        else onJuizChargeToggle(idx);
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, judgeCharges: independentPowerState.judgeCharges > idx ? idx : idx + 1 });
+                        else onJudgeChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
                   ))}
                 </div>
               )}
-              {/* Acusador (v14) checkboxes */}
-              {isGM && mechanicalRole === ("v14" as RoleId) && !isPermanentlyDead && onAcusadorChargeToggle && (
+              {/* Accuser (v14) checkboxes */}
+              {isGM && mechanicalRole === ("v14" as RoleId) && !isPermanentlyDead && onAccuserChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   {[0, 1].map((idx) => (
                     <Checkbox
                       key={idx}
-                      checked={(independentPowerState?.acusadorCharges ?? acusadorCharges ?? 0) > idx}
+                      checked={(independentPowerState?.accuserCharges ?? accuserCharges ?? 0) > idx}
                       onCheckedChange={() => {
-                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, acusadorCharges: independentPowerState.acusadorCharges > idx ? idx : idx + 1 });
-                        else onAcusadorChargeToggle(idx);
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, accuserCharges: independentPowerState.accuserCharges > idx ? idx : idx + 1 });
+                        else onAccuserChargeToggle(idx);
                       }}
                       className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                     />
                   ))}
                 </div>
               )}
-              {/* Lobisomem Vampiro (m03) used checkbox */}
-              {isGM && mechanicalRole === ("m03" as RoleId) && !isPermanentlyDead && onLobisomemVampiroToggle && (
+              {/* Vampire Wolf (m03) used checkbox */}
+              {isGM && mechanicalRole === ("m03" as RoleId) && !isPermanentlyDead && onVampireWolfToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={independentPowerState?.lobisomemVampiroUsed ?? lobisomemVampiroUsed}
+                    checked={independentPowerState?.vampireWolfUsed ?? vampireWolfUsed}
                     onCheckedChange={() => {
-                      if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, lobisomemVampiroUsed: !independentPowerState.lobisomemVampiroUsed });
-                      else onLobisomemVampiroToggle();
+                      if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, vampireWolfUsed: !independentPowerState.vampireWolfUsed });
+                      else onVampireWolfToggle();
                     }}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                   />
@@ -681,7 +684,7 @@ export const PlayerCircle = ({
         );
 
         const showPoison = true;
-        const showIllusion = isMarionetista;
+        const showIllusion = isPuppeteer;
         const showExecutado = gameCyclePhase === "tribunal";
         const availableEffectsForPlayer = seated && _availableEffects ? _availableEffects(seated.id) : [];
 
@@ -696,7 +699,7 @@ export const PlayerCircle = ({
             showIllusion={showIllusion}
             isIllusion={isThisIllusion}
             showExecutado={showExecutado}
-            poisonDisabled={isBruxaPermaDead}
+            poisonDisabled={isWitchPermaDead}
             activeEffects={effects}
             availableEffects={availableEffectsForPlayer}
             onSetPoisoned={() => {

@@ -3,25 +3,26 @@ import {
   canWhiteWolfTarget,
   getCircularDistances,
   getGuaranteedWrongCount,
-  getMeninaAnswerKind,
+  getLittleGirlAnswerKind,
   hasOtherLivingWerewolf,
-  MENINA_POISONED_ANSWERS,
+  LITTLE_GIRL_POISONED_ANSWERS,
   shouldTransformEvilPoisonedSister,
   type WhiteWolfPlayerState,
 } from "./gameRules";
 
 describe("poisoned information rules", () => {
-  it("maps every supported Menina source to its answer category", () => {
-    expect(getMeninaAnswerKind("soldado")).toBe("soldier");
-    expect(getMeninaAnswerKind("s01-suicide")).toBe("suicide");
-    expect(getMeninaAnswerKind("e01")).toBe("werewolves");
-    expect(getMeninaAnswerKind("m06")).toBe("werewolves");
-    expect(getMeninaAnswerKind("s02")).toBe("whiteWerewolf");
+  it("maps every supported LittleGirl source to its answer category", () => {
+    expect(getLittleGirlAnswerKind("soldier")).toBe("soldier");
+    expect(getLittleGirlAnswerKind("soldado")).toBe("soldier");
+    expect(getLittleGirlAnswerKind("s01-suicide")).toBe("suicide");
+    expect(getLittleGirlAnswerKind("e01")).toBe("werewolves");
+    expect(getLittleGirlAnswerKind("m06")).toBeNull();
+    expect(getLittleGirlAnswerKind("s02")).toBe("whiteWerewolf");
   });
 
-  it("keeps the poisoned Menina answer pool limited to the ten approved answers", () => {
-    expect(MENINA_POISONED_ANSWERS).toHaveLength(10);
-    expect(new Set(MENINA_POISONED_ANSWERS.map(({ kind }) => kind)).size).toBe(10);
+  it("keeps the poisoned LittleGirl answer pool limited to the ten approved answers", () => {
+    expect(LITTLE_GIRL_POISONED_ANSWERS).toHaveLength(10);
+    expect(new Set(LITTLE_GIRL_POISONED_ANSWERS.map(({ kind }) => kind)).size).toBe(10);
   });
 
   it("always returns a different evil-being count", () => {

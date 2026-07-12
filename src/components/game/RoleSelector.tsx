@@ -1,5 +1,6 @@
 import { ROLES, ALL_ROLE_IDS, type RoleId } from "@/lib/roles";
 import { useRoleLabel } from "@/lib/i18n";
+import { RULEBOOK_CHARACTER_ORDER } from "@/lib/rulebookContent";
 import {
   Select,
   SelectContent,
@@ -7,6 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const RULEBOOK_ORDERED_ROLE_IDS = [
+  ...RULEBOOK_CHARACTER_ORDER.filter((id): id is RoleId => id in ROLES),
+  ...ALL_ROLE_IDS.filter((id) => !RULEBOOK_CHARACTER_ORDER.includes(id)),
+];
 
 interface RoleSelectorProps {
   value: RoleId;
@@ -17,8 +23,8 @@ interface RoleSelectorProps {
 export const RoleSelector = ({ value, onChange, advancedEnabled = true }: RoleSelectorProps) => {
   const roleLabel = useRoleLabel();
   const filteredIds = advancedEnabled
-    ? ALL_ROLE_IDS
-    : ALL_ROLE_IDS.filter((id) => ROLES[id].category !== "a" || id === value);
+    ? RULEBOOK_ORDERED_ROLE_IDS
+    : RULEBOOK_ORDERED_ROLE_IDS.filter((id) => ROLES[id].category !== "a" || id === value);
 
   return (
     <Select value={value} onValueChange={(v) => onChange(v as RoleId)}>

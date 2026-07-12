@@ -14,15 +14,20 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Other Changes Outside of the Repo
 
-* [ ] RULEBOOK: Rearrange cards by affinity instead of ID; place the Spider Tamer beside the other Tamers and separate Werewolves from their allies
+* [ ] 
 
 ## Critical Fixes
 
-* [ ] Make the rulebook script lines more readable by making them a proper list with "-" or a dot before
+* [x] Make the rulebook script lines more readable by making them a proper list with "-" or a dot before
+  * Codex note 2026-07-12: Rulebook night-script lines now render as a proper bulleted list.
 
 ## Fixes
 
-* [ ] Is it possible to change in fr.ts and pt.ts the lines : "requires: ["e01", "m01", "m02", "m03", "m06", "s02"]" to "requires: WEREWOLF_ROLES" from roles.ts? And also in rulebookContents.ts "refs: ["e01", "m01", "m02", "m03", "m06", "s02"]"
+* [x] Is it possible to change in fr.ts and pt.ts the lines : "requires: ["e01", "m01", "m02", "m03", "m06", "s02"]" to "requires: WEREWOLF_ROLES" from roles.ts? And also in rulebookContents.ts "refs: ["e01", "m01", "m02", "m03", "m06", "s02"]"
+  * Codex note 2026-07-12: Shared werewolf refs now use WEREWOLF_ROLES.
+* [x] For consistency all the names for the characters used in code should use the english names not the portuguese names, for example: onMeninaReveal --> onLittleGirlReveal. (for long names, abbreviations can be used, like Little Red Riding Hood --> RedHood). I added en.ts that just include the character names for now, for reference.
+  * Codex note 2026-07-12: Role-facing identifiers, callbacks, condition keys, reveal channels, actor power fields, and the FortuneTeller modal file were renamed to English. Legacy Portuguese snapshot aliases are retained only in restore helpers for compatibility.
+* [x] If possible, make it so the manual character selection list follows the RULEBOOK_CHARACTER_ORDER
 
 ## Balance Changes
 
@@ -30,8 +35,15 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [x] A few new characters were added to the Rulebook, before adding any functionnality can you add them to the general game. Right now rulebookContent is trhowing an error. This repo is still supposed to let humans easily manually add stuff, can you make changes if needed for it to be more human-friendly and also add complete the rulebookContent description to explain exactly the steps to do to add a new character
-  * Codex note 2026-07-10: Registered `v24`, `v25`, `m06`, `l05`, and `l06` for manual assignment; kept them out of random assignment until their mechanics are implemented; expanded the rulebook editing guide and consistency tests.
+* [x] Implement the new characters features (add their script lines present in Rulebookcontent to the GM script too, in the correct placement):
+  * Codex note 2026-07-12: Implemented v24 poison/immunity, v25 asleep script state, l05 werewolf-night block, l06 red-X resurrection/sacrifice, and m06 hidden werewolf behavior.
+  * [ ] v24: Every night can poison someone (same rules for poison removal after death like the witch). The target also get full immunity for that night and the next day (unlike the Saviour that only lasts for that night). If poisoned another random player gets the effect instead.
+  * [ ] v25: Just add the script line. When poisoned, he doesn't wake up, so strickthrogh and priestAsleep
+  * [ ] l05: No script line, the werewolves just don't wake up the night after his death. Same effect as werewolves poisoned.
+  * [ ] l06: Can be drag-dropped on a redX player, if so, the redX player will ressurect, but the l06 will become redX. If poisoned this doensn't work.
+  * [ ] m06: Acts as a normal werewolf character but every character that knows about evil beings and werewolves will never count this card (example, the bear will not roar, the crow will not count him, etc)
+  
+
 
 ## Future Plans
 

@@ -1,4 +1,4 @@
-import { WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { isDetectableWerewolfRole, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 
 export type WhiteWolfPlayerState = {
   id: string;
@@ -26,7 +26,7 @@ export function canWhiteWolfTarget(
   return !hasOtherLivingWerewolf(players, whiteWolfId) || isLivingWerewolf(target);
 }
 
-export type MeninaAnswerKind =
+export type LittleGirlAnswerKind =
   | "soldier"
   | "suicide"
   | "hunter"
@@ -38,7 +38,7 @@ export type MeninaAnswerKind =
   | "werewolves"
   | "whiteWerewolf";
 
-export const MENINA_POISONED_ANSWERS: Array<{ kind: MeninaAnswerKind; roleId: RoleId }> = [
+export const LITTLE_GIRL_POISONED_ANSWERS: Array<{ kind: LittleGirlAnswerKind; roleId: RoleId }> = [
   { kind: "soldier", roleId: "v09" },
   { kind: "suicide", roleId: "s01" },
   { kind: "hunter", roleId: "v08" },
@@ -51,8 +51,8 @@ export const MENINA_POISONED_ANSWERS: Array<{ kind: MeninaAnswerKind; roleId: Ro
   { kind: "whiteWerewolf", roleId: "s02" },
 ];
 
-export function getMeninaAnswerKind(source: string | undefined): MeninaAnswerKind | null {
-  if (source === "soldado") return "soldier";
+export function getLittleGirlAnswerKind(source: string | undefined): LittleGirlAnswerKind | null {
+  if (source === "soldier" || source === "soldado") return "soldier";
   if (source === "s01-suicide") return "suicide";
   if (source === "v08") return "hunter";
   if (source === "v10") return "paranoid";
@@ -60,7 +60,7 @@ export function getMeninaAnswerKind(source: string | undefined): MeninaAnswerKin
   if (source === "v07" || source === "v07-poisoned") return "rustedKnight";
   if (source === "a03") return "mime";
   if (source === "a04") return "actor";
-  if (source === "e01" || source === "m01" || source === "m02" || source === "m03" || source === "m06") return "werewolves";
+  if (source && isDetectableWerewolfRole(source as RoleId)) return "werewolves";
   if (source === "s02") return "whiteWerewolf";
   return null;
 }

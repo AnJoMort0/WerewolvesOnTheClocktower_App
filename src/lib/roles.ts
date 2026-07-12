@@ -64,59 +64,59 @@ type RoleDefinition = {
 };
 
 const ROLE_DEFINITIONS = {
-  e01: { id: "e01", label: "Lobisomem", image: e01Img, category: "e" },
-  e02: { id: "e02", label: "Bruxa Malvada", image: e02Img, category: "e" },
-  e03: { id: "e03", label: "Chaman", image: e03Img, category: "e" },
-  e04: { id: "e04", label: "Vidente", image: e04Img, category: "e" },
-  v01: { id: "v01", label: "Menina", image: v01Img, category: "v" },
-  v02: { id: "v02", label: "Domador do Urso", image: v02Img, category: "v" },
-  v03: { id: "v03", label: "Domador do Corvo", image: v03Img, category: "v" },
-  v04: { id: "v04", label: "Domador da Raposa", image: v04Img, category: "v" },
-  v05: { id: "v05", label: "Domador dos Coelhos", image: v05Img, category: "v" },
-  v06: { id: "v06", label: "Marionetista", image: v06Img, category: "v" },
-  v07: { id: "v07", label: "Cavaleiro Enferrujado", image: v07Img, category: "v" },
-  v08: { id: "v08", label: "Caçador", image: v08Img, category: "v" },
-  v08b: { id: "v08b", label: "Capuchinho Vermelho", image: v08bImg, category: "v", requires: "v08" },
-  v09: { id: "v09", label: "Capitão", image: v09Img, category: "v" },
-  v10: { id: "v10", label: "Paranoico", image: v10Img, category: "v" },
-  v11: { id: "v11", label: "Chefe da Aldeia", image: v11Img, category: "v" },
-  v12: { id: "v12", label: "Cigana", image: v12Img, category: "v" },
-  v13: { id: "v13", label: "Juiz", image: v13Img, category: "v" },
-  v14: { id: "v14", label: "Acusador", image: v14Img, category: "v" },
-  v15: { id: "v15", label: "Piromaníaco", image: v15Img, category: "v" },
-  v16: { id: "v16", label: "Sonâmbulo", image: v16Img, category: "v" },
-  v17: { id: "v17", label: "Salvador", image: v17Img, category: "v" },
-  v18: { id: "v18", label: "Anjo", image: v18Img, category: "v" },
-  v19: { id: "v19", label: "Profeta", image: v19Img, category: "v" },
-  v20: { id: "v20", label: "Empregada", image: v20Img, category: "v" },
-  v21: { id: "v21", label: "Faroleiro", image: v21Img, category: "v" },
-  v22: { id: "v22", label: "Pedro", image: v22Img, category: "v" },
-  v23: { id: "v23", label: "Domador da Aranha", image: v23Img, category: "v" },
-  v24: { id: "v24", label: "Vinicultor", image: v24Img, category: "v" },
-  v25: { id: "v25", label: "Padre", image: v25Img, category: "v" },
-  m01: { id: "m01", label: "Lobisomem Mau", image: m01Img, category: "m" },
-  m02: { id: "m02", label: "Lobisomem Vidente", image: m02Img, category: "m" },
-  m03: { id: "m03", label: "Lobisomem Vampiro", image: m03Img, category: "m" },
+  e01: { id: "e01", label: "Werewolf", image: e01Img, category: "e" },
+  e02: { id: "e02", label: "Evil Witch", image: e02Img, category: "e" },
+  e03: { id: "e03", label: "Shaman", image: e03Img, category: "e" },
+  e04: { id: "e04", label: "Fortune Teller", image: e04Img, category: "e" },
+  v01: { id: "v01", label: "Little Girl", image: v01Img, category: "v" },
+  v02: { id: "v02", label: "Bear Tamer", image: v02Img, category: "v" },
+  v03: { id: "v03", label: "Raven Tamer", image: v03Img, category: "v" },
+  v04: { id: "v04", label: "Fox Tamer", image: v04Img, category: "v" },
+  v05: { id: "v05", label: "Bunny Tamer", image: v05Img, category: "v" },
+  v06: { id: "v06", label: "Puppeteer", image: v06Img, category: "v" },
+  v07: { id: "v07", label: "Rusted Knight", image: v07Img, category: "v" },
+  v08: { id: "v08", label: "Hunter", image: v08Img, category: "v" },
+  v08b: { id: "v08b", label: "Little Red Riding Hood", image: v08bImg, category: "v", requires: "v08" },
+  v09: { id: "v09", label: "Captain", image: v09Img, category: "v" },
+  v10: { id: "v10", label: "Paranoid", image: v10Img, category: "v" },
+  v11: { id: "v11", label: "Village Elder", image: v11Img, category: "v" },
+  v12: { id: "v12", label: "Gipsy", image: v12Img, category: "v" },
+  v13: { id: "v13", label: "Judge", image: v13Img, category: "v" },
+  v14: { id: "v14", label: "Accuser", image: v14Img, category: "v" },
+  v15: { id: "v15", label: "Pyromaniac", image: v15Img, category: "v" },
+  v16: { id: "v16", label: "Sleepwalker", image: v16Img, category: "v" },
+  v17: { id: "v17", label: "Saviour", image: v17Img, category: "v" },
+  v18: { id: "v18", label: "Angel", image: v18Img, category: "v" },
+  v19: { id: "v19", label: "Prophet", image: v19Img, category: "v" },
+  v20: { id: "v20", label: "House Maid", image: v20Img, category: "v" },
+  v21: { id: "v21", label: "Lamplighter", image: v21Img, category: "v" },
+  v22: { id: "v22", label: "Boy", image: v22Img, category: "v" },
+  v23: { id: "v23", label: "Spider Tamer", image: v23Img, category: "v" },
+  v24: { id: "v24", label: "Vintner", image: v24Img, category: "v" },
+  v25: { id: "v25", label: "Priest", image: v25Img, category: "v" },
+  m01: { id: "m01", label: "Big Bad Werewolf", image: m01Img, category: "m" },
+  m02: { id: "m02", label: "Werewolf Seer", image: m02Img, category: "m" },
+  m03: { id: "m03", label: "Vampire Werewolf", image: m03Img, category: "m" },
   m04: { id: "m04", label: "Ankou", image: m04Img, category: "m" },
-  m05: { id: "m05", label: "Cupido Malvado", image: m05Img, category: "m" },
-  m06: { id: "m06", label: "Mestre do Lobo(isomem)", image: m06Img, category: "m" },
-  s01: { id: "s01", label: "Cupido", image: s01Img, category: "s" },
-  s02: { id: "s02", label: "Lobisomem Branco", image: s02Img, category: "s" },
-  f01: { id: "f01", label: "Ladrão", image: f01Img, category: "f" },
-  f02: { id: "f02", label: "Espião", image: f02Img, category: "f" },
-  a01: { id: "a01", label: "Bêbado", image: a01Img, category: "a" },
-  a02: { id: "a02", label: "Cão-Lobo", image: a02Img, category: "a" },
-  a03: { id: "a03", label: "Mimo", image: a03Img, category: "a" },
-  a04: { id: "a04", label: "Ator", image: a04Img, category: "a" },
-  a05: { id: "a05", label: "Rouba-Túmulos", image: a05Img, category: "a" },
-  a06: { id: "a06", label: "Ilusionista", image: a06Img, category: "a" },
-  as01b: { id: "as01b", label: "Amante Secreto", image: as01bImg, category: "a", requires: "s01" },
-  l01: { id: "l01", label: "Aldeão Triste", image: l01Img, category: "l" },
-  l02: { id: "l02", label: "Criança Selvagem", image: l02Img, category: "l" },
-  l03: { id: "l03", label: "Irmãs", image: l03Img, category: "l", groupSize: 2 },
-  l04: { id: "l04", label: "Irmãos", image: l04Img, category: "l", groupSize: 3 },
-  l05: { id: "l05", label: "Astrônomo", image: l05Img, category: "l" },
-  l06: { id: "l06", label: "Serva Devota", image: l06Img, category: "l" },
+  m05: { id: "m05", label: "Evil Cupid", image: m05Img, category: "m" },
+  m06: { id: "m06", label: "(Were)wolf Tamer", image: m06Img, category: "m" },
+  s01: { id: "s01", label: "Cupid", image: s01Img, category: "s" },
+  s02: { id: "s02", label: "White Werewolf", image: s02Img, category: "s" },
+  f01: { id: "f01", label: "Thief", image: f01Img, category: "f" },
+  f02: { id: "f02", label: "Spy", image: f02Img, category: "f" },
+  a01: { id: "a01", label: "Drunkard", image: a01Img, category: "a" },
+  a02: { id: "a02", label: "Wolf-Dog", image: a02Img, category: "a" },
+  a03: { id: "a03", label: "Mime", image: a03Img, category: "a" },
+  a04: { id: "a04", label: "Actor", image: a04Img, category: "a" },
+  a05: { id: "a05", label: "Grave Robber", image: a05Img, category: "a" },
+  a06: { id: "a06", label: "Illusioner", image: a06Img, category: "a" },
+  as01b: { id: "as01b", label: "Secret Lover", image: as01bImg, category: "a", requires: "s01" },
+  l01: { id: "l01", label: "Ordinary Townsfolk", image: l01Img, category: "l" },
+  l02: { id: "l02", label: "Wild Child", image: l02Img, category: "l" },
+  l03: { id: "l03", label: "Sisters", image: l03Img, category: "l", groupSize: 2 },
+  l04: { id: "l04", label: "Brothers", image: l04Img, category: "l", groupSize: 3 },
+  l05: { id: "l05", label: "Astronomer", image: l05Img, category: "l" },
+  l06: { id: "l06", label: "Devout Servant", image: l06Img, category: "l" },
 } as const satisfies Record<string, RoleDefinition>;
 
 /** Playable role IDs are derived from the registry so a new role is declared only once. */
@@ -142,6 +142,20 @@ export function isUniqueRole(id: RoleId): boolean {
 export const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05"];
 
 export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "m06", "s02"];
+
+export const HIDDEN_WEREWOLF_ROLES: RoleId[] = ["m06"];
+
+export const DETECTABLE_WEREWOLF_ROLES: RoleId[] = WEREWOLF_ROLES.filter(
+  (roleId) => !HIDDEN_WEREWOLF_ROLES.includes(roleId),
+);
+
+export function isWerewolfRole(roleId: RoleId): boolean {
+  return WEREWOLF_ROLES.includes(roleId);
+}
+
+export function isDetectableWerewolfRole(roleId: RoleId): boolean {
+  return DETECTABLE_WEREWOLF_ROLES.includes(roleId);
+}
 
 export const WEB_IMMUNE_ROLES: RoleId[] = ["v10", "v18", "v22"];
 

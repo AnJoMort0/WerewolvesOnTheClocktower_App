@@ -6,35 +6,35 @@ const ACTOR_CHARACTER_PREFIX = "a04:";
 const ACTOR_DRUNKARD_CHARACTER_PREFIX = `${ACTOR_CHARACTER_PREFIX}a01:`;
 
 export type ActorPowerState = {
-  chamanCharges: number;
+  shamanCharges: number;
   foxDisabled: boolean;
-  paranoicoCharges: number;
-  anjoCharges: number;
-  lobisomemMauCharges: number;
-  cupidoCharges: number;
-  lobisomemVidenteUsed: boolean;
-  lobisomemVampiroUsed: boolean;
-  juizCharges: number;
-  acusadorCharges: number;
+  paranoidCharges: number;
+  angelCharges: number;
+  bigBadWolfCharges: number;
+  cupidCharges: number;
+  werewolfSeerUsed: boolean;
+  vampireWolfUsed: boolean;
+  judgeCharges: number;
+  accuserCharges: number;
   spiderDayChangeUsed: boolean;
-  salvadorLastTarget: string | null;
-  chefeLastTarget: string | null;
+  saviourLastTarget: string | null;
+  villageElderLastTarget: string | null;
 };
 
 export const EMPTY_ACTOR_POWER_STATE: ActorPowerState = {
-  chamanCharges: 0,
+  shamanCharges: 0,
   foxDisabled: false,
-  paranoicoCharges: 0,
-  anjoCharges: 0,
-  lobisomemMauCharges: 0,
-  cupidoCharges: 0,
-  lobisomemVidenteUsed: false,
-  lobisomemVampiroUsed: false,
-  juizCharges: 0,
-  acusadorCharges: 0,
+  paranoidCharges: 0,
+  angelCharges: 0,
+  bigBadWolfCharges: 0,
+  cupidCharges: 0,
+  werewolfSeerUsed: false,
+  vampireWolfUsed: false,
+  judgeCharges: 0,
+  accuserCharges: 0,
   spiderDayChangeUsed: false,
-  salvadorLastTarget: null,
-  chefeLastTarget: null,
+  saviourLastTarget: null,
+  villageElderLastTarget: null,
 };
 
 export function getActorIdolUsesAfterSelection(

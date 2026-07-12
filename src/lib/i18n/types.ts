@@ -67,8 +67,8 @@ export interface ToastStrings {
   warnSecretLoverWithoutCupid: string;
   warnWitchPoisonedImmune: string;
   warnWolvesPoisoned: string;
-  warnChamanPoisoned: string;
-  warnChamanUsedAll: string;
+  warnShamanPoisoned: string;
+  warnShamanUsedAll: string;
   warnAngelUsedAll: string;
   warnParanoidUsedAll: string;
   warnLittleRedImmune: string;
@@ -79,7 +79,8 @@ export interface ToastStrings {
   warnCupidPoisoned: string;
   warnThiefPoisoned: string;
   warnProphetPoisoned: string;
-  warnChamanOnlyDead: string;
+  warnShamanOnlyDead: string;
+  warnDevoutServantPoisoned: string;
   infoKnightPoisoned: string;  // "...{name} foi infetado com Tétano."
   infoKnightDied: string;
   infoKnightExecuted: string;
@@ -89,6 +90,7 @@ export interface ToastStrings {
   infoPiromaniacPoisoned: string;
   infoAngelPoisoned: string;
   infoParanoidPoisoned: string;
+  infoVintnerPoisoned: string;
   infoBornFireWolf: string;       // "{name} (Lobisomem) foi incendiado e morreu!"
   infoAdoptiveDadDied: string;
   infoBrothersSaved: string;
@@ -98,8 +100,10 @@ export interface ToastStrings {
   warnAllSpied: string;
   warnNoLimitedRoles: string;
   warnNoTargets: string;
-  okChamanRessurected: string;
-  errChamanDragOnlyDead: string;
+  okShamanRessurected: string;
+  errShamanDragOnlyDead: string;
+  okDevoutServantRessurected: string;
+  errDevoutServantDragOnlyDead: string;
   okJoinLinkCopied: string;
   okRoomReset: string;
   okRoomEnded: string;
@@ -284,6 +288,7 @@ export interface ScriptDynamicStrings {
   rabbitConfused: string;
   werewolvesAsleep: string;
   whiteWolfSoloKill: string;
+  priestAsleep: string;
 }
 
 export interface Translation {
