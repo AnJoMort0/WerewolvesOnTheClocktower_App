@@ -103,6 +103,8 @@ interface NightScriptProps {
   actorCopyNoticeNight?: number | null;
   actorPowerState?: ActorPowerState;
   onActorPowerStateChange?: (state: ActorPowerState) => void;
+  mimePlayerId?: string | null;
+  mimeMechanicalRole?: RoleId | null;
   deathTriggeredSourcePlayerIds?: Record<string, string[]>;
   dogWolfStates?: DogWolfStates;
   dogWolfPlayerIds?: string[];
@@ -127,6 +129,7 @@ type ScriptRenderItem = {
   dogWolfLine?: boolean;
   dogWolfStandalone?: boolean;
   dogWolfActingPoisoned?: boolean;
+  mimeLine?: boolean;
   actingPoisoned?: boolean;
   sourcePlayerId?: string | null;
 };
@@ -209,6 +212,7 @@ function ScriptLineDisplay({
   onLittleGirlReveal,
   onLamplighterReveal,
   onWerewolfSeerReveal,
+  onMimeReveal,
   dynamicText,
   foxDisabled,
   onFoxDisabledToggle,
@@ -246,6 +250,7 @@ function ScriptLineDisplay({
   dogWolfStandalone,
   dogWolfCopiedRole,
   dogWolfActingPoisoned,
+  mimeLine,
   actingPoisoned,
 }: {
   line: ScriptLine;
@@ -260,6 +265,7 @@ function ScriptLineDisplay({
   onLittleGirlReveal?: (sourcePlayerId?: string | null) => void;
   onLamplighterReveal?: (sourcePlayerId?: string | null) => void;
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
+  onMimeReveal?: (sourcePlayerId?: string | null) => void;
   dynamicText?: string;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
@@ -297,6 +303,7 @@ function ScriptLineDisplay({
   dogWolfStandalone?: boolean;
   dogWolfCopiedRole?: RoleId | null;
   dogWolfActingPoisoned?: boolean;
+  mimeLine?: boolean;
   actingPoisoned?: boolean;
 }) {
   const lang = useLanguage();
@@ -307,6 +314,8 @@ function ScriptLineDisplay({
     ? originalText.replace(/(\{[^}]+\})/, `$1 (+ {${getRoleLabel("a04", lang)}})`)
     : actorLine && actorCopiedRole
     ? originalText.replace(replaceAllRoleTokens ? /\{[^}]+\}/g : /\{[^}]+\}/, `{${getRoleLabel("a04", lang)}}`)
+    : mimeLine
+    ? `(${originalText})`
     : originalText;
   const isStrikethrough = rawDisplayText.startsWith("~~") && rawDisplayText.endsWith("~~");
   const displayText = isStrikethrough ? rawDisplayText.slice(2, -2) : rawDisplayText;
@@ -326,6 +335,7 @@ function ScriptLineDisplay({
   const isLittleGirlLine = line.requires?.length === 1 && line.requires[0] === ("v01" as RoleId);
   const isLamplighterLine = line.requires?.length === 1 && line.requires[0] === ("v21" as RoleId);
   const isWerewolfSeerLine = line.requires?.length === 1 && line.requires[0] === ("m02" as RoleId);
+  const isMimeRevealLine = line.requires?.length === 1 && line.requires[0] === ("a03" as RoleId);
   const isParanoidLine = line.requires?.length === 1 && line.requires[0] === ("v10" as RoleId);
   const isAngelLine = line.requires?.length === 1 && line.requires[0] === ("v18" as RoleId);
   const isBigBadWolfLine = line.requires?.length === 1 && line.requires[0] === ("m01" as RoleId);
@@ -351,7 +361,8 @@ function ScriptLineDisplay({
     const r = roleAssignments[poisonedPlayerId];
     return (["e01", "m01", "m02", "m03"] as RoleId[]).includes(r);
   }, [isPoisonedLine, isWerewolfLine, poisonedPlayerId, roleAssignments, sourcePlayerId]);
-  const dragAction = isWerewolfLine && (isWerewolfPoisoned || isWerewolfLinePoisoned) ? null : candidateDragAction;
+  const effectiveWerewolfLinePoisoned = mimeLine ? false : isWerewolfLinePoisoned;
+  const dragAction = isWerewolfLine && (isWerewolfPoisoned || effectiveWerewolfLinePoisoned) ? null : candidateDragAction;
 
   const handleNativeDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragAction) {
@@ -360,7 +371,7 @@ function ScriptLineDisplay({
         toast.warning(getToast("warnShamanPoisoned", lang));
         return;
       }
-      if (dragAction === "kill" && (isWerewolfPoisoned || isWerewolfLinePoisoned)) {
+      if (dragAction === "kill" && (isWerewolfPoisoned || effectiveWerewolfLinePoisoned)) {
         e.preventDefault();
         toast.warning(getToast("warnWolvesPoisoned", lang));
         return;
@@ -410,7 +421,7 @@ function ScriptLineDisplay({
             className="mb-1 mr-2 inline-block h-7 w-7 rounded border border-green-400 object-cover align-middle shadow"
           />
         )}
-        {isWerewolfLine && isWerewolfLinePoisoned ? (
+        {isWerewolfLine && effectiveWerewolfLinePoisoned ? (
           <span className="line-through text-muted-foreground">{werewolvesAsleepText}</span>
         ) : (
           <span className={(isStrikethrough || forceStrikethrough || a05Strike || lineCompleted) ? "line-through text-muted-foreground" : ""}>
@@ -427,7 +438,7 @@ function ScriptLineDisplay({
         )}
 
         {/* Shaman power boxes */}
-        {isShamanLine && (
+        {isShamanLine && !mimeLine && (
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-muted-foreground">{t("uses", lang)}</span>
             {[0, 1].map((idx) => (
@@ -457,14 +468,14 @@ function ScriptLineDisplay({
         )}
 
         {/* Generic 2-charge checkboxes for limited-use roles */}
-        {isParanoidLine && onParanoidChargeToggle != null && (
+        {isParanoidLine && !mimeLine && onParanoidChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
               <Checkbox key={idx} checked={(paranoidCharges ?? 0) > idx} onCheckedChange={() => onParanoidChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             ))}
           </div>
         )}
-        {isAngelLine && onAngelChargeToggle != null && (
+        {isAngelLine && !mimeLine && onAngelChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
               <Checkbox key={idx} checked={(angelCharges ?? 0) > idx} onCheckedChange={() => onAngelChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
@@ -522,6 +533,9 @@ function ScriptLineDisplay({
         )}
         {isWerewolfSeerLine && onWerewolfSeerReveal && (
           <button onClick={(e) => { e.stopPropagation(); onWerewolfSeerReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
+        )}
+        {isMimeRevealLine && onMimeReveal && (
+          <button onClick={(e) => { e.stopPropagation(); onMimeReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
         )}
         {isSpiderCaughtLine && !dynamicText && onSpiderReveal && (
           <button onClick={(e) => { e.stopPropagation(); onSpiderReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
@@ -590,6 +604,8 @@ export const NightScript = ({
   actorCopyNoticeNight = null,
   actorPowerState = EMPTY_ACTOR_POWER_STATE,
   onActorPowerStateChange,
+  mimePlayerId = null,
+  mimeMechanicalRole = null,
   deathTriggeredSourcePlayerIds = {},
   dogWolfStates = {},
   dogWolfPlayerIds = [],
@@ -854,10 +870,66 @@ export const NightScript = ({
     return undefined;
   };
 
-  const getDynamicText = (line: ScriptLine, sourcePlayerId?: string | null, dogWolfLine = false): string | undefined => {
+  const getCopiedDynamicText = (line: ScriptLine, sourcePlayerId: string): string | undefined => {
+    const role = line.requires?.length === 1 ? line.requires[0] : null;
+    if (role === "v02") {
+      const neighbors = getLivingNeighbors(sourcePlayerId);
+      const hasEvilNeighbor = neighbors.some((neighbor) => countsAsEvilBeing(neighbor.id));
+      const hasIllusionNeighbor = neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id));
+      if (isPlayerActingPoisoned(sourcePlayerId)) return hasEvilNeighbor ? dyn.bearSilent : dyn.bearGrowl;
+      if (hasIllusionNeighbor) return dyn.bearConfused;
+      return hasEvilNeighbor ? dyn.bearGrowl : dyn.bearSilent;
+    }
+    if (role === "v03") {
+      const aliveEvilCount = alivePlayers.filter((player) => countsAsEvilBeing(player.id)).length;
+      if (isPlayerActingPoisoned(sourcePlayerId)) {
+        return dyn.crowReveal.replace("{n}", String(getGuaranteedWrongCount(aliveEvilCount)));
+      }
+      const illusionActive = [...illusionPlayerIds].some((playerId) => (
+        !_permanentlyDeadPlayerIds.has(playerId) && countsAsEvilBeing(playerId)
+      ));
+      return illusionActive ? dyn.crowConfused : dyn.crowReveal.replace("{n}", String(aliveEvilCount));
+    }
+    if (role === "v05") {
+      const neighbors = getLivingNeighbors(sourcePlayerId);
+      const relevantIds = [sourcePlayerId, ...neighbors.map((neighbor) => neighbor.id)];
+      const wasTargeted = relevantIds.some((playerId) => nightTargetedPlayerIds.has(playerId));
+      if (isPlayerActingPoisoned(sourcePlayerId)) return wasTargeted ? `~~${dyn.rabbitNothing}~~` : dyn.rabbitHeard;
+      if (neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id))) return dyn.rabbitConfused;
+      return wasTargeted ? dyn.rabbitHeard : `~~${dyn.rabbitNothing}~~`;
+    }
+    if (role === "v20") {
+      const sorted = players
+        .filter((player) => player.seat_position !== null && !_permanentlyDeadPlayerIds.has(player.id))
+        .sort((a, b) => a.seat_position! - b.seat_position!);
+      const sourceIndex = sorted.findIndex((player) => player.id === sourcePlayerId);
+      let distances: number[] = [];
+      if (isPlayerActingPoisoned(sourcePlayerId)) {
+        const resultCount = Math.max(1, poisonedPlayerIds.size);
+        distances = Array.from({ length: resultCount }, () => (
+          Math.floor(Math.random() * Math.max(1, Math.floor(sorted.length / 2))) + 1
+        )).sort((left, right) => left - right);
+      } else if (sourceIndex !== -1) {
+        distances = getCircularDistances(
+          sourcePlayerId,
+          sorted.map((player) => player.id),
+          poisonedPlayerIds,
+        );
+      }
+      if (distances.length === 0) return undefined;
+      return `${line.text.replace(/\.$/, "")}: ${distances.join(", ")}`;
+    }
+    return undefined;
+  };
+
+  const getDynamicText = (line: ScriptLine, sourcePlayerId?: string | null, dogWolfLine = false, mimeLine = false): string | undefined => {
     if (dogWolfLine && sourcePlayerId) {
       const dogText = getDogDynamicText(line, sourcePlayerId);
       if (dogText) return dogText;
+    }
+    if (mimeLine && sourcePlayerId) {
+      const copiedText = getCopiedDynamicText(line, sourcePlayerId);
+      if (copiedText) return copiedText;
     }
     if (line.requires?.length === 1 && line.requires[0] === "v02") return bearDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v03") return crowDynamicText;
@@ -978,8 +1050,12 @@ export const NightScript = ({
           && (!effectivelyDead.has(playerId) || prophecyGhostPlayerIds.has(playerId)));
       const actorAllowsStandardLine = !isCopiedRoleLine || hasOriginalRolePlayer || isSharedCopiedRoleLine;
       const drunkardAllowsStandardLine = !isDrunkardRoleLine || hasOriginalDrunkardRolePlayer;
+      const isActiveMimeRevealLine = !!mimeMechanicalRole
+        && !!mimePlayerId
+        && line.requires?.length === 1
+        && line.requires[0] === ("a03" as RoleId);
 
-      if (predicate(line) && actorAllowsStandardLine && drunkardAllowsStandardLine) {
+      if (!isActiveMimeRevealLine && predicate(line) && actorAllowsStandardLine && drunkardAllowsStandardLine) {
         const standardSourcePlayerId = line.requires?.length === 1
           ? Object.entries(roleAssignments).find(([, role]) => role === line.requires?.[0])?.[0]
           : undefined;
@@ -1030,6 +1106,32 @@ export const NightScript = ({
             ),
           });
         });
+      }
+
+      const isMimeCopiedRoleLine = !!mimeMechanicalRole && !!mimePlayerId && line.requires?.includes(mimeMechanicalRole);
+      const mimeCanPerform = !!mimePlayerId
+        && (!_permanentlyDeadPlayerIds.has(mimePlayerId) || prophecyGhostPlayerIds.has(mimePlayerId));
+      const isSharedWerewolfLine = (line.requires?.length ?? 0) > 1
+        && line.requires?.includes("e01" as RoleId)
+        && line.requires?.includes("m01" as RoleId);
+      const mimeCanUseSharedLine = !isSharedWerewolfLine || mimeMechanicalRole === "e01";
+      const mimeUsesHunterLine = mimeMechanicalRole === "v08" && line.conditionKey === "hunterDied";
+      const mimeLineVisible = predicate(line) || mimeUsesHunterLine;
+      if (isMimeCopiedRoleLine && mimeCanPerform && mimeCanUseSharedLine && mimeLineVisible) {
+        const conditionKeyMatches = !line.conditionKey || !!conditionKeys[line.conditionKey] || mimeUsesHunterLine;
+        const conditionMatches = conditionKeyMatches
+          && (line.conditionKey !== "spiderHasCaught" || (spiderCaughtBySource[mimePlayerId]?.length ?? 0) > 0);
+        const mimeFortuneTellerVisible = !(line.requires?.length === 1 && line.requires[0] === "e04" && !shouldShowFortuneTellerLine);
+        if (conditionMatches && mimeFortuneTellerVisible) {
+          items.push({
+            line,
+            key: `${nightNumber}:${source}:${index}:mime`,
+            progressOrder,
+            sourcePlayerId: mimePlayerId,
+            mimeLine: true,
+            actingPoisoned: isPlayerActingPoisoned(mimePlayerId),
+          });
+        }
       }
 
       const dogPlayerIdsForLine = dogWolfPlayerIds.filter((dogPlayerId) => {
@@ -1128,7 +1230,7 @@ export const NightScript = ({
     }
 
     return lines;
-  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
 
   useEffect(() => {
     if (!onScriptRolesVisible) return;
@@ -1225,7 +1327,8 @@ export const NightScript = ({
                 onLittleGirlReveal={onLittleGirlReveal}
                 onLamplighterReveal={onLamplighterReveal}
                 onWerewolfSeerReveal={onWerewolfSeerReveal}
-                dynamicText={getDynamicText(item.line, sourcePlayerId, !!item.dogWolfLine)}
+                onMimeReveal={onMimeReveal}
+                dynamicText={getDynamicText(item.line, sourcePlayerId, !!item.dogWolfLine, !!item.mimeLine)}
                 foxDisabled={usesIndependentPowerState ? powerState.foxDisabled : foxDisabled}
                 onFoxDisabledToggle={usesIndependentPowerState ? () => toggleBoolean("foxDisabled") : onFoxDisabledToggle}
                 showFoxCheckbox={nightNumber > 1}
@@ -1270,6 +1373,7 @@ export const NightScript = ({
                 dogWolfStandalone={item.dogWolfStandalone}
                 dogWolfCopiedRole={item.dogWolfLine && sourcePlayerId ? abilityRoleAssignments[sourcePlayerId] : null}
                 dogWolfActingPoisoned={item.dogWolfActingPoisoned}
+                mimeLine={item.mimeLine}
                 actingPoisoned={item.actingPoisoned}
               />
               );

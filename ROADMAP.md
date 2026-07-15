@@ -18,11 +18,12 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] v24 and l06 cannot be drag-dropped from the player list (I have maybe not be checking all the drag-drops options, but drag-drops should be able to be done from:
+* [x] v24 and l06 cannot be drag-dropped from the player list (I have maybe not be checking all the drag-drops options, but drag-drops should be able to be done from:
   script -> circle || player list
   circle -> circle || player list
   player list -> circle || player list
 so make sure that's the case for every drag-drop action)
+  * Codex note 2026-07-15: Added the missing GM player-list drag mappings for v24 and l06; the existing script/circle drag sources and circle/list drop targets now use the same role-v24/role-l06 handlers.
 * [ ] In the analog page, not all mistakes are warned (all the wrong character balances from the main GM page, like double character, werewolf count etc should be warned in this page too, using the same logic.) And therefore they don't have a fix tied to them either when they should.
 
 ## Fixes
@@ -35,8 +36,10 @@ so make sure that's the case for every drag-drop action)
 
 ## Additions
 
-* [ ] Add functionality a03:
-  * [ ] In his script line he has an eye icon. The eye icon makes a modal in the GM and player device with a random card in game, dead or alive from the MIME_COPY_ROLES list.
+* [x] Add functionality a03:
+  <!-- Codex 2026-07-15: Added the script-line eye icon wiring, GM/player reveal modal, temporary copied-card metadata, small Mime badge, copied script-line insertion, and copied-role drag/eye action sourcing. Remaining special cases still need a dedicated pass before ticking the whole a03 item. -->
+  <!-- Codex 2026-07-15: Completed the Mime pass: copied-card candidate filters, GM/player modal flow, temporary card display with Mime badge, villager objective preservation, copied script-line replacement, copied dynamic information, drag/eye action sourcing, special cases for Drunkard/Dog/Grave Robber/Hunter/Paranoid/Big Bad Wolf/Saviour/Cupid/Bear Tamer/Rabbit/Crow/Angel, and Little Girl seeing Mime on copied kills are implemented with focused NightScript coverage. -->
+  * [x] In his script line he has an eye icon. The eye icon makes a modal in the GM and player device with a random card in game, dead or alive from the MIME_COPY_ROLES list.
     If the GM closes the modal, it stays on in the player device because, the player's device modal as a check or "ok" button, when they press that button, the modal closes, their card gets replaced with the shown card until dawn with a small mime card at the bottom (like the Actor does), same in GM device.
     A difference with the Actor is that the Mime keeps his objective (always villager).
     The mime script line is replaced with the script line of the shown character but in paranthesis, drag-drop actions, eye icon actions, etc will trigger the powers of the copied card.

@@ -36,6 +36,7 @@ import dogIdolIcon from "@/assets/icons/idol_dog.png";
 import dogAdoptiveDadIcon from "@/assets/icons/adoptive_dad_dog.png";
 import dogEnemyIcon from "@/assets/icons/enemy_dog.png";
 import dogDugUpIcon from "@/assets/icons/dug_up_dog.png";
+import mimeDugUpIcon from "@/assets/icons/dug_up_mime.png";
 
 export type PlayerStatus = "alive" | "poisoned" | "dead-this-night" | "dead";
 
@@ -69,6 +70,7 @@ export type StatusEffect =
   | "adoptive_dad_dog"
   | "enemy_dog"
   | "dug_up_dog"
+  | "dug_up_mime"
   | "owner";
 
 export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
@@ -101,6 +103,7 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   adoptive_dad_dog: dogAdoptiveDadIcon,
   enemy_dog: dogEnemyIcon,
   dug_up_dog: dogDugUpIcon,
+  dug_up_mime: mimeDugUpIcon,
   owner: ownerIcon,
 };
 

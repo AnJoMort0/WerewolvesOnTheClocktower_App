@@ -273,6 +273,7 @@ export const fr: Translation = {
       adoptive_dad_dog: "Père Adoptif du Chien",
       enemy_dog: "Ennemi du Chien",
       dug_up_dog: "Déterré par le Chien",
+      dug_up_mime: "Déterré par le Mime",
       owner: "Maître",
     },
     toasts: {

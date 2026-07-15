@@ -91,6 +91,74 @@ describe("NightScript progress", () => {
 });
 
 describe("NightScript conditional behavior", () => {
+  it("shows an eye action on the Mime script line", () => {
+    const onMimeReveal = vi.fn();
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["a03" as const])}
+          roleAssignments={{ mime: "a03" as const }}
+          players={[{ id: "mime", name: "Mime", seat_position: 0 }]}
+          onMimeReveal={onMimeReveal}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    for (const button of Array.from(container.querySelectorAll("button"))) {
+      fireEvent.click(button);
+    }
+
+    expect(onMimeReveal).toHaveBeenCalledWith("mime");
+  });
+
+  it("replaces the Mime reveal line with the copied role line after a copy is active", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["a03" as const, "e02" as const])}
+          roleAssignments={{ mime: "a03" as const, witch: "e02" as const }}
+          players={[
+            { id: "mime", name: "Mime", seat_position: 0 },
+            { id: "witch", name: "Witch", seat_position: 1 },
+          ]}
+          mimePlayerId="mime"
+          mimeMechanicalRole="e02"
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).not.toContain("O Mimo acorda");
+    expect(container.textContent).toContain("(A Bruxa Malvada acorda");
+  });
+
+  it("lets a Mime copying a base Werewolf drag-kill even when the pack is blocked", () => {
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["a03" as const, "e01" as const])}
+          roleAssignments={{ mime: "a03" as const, wolf: "e01" as const }}
+          players={[
+            { id: "mime", name: "Mime", seat_position: 0 },
+            { id: "wolf", name: "Wolf", seat_position: 1 },
+          ]}
+          mimePlayerId="mime"
+          mimeMechanicalRole="e01"
+          conditionKeys={{ astronomerBlocksWerewolvesTonight: true }}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const draggableLine = container.querySelector('[draggable="true"]') as HTMLElement;
+    expect(draggableLine).toBeTruthy();
+    fireEvent.dragStart(draggableLine, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("action", "kill");
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "mime");
+  });
+
   it("renders a distinct intoxicated Drunkard line that keeps the Drunkard as its source", () => {
     const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
     const props = {
