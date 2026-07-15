@@ -133,6 +133,28 @@ describe("NightScript conditional behavior", () => {
     expect(container.textContent).toContain("(A Bruxa Malvada acorda");
   });
 
+  it("keeps the Mime copied line available without changing the Mime's real role", () => {
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["a03" as const, "e02" as const])}
+          roleAssignments={{ mime: "a03" as const, witch: "e02" as const }}
+          players={[
+            { id: "mime", name: "Mime", seat_position: 0 },
+            { id: "witch", name: "Witch", seat_position: 1 },
+          ]}
+          permanentlyDead={new Set(["witch"])}
+          mimePlayerId="mime"
+          mimeMechanicalRole="e02"
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).not.toContain("O Mimo acorda");
+    expect(container.textContent).toContain("(A Bruxa Malvada acorda");
+  });
+
   it("lets a Mime copying a base Werewolf drag-kill even when the pack is blocked", () => {
     const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
     const { container } = render(

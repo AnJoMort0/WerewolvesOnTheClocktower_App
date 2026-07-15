@@ -562,11 +562,15 @@ const GMRoom = () => {
     () => Object.entries(playerEffects).find(([, effects]) => effects.has("idol"))?.[0] ?? null,
     [playerEffects],
   );
-  const effectiveRoleAssignments = useMemo(() => {
-    const assignments = getEffectiveRoleAssignments(roleAssignments, actorCopiedRole, drunkardReplacementRole);
+  const effectiveRoleAssignments = useMemo(
+    () => getEffectiveRoleAssignments(roleAssignments, actorCopiedRole, drunkardReplacementRole),
+    [actorCopiedRole, drunkardReplacementRole, roleAssignments],
+  );
+  const displayRoleAssignments = useMemo(() => {
+    const assignments = { ...effectiveRoleAssignments };
     if (mimePlayerId && mimeCopiedRole) assignments[mimePlayerId] = mimeCopiedRole;
     return assignments;
-  }, [actorCopiedRole, drunkardReplacementRole, mimeCopiedRole, mimePlayerId, roleAssignments]);
+  }, [effectiveRoleAssignments, mimeCopiedRole, mimePlayerId]);
   const dogWolfPlayerIds = useMemo(
     () => getDogWolfPlayerIds(roleAssignments, actorPlayerId, actorCopiedRole),
     [actorCopiedRole, actorPlayerId, roleAssignments],
@@ -5164,7 +5168,7 @@ const GMRoom = () => {
                   totalSlots={seatedPlayersCount}
                   onDropPlayer={updateSeatPosition}
                   isGM
-                  roleAssignments={rolesAssigned ? effectiveRoleAssignments : undefined}
+                  roleAssignments={rolesAssigned ? displayRoleAssignments : undefined}
                   abilityRoleAssignments={rolesAssigned ? abilityRoleAssignments : undefined}
                   baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                   playerStatuses={playerStatuses}
@@ -5421,12 +5425,13 @@ const GMRoom = () => {
                     .sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0))
                     .map((player) => {
                       const baseRoleId = roleAssignments[player.id];
-                      const roleId = effectiveRoleAssignments[player.id];
+                      const roleId = displayRoleAssignments[player.id];
                       const mechanicalRoleId = abilityRoleAssignments[player.id] ?? roleId;
                       const roleDef = roleId ? ROLES[roleId] : null;
                       const isDuplicate = baseRoleId && duplicateRoles.has(baseRoleId);
                       const isActor = baseRoleId === "a04";
                       const isDrunkard = baseRoleId === "a01";
+                      const isMime = baseRoleId === "a03";
                       const dogState = dogWolfStates[player.id];
                       const status = playerStatuses[player.id] || "alive";
                       const isPermanentDead = permanentlyDead.has(player.id);
@@ -5488,6 +5493,9 @@ const GMRoom = () => {
                                )}
                                {isDrunkard && roleId !== "a01" && (
                                  <img src={ROLES.a01.image} alt={roleLabel("a01")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-green-400 object-cover" />
+                               )}
+                               {isMime && roleId !== "a03" && (
+                                 <img src={ROLES.a03.image} alt={roleLabel("a03")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-cyan-300 object-cover" />
                                )}
                                {dogWolfOwnerRoles[player.id] && (
                                  <img src={ROLES[dogWolfOwnerRoles[player.id]].image} alt={roleLabel(dogWolfOwnerRoles[player.id])} className="absolute -bottom-1 -right-1 h-4 w-4 rounded-sm border border-amber-400 object-cover" />
@@ -5809,7 +5817,7 @@ const GMRoom = () => {
                     totalSlots={players.length}
                     onDropPlayer={updateSeatPosition}
                     isGM
-                    roleAssignments={rolesAssigned ? effectiveRoleAssignments : undefined}
+                    roleAssignments={rolesAssigned ? displayRoleAssignments : undefined}
                     abilityRoleAssignments={rolesAssigned ? abilityRoleAssignments : undefined}
                     baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                     compact

@@ -39,44 +39,77 @@ so make sure that's the case for every drag-drop action)
 * [x] Add functionality a03:
   <!-- Codex 2026-07-15: Added the script-line eye icon wiring, GM/player reveal modal, temporary copied-card metadata, small Mime badge, copied script-line insertion, and copied-role drag/eye action sourcing. Remaining special cases still need a dedicated pass before ticking the whole a03 item. -->
   <!-- Codex 2026-07-15: Completed the Mime pass: copied-card candidate filters, GM/player modal flow, temporary card display with Mime badge, villager objective preservation, copied script-line replacement, copied dynamic information, drag/eye action sourcing, special cases for Drunkard/Dog/Grave Robber/Hunter/Paranoid/Big Bad Wolf/Saviour/Cupid/Bear Tamer/Rabbit/Crow/Angel, and Little Girl seeing Mime on copied kills are implemented with focused NightScript coverage. -->
-  * [x] In his script line he has an eye icon. The eye icon makes a modal in the GM and player device with a random card in game, dead or alive from the MIME_COPY_ROLES list.
-    If the GM closes the modal, it stays on in the player device because, the player's device modal as a check or "ok" button, when they press that button, the modal closes, their card gets replaced with the shown card until dawn with a small mime card at the bottom (like the Actor does), same in GM device.
-    A difference with the Actor is that the Mime keeps his objective (always villager).
-    The mime script line is replaced with the script line of the shown character but in paranthesis, drag-drop actions, eye icon actions, etc will trigger the powers of the copied card.
-    Here's a few special case scenarios:
-      There's no limited uses for any power and the Mime can copy powers that have been fully used up
-      e03 and other characters that have their script line tied to redX characters can only appear to the Mime when there are redX characters
-      a01: shows the a01 card with a small corner card for the role he is replacing. The mime will act as the replaced role receiving poisoned results excatly like the drunkard would
-      a02: Only shows when the dog is copying an owner. Shows the a02 card with a corner owner card. Mime acts as the owner.
-      a05: Targets a redX character and changes cards with them (the redX becomes a mime, the mime becomes the target). Use the dug_up_mime.png for the switch.
-      e01/v08: must just kill a player of the mime's choice straight away
-      v10: can choose to kill a player straight away
-      m01: the mime can choose to get full immunity for a day and night
-      m02: can choose to save the victim of the werewolves and sees their card
-      s01: can give the immunity to the lovers
-      v02/v05/v20: receives the information as if he is the tamer/maid
-      v12: just poisons himself if he steals the poison, no double vote abilities tied to it
-      v15: can only show if it there is a vote_innocent player
-      v18: can only appear if there are permadead players. can choose to save one of them that gets ressurected at dawn
-    If the Mime kills someone regardless of the power he is copying, the little girl will see the Mime card.
-    If poisoned act as the copied abilities poisoned effect.
+  * [ ] In his script line, he has an eye icon. The eye icon opens a modal on both the GM’s and the player’s devices, displaying a random in-game character card—dead or alive—from the `MIME_COPY_ROLES` list.
+    * [ ] If the GM closes the modal, it remains open on the player’s device.
+    * [ ] The player’s modal has a checkmark or “OK” button.
+    * [ ] When the player presses the button, the modal closes and their card is replaced with the displayed card until dawn.
+    * [ ] A small Mime card appears at the bottom of the copied card, similar to the Actor.
+    * [ ] The same copied-card display appears on the GM’s device.
+    * [ ] Unlike the Actor, the Mime keeps his original objective, which is always Villager.
+    * [ ] The Mime’s script line is replaced with the displayed character’s script line, shown in parentheses.
+    * [ ] Drag-and-drop actions, eye-icon actions, and other interactions trigger the powers of the copied card.
 
-    -->
-    Uncaught ReferenceError: onMimeReveal is not defined
-    at index-DFO1nZY4.js:461:60322
-    at Array.map (<anonymous>)
-    at index-DFO1nZY4.js:461:59480
-    at Array.map (<anonymous>)
-    at A7 (index-DFO1nZY4.js:461:59308)
-    at cw (index-DFO1nZY4.js:38:17029)
-    at ij (index-DFO1nZY4.js:40:44058)
-    at rj (index-DFO1nZY4.js:40:39790)
-    at IM (index-DFO1nZY4.js:40:39718)
-    at op (index-DFO1nZY4.js:40:39570)
+  * [ ] Special-case scenarios:
+
+    * [ ] There are no limited uses for copied powers.
+    * [ ] The Mime can copy powers that have already been fully used.
+    * [ ] `e03` and other characters whose script lines depend on red-X characters can only appear to the Mime when red-X characters are present.
+    * [ ] `a01`:
+
+      * [ ] Show the `a01` card with a small corner card representing the role being replaced.
+      * [ ] The Mime acts as the replaced role.
+      * [ ] The Mime receives poisoned results exactly as the Drunkard would.
+    * [ ] `a02`:
+
+      * [ ] This can only appear when the Dog is copying an Owner.
+      * [ ] Show the `a02` card with a small Owner card in the corner.
+      * [ ] The Mime acts as the Owner.
+    * [ ] `a05`:
+
+      * [ ] The Mime targets a red-X character and swaps cards with them.
+      * [ ] The red-X character becomes the Mime.
+      * [ ] The Mime becomes the targeted character.
+      * [ ] Use `dug_up_mime.png` for the switch.
+    * [ ] `e01` / `v08`:
+
+      * [ ] The Mime must immediately kill a player of his choice.
+    * [ ] `v10`:
+
+      * [ ] The Mime may choose to immediately kill a player.
+    * [ ] `m01`:
+
+      * [ ] The Mime may choose to gain full immunity for one day and one night.
+    * [ ] `m02`:
+
+      * [ ] The Mime may choose to save the Werewolves’ victim.
+      * [ ] The Mime sees the victim’s card.
+    * [ ] `s01`:
+
+      * [ ] The Mime may give immunity to the Lovers.
+    * [ ] `v02` / `v05` / `v20`:
+
+      * [ ] The Mime receives information as though he were the Tamer or Maid.
+    * [ ] `v12`:
+
+      * [ ] The Mime poisons himself if he steals the poison.
+      * [ ] He does not receive any double-vote abilities associated with it.
+    * [ ] `v15`:
+
+      * [ ] This can only appear when there is a `vote_innocent` player.
+    * [ ] `v18`:
+
+      * [ ] This can only appear when permanently dead players exist.
+      * [ ] The Mime may choose one permanently dead player to save.
+      * [ ] The selected player is resurrected at dawn.
+
+  * [ ] If the Mime kills someone, regardless of the copied power used, the Little Girl sees the Mime card.
+
+  * [ ] If the Mime is poisoned, apply the poisoned effect of the copied character’s ability.
+
   
 ## Future Plans
 
-* [ ] Add skin packs
+* [ ] Add skin packs (don't forget to add a warning when there are seasonal skins for players not to be confused)
 * [ ] Adding phone interactions:
     * [ ] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device screen changes to the player circle and a poison button option appears, when the player clicks that button, he is in poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script.
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)

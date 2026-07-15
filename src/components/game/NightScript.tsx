@@ -978,6 +978,16 @@ export const NightScript = ({
     return true;
   }, [activeRoles, permanentlyDeadRoles, roleAssignments, effectivelyDead, conditionKeys, shamanCharges, shouldShowFortuneTellerLine, foxDisabled, prophecyGhostPlayerIds, _playerEffects, actorCopiedRole, actorPowerState.foxDisabled, drunkardReplacementRole]);
 
+  const shouldShowMimeCopiedLine = useCallback((l: ScriptLine): boolean => {
+    if (l.conditionKey && !conditionKeys[l.conditionKey]) return false;
+    if (l.requires?.length === 1 && l.requires[0] === ("e04" as RoleId) && !shouldShowFortuneTellerLine) return false;
+    if (l.requires?.length === 1 && l.requires[0] === ("as01b" as RoleId) && !l.conditionKey) {
+      const secretLoverId = Object.entries(roleAssignments).find(([, role]) => role === "as01b")?.[0];
+      if (secretLoverId && _playerEffects[secretLoverId]?.has("namorado")) return false;
+    }
+    return true;
+  }, [conditionKeys, roleAssignments, shouldShowFortuneTellerLine, _playerEffects]);
+
   const localizedScripts = useMemo(() => getScripts(lang), [lang]);
   // A remounted script must not replay an action from the previous night.
   const processedAutoCompleteVersion = useRef(autoCompleteVersion);
@@ -1116,8 +1126,8 @@ export const NightScript = ({
         && line.requires?.includes("m01" as RoleId);
       const mimeCanUseSharedLine = !isSharedWerewolfLine || mimeMechanicalRole === "e01";
       const mimeUsesHunterLine = mimeMechanicalRole === "v08" && line.conditionKey === "hunterDied";
-      const mimeLineVisible = predicate(line) || mimeUsesHunterLine;
-      if (isMimeCopiedRoleLine && mimeCanPerform && mimeCanUseSharedLine && mimeLineVisible) {
+      const mimeLineVisible = shouldShowMimeCopiedLine(line) || mimeUsesHunterLine;
+      if (source === "normal" && isMimeCopiedRoleLine && mimeCanPerform && mimeCanUseSharedLine && mimeLineVisible) {
         const conditionKeyMatches = !line.conditionKey || !!conditionKeys[line.conditionKey] || mimeUsesHunterLine;
         const conditionMatches = conditionKeyMatches
           && (line.conditionKey !== "spiderHasCaught" || (spiderCaughtBySource[mimePlayerId]?.length ?? 0) > 0);
@@ -1230,7 +1240,7 @@ export const NightScript = ({
     }
 
     return lines;
-  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
 
   useEffect(() => {
     if (!onScriptRolesVisible) return;
