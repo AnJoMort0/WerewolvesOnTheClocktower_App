@@ -1188,7 +1188,7 @@ const GMRoom = () => {
       permanentlyDead: Array.from(permanentlyDead),
       poisonedPlayerId,
       poisonTargetsBySource,
-      illusionPlayerIds: new Set(illusionPlayerIds),
+      illusionPlayerId,
       illusionTargetsBySource,
       shamanCharges,
       lastNightDeadPlayerIds,

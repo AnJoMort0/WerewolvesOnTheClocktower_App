@@ -23,6 +23,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
   circle -> circle || player list
   player list -> circle || player list
 so make sure that's the case for every drag-drop action)
+* [ ] In the analog page, not all mistakes are warned (all the wrong character balances from the main GM page, like double character, werewolf count etc should be warned in this page too, using the same logic.) And therefore they don't have a fix tied to them either when they should.
 
 ## Fixes
 
@@ -56,6 +57,19 @@ so make sure that's the case for every drag-drop action)
       v18: can only appear if there are permadead players. can choose to save one of them that gets ressurected at dawn
     If the Mime kills someone regardless of the power he is copying, the little girl will see the Mime card.
     If poisoned act as the copied abilities poisoned effect.
+
+    -->
+    Uncaught ReferenceError: onMimeReveal is not defined
+    at index-DFO1nZY4.js:461:60322
+    at Array.map (<anonymous>)
+    at index-DFO1nZY4.js:461:59480
+    at Array.map (<anonymous>)
+    at A7 (index-DFO1nZY4.js:461:59308)
+    at cw (index-DFO1nZY4.js:38:17029)
+    at ij (index-DFO1nZY4.js:40:44058)
+    at rj (index-DFO1nZY4.js:40:39790)
+    at IM (index-DFO1nZY4.js:40:39718)
+    at op (index-DFO1nZY4.js:40:39570)
   
 ## Future Plans
 

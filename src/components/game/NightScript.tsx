@@ -562,6 +562,7 @@ export const NightScript = ({
   onLittleGirlReveal,
   onLamplighterReveal,
   onWerewolfSeerReveal,
+  onMimeReveal,
   paranoidCharges,
   onParanoidChargeToggle,
   angelCharges,

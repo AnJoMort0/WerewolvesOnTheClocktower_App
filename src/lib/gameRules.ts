@@ -60,8 +60,8 @@ export function getLittleGirlAnswerKind(source: string | undefined): LittleGirlA
   if (source === "v07" || source === "v07-poisoned") return "rustedKnight";
   if (source === "a03") return "mime";
   if (source === "a04") return "actor";
-  if (source && isDetectableWerewolfRole(source as RoleId)) return "werewolves";
   if (source === "s02") return "whiteWerewolf";
+  if (source && isDetectableWerewolfRole(source as RoleId)) return "werewolves";
   return null;
 }
 
