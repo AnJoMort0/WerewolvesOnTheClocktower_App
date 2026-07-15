@@ -7,7 +7,7 @@ import {
   parseScriptText,
   type ScriptLine,
 } from "@/lib/nightScript";
-import { useLanguage, getScripts, getDynamic, getRoleLabel, t, getToast } from "@/lib/i18n";
+import { useLanguage, getScripts, getDynamic, getRoleLabel, t, getToast, type Language } from "@/lib/i18n";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
 import poisonedIcon from "@/assets/icons/poisoned.png";
@@ -34,6 +34,7 @@ const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
   v11: "role-v11",
   f01: "role-f01",
   l02: "role-l02",
+  v10: "role-v10",
   v15: "role-v15",
   v18: "role-v18",
   s02: "role-s02",
@@ -197,6 +198,33 @@ function replaceRoleWithDog(text: string, lang: "pt" | "fr", copiedRole?: RoleId
     : /(?:A|O)\s+\{[^}]+\}/;
   const withArticle = text.replace(articlePattern, `${lang === "fr" ? "Le" : "O"} ${dogToken}`);
   return withArticle === text ? text.replace(/\{[^}]+\}/, dogToken) : withArticle;
+}
+
+const MIME_ONLY_SCRIPT_LINES: Record<Language, Partial<Record<RoleId, ScriptLine>>> = {
+  pt: {
+    v10: {
+      text: "O {Paranoico} acorda e escolhe um jogador para assassinar imediatamente.",
+      requires: ["v10"],
+    },
+    v18: {
+      text: "O {Anjo} acorda e escolhe um Fantasma para ressuscitar.",
+      requires: ["v18"],
+    },
+  },
+  fr: {
+    v10: {
+      text: "Le {Paranoïaque} se réveille et choisit un joueur à assassiner immédiatement.",
+      requires: ["v10"],
+    },
+    v18: {
+      text: "L'{Ange} se réveille et choisit un Fantôme à ressusciter.",
+      requires: ["v18"],
+    },
+  },
+};
+
+function getMimeOnlyScriptLine(role: RoleId, lang: Language): ScriptLine | null {
+  return MIME_ONLY_SCRIPT_LINES[lang][role] ?? null;
 }
 
 function ScriptLineDisplay({
@@ -1026,7 +1054,7 @@ export const NightScript = ({
         line.requires?.includes(mimeMechanicalRole)
         && !isSharedWerewolfLine(line)
         && shouldShowMimeCopiedLine(line)
-      )) ?? null;
+      )) ?? getMimeOnlyScriptLine(mimeMechanicalRole, lang);
     };
     const makeItems = (
       source: "first" | "second" | "normal",
@@ -1258,7 +1286,7 @@ export const NightScript = ({
     }
 
     return lines;
-  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
 
   useEffect(() => {
     if (!onScriptRolesVisible) return;

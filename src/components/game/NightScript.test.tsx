@@ -165,6 +165,69 @@ describe("NightScript conditional behavior", () => {
     expect(container.textContent).toContain("(A Bruxa Malvada acorda");
   });
 
+  it("creates a draggable copied Mime line for Paranoid even though Paranoid has no normal script line", () => {
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["a03" as const, "v10" as const])}
+          roleAssignments={{ mime: "a03" as const, paranoid: "v10" as const }}
+          players={[
+            { id: "mime", name: "Mime", seat_position: 0 },
+            { id: "paranoid", name: "Paranoid", seat_position: 1 },
+            { id: "target", name: "Target", seat_position: 2 },
+          ]}
+          mimePlayerId="mime"
+          mimeMechanicalRole="v10"
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).not.toContain("O Mimo acorda");
+    expect(container.textContent).toContain("(O Paranoico acorda");
+    expect(container.querySelector('img[alt="Mimo"]')).toBeTruthy();
+
+    const draggableLine = Array.from(container.querySelectorAll('[draggable="true"]'))
+      .find((element) => element.textContent?.includes("Paranoico")) as HTMLElement;
+    expect(draggableLine).toBeTruthy();
+    fireEvent.dragStart(draggableLine, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-v10");
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "mime");
+  });
+
+  it("creates a draggable copied Mime line for Angel even though Angel has no GM script line", () => {
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    const { container } = render(
+      <LanguageContext.Provider value="pt">
+        <NightScript
+          {...baseProps}
+          activeRoles={new Set(["a03" as const, "v18" as const])}
+          roleAssignments={{ mime: "a03" as const, angel: "v18" as const, ghost: "v02" as const }}
+          players={[
+            { id: "mime", name: "Mime", seat_position: 0 },
+            { id: "angel", name: "Angel", seat_position: 1 },
+            { id: "ghost", name: "Ghost", seat_position: 2 },
+          ]}
+          permanentlyDead={new Set(["ghost"])}
+          mimePlayerId="mime"
+          mimeMechanicalRole="v18"
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).not.toContain("O Mimo acorda");
+    expect(container.textContent).toContain("(O Anjo acorda");
+    expect(container.querySelector('img[alt="Mimo"]')).toBeTruthy();
+
+    const draggableLine = Array.from(container.querySelectorAll('[draggable="true"]'))
+      .find((element) => element.textContent?.includes("Anjo")) as HTMLElement;
+    expect(draggableLine).toBeTruthy();
+    fireEvent.dragStart(draggableLine, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-v18");
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "mime");
+  });
+
   it("lets a Mime copying a base Werewolf drag-kill even when the pack is blocked", () => {
     const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
     const { container } = render(
