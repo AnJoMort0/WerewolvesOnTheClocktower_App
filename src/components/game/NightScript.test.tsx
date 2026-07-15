@@ -117,25 +117,29 @@ describe("NightScript conditional behavior", () => {
       <LanguageContext.Provider value="pt">
         <NightScript
           {...baseProps}
-          activeRoles={new Set(["a03" as const, "e02" as const, "v21" as const])}
-          roleAssignments={{ mime: "a03" as const, witch: "e02" as const, lamplighter: "v21" as const }}
+          activeRoles={new Set(["a03" as const, "e02" as const, "v25" as const, "e03" as const])}
+          roleAssignments={{ mime: "a03" as const, witch: "e02" as const, priest: "v25" as const, shaman: "e03" as const }}
           players={[
             { id: "mime", name: "Mime", seat_position: 0 },
             { id: "witch", name: "Witch", seat_position: 1 },
-            { id: "lamplighter", name: "Lamplighter", seat_position: 2 },
+            { id: "priest", name: "Priest", seat_position: 2 },
+            { id: "shaman", name: "Shaman", seat_position: 3 },
           ]}
           permanentlyDead={new Set(["witch"])}
           mimePlayerId="mime"
           mimeMechanicalRole="e02"
+          conditionKeys={{ hasRedXPlayers: true }}
         />
       </LanguageContext.Provider>,
     );
 
     const text = container.textContent ?? "";
-    const lamplighterIndex = text.indexOf("O Faroleiro acorda");
+    const priestIndex = text.indexOf("O Padre acorda");
     const mimeCopyIndex = text.indexOf("(A Bruxa Malvada acorda");
+    const shamanIndex = text.indexOf("O Chaman acorda");
     expect(text).not.toContain("O Mimo acorda");
-    expect(mimeCopyIndex).toBeGreaterThan(lamplighterIndex);
+    expect(mimeCopyIndex).toBeGreaterThan(priestIndex);
+    expect(mimeCopyIndex).toBeLessThan(shamanIndex);
     expect(container.querySelector('img[alt="Mimo"]')).toBeTruthy();
   });
 

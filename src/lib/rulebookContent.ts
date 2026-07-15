@@ -2830,6 +2830,14 @@ export const RULEBOOK_NIGHT_SCRIPT = {
         fr: `Le Prêtre se réveille. Si un joueur souhaite se confesser, révélant ainsi son rôle au Prêtre, il peut lever la main. Le Prêtre choisit l'un de ces joueurs, qui sera touché pour se réveiller. Il voit qui est le Prêtre et montre son rôle.`,
       },
     },
+        {
+      id: "normal-a03",
+      refs: ["a03"],
+      text: {
+        pt: `O Mimo acorda e é-lhe mostrado um papel em jogo. Ele age silenciosamente segundo esse papel ou recebe as informações que esse papel receberia.`,
+        fr: `Le Mîme se réveille et on lui montre un rôle en jeu. Il agit silencieusement selon ce rôle ou reçoit les informations que ce rôle recevrait.`,
+      },
+    },
     {
       id: "normal-e03",
       refs: ["e03"],
@@ -2852,22 +2860,6 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       text: {
         pt: `O Faroleiro acorda e é-lhe mostrado um personagem em jogo com um poder limitado e é informado de quantos usos esse personagem ainda tem.`,
         fr: `Le Falotier se réveille et on lui montre un personnage en jeu avec un pouvoir limité, puis on l’informe du nombre d’utilisations qu’il reste à ce personnage.`,
-      },
-    },
-    {
-      id: "normal-a03",
-      refs: ["a03"],
-      text: {
-        pt: `O Mimo acorda e é-lhe mostrado um papel em jogo. Ele age silenciosamente segundo esse papel ou recebe as informações que esse papel receberia.`,
-        fr: `Le Mîme se réveille et on lui montre un rôle en jeu. Il agit silencieusement selon ce rôle ou reçoit les informations que ce rôle recevrait.`,
-      },
-    },
-    {
-      id: "normal-v07.2",
-      refs: ["v07"],
-      text: {
-        pt: `(Se o Cavaleiro Enferrujado morreu durante a noite, matar o Lobisomem mais próximo.)`,
-        fr: `(Si le Chevalier Rouillé est mort pendant la nuit, tuer le Loup-garou le plus proche.)`,
       },
     },
     {
@@ -2900,6 +2892,14 @@ export const RULEBOOK_NIGHT_SCRIPT = {
       text: {
         pt: `O Domador da Aranha acorda/não acorda se não houver necessidade e é-lhe mostrado todos os papéis dos jogadores que foram apanhados pela teia esta noite.`,
         fr: `Le Maître de l’Araignée se réveille / ne se réveille pas si ce n’est pas nécessaire. Les rôles de tous les joueurs pris dans la toile cette nuit lui sont révélés.`,
+      },
+    },
+        {
+      id: "normal-v07.2",
+      refs: ["v07"],
+      text: {
+        pt: `(Se o Cavaleiro Enferrujado morreu durante a noite, matar o Lobisomem mais próximo no ínicio do próximo Tribunal.)`,
+        fr: `(Si le Chevalier Rouillé est mort pendant la nuit, tuer le Loup-garou le plus proche au début du prochain Tribunal.)`,
       },
     },
   ],
