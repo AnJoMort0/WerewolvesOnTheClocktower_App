@@ -421,6 +421,14 @@ function ScriptLineDisplay({
             className="mb-1 mr-2 inline-block h-7 w-7 rounded border border-green-400 object-cover align-middle shadow"
           />
         )}
+        {mimeLine && (
+          <img
+            src={ROLES.a03.image}
+            alt={getRoleLabel("a03", lang)}
+            title={getRoleLabel("a03", lang)}
+            className="mb-1 mr-2 inline-block h-7 w-7 rounded border border-cyan-300 object-cover align-middle shadow"
+          />
+        )}
         {isWerewolfLine && effectiveWerewolfLinePoisoned ? (
           <span className="line-through text-muted-foreground">{werewolvesAsleepText}</span>
         ) : (
@@ -999,6 +1007,27 @@ export const NightScript = ({
 
   const scriptLines = useMemo(() => {
     const lines: { section: string; items: ScriptRenderItem[] }[] = [];
+    const getMimeCopiedScriptLine = (): ScriptLine | null => {
+      if (!mimeMechanicalRole) return null;
+      const isSharedWerewolfLine = (line: ScriptLine) => (line.requires?.length ?? 0) > 1
+        && line.requires?.includes("e01" as RoleId)
+        && line.requires?.includes("m01" as RoleId);
+      if (mimeMechanicalRole === "e01") {
+        return localizedScripts.normalNight.find(isSharedWerewolfLine) ?? null;
+      }
+      if (mimeMechanicalRole === "v08") {
+        return localizedScripts.normalNight.find((line) => (
+          line.requires?.length === 1
+          && line.requires[0] === "v08"
+          && line.conditionKey === "hunterDied"
+        )) ?? null;
+      }
+      return localizedScripts.normalNight.find((line) => (
+        line.requires?.includes(mimeMechanicalRole)
+        && !isSharedWerewolfLine(line)
+        && shouldShowMimeCopiedLine(line)
+      )) ?? null;
+    };
     const makeItems = (
       source: "first" | "second" | "normal",
       sourceLines: ScriptLine[],
@@ -1064,6 +1093,21 @@ export const NightScript = ({
         && !!mimePlayerId
         && line.requires?.length === 1
         && line.requires[0] === ("a03" as RoleId);
+      const mimeCanPerform = !!mimePlayerId
+        && (!_permanentlyDeadPlayerIds.has(mimePlayerId) || prophecyGhostPlayerIds.has(mimePlayerId));
+      if (source === "normal" && isActiveMimeRevealLine && mimeCanPerform) {
+        const copiedLine = getMimeCopiedScriptLine();
+        if (copiedLine) {
+          items.push({
+            line: copiedLine,
+            key: `${nightNumber}:${source}:${index}:mime`,
+            progressOrder,
+            sourcePlayerId: mimePlayerId,
+            mimeLine: true,
+            actingPoisoned: isPlayerActingPoisoned(mimePlayerId),
+          });
+        }
+      }
 
       if (!isActiveMimeRevealLine && predicate(line) && actorAllowsStandardLine && drunkardAllowsStandardLine) {
         const standardSourcePlayerId = line.requires?.length === 1
@@ -1116,32 +1160,6 @@ export const NightScript = ({
             ),
           });
         });
-      }
-
-      const isMimeCopiedRoleLine = !!mimeMechanicalRole && !!mimePlayerId && line.requires?.includes(mimeMechanicalRole);
-      const mimeCanPerform = !!mimePlayerId
-        && (!_permanentlyDeadPlayerIds.has(mimePlayerId) || prophecyGhostPlayerIds.has(mimePlayerId));
-      const isSharedWerewolfLine = (line.requires?.length ?? 0) > 1
-        && line.requires?.includes("e01" as RoleId)
-        && line.requires?.includes("m01" as RoleId);
-      const mimeCanUseSharedLine = !isSharedWerewolfLine || mimeMechanicalRole === "e01";
-      const mimeUsesHunterLine = mimeMechanicalRole === "v08" && line.conditionKey === "hunterDied";
-      const mimeLineVisible = shouldShowMimeCopiedLine(line) || mimeUsesHunterLine;
-      if (source === "normal" && isMimeCopiedRoleLine && mimeCanPerform && mimeCanUseSharedLine && mimeLineVisible) {
-        const conditionKeyMatches = !line.conditionKey || !!conditionKeys[line.conditionKey] || mimeUsesHunterLine;
-        const conditionMatches = conditionKeyMatches
-          && (line.conditionKey !== "spiderHasCaught" || (spiderCaughtBySource[mimePlayerId]?.length ?? 0) > 0);
-        const mimeFortuneTellerVisible = !(line.requires?.length === 1 && line.requires[0] === "e04" && !shouldShowFortuneTellerLine);
-        if (conditionMatches && mimeFortuneTellerVisible) {
-          items.push({
-            line,
-            key: `${nightNumber}:${source}:${index}:mime`,
-            progressOrder,
-            sourcePlayerId: mimePlayerId,
-            mimeLine: true,
-            actingPoisoned: isPlayerActingPoisoned(mimePlayerId),
-          });
-        }
       }
 
       const dogPlayerIdsForLine = dogWolfPlayerIds.filter((dogPlayerId) => {

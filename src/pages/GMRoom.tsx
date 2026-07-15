@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { assignRoles, ROLES, isUniqueRole, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, type RoleId } from "@/lib/roles";
-import { LanguageContext, getEffectLabel, getRoleLabel, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
+import { LanguageContext, getEffectLabel, getRoleLabel, getScripts, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
 import {
@@ -4756,9 +4756,9 @@ const GMRoom = () => {
     }
     if (distances.length === 0) return undefined;
     const lng2: Language = (room?.language as Language) || "pt";
-    const baseLine = (lng2 === "fr"
-      ? "La {Domestique} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée"
-      : "A {HouseMaid} acorda e é-lhe revelada a distância até a pessoa envenenada");
+    const baseLine = getScripts(lng2).normalNight
+      .find((line) => line.requires?.length === 1 && line.requires[0] === "v20")
+      ?.text.replace(/\.$/, "") ?? "";
     return `${baseLine}: ${distances.join(", ")}`;
   }, [effectiveRoleAssignments, players, poisonedPlayerIds, permanentlyDead, room?.language, isPlayerPoisoned]);
 

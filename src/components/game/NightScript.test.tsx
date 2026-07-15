@@ -117,20 +117,26 @@ describe("NightScript conditional behavior", () => {
       <LanguageContext.Provider value="pt">
         <NightScript
           {...baseProps}
-          activeRoles={new Set(["a03" as const, "e02" as const])}
-          roleAssignments={{ mime: "a03" as const, witch: "e02" as const }}
+          activeRoles={new Set(["a03" as const, "e02" as const, "v21" as const])}
+          roleAssignments={{ mime: "a03" as const, witch: "e02" as const, lamplighter: "v21" as const }}
           players={[
             { id: "mime", name: "Mime", seat_position: 0 },
             { id: "witch", name: "Witch", seat_position: 1 },
+            { id: "lamplighter", name: "Lamplighter", seat_position: 2 },
           ]}
+          permanentlyDead={new Set(["witch"])}
           mimePlayerId="mime"
           mimeMechanicalRole="e02"
         />
       </LanguageContext.Provider>,
     );
 
-    expect(container.textContent).not.toContain("O Mimo acorda");
-    expect(container.textContent).toContain("(A Bruxa Malvada acorda");
+    const text = container.textContent ?? "";
+    const lamplighterIndex = text.indexOf("O Faroleiro acorda");
+    const mimeCopyIndex = text.indexOf("(A Bruxa Malvada acorda");
+    expect(text).not.toContain("O Mimo acorda");
+    expect(mimeCopyIndex).toBeGreaterThan(lamplighterIndex);
+    expect(container.querySelector('img[alt="Mimo"]')).toBeTruthy();
   });
 
   it("keeps the Mime copied line available without changing the Mime's real role", () => {

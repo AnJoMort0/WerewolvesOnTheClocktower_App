@@ -50,60 +50,47 @@ so make sure that's the case for every drag-drop action)
     * [ ] Drag-and-drop actions, eye-icon actions, and other interactions trigger the powers of the copied card.
 
   * [ ] Special-case scenarios:
-
     * [ ] There are no limited uses for copied powers.
     * [ ] The Mime can copy powers that have already been fully used.
     * [ ] `e03` and other characters whose script lines depend on red-X characters can only appear to the Mime when red-X characters are present.
     * [ ] `a01`:
-
       * [ ] Show the `a01` card with a small corner card representing the role being replaced.
       * [ ] The Mime acts as the replaced role.
       * [ ] The Mime receives poisoned results exactly as the Drunkard would.
     * [ ] `a02`:
-
       * [ ] This can only appear when the Dog is copying an Owner.
       * [ ] Show the `a02` card with a small Owner card in the corner.
       * [ ] The Mime acts as the Owner.
     * [ ] `a05`:
-
       * [ ] The Mime targets a red-X character and swaps cards with them.
       * [ ] The red-X character becomes the Mime.
       * [ ] The Mime becomes the targeted character.
       * [ ] Use `dug_up_mime.png` for the switch.
     * [ ] `e01` / `v08`:
-
       * [ ] The Mime must immediately kill a player of his choice.
+    * [ ] `e02`:
+      * [ ] The Mime's applied poison disappears when the Mime's next turn is played (or if the mime is dead, when his turn was supposed to be played like the Witch's poison already does).
     * [ ] `v10`:
-
       * [ ] The Mime may choose to immediately kill a player.
     * [ ] `m01`:
-
       * [ ] The Mime may choose to gain full immunity for one day and one night.
     * [ ] `m02`:
-
       * [ ] The Mime may choose to save the Werewolves’ victim.
       * [ ] The Mime sees the victim’s card.
     * [ ] `s01`:
-
       * [ ] The Mime may give immunity to the Lovers.
     * [ ] `v02` / `v05` / `v20`:
-
       * [ ] The Mime receives information as though he were the Tamer or Maid.
     * [ ] `v12`:
-
       * [ ] The Mime poisons himself if he steals the poison.
       * [ ] He does not receive any double-vote abilities associated with it.
     * [ ] `v15`:
-
       * [ ] This can only appear when there is a `vote_innocent` player.
     * [ ] `v18`:
-
       * [ ] This can only appear when permanently dead players exist.
       * [ ] The Mime may choose one permanently dead player to save.
       * [ ] The selected player is resurrected at dawn.
-
   * [ ] If the Mime kills someone, regardless of the copied power used, the Little Girl sees the Mime card.
-
   * [ ] If the Mime is poisoned, apply the poisoned effect of the copied character’s ability.
 
   
