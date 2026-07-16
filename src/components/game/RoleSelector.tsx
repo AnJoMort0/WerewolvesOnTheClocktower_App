@@ -1,6 +1,8 @@
 import { ROLES, ALL_ROLE_IDS, type RoleId } from "@/lib/roles";
 import { useRoleLabel } from "@/lib/i18n";
 import { RULEBOOK_CHARACTER_ORDER } from "@/lib/rulebookContent";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 import {
   Select,
   SelectContent,
@@ -22,6 +24,7 @@ interface RoleSelectorProps {
 
 export const RoleSelector = ({ value, onChange, advancedEnabled = true }: RoleSelectorProps) => {
   const roleLabel = useRoleLabel();
+  const { skinPackId } = useSkinPack();
   const filteredIds = advancedEnabled
     ? RULEBOOK_ORDERED_ROLE_IDS
     : RULEBOOK_ORDERED_ROLE_IDS.filter((id) => ROLES[id].category !== "a" || id === value);
@@ -35,7 +38,7 @@ export const RoleSelector = ({ value, onChange, advancedEnabled = true }: RoleSe
         {filteredIds.map((id) => (
           <SelectItem key={id} value={id} className="text-xs font-display">
             <div className="flex items-center gap-2">
-              <img src={ROLES[id].image} alt={roleLabel(id)} className="w-5 h-5 rounded" />
+              <img src={resolveRoleImage(id, { skinPackId }).src} alt={roleLabel(id)} className="w-5 h-5 rounded" />
               <span>{id}. {roleLabel(id)}</span>
             </div>
           </SelectItem>

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { ROLES, type RoleId } from "@/lib/roles";
 import { useLanguage, getRoleLabel, useT } from "@/lib/i18n";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 
 interface FortuneTellerRevealModalProps {
   open: boolean;
@@ -33,6 +35,7 @@ export const FortuneTellerRevealModal = ({
 }: FortuneTellerRevealModalProps) => {
   const lang = useLanguage();
   const t = useT();
+  const { skinPackId } = useSkinPack();
   const illusionIds = useMemo(
     () => new Set(illusionPlayerIds ?? (illusionPlayerId ? [illusionPlayerId] : [])),
     [illusionPlayerId, illusionPlayerIds],
@@ -123,7 +126,7 @@ export const FortuneTellerRevealModal = ({
                         className="w-24 h-24 rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg block"
                       >
                         <img
-                          src={roleDef.image}
+                          src={resolveRoleImage(displayRole, { skinPackId }).src}
                           alt={label}
                           className="w-full h-full object-cover"
                         />

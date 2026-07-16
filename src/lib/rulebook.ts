@@ -1,5 +1,11 @@
 import { ROLES, type RoleId } from "@/lib/roles";
 import type { Language } from "@/lib/i18n";
+import {
+  getRulebookSkinOptions,
+  resolveRulebookRoleImage,
+  type RulebookSkinPreviewValue,
+  type SkinPackId,
+} from "@/lib/skinPacks";
 import x01Card from "@/assets/extras/x01_card.png";
 import x02Card from "@/assets/extras/x02_card.png";
 import x021Card from "@/assets/extras/x021_card.png";
@@ -23,6 +29,11 @@ import {
 
 export const RULEBOOK_TOP_ID = "rulebook-top";
 export const RULEBOOK_SUMMARY_ID = "rulebook-summary";
+
+export interface RulebookRenderOptions {
+  skinPackId?: SkinPackId;
+  skinPreviewOverrides?: Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>;
+}
 
 const FALLBACK_MESSAGE: Record<Language, string> = {
   pt: "Ficha nao encontrada.",
@@ -111,8 +122,16 @@ function renderTextBlock(value: string): string {
     .join("");
 }
 
-function roleImage(characterId: RulebookCharacterId): string | undefined {
-  return ROLES[characterId as RoleId]?.image ?? EXTRA_CARD_IMAGES[characterId];
+function roleImage(characterId: RulebookCharacterId, options: RulebookRenderOptions = {}): string | undefined {
+  const role = ROLES[characterId as RoleId];
+  if (role) {
+    return resolveRulebookRoleImage(
+      role.id,
+      options.skinPackId ?? "default",
+      options.skinPreviewOverrides?.[characterId] ?? "device",
+    ).src;
+  }
+  return EXTRA_CARD_IMAGES[characterId];
 }
 
 function roleAlt(character: RulebookCharacter, lang: Language): string {
@@ -164,7 +183,7 @@ function renderNightScript(lang: Language): string {
   `;
 }
 
-function renderCharacterIndex(lang: Language): string {
+function renderCharacterIndex(lang: Language, options: RulebookRenderOptions = {}): string {
   const groups = RULEBOOK_TEXT.groups
     .map((group) => {
       const characterIds = characterIdsForGroup(group.id);
@@ -173,7 +192,7 @@ function renderCharacterIndex(lang: Language): string {
       const links = characterIds
         .map((characterId) => {
           const character = RULEBOOK_CHARACTERS[characterId];
-          const image = roleImage(characterId);
+          const image = roleImage(characterId, options);
           const imageHtml = image
             ? `<img src="${escapeAttribute(image)}" alt="${escapeAttribute(roleAlt(character, lang))}" loading="lazy" />`
             : "";
@@ -211,7 +230,7 @@ function renderCharacterIndex(lang: Language): string {
   `;
 }
 
-function renderCharacterTables(lang: Language): string {
+function renderCharacterTables(lang: Language, options: RulebookRenderOptions = {}): string {
   return RULEBOOK_TEXT.groups
     .map((group) => {
       const characters = characterIdsForGroup(group.id).map((characterId) => RULEBOOK_CHARACTERS[characterId]);
@@ -221,7 +240,7 @@ function renderCharacterTables(lang: Language): string {
         <section class="rulebook-character-group">
           <h2 class="rulebook-group-heading">${renderInline(group.label[lang])}</h2>
           <table class="character-table">
-            <tbody>${characters.map((character) => renderCharacterRow(character, lang)).join("")}</tbody>
+          <tbody>${characters.map((character) => renderCharacterRow(character, lang, options)).join("")}</tbody>
           </table>
         </section>
       `;
@@ -229,10 +248,10 @@ function renderCharacterTables(lang: Language): string {
     .join("");
 }
 
-function renderCharacterRow(character: RulebookCharacter, lang: Language): string {
-  const image = roleImage(character.id);
+function renderCharacterRow(character: RulebookCharacter, lang: Language, options: RulebookRenderOptions = {}): string {
+  const image = roleImage(character.id, options);
   const imageHtml = image
-    ? `<img src="${escapeAttribute(image)}" alt="${escapeAttribute(roleAlt(character, lang))}" loading="lazy" />`
+    ? `<img src="${escapeAttribute(image)}" alt="${escapeAttribute(roleAlt(character, lang))}" loading="lazy" />${renderSkinPreviewSelect(character.id, lang, options)}`
     : "";
   const detailsHtml = character.details
     .map((detail) => {
@@ -264,17 +283,38 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language): strin
   `;
 }
 
-function renderFullRulebook(lang: Language): string {
+function renderSkinPreviewSelect(characterId: RulebookCharacterId, lang: Language, options: RulebookRenderOptions): string {
+  if (!(characterId in ROLES)) return "";
+  const roleId = characterId as RoleId;
+  const skinOptions = getRulebookSkinOptions(roleId, lang);
+  if (skinOptions.length === 0) return "";
+  const value = options.skinPreviewOverrides?.[characterId] ?? "device";
+
+  return `
+    <label class="rulebook-skin-preview">
+      <span>Skin</span>
+      <select data-rulebook-skin-select="${escapeAttribute(characterId)}">
+        ${skinOptions.map((skinOption) => `
+          <option value="${escapeAttribute(skinOption.value)}"${skinOption.value === value ? " selected" : ""}>
+            ${renderInline(skinOption.label)}
+          </option>
+        `).join("")}
+      </select>
+    </label>
+  `;
+}
+
+function renderFullRulebook(lang: Language, options: RulebookRenderOptions = {}): string {
   return `
     <h1 id="${RULEBOOK_TOP_ID}">${renderInline(RULEBOOK_TEXT.title[lang])}</h1>
-    ${renderCharacterIndex(lang)}
+    ${renderCharacterIndex(lang, options)}
     ${renderSectionBlocks(RULEBOOK_TEXT.sections[lang])}
-    ${renderCharacterTables(lang)}
+    ${renderCharacterTables(lang, options)}
     ${renderNightScript(lang)}
   `;
 }
 
-function renderCharacterRulebook(lang: Language, characterId: RulebookCharacterId): string {
+function renderCharacterRulebook(lang: Language, characterId: RulebookCharacterId, options: RulebookRenderOptions = {}): string {
   const character = RULEBOOK_CHARACTERS[characterId];
   if (!character) {
     return `<p>${FALLBACK_MESSAGE[lang]}</p>`;
@@ -282,7 +322,7 @@ function renderCharacterRulebook(lang: Language, characterId: RulebookCharacterI
 
   return `
     <table class="character-table character-table-single">
-      <tbody>${renderCharacterRow(character, lang)}</tbody>
+      <tbody>${renderCharacterRow(character, lang, options)}</tbody>
     </table>
   `;
 }
@@ -291,6 +331,10 @@ export function isRulebookCharacterId(value: string): value is RulebookCharacter
   return value in RULEBOOK_CHARACTERS;
 }
 
-export function getRulebookHtml(lang: Language, characterId?: RulebookCharacterId | null): string {
-  return characterId ? renderCharacterRulebook(lang, characterId) : renderFullRulebook(lang);
+export function getRulebookHtml(
+  lang: Language,
+  characterId?: RulebookCharacterId | null,
+  options: RulebookRenderOptions = {},
+): string {
+  return characterId ? renderCharacterRulebook(lang, characterId, options) : renderFullRulebook(lang, options);
 }

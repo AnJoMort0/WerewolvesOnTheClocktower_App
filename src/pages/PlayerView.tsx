@@ -21,6 +21,8 @@ import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/
 import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
 import { parsePlayerCharacter, shouldShowActorBadge } from "@/lib/actor";
 import { parsePlayerCharacterMetadata } from "@/lib/playerCharacter";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 
 type RoomPlayer = {
   id: string;
@@ -32,6 +34,7 @@ type RoomPlayer = {
 const PlayerView = () => {
   const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
+  const { skinPackId } = useSkinPack();
   const [player, setPlayer] = useState<{
     name: string;
     character: string | null;
@@ -458,6 +461,19 @@ const PlayerView = () => {
   const objectiveRoleDef = characterMetadata.objectiveRole
     ? ROLES[characterMetadata.objectiveRole]
     : isMimeCopying ? null : ownerRoleDef;
+  const canUseFlexibleSkin = !!displayRole && parsedCharacter.baseRole === displayRole;
+  const displayedRoleImage = roleDef
+    ? resolveRoleImage(roleDef.id, {
+      skinPackId,
+      flexible: canUseFlexibleSkin
+        ? {
+          objectiveRoleId: characterMetadata.objectiveRole ?? characterMetadata.ownerRole,
+          effects: characterMetadata.objectiveEffects,
+        }
+        : undefined,
+    }).src
+    : null;
+  const getSkinImage = (roleId: RoleId) => resolveRoleImage(roleId, { skinPackId }).src;
   const objectiveIndicators = (() => {
     const indicators: Array<{ id: string; image: string; label: string }> = [];
     for (const effect of characterMetadata.objectiveEffects) {
@@ -667,13 +683,13 @@ const PlayerView = () => {
                         className="relative w-48 h-48 mx-auto rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg block"
                       >
                         <img
-                          src={roleDef.image}
+                          src={displayedRoleImage ?? roleDef.image}
                           alt={roleDef.label}
                           className={`w-full h-full object-cover ${isDead ? "grayscale" : ""}`}
                         />
                         {isActorCopying && !isDogActorCopying && (
                           <img
-                            src={ROLES.a04.image}
+                            src={getSkinImage("a04")}
                             alt={getRoleLabel("a04", language)}
                             title={getRoleLabel("a04", language)}
                             onClick={(event) => {
@@ -685,7 +701,7 @@ const PlayerView = () => {
                         )}
                         {isMimeCopying && (
                           <img
-                            src={ROLES.a03.image}
+                            src={getSkinImage("a03")}
                             alt={getRoleLabel("a03", language)}
                             title={getRoleLabel("a03", language)}
                             onClick={(event) => {
@@ -697,7 +713,7 @@ const PlayerView = () => {
                         )}
                         {ownerRoleDef && !isDogActorCopying && (
                           <img
-                            src={ownerRoleDef.image}
+                            src={getSkinImage(ownerRoleDef.id)}
                             alt={getRoleLabel(ownerRoleDef.id, language)}
                             title={getRoleLabel(ownerRoleDef.id, language)}
                             onClick={(event) => {
@@ -710,7 +726,7 @@ const PlayerView = () => {
                         {isDogActorCopying && (
                           <div className="absolute bottom-2 left-2 h-14 w-14">
                             <img
-                              src={ROLES.a02.image}
+                              src={getSkinImage("a02")}
                               alt={getRoleLabel("a02", language)}
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -720,7 +736,7 @@ const PlayerView = () => {
                               title={getRoleLabel("a02", language)}
                             />
                             <img
-                              src={ROLES.a04.image}
+                              src={getSkinImage("a04")}
                               alt={getRoleLabel("a04", language)}
                               onClick={(event) => {
                                 event.stopPropagation();

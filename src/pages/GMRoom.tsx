@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { assignRoles, EVIL_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
 import { LanguageContext, getEffectLabel, getRoleLabel, getScripts, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
 import {
@@ -379,6 +381,7 @@ const NIGHT_START_CLEARED_EFFECTS: StatusEffect[] = ["vote_against", "vote_doubl
 
 const GMRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
+  const { skinPackId } = useSkinPack();
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [copied, setCopied] = useState(false);
@@ -5674,7 +5677,17 @@ const GMRoom = () => {
                         >
                           {roleDef && (
                             <div className="relative w-8 h-8 flex-shrink-0">
-                              <img src={roleDef.image} alt={roleLabel(roleDef.id)} className={`w-8 h-8 rounded ${isPermanentDead ? "grayscale" : ""}`} />
+                              <img
+                                src={resolveRoleImage(roleDef.id, {
+                                  skinPackId,
+                                  flexible: {
+                                    objectiveRoleId,
+                                    effects,
+                                  },
+                                }).src}
+                                alt={roleLabel(roleDef.id)}
+                                className={`w-8 h-8 rounded ${isPermanentDead ? "grayscale" : ""}`}
+                              />
                               {(status === "dead-this-night" || isPermanentDead) && (
                                 <X className={`absolute inset-0 m-auto w-6 h-6 ${isPermanentDead ? "text-muted-foreground" : "text-destructive"}`} strokeWidth={3} />
                               )}
@@ -5688,19 +5701,19 @@ const GMRoom = () => {
                                  <img src={imunityIcon} alt="imunidade" className="absolute -top-1 -left-1 w-4 h-4" />
                                )}
                                {isActor && roleId !== "a04" && (
-                                 <img src={ROLES.a04.image} alt={roleLabel("a04")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-primary object-cover" />
+                                 <img src={resolveRoleImage("a04", { skinPackId }).src} alt={roleLabel("a04")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-primary object-cover" />
                                )}
                                {isActor && actorCopiedRole === "a01" && roleId !== "a01" && (
-                                 <img src={ROLES.a01.image} alt={roleLabel("a01")} className="absolute -left-1 -top-1 h-4 w-4 rounded-sm border border-green-400 object-cover" />
+                                 <img src={resolveRoleImage("a01", { skinPackId }).src} alt={roleLabel("a01")} className="absolute -left-1 -top-1 h-4 w-4 rounded-sm border border-green-400 object-cover" />
                                )}
                                {isDrunkard && roleId !== "a01" && (
-                                 <img src={ROLES.a01.image} alt={roleLabel("a01")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-green-400 object-cover" />
+                                 <img src={resolveRoleImage("a01", { skinPackId }).src} alt={roleLabel("a01")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-green-400 object-cover" />
                                )}
                                {isMime && roleId !== "a03" && (
-                                 <img src={ROLES.a03.image} alt={roleLabel("a03")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-cyan-300 object-cover" />
+                                 <img src={resolveRoleImage("a03", { skinPackId }).src} alt={roleLabel("a03")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-cyan-300 object-cover" />
                                )}
                                {dogWolfOwnerRoles[player.id] && (
-                                 <img src={ROLES[dogWolfOwnerRoles[player.id]].image} alt={roleLabel(dogWolfOwnerRoles[player.id])} className="absolute -bottom-1 -right-1 h-4 w-4 rounded-sm border border-amber-400 object-cover" />
+                                 <img src={resolveRoleImage(dogWolfOwnerRoles[player.id], { skinPackId }).src} alt={roleLabel(dogWolfOwnerRoles[player.id])} className="absolute -bottom-1 -right-1 h-4 w-4 rounded-sm border border-amber-400 object-cover" />
                                )}
                             </div>
                           )}
@@ -6116,7 +6129,7 @@ const GMRoom = () => {
                           className={`flex items-center gap-2 bg-card border rounded-lg p-2 ${isDuplicate ? "border-yellow-500" : "border-border"}`}
                         >
                           {roleDef && (
-                            <img src={roleDef.image} alt={roleLabel(roleDef.id)} className="w-8 h-8 rounded flex-shrink-0" />
+                            <img src={resolveRoleImage(roleDef.id, { skinPackId }).src} alt={roleLabel(roleDef.id)} className="w-8 h-8 rounded flex-shrink-0" />
                           )}
                           <span className="font-body text-sm flex-1 truncate">
                             {player.name}

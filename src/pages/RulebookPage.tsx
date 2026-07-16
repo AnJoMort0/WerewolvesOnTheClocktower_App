@@ -1,9 +1,12 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID, RULEBOOK_TOP_ID, isRulebookCharacterId } from "@/lib/rulebook";
 import { t, type Language } from "@/lib/i18n";
+import { useSkinPack } from "@/lib/skinPackContext";
+import type { RulebookSkinPreviewValue } from "@/lib/skinPacks";
+import { RULEBOOK_CHARACTERS, type RulebookCharacterId } from "@/lib/rulebookContent";
 
 function getInitialLanguage(searchLanguage: string | null): Language {
   if (searchLanguage === "fr" || searchLanguage === "pt") return searchLanguage;
@@ -16,7 +19,12 @@ export default function RulebookPage() {
   const { roleId } = useParams<{ roleId?: string }>();
   const [searchParams] = useSearchParams();
   const language = getInitialLanguage(searchParams.get("lang"));
-  const html = useMemo(() => getRulebookHtml(language), [language]);
+  const { skinPackId } = useSkinPack();
+  const [skinPreviewOverrides, setSkinPreviewOverrides] = useState<Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>>({});
+  const html = useMemo(
+    () => getRulebookHtml(language, null, { skinPackId, skinPreviewOverrides }),
+    [language, skinPackId, skinPreviewOverrides],
+  );
 
   useEffect(() => {
     const targetId = roleId && isRulebookCharacterId(roleId) ? roleId : RULEBOOK_TOP_ID;
@@ -24,7 +32,7 @@ export default function RulebookPage() {
       document.getElementById(targetId)?.scrollIntoView({ block: "start" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [roleId, html]);
+  }, [roleId]);
 
   const scrollUp = () => {
     const summary = document.getElementById(RULEBOOK_SUMMARY_ID);
@@ -41,6 +49,20 @@ export default function RulebookPage() {
       return;
     }
     navigate("/");
+  };
+
+  const handleArticleChange = (event: ChangeEvent<HTMLElement>) => {
+    const select = (event.target as HTMLElement).closest<HTMLSelectElement>("select[data-rulebook-skin-select]");
+    if (!select) return;
+    const characterId = select.dataset.rulebookSkinSelect as RulebookCharacterId | undefined;
+    if (!characterId || !(characterId in RULEBOOK_CHARACTERS)) return;
+    const value = select.value as RulebookSkinPreviewValue;
+    setSkinPreviewOverrides((current) => {
+      const next = { ...current };
+      if (value === "device") delete next[characterId];
+      else next[characterId] = value;
+      return next;
+    });
   };
 
   return (
@@ -66,6 +88,7 @@ export default function RulebookPage() {
       </div>
       <article
         className="rulebook-content mx-auto max-w-6xl pb-16"
+        onChange={handleArticleChange}
         dangerouslySetInnerHTML={{ __html: html }}
       />
       <Button

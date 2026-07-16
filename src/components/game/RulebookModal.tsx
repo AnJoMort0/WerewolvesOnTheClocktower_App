@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent } from "react";
 import { ArrowUp, List } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID, RULEBOOK_TOP_ID } from "@/lib/rulebook";
 import { t, type Language } from "@/lib/i18n";
 import type { RoleId } from "@/lib/roles";
+import { useSkinPack } from "@/lib/skinPackContext";
+import type { RulebookSkinPreviewValue } from "@/lib/skinPacks";
 import { RULEBOOK_CHARACTERS, RULEBOOK_TEXT, type RulebookCharacterId } from "@/lib/rulebookContent";
 
 interface RulebookModalProps {
@@ -17,8 +19,13 @@ interface RulebookModalProps {
 export function RulebookModal({ open, onOpenChange, language, roleId = null }: RulebookModalProps) {
   const [viewRoleId, setViewRoleId] = useState<RulebookCharacterId | null>(roleId);
   const [pendingScroll, setPendingScroll] = useState<"top" | "summary" | null>(null);
+  const [skinPreviewOverrides, setSkinPreviewOverrides] = useState<Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const html = useMemo(() => getRulebookHtml(language, viewRoleId), [language, viewRoleId]);
+  const { skinPackId } = useSkinPack();
+  const html = useMemo(
+    () => getRulebookHtml(language, viewRoleId, { skinPackId, skinPreviewOverrides }),
+    [language, viewRoleId, skinPackId, skinPreviewOverrides],
+  );
   const title = viewRoleId ? RULEBOOK_CHARACTERS[viewRoleId]?.name[language] ?? t("rulebook", language) : t("rulebook", language);
 
   const findRulebookTarget = useCallback((targetId: string): HTMLElement | null => {
@@ -41,6 +48,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
   useEffect(() => {
     if (!open) return;
     setViewRoleId(roleId);
+    setSkinPreviewOverrides({});
     setPendingScroll("top");
   }, [open, roleId]);
 
@@ -63,6 +71,20 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
     if (!targetId) return;
     event.preventDefault();
     scrollToTarget(targetId);
+  };
+
+  const handleArticleChange = (event: ChangeEvent<HTMLElement>) => {
+    const select = (event.target as HTMLElement).closest<HTMLSelectElement>("select[data-rulebook-skin-select]");
+    if (!select) return;
+    const characterId = select.dataset.rulebookSkinSelect as RulebookCharacterId | undefined;
+    if (!characterId || !(characterId in RULEBOOK_CHARACTERS)) return;
+    const value = select.value as RulebookSkinPreviewValue;
+    setSkinPreviewOverrides((current) => {
+      const next = { ...current };
+      if (value === "device") delete next[characterId];
+      else next[characterId] = value;
+      return next;
+    });
   };
 
   const handleShowAllCharacters = () => {
@@ -102,6 +124,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
           <article
             className="rulebook-content mx-auto max-w-6xl py-4"
             onClick={handleArticleClick}
+            onChange={handleArticleChange}
             dangerouslySetInnerHTML={{ __html: html }}
           />
         </div>

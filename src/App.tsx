@@ -9,6 +9,8 @@ import PlayerView from "./pages/PlayerView";
 import RulebookPage from "./pages/RulebookPage";
 import RoomDisplay from "./pages/RoomDisplay";
 import NotFound from "./pages/NotFound";
+import { SkinPackChrome } from "@/components/game/SkinPackSelector";
+import { SkinPackProvider } from "@/components/game/SkinPackProvider";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +18,9 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <Sonner />
     <BrowserRouter>
-      <Routes>
+      <SkinPackProvider>
+        <SkinPackChrome />
+        <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/characters" element={<CharacterGeneratorPage />} />
           <Route path="/host" element={<Index />} />
@@ -29,7 +33,8 @@ const App = () => (
           <Route path="/rulebook" element={<RulebookPage />} />
           <Route path="/rulebook/:roleId" element={<RulebookPage />} />
           <Route path="*" element={<NotFound />} />
-      </Routes>
+        </Routes>
+      </SkinPackProvider>
     </BrowserRouter>
   </QueryClientProvider>
 );

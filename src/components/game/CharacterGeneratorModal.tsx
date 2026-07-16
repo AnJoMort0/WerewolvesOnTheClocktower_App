@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import { RulebookModal } from "@/components/game/RulebookModal";
-import { ALL_ROLE_IDS, assignRoles, ROLES, type RoleId } from "@/lib/roles";
+import { assignRoles, type RoleId } from "@/lib/roles";
 import { LanguageContext, getRoleLabel, type Language } from "@/lib/i18n";
+import { resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 
 const MIN_PLAYERS = 8;
 
@@ -85,14 +87,14 @@ function roleMessage(roleId: RoleId, language: Language): string {
   return strings[language].message(roleId, getRoleLabel(roleId, language));
 }
 
-function richPayload(roleId: RoleId, language: Language): { html: string; text: string } {
+function richPayload(roleId: RoleId, language: Language, skinPackId: SkinPackId): { html: string; text: string } {
   const label = getRoleLabel(roleId, language);
-  const role = ROLES[roleId];
+  const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
   const text = roleMessage(roleId, language);
   const prefix = language === "fr" ? "Ton personnage est" : "O teu personagem é";
   const html = `
     <div style="display:flex;gap:12px;align-items:center;font-family:Georgia,'Times New Roman',serif;color:#2d231f;max-width:520px;">
-      <img src="${escapeHtml(role.image)}" alt="${escapeHtml(`${roleId}.${label}`)}" style="width:92px;height:92px;object-fit:contain;border-radius:12px;border:1px solid #7d2424;background:#211d19;">
+      <img src="${escapeHtml(roleImage)}" alt="${escapeHtml(`${roleId}.${label}`)}" style="width:92px;height:92px;object-fit:contain;border-radius:12px;border:1px solid #7d2424;background:#211d19;">
       <div style="font-size:16px;line-height:1.35;">${escapeHtml(prefix)} <strong>${escapeHtml(`${roleId}.${label}`)}</strong></div>
     </div>
   `.trim();
@@ -139,6 +141,7 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
   language: Language;
 }) {
   const text = strings[language];
+  const { skinPackId } = useSkinPack();
   const [playerCount, setPlayerCount] = useState("10");
   const [advancedEnabled, setAdvancedEnabled] = useState(false);
   const [roleIds, setRoleIds] = useState<RoleId[]>([]);
@@ -147,7 +150,7 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
   const [rulebookOpen, setRulebookOpen] = useState(false);
   const [rulebookRoleId, setRulebookRoleId] = useState<RoleId | null>(null);
 
-  const payloads = useMemo(() => roleIds.map((roleId) => richPayload(roleId, language)), [roleIds, language]);
+  const payloads = useMemo(() => roleIds.map((roleId) => richPayload(roleId, language, skinPackId)), [roleIds, language, skinPackId]);
 
   const markCopied = (key: string, label: string) => {
     setCopiedKey(key);
@@ -260,10 +263,10 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
               ) : (
                 <div className="grid gap-3 pb-2 sm:grid-cols-2 xl:grid-cols-3">
                   {roleIds.map((roleId, index) => {
-                    const role = ROLES[roleId];
                     const label = getRoleLabel(roleId, language);
                     const payload = payloads[index];
                     const keyPrefix = `${index}-${roleId}`;
+                    const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
 
                     return (
                       <article key={`${index}-${roleId}`} className="grid gap-3 rounded-lg border border-border bg-card p-3">
@@ -280,7 +283,7 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
                             onClick={() => openRulebook(roleId)}
                             className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-primary/40 bg-secondary"
                           >
-                            <img src={role.image} alt={label} className="h-full w-full object-cover" />
+                            <img src={roleImage} alt={label} className="h-full w-full object-cover" />
                           </button>
                           <div className="min-w-0 flex-1 space-y-2">
                             <h3 className="truncate font-display text-lg text-foreground">{label}</h3>

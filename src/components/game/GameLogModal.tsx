@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { getEffectLabel, getGameOver, getRoleLabel, getWinLabel, type Language } from "@/lib/i18n";
 import { ROLES, type RoleId } from "@/lib/roles";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 import type { GameLogEvent, GameLogPlayerSnapshot, GameLogPhase } from "@/lib/gameLog";
 import type { PlayerStatus, StatusEffect } from "@/components/game/PlayerStatusPopover";
 import { STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
@@ -169,13 +171,14 @@ function PlayerMiniCard({
   selected?: boolean;
   noRoleLabel: string;
 }) {
+  const { skinPackId } = useSkinPack();
   const displayRole = player?.role ?? role ?? null;
   const roleDef = displayRole ? ROLES[displayRole] : null;
   return (
     <div className={`min-w-[58px] max-w-[70px] rounded-md border bg-card/70 p-1 text-center ${selected ? "border-primary shadow-[0_0_0_2px_hsl(var(--primary)/0.35)]" : "border-border"}`}>
       <div className="mx-auto h-9 w-9 overflow-hidden rounded-md border border-border/70 bg-muted">
         {roleDef ? (
-          <img src={roleDef.image} alt="" className="h-full w-full object-cover" />
+          <img src={resolveRoleImage(roleDef.id, { skinPackId }).src} alt="" className="h-full w-full object-cover" />
         ) : (
           <img src={villagerIcon} alt="" className="h-full w-full object-cover opacity-40" />
         )}
@@ -268,6 +271,7 @@ function FinalCircle({
           playerEffects={playerEffects}
           onPlayerClick={onSelect}
           selectedPlayerId={selectedPlayerId}
+          allowFlexibleRoleSkins={false}
         />
       </div>
     </div>

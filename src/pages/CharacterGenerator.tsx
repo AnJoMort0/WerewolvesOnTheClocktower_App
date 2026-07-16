@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import { LanguageContext, getRoleLabel, t, type Language } from "@/lib/i18n";
 import { RULEBOOK_NIGHT_SCRIPT, type RulebookNightPhase } from "@/lib/rulebookContent";
-import { assignRoles, ROLES, type RoleId } from "@/lib/roles";
+import { assignRoles, type RoleId } from "@/lib/roles";
 import { autoFixRoleSelection, validateRoleSelection } from "@/lib/roleValidation";
+import { resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 
 const MIN_PLAYERS = 8;
 
@@ -95,16 +97,16 @@ function rulebookUrl(roleId: RoleId, language: Language): string {
   return `${origin}/rulebook/${roleId}?lang=${language}`;
 }
 
-function richPayload(roleId: RoleId, language: Language): { html: string; text: string } {
+function richPayload(roleId: RoleId, language: Language, skinPackId: SkinPackId): { html: string; text: string } {
   const label = getRoleLabel(roleId, language);
-  const role = ROLES[roleId];
+  const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
   const url = rulebookUrl(roleId, language);
   const text = strings[language].message(roleId, label, url);
   const prefix = language === "fr" ? "Ton personnage est" : "O teu personagem é";
   const linkLabel = strings[language].rulebook;
   const html = `
     <div style="display:flex;gap:12px;align-items:center;font-family:Georgia,'Times New Roman',serif;color:#2d231f;max-width:560px;">
-      <img src="${escapeHtml(role.image)}" alt="${escapeHtml(`${roleId}.${label}`)}" style="width:92px;height:92px;object-fit:contain;border-radius:12px;border:1px solid #7d2424;background:#211d19;">
+      <img src="${escapeHtml(roleImage)}" alt="${escapeHtml(`${roleId}.${label}`)}" style="width:92px;height:92px;object-fit:contain;border-radius:12px;border:1px solid #7d2424;background:#211d19;">
       <div style="font-size:16px;line-height:1.35;">
         ${escapeHtml(prefix)} <strong>${escapeHtml(`${roleId}.${label}`)}</strong><br>
         <a href="${escapeHtml(url)}">${escapeHtml(linkLabel)}</a>
@@ -151,6 +153,7 @@ async function copyRich(html: string, text: string): Promise<boolean> {
 export default function CharacterGeneratorPage() {
   const [searchParams] = useSearchParams();
   const [language] = useState<Language>(() => getInitialLanguage(searchParams.get("lang")));
+  const { skinPackId } = useSkinPack();
   const text = strings[language];
   const [playerCount, setPlayerCount] = useState("10");
   const [advancedEnabled, setAdvancedEnabled] = useState(false);
@@ -161,7 +164,7 @@ export default function CharacterGeneratorPage() {
   const [completedLines, setCompletedLines] = useState<Set<string>>(new Set());
   const [lockedLines, setLockedLines] = useState<Set<string>>(new Set());
 
-  const payloads = useMemo(() => roleIds.map((roleId) => richPayload(roleId, language)), [roleIds, language]);
+  const payloads = useMemo(() => roleIds.map((roleId) => richPayload(roleId, language, skinPackId)), [roleIds, language, skinPackId]);
   const warnings = useMemo(() => roleIds.length > 0 ? validateRoleSelection(roleIds, language) : [], [roleIds, language]);
   const activeRoles = useMemo(() => new Set(roleIds), [roleIds]);
   const scriptLines = useMemo(() => {
@@ -336,11 +339,11 @@ export default function CharacterGeneratorPage() {
             <>
               <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {roleIds.map((roleId, index) => {
-                  const role = ROLES[roleId];
                   const label = getRoleLabel(roleId, language);
                   const payload = payloads[index];
                   const keyPrefix = `${index}-${roleId}`;
                   const url = rulebookUrl(roleId, language);
+                  const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
 
                   return (
                     <article key={`${index}-${roleId}`} className="grid gap-3 rounded-lg border border-border bg-card p-3">
@@ -357,7 +360,7 @@ export default function CharacterGeneratorPage() {
                           className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-primary/40 bg-secondary"
                           title={text.rulebook}
                         >
-                          <img src={role.image} alt={label} className="h-full w-full object-cover" />
+                          <img src={roleImage} alt={label} className="h-full w-full object-cover" />
                         </Link>
                         <div className="min-w-0 flex-1 space-y-2">
                           <h3 className="truncate font-display text-lg text-foreground">{label}</h3>

@@ -2,6 +2,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { ROLES, type RoleId } from "@/lib/roles";
 import { getRoleLabel, t, type Language } from "@/lib/i18n";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 import ghostExecutedIcon from "@/assets/icons/ghost_executed.png";
 import villagerIcon from "@/assets/icons/villager.png";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,6 +37,7 @@ interface RevealModalProps {
 }
 
 export const RevealModal = ({ open, onClose, title, subtitle, cards, language = "pt", dismissible = true, actionLabel, onRoleClick }: RevealModalProps) => {
+  const { skinPackId } = useSkinPack();
   return (
     <AnimatePresence>
       {open && (
@@ -66,12 +69,14 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language = 
             <div className="grid grid-cols-2 gap-4">
               {cards.map((c, i) => {
                 const cornerRole = c.cornerRoleId ? ROLES[c.cornerRoleId] : null;
+                const cardImage = c.roleId ? resolveRoleImage(c.roleId, { skinPackId }).src : c.image;
+                const cornerImage = c.cornerRoleId ? resolveRoleImage(c.cornerRoleId, { skinPackId }).src : null;
                 const imageBlock = (
                   <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg">
-                    <img src={c.image} alt={c.label} className="w-full h-full object-cover" />
+                    <img src={cardImage} alt={c.label} className="w-full h-full object-cover" />
                     {cornerRole && (
                       <img
-                        src={cornerRole.image}
+                        src={cornerImage ?? cornerRole.image}
                         alt={getRoleLabel(c.cornerRoleId!, language)}
                         className="absolute bottom-1 right-1 h-8 w-8 rounded border border-cyan-300 object-cover shadow"
                       />

@@ -363,6 +363,31 @@
     background: rgb(0 0 0 / 0.22);
   }
 
+  .rulebook-content .rulebook-skin-preview {
+    display: grid;
+    gap: 0.2rem;
+    margin-top: 0.45rem;
+    color: #1b1b1b;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-align: left;
+  }
+
+  .rulebook-content .rulebook-skin-preview select {
+    width: 130px;
+    max-width: 100%;
+    min-height: 1.85rem;
+    border: 1px solid rgb(0 0 0 / 0.28);
+    border-radius: 0.35rem;
+    background: rgb(255 255 255 / 0.72);
+    color: #171717;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
   .rulebook-content .role-text-cell {
     width: auto;
     min-width: 0;
@@ -472,6 +497,10 @@
     .rulebook-content .role-image-cell img {
       width: 96px;
       max-width: 96px;
+    }
+
+    .rulebook-content .rulebook-skin-preview select {
+      width: 96px;
     }
 
     .rulebook-content .role-text-cell {

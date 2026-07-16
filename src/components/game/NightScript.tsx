@@ -9,6 +9,8 @@ import {
 } from "@/lib/nightScript";
 import { useLanguage, getScripts, getDynamic, getRoleLabel, t, getToast, type Language } from "@/lib/i18n";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 import { getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import { toast } from "sonner";
@@ -336,6 +338,7 @@ function ScriptLineDisplay({
   actingPoisoned?: boolean;
 }) {
   const lang = useLanguage();
+  const { skinPackId } = useSkinPack();
   const originalText = dynamicText ?? line.text;
   const rawDisplayText = dogWolfLine
     ? `${dogWolfStandalone ? "" : "("}${replaceRoleWithDog(originalText, lang, dogWolfCopiedRole)}${dogWolfStandalone ? "" : ")"}`
@@ -444,7 +447,7 @@ function ScriptLineDisplay({
         />
         {drunkardLine && (
           <img
-            src={ROLES.a01.image}
+            src={resolveRoleImage("a01", { skinPackId }).src}
             alt={getRoleLabel("a01", lang)}
             title={getRoleLabel("a01", lang)}
             className="mb-1 mr-2 inline-block h-7 w-7 rounded border border-green-400 object-cover align-middle shadow"
@@ -452,7 +455,7 @@ function ScriptLineDisplay({
         )}
         {mimeLine && (
           <img
-            src={ROLES.a03.image}
+            src={resolveRoleImage("a03", { skinPackId }).src}
             alt={getRoleLabel("a03", lang)}
             title={getRoleLabel("a03", lang)}
             className="mb-1 mr-2 inline-block h-7 w-7 rounded border border-cyan-300 object-cover align-middle shadow"

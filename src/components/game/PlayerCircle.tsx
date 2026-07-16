@@ -4,6 +4,8 @@ import { X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { useRoleLabel, useT, useLanguage, getEffectLabel, getToast } from "@/lib/i18n";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS } from "./PlayerStatusPopover";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
@@ -117,6 +119,7 @@ interface PlayerCircleProps {
   dogWolfOwnerRoles?: Record<string, RoleId>;
   dogWolfStates?: DogWolfStates;
   onDogActorIdolUseToggle?: (playerId: string, index: number) => void;
+  allowFlexibleRoleSkins?: boolean;
 }
 
 export const PlayerCircle = ({
@@ -184,11 +187,13 @@ export const PlayerCircle = ({
   dogWolfOwnerRoles = {},
   dogWolfStates = {},
   onDogActorIdolUseToggle,
+  allowFlexibleRoleSkins = true,
 }: PlayerCircleProps) => {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const roleLabel = useRoleLabel();
   const t = useT();
   const lang = useLanguage();
+  const { skinPackId } = useSkinPack();
   const seatedPlayers = players.filter((p) => p.seat_position !== null);
 
   const scale = compact ? 0.65 : 1;
@@ -298,6 +303,16 @@ export const PlayerCircle = ({
     if (EVIL_ROLES.includes(objectiveRole)) return ["evil_being"];
     return [];
   };
+
+  const getRoleImage = (roleId: RoleId, playerId?: string): string => resolveRoleImage(roleId, {
+    skinPackId,
+    flexible: playerId && allowFlexibleRoleSkins && !hideSensitiveInfo
+      ? {
+        objectiveRoleId: objectiveRoleAssignments?.[playerId] ?? baseRoleAssignments?.[playerId] ?? roleAssignments?.[playerId] ?? null,
+        effects: _playerEffects[playerId] ?? null,
+      }
+      : undefined,
+  }).src;
 
   const getDragProps = (playerId: string) => {
     if (hideSensitiveInfo) return {};
@@ -459,7 +474,7 @@ export const PlayerCircle = ({
                     style={getGlowStyle(seated.id)}
                   >
                     <img
-                      src={roleDef.image}
+                      src={getRoleImage(roleDef.id, seated.id)}
                       alt={role ? roleLabel(role) : ""}
                       className={`w-full h-full object-cover ${isPermanentlyDead ? "grayscale" : ""}`}
                     />
@@ -501,35 +516,35 @@ export const PlayerCircle = ({
                 )}
                 {isActor && role !== "a04" && (
                   <img
-                    src={ROLES.a04.image}
+                    src={getRoleImage("a04")}
                     alt={roleLabel("a04")}
                     className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-primary object-cover shadow"
                   />
                 )}
                 {isActor && actorCopiesDrunkard && role !== "a01" && (
                   <img
-                    src={ROLES.a01.image}
+                    src={getRoleImage("a01")}
                     alt={roleLabel("a01")}
                     className="absolute -left-1 -top-1 h-6 w-6 rounded border border-green-400 object-cover shadow"
                   />
                 )}
                 {isDrunkard && role !== "a01" && (
                   <img
-                    src={ROLES.a01.image}
+                    src={getRoleImage("a01")}
                     alt={roleLabel("a01")}
                     className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-green-400 object-cover shadow"
                   />
                 )}
                 {isMime && role !== "a03" && (
                   <img
-                    src={ROLES.a03.image}
+                    src={getRoleImage("a03")}
                     alt={roleLabel("a03")}
                     className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-cyan-300 object-cover shadow"
                   />
                 )}
                 {seated && dogWolfOwnerRoles[seated.id] && (
                   <img
-                    src={ROLES[dogWolfOwnerRoles[seated.id]].image}
+                    src={getRoleImage(dogWolfOwnerRoles[seated.id])}
                     alt={roleLabel(dogWolfOwnerRoles[seated.id])}
                     className="absolute -bottom-1 -right-1 h-6 w-6 rounded border border-amber-400 object-cover shadow"
                   />
