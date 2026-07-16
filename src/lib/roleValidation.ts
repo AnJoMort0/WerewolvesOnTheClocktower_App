@@ -68,18 +68,26 @@ export function validateRoleSelection(roleIds: readonly RoleId[], language: Lang
   return warnings;
 }
 
-function addOrReplaceRole(roleIds: RoleId[], roleId: RoleId, protectedRoles: Set<RoleId>) {
-  if (roleIds.includes(roleId)) return;
-  const replacementIndex = findReplacementIndex(roleIds, protectedRoles);
+function addOrReplaceRole(
+  roleIds: RoleId[],
+  roleId: RoleId,
+  protectedRoles: Set<RoleId>,
+  options: { allowDuplicate?: boolean } = {},
+) {
+  if (!options.allowDuplicate && roleIds.includes(roleId)) return false;
+  const replacementIndex = findReplacementIndex(roleIds, protectedRoles, roleId);
   if (replacementIndex >= 0) {
     roleIds[replacementIndex] = roleId;
     protectedRoles.add(roleId);
+    return true;
   }
+  return false;
 }
 
-function findReplacementIndex(roleIds: RoleId[], protectedRoles: Set<RoleId>): number {
+function findReplacementIndex(roleIds: RoleId[], protectedRoles: Set<RoleId>, replacementRole: RoleId): number {
   const counts = countRoles(roleIds);
   const duplicateUniqueIndex = roleIds.findIndex((roleId) => {
+    if (roleId === replacementRole) return false;
     if (protectedRoles.has(roleId)) return false;
     if (!isUniqueRole(roleId)) return false;
     if (roleId === "l03" || roleId === "l04") return false;
@@ -87,19 +95,21 @@ function findReplacementIndex(roleIds: RoleId[], protectedRoles: Set<RoleId>): n
   });
   if (duplicateUniqueIndex >= 0) return duplicateUniqueIndex;
 
-  const fillerIndex = roleIds.findIndex((roleId) => roleId === "l01" && !protectedRoles.has(roleId));
+  const fillerIndex = roleIds.findIndex((roleId) => roleId !== replacementRole && roleId === "l01" && !protectedRoles.has(roleId));
   if (fillerIndex >= 0) return fillerIndex;
 
   const optionalIndex = roleIds.findIndex((roleId) => {
+    if (roleId === replacementRole) return false;
     if (protectedRoles.has(roleId)) return false;
     if (ESSENTIAL_ROLES.includes(roleId)) return false;
     if (WEREWOLF_ROLES.includes(roleId)) return false;
+    if (roleId === "l03" || roleId === "l04") return false;
     if (roleIds.some((otherRoleId) => ROLES[otherRoleId].requires === roleId)) return false;
     return true;
   });
   if (optionalIndex >= 0) return optionalIndex;
 
-  return roleIds.findIndex((roleId) => !protectedRoles.has(roleId));
+  return roleIds.findIndex((roleId) => roleId !== replacementRole && !protectedRoles.has(roleId));
 }
 
 function countRoles(roleIds: readonly RoleId[]): Record<RoleId, number> {
@@ -114,9 +124,8 @@ function normalizeGroupCount(roleIds: RoleId[], roleId: RoleId, expected: number
   if (count === 0) return;
 
   while (count < expected) {
-    addOrReplaceRole(roleIds, roleId, protectedRoles);
+    if (!addOrReplaceRole(roleIds, roleId, protectedRoles, { allowDuplicate: true })) break;
     count = roleIds.filter((id) => id === roleId).length;
-    if (count < expected && !roleIds.includes(roleId)) break;
   }
 
   while (count > expected) {
@@ -158,7 +167,7 @@ export function autoFixRoleSelection(roleIds: readonly RoleId[]): RoleId[] {
 
   const expectedWerewolves = getExpectedWerewolfCount(next.length);
   while (next.filter((roleId) => WEREWOLF_ROLES.includes(roleId)).length < expectedWerewolves) {
-    addOrReplaceRole(next, "e01", protectedRoles);
+    if (!addOrReplaceRole(next, "e01", protectedRoles, { allowDuplicate: true })) break;
     const werewolfCount = next.filter((roleId) => WEREWOLF_ROLES.includes(roleId)).length;
     if (werewolfCount >= expectedWerewolves) break;
   }

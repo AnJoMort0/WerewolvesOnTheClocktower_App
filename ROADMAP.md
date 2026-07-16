@@ -15,15 +15,16 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 ## Other Changes Outside of the Repo
 
 * [ ] Remove Sleepwalker from Drunkard in DOCS
+* [ ] Decide: Should the Vampire Werewolf be webbed?
 
 ## Critical Fixes
 
-* [x] In the analog page, not all mistakes are warned (all the wrong character balances from the main GM page, like double character, werewolf count etc should be warned in this page too, using the same logic.) And therefore they don't have a fix tied to them either when they should.
-  <!-- Codex 2026-07-16: Analog validation now warns for duplicated unique roles and auto-fixes extra copies, alongside the existing essential/werewolf/dependency/group-count checks. -->
+* [x] In the analog page, if a auto-fix that needs more than just changing one character, the page just freezes, I don't know if it's broken or just making extreme calculations. It should not be a NASA equation, it should try to fix it even a litte dumbly if needed
+  <!-- Codex 2026-07-17: Fixed analog auto-fix loops by allowing repeatable replacements for extra Werewolves/Sisters/Brothers, preserving existing repeatable groups where possible, and stopping if no replacement can be made. -->
 
 ## Fixes
 
-* [x] The log should show from whom the Gipsy stole the poison from
+* [ ] 
 
 ## Balance Changes
 
@@ -31,11 +32,39 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] 
+* [ ] Add a skinpack system:
+  * [ ] Each user controls which skinpack their device uses
+  * [ ] The skinpack inpacts everytime an character card is shown, player role, rulebook, etc.
+  * [ ] The players can choose their skinpack from a dropdown menu accessible in everypage, including in the rulebook
+  * [ ] Moreover, in the rulebook, every character that has an alternative skin has a dropdown menu to (as long as that page is open, see an alternative skin)
+  * [ ] When a skinpack is selected but a card has no skins in that pack, the default asset is used
+  * [ ] For the dropdown menu, maybe using a card as an icon to represent the skinpack would be good. Use e04.
+  * [ ] The choices for now are
+    * [ ] Default (with seasonals)
+      * [ ] e04_halloween for the dropdown image
+      * [ ] This is the default for players devices
+      * [ ] Seasonals change some roles only around certain times of the year
+        * [ ] Carnival during the week before and after Shrove Tuesday
+        * [ ] Christmas during Advent up to the 6th of January (included)
+        * [ ] Easter during easter time, from Holy Week to Pentecost (included)
+        * [ ] Halloween, during the week before and after Halloween
+        * [ ] New Years, during the week before and after 1st January
+      * [ ] When a player gets or sees a card with a seasonal skin, a visible box on top of the page warns them that "This is a seasonal skin, not a different card. You can change the skins on [top righ corner or wherever it is]". You can use "skin" for Portuguese and French, I think that's the most commonly used name, if there's another more commonly used term, use tha instead. This box has a (x) to close it permanenty during this game
+    * [ ] Default
+      * [ ] Default e04 for the icon
+      * [ ] This the default for the GM
+      * [ ] All the default assets
+    * [ ] Thiercelieux/Miller's Hollow/Find the most used name for EU Portuguese
+      * [ ] e04.thiercelieux for the icon
+      * [ ] Replaces all the roles with the cards in the Thiercelieux folder
+  * [ ] Since changing skins are being added, we also designed dynamic skins for the characters that can change objectives
+    * [ ] They can be found in the dynamic_flexibles folder
+    * [ ] These dynamic skins should only be used in the player's assigned role in their own device, and in the GM's player circle and player list, nowhere else, specifically not in modals, since no outside player is supposed to know the objectives of the flexible players in game
+    * [ ] Seasonals and Thiercelieux (and future skinpacks) overide these flexible characters
+    * [ ] These flexible skins also appear as options to see under the character's cards in the rulebook
   
 ## Future Plans
 
-* [ ] Add skin packs (don't forget to add a warning when there are seasonal skins for players not to be confused)
 * [ ] Adding phone interactions:
     * [ ] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device screen changes to the player circle and a poison button option appears, when the player clicks that button, he is in poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script.
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)

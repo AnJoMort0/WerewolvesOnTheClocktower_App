@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getExpectedWerewolfCount } from "@/lib/roles";
+import { WEREWOLF_ROLES, getExpectedWerewolfCount } from "@/lib/roles";
 import { autoFixRoleSelection, getDuplicateUniqueRoles, validateRoleSelection } from "@/lib/roleValidation";
 
 describe("role validation", () => {
@@ -12,6 +12,16 @@ describe("role validation", () => {
     const fixed = autoFixRoleSelection(["e02", "e02", "e03", "e04", "e01", "e01"]);
     expect(fixed.filter((roleId) => roleId === "e02")).toHaveLength(1);
     expect(fixed.filter((roleId) => roleId === "e01")).toHaveLength(2);
+  });
+
+  it("adds repeatable roles without looping when a fix needs multiple replacements", () => {
+    const fixed = autoFixRoleSelection([
+      "e02", "e03", "e04", "e01", "l03", "l04",
+      "v01", "v02", "v03", "v04", "v05", "v06",
+    ]);
+    expect(fixed.filter((roleId) => WEREWOLF_ROLES.includes(roleId))).toHaveLength(3);
+    expect(fixed.filter((roleId) => roleId === "l03")).toHaveLength(2);
+    expect(fixed.filter((roleId) => roleId === "l04")).toHaveLength(3);
   });
 
   it("shares expected werewolf and duplicate role helpers", () => {
