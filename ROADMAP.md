@@ -14,15 +14,10 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Other Changes Outside of the Repo
 
-* [ ] 
+* [ ] Remove Sleepwalker from Drunkard in DOCS
 
 ## Critical Fixes
 
-* [x] `e02`:
-  * [x] The Mime's applied poison disappears when the Mime's next turn is played (or if the mime is dead, when his turn was supposed to be played like the Witch's poison already does).
-  * [x] Fix: If there are no script lines to tick when in the case of the mime dying while the poison is active, ending the night should remove the poison, since it happens after the mime's line. Check if the same thing is coded correctly for the Witch as well
-    * [x] CRITICAL FIX: This should not disappear at the beginning of the night! The poison is supposed to last an entire turn so from the character action to the next time they act, that's why it is coded to be removed when the character's line after the dead Witch is ticked, the question here was the fact that it wasn't being removed in the case where there was no charcter script line after.
-      <!-- Codex 2026-07-16: Moved the no-later-script-line poison fallback from start-of-night to dawn/end-night, so Mime/Witch poison still lasts until the next time that character's turn would have passed. -->
 * [ ] In the analog page, not all mistakes are warned (all the wrong character balances from the main GM page, like double character, werewolf count etc should be warned in this page too, using the same logic.) And therefore they don't have a fix tied to them either when they should.
 
 ## Fixes
