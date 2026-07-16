@@ -34,6 +34,14 @@ export function validateRoleSelection(roleIds: readonly RoleId[], language: Lang
     warnings.push(format(getValidation("fewWerewolves", language), { n: werewolfCount, expected: expectedWerewolves }));
   }
 
+  const counts = countRoles(roleIds);
+  for (const [roleId, count] of Object.entries(counts) as Array<[RoleId, number]>) {
+    if (roleId === "l03" || roleId === "l04") continue;
+    if (isUniqueRole(roleId) && count > 1) {
+      warnings.push(format(getValidation("duplicateRole", language), { label: getRoleLabel(roleId, language), n: count }));
+    }
+  }
+
   if (assignedRoles.has("v08b") && !assignedRoles.has("v08")) {
     warnings.push(getValidation("littleRedNeedsHunter", language));
   }
@@ -120,6 +128,21 @@ function normalizeGroupCount(roleIds: RoleId[], roleId: RoleId, expected: number
   }
 }
 
+function normalizeUniqueDuplicates(roleIds: RoleId[]) {
+  const counts = countRoles(roleIds);
+  const kept = new Map<RoleId, number>();
+  for (let index = 0; index < roleIds.length; index += 1) {
+    const roleId = roleIds[index];
+    if (roleId === "l03" || roleId === "l04" || !isUniqueRole(roleId) || counts[roleId] <= 1) continue;
+    const currentKept = kept.get(roleId) ?? 0;
+    if (currentKept === 0) {
+      kept.set(roleId, 1);
+      continue;
+    }
+    roleIds[index] = "l01";
+  }
+}
+
 export function autoFixRoleSelection(roleIds: readonly RoleId[]): RoleId[] {
   const next = [...roleIds];
   const protectedRoles = new Set<RoleId>();
@@ -140,6 +163,7 @@ export function autoFixRoleSelection(roleIds: readonly RoleId[]): RoleId[] {
 
   normalizeGroupCount(next, "l03", 2, protectedRoles);
   normalizeGroupCount(next, "l04", 3, protectedRoles);
+  normalizeUniqueDuplicates(next);
 
   return next;
 }

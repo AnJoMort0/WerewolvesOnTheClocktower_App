@@ -116,6 +116,7 @@ export interface ToastStrings {
 export interface ValidationWarningStrings {
   essentialMissing: string;     // "{label} em falta!"
   fewWerewolves: string;        // "Poucos Lobisomens ({n}/{expected})"
+  duplicateRole: string;
   littleRedNeedsHunter: string;
   secretLoverNeedsCupid: string;
   sistersCount: string;           // "Irmãs precisam de exatamente 2 jogadoras (tem {n})!"

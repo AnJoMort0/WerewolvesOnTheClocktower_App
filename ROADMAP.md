@@ -18,11 +18,12 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] In the analog page, not all mistakes are warned (all the wrong character balances from the main GM page, like double character, werewolf count etc should be warned in this page too, using the same logic.) And therefore they don't have a fix tied to them either when they should.
+* [x] In the analog page, not all mistakes are warned (all the wrong character balances from the main GM page, like double character, werewolf count etc should be warned in this page too, using the same logic.) And therefore they don't have a fix tied to them either when they should.
+  <!-- Codex 2026-07-16: Analog validation now warns for duplicated unique roles and auto-fixes extra copies, alongside the existing essential/werewolf/dependency/group-count checks. -->
 
 ## Fixes
 
-* [ ] The log should show from whom the Gipsy stole the poison from
+* [x] The log should show from whom the Gipsy stole the poison from
 
 ## Balance Changes
 

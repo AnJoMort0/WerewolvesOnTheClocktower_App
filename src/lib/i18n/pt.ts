@@ -341,6 +341,7 @@ export const pt: Translation = {
     validations: {
       essentialMissing: "{label} em falta!",
       fewWerewolves: "Poucos Lobisomens ({n}/{expected})",
+      duplicateRole: "{label} duplicado ({n})!",
       littleRedNeedsHunter: "Capuchinho Vermelho precisa do Caçador!",
       secretLoverNeedsCupid: "Amante Secreto precisa do Cúpido!",
       sistersCount: "Irmãs precisam de exatamente 2 jogadoras (tem {n})!",

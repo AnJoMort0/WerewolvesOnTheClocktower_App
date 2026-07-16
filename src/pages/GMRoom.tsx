@@ -489,6 +489,7 @@ const GMRoom = () => {
   const pendingActorDogFallbackLogRef = useRef<string | null>(null);
   const pendingRoleChangeSourcesRef = useRef<Map<string, { sourcePlayerId: string; sourceRole: RoleId }>>(new Map());
   const pendingGameActionLogSourcesRef = useRef<Map<string, string>>(new Map());
+  const suppressedPoisonLogAddsRef = useRef<Set<string>>(new Set());
   const suppressedEffectLogAddsRef = useRef<Set<string>>(new Set());
   const gameLogDiffReadyRef = useRef(false);
   const previousGameLogStateRef = useRef<{
@@ -1685,6 +1686,7 @@ const GMRoom = () => {
     setScriptAutoComplete({ role: null, sourcePlayerIds: [], version: 0 });
     setGameLogOpen(false);
     setGameLogEvents([]);
+    suppressedPoisonLogAddsRef.current.clear();
     suppressedEffectLogAddsRef.current.clear();
     pendingGameActionLogSourcesRef.current.clear();
     pendingActorCopyLogRef.current = null;
@@ -3313,6 +3315,7 @@ const GMRoom = () => {
     if (!shouldLog) {
       previousGameLogStateRef.current = currentState;
       gameLogDiffReadyRef.current = false;
+      suppressedPoisonLogAddsRef.current.clear();
       pendingGameActionLogSourcesRef.current.clear();
       return;
     }
@@ -3321,6 +3324,7 @@ const GMRoom = () => {
     if (!gameLogDiffReadyRef.current || !previousState) {
       previousGameLogStateRef.current = currentState;
       gameLogDiffReadyRef.current = true;
+      suppressedPoisonLogAddsRef.current.clear();
       suppressedEffectLogAddsRef.current.clear();
       recordGameEvent({
         action: "phase",
@@ -3361,6 +3365,10 @@ const GMRoom = () => {
 
     for (const poisonedId of poisonedPlayerIds) {
       if (!previousState.poisonedPlayerIds.has(poisonedId)) {
+        if (suppressedPoisonLogAddsRef.current.delete(poisonedId)) {
+          pendingGameActionLogSourcesRef.current.delete(`poison:${poisonedId}`);
+          continue;
+        }
         recordGameEvent({
           action: "poison",
           actor: actorForTransition(`poison:${poisonedId}`, "e02"),
@@ -4022,6 +4030,31 @@ const GMRoom = () => {
           toast.warning(getToast("warnNoTargets", (room?.language as Language) || "pt"));
           return;
         }
+        if (gmSnapshotLoaded && room?.status === "playing") {
+          const poisonStealerSnapshot = getPlayerLogSnapshot(poisonStealerId);
+          const stolenFromSnapshot = getPlayerLogSnapshot(targetPlayerId);
+          if (poisonStealerSnapshot && stolenFromSnapshot) {
+            const localLang: Language = (room?.language as Language) || "pt";
+            suppressedPoisonLogAddsRef.current.add(poisonStealerId);
+            recordGameEvent({
+              action: "poison",
+              actor: poisonStealerSnapshot,
+              actorRole: "v12",
+              target: { ...poisonStealerSnapshot, poisoned: true },
+              secondaryTarget: stolenFromSnapshot,
+              detail: localLang === "fr"
+                ? `Poison volé à ${stolenFromSnapshot.name}.`
+                : `Veneno roubado de ${stolenFromSnapshot.name}.`,
+              participants: [
+                poisonStealerId,
+                targetPlayerId,
+                ...poisonSourceEntries
+                  .map(([poisonSourcePlayerId]) => poisonSourcePlayerId)
+                  .filter((poisonSourcePlayerId) => poisonSourcePlayerId !== "manual"),
+              ],
+            });
+          }
+        }
         setPoisonTargetsBySource((previous) => {
           let changed = false;
           const next = { ...previous };
@@ -4282,7 +4315,7 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, toggleEffect, players, playerEffects, gameCyclePhase, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, getPlayerLogSnapshot, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, gameCyclePhase, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();

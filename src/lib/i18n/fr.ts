@@ -341,6 +341,7 @@ export const fr: Translation = {
     validations: {
       essentialMissing: "{label} manquant !",
       fewWerewolves: "Trop peu de Loups-garous ({n}/{expected})",
+      duplicateRole: "{label} en double ({n}) !",
       littleRedNeedsHunter: "Le Petit Chaperon Rouge a besoin du Chasseur !",
       secretLoverNeedsCupid: "L'Arnacœur a besoin du Cupidon !",
       sistersCount: "Les Sœurs doivent être exactement 2 joueuses (actuellement {n}) !",
