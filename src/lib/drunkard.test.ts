@@ -20,7 +20,7 @@ describe("Drunkard replacement", () => {
 
   it("prefers an implemented replacement that is not already in the game", () => {
     expect(getDrunkardReplacementCandidates()).toContain("e04");
-    expect(getDrunkardReplacementCandidates(["e04", "v01", "v02", "v03", "v04", "v05", "v16"]))
+    expect(getDrunkardReplacementCandidates(["e04", "v01", "v02", "v03", "v04", "v05"]))
       .toEqual(["v23"]);
     expect(pickDrunkardReplacement(["e04"], () => 0)).toBe("v02");
   });

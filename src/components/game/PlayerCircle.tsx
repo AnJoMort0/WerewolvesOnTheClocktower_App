@@ -2,8 +2,8 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
-import { useRoleLabel, useT, useLanguage, getToast } from "@/lib/i18n";
+import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { useRoleLabel, useT, useLanguage, getEffectLabel, getToast } from "@/lib/i18n";
 import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS } from "./PlayerStatusPopover";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
@@ -34,6 +34,7 @@ const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   m06: "kill",
   v09: "role-v09",
   v11: "role-v11",
+  v12: "role-v12",
   f01: "role-f01",
   l02: "role-l02",
   s01: "role-s01",
@@ -59,6 +60,7 @@ interface PlayerCircleProps {
   roleAssignments?: Record<string, RoleId>;
   abilityRoleAssignments?: Record<string, RoleId>;
   baseRoleAssignments?: Record<string, RoleId>;
+  objectiveRoleAssignments?: Record<string, RoleId>;
   playerStatuses?: Record<string, PlayerStatus>;
   permanentlyDead?: Set<string>;
   onPlayerStatusChange?: (playerId: string, status: PlayerStatus, source?: string) => void;
@@ -125,6 +127,7 @@ export const PlayerCircle = ({
   roleAssignments,
   abilityRoleAssignments,
   baseRoleAssignments,
+  objectiveRoleAssignments,
   playerStatuses = {},
   permanentlyDead = new Set(),
   onPlayerStatusChange,
@@ -257,6 +260,7 @@ export const PlayerCircle = ({
     const isPDead = permanentlyDead.has(playerId);
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
     if (isPDead) return "grayscale opacity-50";
+    if (getDefaultObjectiveEffects(playerId).length > 0) return ""; // handled by glow
     if (effects.has("werewolf_turned")) return ""; // handled by glow
     if (effects.has("evil_being")) return ""; // handled by glow
     if (poisonedPlayerIds.has(playerId)) return "ring-2 ring-green-500";
@@ -278,10 +282,21 @@ export const PlayerCircle = ({
   const getGlowStyle = (playerId: string): React.CSSProperties => {
     if (hideSensitiveInfo) return {};
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
-    if (effects.has("werewolf_turned") || effects.has("evil_being")) {
+    if (getDefaultObjectiveEffects(playerId).length > 0 || effects.has("werewolf_turned") || effects.has("evil_being")) {
       return { boxShadow: "0 0 12px 3px rgba(239,68,68,0.5)" };
     }
     return {};
+  };
+
+  const getDefaultObjectiveEffects = (playerId: string): StatusEffect[] => {
+    if (hideSensitiveInfo) return [];
+    const objectiveRole = objectiveRoleAssignments?.[playerId]
+      ?? baseRoleAssignments?.[playerId]
+      ?? roleAssignments?.[playerId];
+    if (!objectiveRole) return [];
+    if (WEREWOLF_ROLES.includes(objectiveRole)) return ["werewolf_turned"];
+    if (EVIL_ROLES.includes(objectiveRole)) return ["evil_being"];
+    return [];
   };
 
   const getDragProps = (playerId: string) => {
@@ -403,7 +418,11 @@ export const PlayerCircle = ({
           else if (isActor && onActorPowerStateChange) onActorPowerStateChange(state);
         };
         const effects = seated && !hideSensitiveInfo ? (_playerEffects[seated.id] || new Set<StatusEffect>()) : new Set<StatusEffect>();
-        const effectsList = hideSensitiveInfo ? [] : Array.from(effects);
+        const defaultObjectiveEffects = seated ? getDefaultObjectiveEffects(seated.id) : [];
+        const effectsList = hideSensitiveInfo ? [] : [
+          ...defaultObjectiveEffects,
+          ...Array.from(effects).filter((effect) => !defaultObjectiveEffects.includes(effect)),
+        ];
 
         const playerNode = seated ? (
           <div
@@ -429,7 +448,7 @@ export const PlayerCircle = ({
               {effectsList.length > 0 && (
                 <div className="flex gap-0.5 mb-0.5 flex-wrap justify-center max-w-[80px]">
                   {effectsList.map(eff => STATUS_EFFECT_ICONS[eff] ? (
-                    <img key={eff} src={STATUS_EFFECT_ICONS[eff]} alt={eff} className="h-3.5 w-3.5" />
+                    <img key={eff} src={STATUS_EFFECT_ICONS[eff]} alt={eff} title={getEffectLabel(eff, lang)} className="h-3.5 w-3.5" />
                   ) : null)}
                 </div>
               )}

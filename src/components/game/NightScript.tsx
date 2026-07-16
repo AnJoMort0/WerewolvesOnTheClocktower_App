@@ -32,6 +32,7 @@ const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
   v24: "role-v24",
   v09: "role-v09",
   v11: "role-v11",
+  v12: "role-v12",
   f01: "role-f01",
   l02: "role-l02",
   v10: "role-v10",

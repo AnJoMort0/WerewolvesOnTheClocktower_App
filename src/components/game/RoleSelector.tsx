@@ -28,7 +28,7 @@ export const RoleSelector = ({ value, onChange, advancedEnabled = true }: RoleSe
 
   return (
     <Select value={value} onValueChange={(v) => onChange(v as RoleId)}>
-      <SelectTrigger className="w-[140px] h-8 text-xs font-display">
+      <SelectTrigger className="w-[190px] h-8 text-xs font-display">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -36,7 +36,7 @@ export const RoleSelector = ({ value, onChange, advancedEnabled = true }: RoleSe
           <SelectItem key={id} value={id} className="text-xs font-display">
             <div className="flex items-center gap-2">
               <img src={ROLES[id].image} alt={roleLabel(id)} className="w-5 h-5 rounded" />
-              {roleLabel(id)}
+              <span>{id}. {roleLabel(id)}</span>
             </div>
           </SelectItem>
         ))}

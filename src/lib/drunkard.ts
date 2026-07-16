@@ -9,7 +9,6 @@ export const DRUNKARD_REPLACEMENT_CANDIDATE_IDS: readonly string[] = [
   "v03",
   "v04",
   "v05",
-  "v16",
   "v23",
 ];
 
