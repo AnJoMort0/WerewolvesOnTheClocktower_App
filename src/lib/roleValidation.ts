@@ -1,6 +1,7 @@
 import {
   ROLES,
   WEREWOLF_ROLES,
+  getExpectedWerewolfCount,
   isUniqueRole,
   type RoleId,
 } from "@/lib/roles";
@@ -11,11 +12,17 @@ import {
   type Language,
 } from "@/lib/i18n";
 
-const ESSENTIAL_ROLES: RoleId[] = ["e02", "e03", "e04"];
+export const ESSENTIAL_ROLES: RoleId[] = ["e02", "e03", "e04"];
 
-function getExpectedWerewolfCount(playerCount: number): number {
-  if (playerCount < 12) return 2;
-  return Math.floor(playerCount / 4);
+export function getDuplicateUniqueRoles(roleIds: readonly RoleId[]): Set<RoleId> {
+  const counts = countRoles(roleIds);
+  const duplicates = new Set<RoleId>();
+  for (const [roleId, count] of Object.entries(counts) as Array<[RoleId, number]>) {
+    if (roleId === "l03" && count <= 2) continue;
+    if (roleId === "l04" && count <= 3) continue;
+    if (isUniqueRole(roleId) && count > 1) duplicates.add(roleId);
+  }
+  return duplicates;
 }
 
 export function validateRoleSelection(roleIds: readonly RoleId[], language: Language): string[] {
@@ -35,11 +42,9 @@ export function validateRoleSelection(roleIds: readonly RoleId[], language: Lang
   }
 
   const counts = countRoles(roleIds);
-  for (const [roleId, count] of Object.entries(counts) as Array<[RoleId, number]>) {
+  for (const roleId of getDuplicateUniqueRoles(roleIds)) {
     if (roleId === "l03" || roleId === "l04") continue;
-    if (isUniqueRole(roleId) && count > 1) {
-      warnings.push(format(getValidation("duplicateRole", language), { label: getRoleLabel(roleId, language), n: count }));
-    }
+    warnings.push(format(getValidation("duplicateRole", language), { label: getRoleLabel(roleId, language), n: counts[roleId] }));
   }
 
   if (assignedRoles.has("v08b") && !assignedRoles.has("v08")) {

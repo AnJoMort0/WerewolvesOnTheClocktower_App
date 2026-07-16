@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { assignRoles, EVIL_ROLES, ROLES, isUniqueRole, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, type RoleId } from "@/lib/roles";
+import { assignRoles, EVIL_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
 import { LanguageContext, getEffectLabel, getRoleLabel, getScripts, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
@@ -68,6 +68,7 @@ import {
   parsePlayerCharacterMetadata,
   type ObjectiveEffectId,
 } from "@/lib/playerCharacter";
+import { ESSENTIAL_ROLES, getDuplicateUniqueRoles } from "@/lib/roleValidation";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
 import imunityIcon from "@/assets/icons/imunity_full.png";
@@ -308,7 +309,6 @@ function pruneOldGMSnapshots() {
   }
 }
 
-const ESSENTIAL_ROLES: RoleId[] = ["e02", "e03", "e04"];
 const POISON_DRAG_ROLE: RoleId = "e02";
 const KILL_DRAG_ROLE: RoleId = "e01";
 const SHAMAN_ROLE: RoleId = "e03";
@@ -376,11 +376,6 @@ const SOURCE_SCOPED_EFFECTS = new Set<StatusEffect>([
   "dug_up_mime",
 ]);
 const NIGHT_START_CLEARED_EFFECTS: StatusEffect[] = ["vote_against", "vote_double", "vote_revoked"];
-
-function getExpectedWerewolfCount(playerCount: number): number {
-  if (playerCount < 12) return 2;
-  return Math.floor(playerCount / 4);
-}
 
 const GMRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -767,21 +762,10 @@ const GMRoom = () => {
     return false;
   }, [effectiveRoleAssignments, permanentlyDead]);
 
-  const duplicateRoles = useMemo(() => {
-    const counts: Record<string, number> = {};
-    Object.values(roleAssignments).forEach((roleId) => {
-      counts[roleId] = (counts[roleId] || 0) + 1;
-    });
-    const dupes = new Set<RoleId>();
-    Object.entries(counts).forEach(([roleId, count]) => {
-      if (count > 1 && isUniqueRole(roleId as RoleId)) {
-        if (roleId === "l03" && count <= 2) return;
-        if (roleId === "l04" && count <= 3) return;
-        dupes.add(roleId as RoleId);
-      }
-    });
-    return dupes;
-  }, [roleAssignments]);
+  const duplicateRoles = useMemo(
+    () => getDuplicateUniqueRoles(Object.values(roleAssignments)),
+    [roleAssignments],
+  );
 
   const validationWarnings = useMemo(() => {
     if (!rolesAssigned) return [];

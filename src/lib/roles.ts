@@ -175,14 +175,14 @@ const ADVANCED_ROLES: RoleId[] = ["a01", "a02", "a03", "a04", "a05", "a06", "as0
 const OTHER_UNIQUE: RoleId[] = ["m04", "m05", "s01", "f01", "f02"];
 const LAME_SINGLES: RoleId[] = ["l02", "l05", "l06"];
 
-function getWerewolfCount(playerCount: number): number {
+export function getExpectedWerewolfCount(playerCount: number): number {
   // 1 werewolf per 4 players; under 12 players, always exactly 2 wolves.
   if (playerCount < 12) return 2;
   return Math.floor(playerCount / 4);
 }
 
 function getWerewolfRoles(playerCount: number): RoleId[] {
-  const wwCount = getWerewolfCount(playerCount);
+  const wwCount = getExpectedWerewolfCount(playerCount);
   if (playerCount < 12) {
     return Array.from({ length: wwCount }, () => "e01" as RoleId);
   }
