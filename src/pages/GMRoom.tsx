@@ -2767,6 +2767,34 @@ const GMRoom = () => {
     })));
     setSpiderCaughtBySource({});
 
+    const dueMimeWitchPoisonAtDawn = !!mimePlayerId
+      && !!mimeWitchPoison
+      && mimeWitchPoison.nightNumber < nightNumber;
+    setPoisonTargetsBySource((previous) => {
+      let changed = false;
+      const next = { ...previous };
+      for (const [sourcePlayerId, targetPlayerId] of Object.entries(previous)) {
+        if (sourcePlayerId === "manual") continue;
+        const isDueMimeWitchPoison = sourcePlayerId === mimePlayerId
+          && dueMimeWitchPoisonAtDawn
+          && mimeWitchPoison?.targetPlayerId === targetPlayerId;
+        const ownerPlayerId = dogWolfStates[sourcePlayerId]?.ownerPlayerId;
+        const sourceInactive = permanentlyDead.has(sourcePlayerId)
+          || (!!ownerPlayerId && permanentlyDead.has(ownerPlayerId));
+        const sourceRole = isDueMimeWitchPoison
+          ? "a03"
+          : ownerPlayerId
+          ? effectiveRoleAssignments[ownerPlayerId]
+          : abilityRoleAssignments[sourcePlayerId];
+        if (isDueMimeWitchPoison || (sourceInactive && !!sourceRole)) {
+          delete next[sourcePlayerId];
+          changed = true;
+        }
+      }
+      return changed ? next : previous;
+    });
+    if (dueMimeWitchPoisonAtDawn) setMimeWitchPoison(null);
+
     setPermanentlyDead(newPermanentlyDead);
     setPlayerStatuses(newStatuses);
     setNightTargetedPlayerIds(new Set());
@@ -3056,31 +3084,6 @@ const GMRoom = () => {
         newEffects[pid] = cleaned;
       }
     }
-
-    const dueMimeWitchPoisonAtNightStart = !!mimePlayerId
-      && !!mimeWitchPoison
-      && mimeWitchPoison.nightNumber < nightNumber;
-    const isInactivePoisonSource = (sourcePlayerId: string) => {
-      if (sourcePlayerId === "manual") return false;
-      if (newPermanentlyDead.has(sourcePlayerId) || newStatuses[sourcePlayerId] === "dead") return true;
-      const ownerPlayerId = dogWolfStates[sourcePlayerId]?.ownerPlayerId;
-      return !!ownerPlayerId && (newPermanentlyDead.has(ownerPlayerId) || newStatuses[ownerPlayerId] === "dead");
-    };
-    setPoisonTargetsBySource((previous) => {
-      let changed = false;
-      const next = { ...previous };
-      for (const [sourcePlayerId, targetPlayerId] of Object.entries(next)) {
-        const isDueMimeWitchPoison = sourcePlayerId === mimePlayerId
-          && dueMimeWitchPoisonAtNightStart
-          && mimeWitchPoison?.targetPlayerId === targetPlayerId;
-        if (isDueMimeWitchPoison || isInactivePoisonSource(sourcePlayerId)) {
-          delete next[sourcePlayerId];
-          changed = true;
-        }
-      }
-      return changed ? next : previous;
-    });
-    if (dueMimeWitchPoisonAtNightStart) setMimeWitchPoison(null);
 
     setPlayerEffects(newEffects);
 
