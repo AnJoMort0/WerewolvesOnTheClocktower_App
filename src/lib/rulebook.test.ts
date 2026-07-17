@@ -17,6 +17,7 @@ describe("in-app rulebook rendering", () => {
     expect(html).toContain('id="normal-v20"');
     expect(html.match(/id="rulebook-night-script"/g)).toHaveLength(1);
     expect(html).toContain('draggable="false"');
+    expect(html).toContain('href="#e01" draggable="false"');
     expect(html).toContain('data-rulebook-role-image="a02"');
     expect(html).toContain('data-rulebook-skin-select="a02"');
     expect(html).toContain('data-preview-image="');

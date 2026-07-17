@@ -216,6 +216,9 @@
     border-radius: 0.45rem;
     color: #171717;
     text-decoration: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    touch-action: manipulation;
   }
 
   .rulebook-content .rulebook-index-link:hover,

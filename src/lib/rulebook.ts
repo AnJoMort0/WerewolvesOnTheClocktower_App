@@ -198,7 +198,7 @@ function renderCharacterIndex(lang: Language, options: RulebookRenderOptions = {
             : "";
 
           return `
-            <a class="rulebook-index-link ${TEAM_FACTION_CLASS[character.team]}" href="#${escapeAttribute(characterId)}">
+            <a class="rulebook-index-link ${TEAM_FACTION_CLASS[character.team]}" href="#${escapeAttribute(characterId)}" draggable="false">
               ${imageHtml}
               <span class="rulebook-index-id">${escapeHtml(characterId)}</span>
               <strong>${renderInline(character.name[lang])}</strong>

@@ -21,6 +21,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 * [x] In the rulebook the images are draggable which makes it super hard to scroll up/down on mobile devices
   <!-- Codex 2026-07-17: Rulebook card and index images now render as non-draggable and opt out of webkit image dragging so mobile scroll gestures do not grab the cards. -->
+  <!-- Codex 2026-07-17: Follow-up: quick-list shortcut links also render as non-draggable and opt out of link dragging. -->
 
 ## Fixes
 
