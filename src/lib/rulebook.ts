@@ -194,7 +194,7 @@ function renderCharacterIndex(lang: Language, options: RulebookRenderOptions = {
           const character = RULEBOOK_CHARACTERS[characterId];
           const image = roleImage(characterId, options);
           const imageHtml = image
-            ? `<img src="${escapeAttribute(image)}" alt="${escapeAttribute(roleAlt(character, lang))}" loading="lazy" />`
+            ? `<img src="${escapeAttribute(image)}" alt="${escapeAttribute(roleAlt(character, lang))}" loading="lazy" draggable="false" />`
             : "";
 
           return `
@@ -251,7 +251,7 @@ function renderCharacterTables(lang: Language, options: RulebookRenderOptions = 
 function renderCharacterRow(character: RulebookCharacter, lang: Language, options: RulebookRenderOptions = {}): string {
   const image = roleImage(character.id, options);
   const imageHtml = image
-    ? `<img src="${escapeAttribute(image)}" alt="${escapeAttribute(roleAlt(character, lang))}" loading="lazy" />${renderSkinPreviewSelect(character.id, lang, options)}`
+    ? `<img src="${escapeAttribute(image)}" alt="${escapeAttribute(roleAlt(character, lang))}" loading="lazy" draggable="false" data-rulebook-role-image="${escapeAttribute(character.id)}" />${renderSkinPreviewSelect(character.id, lang, options)}`
     : "";
   const detailsHtml = character.details
     .map((detail) => {
@@ -295,7 +295,7 @@ function renderSkinPreviewSelect(characterId: RulebookCharacterId, lang: Languag
       <span>Skin</span>
       <select data-rulebook-skin-select="${escapeAttribute(characterId)}">
         ${skinOptions.map((skinOption) => `
-          <option value="${escapeAttribute(skinOption.value)}"${skinOption.value === value ? " selected" : ""}>
+          <option value="${escapeAttribute(skinOption.value)}" data-preview-image="${escapeAttribute(resolveRulebookRoleImage(roleId, options.skinPackId ?? "default", skinOption.value).src)}"${skinOption.value === value ? " selected" : ""}>
             ${renderInline(skinOption.label)}
           </option>
         `).join("")}

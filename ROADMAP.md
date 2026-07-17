@@ -19,7 +19,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] 
+* [x] In the rulebook the images are draggable which makes it super hard to scroll up/down on mobile devices
+  <!-- Codex 2026-07-17: Rulebook card and index images now render as non-draggable and opt out of webkit image dragging so mobile scroll gestures do not grab the cards. -->
 
 ## Fixes
 
@@ -32,7 +33,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 ## Additions
 
 * [x] Add a skinpack system:
-  <!-- Codex 2026-07-17: Added local per-device skinpack selection, Vite-glob asset discovery for skin pack folders, seasonal date resolution, rulebook previews, and scoped dynamic flexible skins. Dynamic skins are contextual objective art and remain limited to the player's own role card plus GM circle/list; seasonal role skins and Thiercelieux role skins take priority when present. Portuguese label uses "Aldeia Velha / Thiercelieux" based on the Portuguese edition name. -->
+  <!-- Codex 2026-07-17: Added local per-device skinpack selection, Vite-glob asset discovery for skin pack folders, seasonal date resolution, rulebook previews, and scoped dynamic flexible skins. Dynamic skins are contextual objective art and remain limited to the player's own role card plus GM circle/list; seasonal role skins and Thiercelieux role skins take priority when present. Portuguese label now uses only "Aldeia Velha"; the global selector is a fixed SKINS dropdown button with card icons only inside the menu, and rulebook preview dropdowns use native generated-HTML event handling. -->
   * [x] Each user controls which skinpack their device uses
   * [x] The skinpack inpacts everytime an character card is shown, player role, rulebook, etc.
   * [x] The players can choose their skinpack from a dropdown menu accessible in everypage, including in the rulebook

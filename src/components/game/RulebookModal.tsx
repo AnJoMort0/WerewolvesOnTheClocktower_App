@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { ArrowUp, List } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { t, type Language } from "@/lib/i18n";
 import type { RoleId } from "@/lib/roles";
 import { useSkinPack } from "@/lib/skinPackContext";
 import type { RulebookSkinPreviewValue } from "@/lib/skinPacks";
+import { handleRulebookSkinPreviewChange } from "@/lib/rulebookSkinPreview";
 import { RULEBOOK_CHARACTERS, RULEBOOK_TEXT, type RulebookCharacterId } from "@/lib/rulebookContent";
 
 interface RulebookModalProps {
@@ -63,6 +64,19 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
     return () => window.cancelAnimationFrame(frame);
   }, [html, open, pendingScroll, scrollToTarget]);
 
+  useEffect(() => {
+    if (!open) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    const handleChange = (event: Event) => {
+      handleRulebookSkinPreviewChange(event, scroller, setSkinPreviewOverrides);
+    };
+
+    scroller.addEventListener("change", handleChange);
+    return () => scroller.removeEventListener("change", handleChange);
+  }, [open]);
+
   const handleArticleClick = (event: MouseEvent<HTMLElement>) => {
     const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[href^='#']");
     if (!link) return;
@@ -71,20 +85,6 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
     if (!targetId) return;
     event.preventDefault();
     scrollToTarget(targetId);
-  };
-
-  const handleArticleChange = (event: ChangeEvent<HTMLElement>) => {
-    const select = (event.target as HTMLElement).closest<HTMLSelectElement>("select[data-rulebook-skin-select]");
-    if (!select) return;
-    const characterId = select.dataset.rulebookSkinSelect as RulebookCharacterId | undefined;
-    if (!characterId || !(characterId in RULEBOOK_CHARACTERS)) return;
-    const value = select.value as RulebookSkinPreviewValue;
-    setSkinPreviewOverrides((current) => {
-      const next = { ...current };
-      if (value === "device") delete next[characterId];
-      else next[characterId] = value;
-      return next;
-    });
   };
 
   const handleShowAllCharacters = () => {
@@ -124,7 +124,6 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
           <article
             className="rulebook-content mx-auto max-w-6xl py-4"
             onClick={handleArticleClick}
-            onChange={handleArticleChange}
             dangerouslySetInnerHTML={{ __html: html }}
           />
         </div>

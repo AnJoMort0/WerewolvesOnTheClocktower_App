@@ -84,15 +84,15 @@ for (const [path, src] of Object.entries(SKIN_PACK_IMAGE_MODULES)) {
 
 const SKIN_PACK_LABELS: Record<SkinPackId, Record<Language, string>> = {
   seasonal: {
-    pt: "Default (com sazonais)",
+    pt: "Padrão (com sazonais)",
     fr: "Défaut (saisonnier)",
   },
   default: {
-    pt: "Default",
+    pt: "Padrão",
     fr: "Défaut",
   },
   thiercelieux: {
-    pt: "Aldeia Velha / Thiercelieux",
+    pt: "Aldeia Velha",
     fr: "Thiercelieux",
   },
 };

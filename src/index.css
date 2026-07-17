@@ -232,6 +232,8 @@
     border-radius: 0.28rem;
     border: 1px solid rgb(0 0 0 / 0.32);
     background: rgb(0 0 0 / 0.16);
+    user-select: none;
+    -webkit-user-drag: none;
   }
 
   .rulebook-content .rulebook-index-link strong {
@@ -361,31 +363,63 @@
     border-radius: 0.45rem;
     border: 1px solid rgb(0 0 0 / 0.35);
     background: rgb(0 0 0 / 0.22);
+    user-select: none;
+    -webkit-user-drag: none;
   }
 
   .rulebook-content .rulebook-skin-preview {
-    display: grid;
-    gap: 0.2rem;
-    margin-top: 0.45rem;
-    color: #1b1b1b;
+    position: relative;
+    display: inline-grid;
+    width: 130px;
+    gap: 0.22rem;
+    margin-top: 0.5rem;
+    color: rgb(0 0 0 / 0.78);
     font-family: 'Cinzel', serif;
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     font-weight: 800;
     letter-spacing: 0;
-    text-align: left;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .rulebook-content .rulebook-skin-preview::after {
+    content: "v";
+    position: absolute;
+    right: 0.48rem;
+    bottom: 0.38rem;
+    color: #5a3d10;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    font-weight: 900;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .rulebook-content .rulebook-skin-preview span {
+    color: rgb(0 0 0 / 0.72);
   }
 
   .rulebook-content .rulebook-skin-preview select {
+    appearance: none;
     width: 130px;
     max-width: 100%;
-    min-height: 1.85rem;
-    border: 1px solid rgb(0 0 0 / 0.28);
+    min-height: 1.95rem;
+    padding: 0.22rem 1.35rem 0.22rem 0.5rem;
+    border: 1px solid rgb(71 47 12 / 0.55);
     border-radius: 0.35rem;
-    background: rgb(255 255 255 / 0.72);
+    background: linear-gradient(180deg, #fff4c9 0%, #eed37d 100%);
     color: #171717;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1.15;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55);
+    cursor: pointer;
+  }
+
+  .rulebook-content .rulebook-skin-preview select:focus-visible {
+    outline: 2px solid hsl(var(--gold));
+    outline-offset: 2px;
   }
 
   .rulebook-content .role-text-cell {
@@ -501,6 +535,12 @@
 
     .rulebook-content .rulebook-skin-preview select {
       width: 96px;
+      font-size: 0.6rem;
+    }
+
+    .rulebook-content .rulebook-skin-preview {
+      width: 96px;
+      font-size: 0.58rem;
     }
 
     .rulebook-content .role-text-cell {

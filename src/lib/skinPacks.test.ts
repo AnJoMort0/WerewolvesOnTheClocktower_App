@@ -4,6 +4,7 @@ import {
   getActiveSeasonalEvents,
   getDefaultSkinPackForPath,
   getRulebookSkinOptions,
+  getSkinPackLabel,
   resolveRoleImage,
 } from "@/lib/skinPacks";
 
@@ -13,6 +14,12 @@ describe("skin packs", () => {
     expect(getDefaultSkinPackForPath("/host/abc")).toBe("default");
     expect(getDefaultSkinPackForPath("/play/player-1")).toBe("seasonal");
     expect(getDefaultSkinPackForPath("/rulebook")).toBe("seasonal");
+  });
+
+  it("translates skinpack labels", () => {
+    expect(getSkinPackLabel("default", "pt")).toBe("Padrão");
+    expect(getSkinPackLabel("seasonal", "fr")).toBe("Défaut (saisonnier)");
+    expect(getSkinPackLabel("thiercelieux", "pt")).toBe("Aldeia Velha");
   });
 
   it("detects seasonal windows with expected overlap priority", () => {

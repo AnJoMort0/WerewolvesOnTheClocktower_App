@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { X } from "lucide-react";
+import { Shirt, X } from "lucide-react";
 import {
   SKIN_PACK_ORDER,
   getActiveSeasonalEvents,
+  getDefaultSkinPackForPath,
   getSkinPackIcon,
   getSkinPackLabel,
   hasActiveSeasonalSkins,
@@ -16,19 +17,18 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 
 const NOTICE_TEXT: Record<Language, { title: string; body: string; dismiss: string; selector: string }> = {
   pt: {
     title: "Skin sazonal",
-    body: "Esta é uma skin sazonal, não uma carta diferente. Podes mudar as skins no canto inferior esquerdo.",
+    body: "Esta é uma skin sazonal, não uma carta diferente. Podes mudar as skins no botão SKINS.",
     dismiss: "Fechar aviso de skin sazonal",
     selector: "Escolher skinpack",
   },
   fr: {
     title: "Skin saisonnier",
-    body: "Ceci est un skin saisonnier, pas une carte différente. Tu peux changer les skins en bas à gauche.",
+    body: "Ceci est un skin saisonnier, pas une carte différente. Tu peux changer les skins avec le bouton SKINS.",
     dismiss: "Fermer l'avertissement de skin saisonnier",
     selector: "Choisir le skinpack",
   },
@@ -51,6 +51,9 @@ function getNoticeScope(pathname: string): string {
 export function SkinPackChrome() {
   const { skinPackId, setSkinPackId } = useSkinPack();
   const [language, setLanguage] = useState<Language>(() => getPreferredLanguage());
+  const location = useLocation();
+  const defaultSkinPackId = getDefaultSkinPackForPath(location.pathname);
+  const triggerLabel = skinPackId === defaultSkinPackId ? "SKINS" : getSkinPackLabel(skinPackId, language);
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
@@ -66,18 +69,12 @@ export function SkinPackChrome() {
       <div className="fixed bottom-4 left-4 z-40">
         <Select value={skinPackId} onValueChange={(value) => setSkinPackId(value as SkinPackId)}>
           <SelectTrigger
-            className="h-12 w-12 rounded-full border-primary/50 bg-card/95 p-1 shadow-lg backdrop-blur [&>svg]:hidden"
+            className="h-11 w-auto min-w-[7.25rem] max-w-[calc(100vw-2rem)] gap-2 rounded-md border-primary/50 bg-card/95 px-3 py-2 font-display text-xs font-semibold text-foreground shadow-lg backdrop-blur"
             aria-label={NOTICE_TEXT[language].selector}
             title={NOTICE_TEXT[language].selector}
           >
-            <img
-              src={getSkinPackIcon(skinPackId)}
-              alt=""
-              className="h-full w-full rounded-full object-cover"
-            />
-            <span className="sr-only">
-              <SelectValue />
-            </span>
+            <Shirt className="h-4 w-4 shrink-0 text-amber-300" />
+            <span className="min-w-0 truncate">{triggerLabel}</span>
           </SelectTrigger>
           <SelectContent align="start" className="min-w-[15rem]">
             {SKIN_PACK_ORDER.map((id) => (
