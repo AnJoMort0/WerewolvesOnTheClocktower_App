@@ -286,7 +286,7 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language, option
 function renderSkinPreviewSelect(characterId: RulebookCharacterId, lang: Language, options: RulebookRenderOptions): string {
   if (!(characterId in ROLES)) return "";
   const roleId = characterId as RoleId;
-  const skinOptions = getRulebookSkinOptions(roleId, lang);
+  const skinOptions = getRulebookSkinOptions(roleId, lang, options.skinPackId ?? "default");
   if (skinOptions.length === 0) return "";
   const value = options.skinPreviewOverrides?.[characterId] ?? "device";
 

@@ -207,6 +207,7 @@ export function resolveRulebookRoleImage(
 export function getRulebookSkinOptions(
   roleId: RoleId,
   language: Language,
+  skinPackId: SkinPackId = "default",
 ): Array<{ value: RulebookSkinPreviewValue; label: string }> {
   const seasonalOptions = SEASONAL_EVENT_ORDER
     .filter((eventId) => !!seasonalImages[eventId][roleId])
@@ -222,16 +223,20 @@ export function getRulebookSkinOptions(
   const hasThiercelieux = !!thiercelieuxImages[roleId];
   const alternatives = [
     ...seasonalOptions,
-    ...(hasThiercelieux ? [{ value: "thiercelieux" as RulebookSkinPreviewValue, label: SKIN_PACK_LABELS.thiercelieux[language] }] : []),
+    ...(hasThiercelieux && skinPackId !== "thiercelieux"
+      ? [{ value: "thiercelieux" as RulebookSkinPreviewValue, label: SKIN_PACK_LABELS.thiercelieux[language] }]
+      : []),
     ...flexibleOptions,
   ];
 
-  if (alternatives.length === 0) return [];
-  return [
-    { value: "device", label: language === "fr" ? "Skin actuelle" : "Skin atual" },
-    { value: "default", label: SKIN_PACK_LABELS.default[language] },
+  const options = [
+    { value: "device", label: SKIN_PACK_LABELS[skinPackId][language] },
+    ...(skinPackId === "default"
+      ? []
+      : [{ value: "default" as RulebookSkinPreviewValue, label: SKIN_PACK_LABELS.default[language] }]),
     ...alternatives,
   ];
+  return options.length > 1 ? options : [];
 }
 
 function resolveFlexibleVariant(

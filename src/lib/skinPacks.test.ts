@@ -47,11 +47,22 @@ describe("skin packs", () => {
   });
 
   it("offers rulebook previews for static, seasonal, and flexible alternatives", () => {
-    const options = getRulebookSkinOptions("a02", "pt").map((option) => option.value);
+    const options = getRulebookSkinOptions("a02", "pt", "seasonal").map((option) => option.value);
     expect(options).toContain("default");
     expect(options).toContain("thiercelieux");
     expect(options).toContain("dynamic:good");
     expect(options).toContain("dynamic:evil");
     expect(options).toContain("dynamic:solo");
+  });
+
+  it("names the rulebook current-skin option after the active skinpack", () => {
+    const defaultOptions = getRulebookSkinOptions("a02", "pt", "default");
+    expect(defaultOptions[0]).toEqual({ value: "device", label: "Padrão" });
+    expect(defaultOptions.map((option) => option.value)).not.toContain("default");
+
+    const thiercelieuxOptions = getRulebookSkinOptions("a02", "pt", "thiercelieux");
+    expect(thiercelieuxOptions[0]).toEqual({ value: "device", label: "Aldeia Velha" });
+    expect(thiercelieuxOptions.map((option) => option.value)).toContain("default");
+    expect(thiercelieuxOptions.map((option) => option.value)).not.toContain("thiercelieux");
   });
 });

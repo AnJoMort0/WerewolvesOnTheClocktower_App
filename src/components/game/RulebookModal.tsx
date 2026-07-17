@@ -21,6 +21,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
   const [viewRoleId, setViewRoleId] = useState<RulebookCharacterId | null>(roleId);
   const [pendingScroll, setPendingScroll] = useState<"top" | "summary" | null>(null);
   const [skinPreviewOverrides, setSkinPreviewOverrides] = useState<Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>>({});
+  const [articleElement, setArticleElement] = useState<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { skinPackId } = useSkinPack();
   const html = useMemo(
@@ -65,17 +66,15 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
   }, [html, open, pendingScroll, scrollToTarget]);
 
   useEffect(() => {
-    if (!open) return;
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
+    if (!open || !articleElement) return;
 
     const handleChange = (event: Event) => {
-      handleRulebookSkinPreviewChange(event, scroller, setSkinPreviewOverrides);
+      handleRulebookSkinPreviewChange(event, articleElement, setSkinPreviewOverrides);
     };
 
-    scroller.addEventListener("change", handleChange);
-    return () => scroller.removeEventListener("change", handleChange);
-  }, [open]);
+    articleElement.addEventListener("change", handleChange);
+    return () => articleElement.removeEventListener("change", handleChange);
+  }, [articleElement, open]);
 
   const handleArticleClick = (event: MouseEvent<HTMLElement>) => {
     const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[href^='#']");
@@ -122,6 +121,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
         </DialogHeader>
         <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
           <article
+            ref={setArticleElement}
             className="rulebook-content mx-auto max-w-6xl py-4"
             onClick={handleArticleClick}
             dangerouslySetInnerHTML={{ __html: html }}
