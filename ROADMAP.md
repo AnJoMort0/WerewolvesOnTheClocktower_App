@@ -19,9 +19,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [x] In the rulebook the images are draggable which makes it super hard to scroll up/down on mobile devices
-  <!-- Codex 2026-07-17: Rulebook card and index images now render as non-draggable and opt out of webkit image dragging so mobile scroll gestures do not grab the cards. -->
-  <!-- Codex 2026-07-17: Follow-up: quick-list shortcut links also render as non-draggable and opt out of link dragging. -->
+* [ ] 
 
 ## Fixes
 
@@ -33,37 +31,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [x] Add a skinpack system:
-  <!-- Codex 2026-07-17: Added local per-device skinpack selection, Vite-glob asset discovery for skin pack folders, seasonal date resolution, rulebook previews, and scoped dynamic flexible skins. Dynamic skins are contextual objective art and remain limited to the player's own role card plus GM circle/list; seasonal role skins and Thiercelieux role skins take priority when present. Portuguese label now uses only "Aldeia Velha"; the global selector is a fixed SKINS dropdown button with card icons only inside the menu, and rulebook preview dropdowns use native generated-HTML event handling. -->
-  * [x] Each user controls which skinpack their device uses
-  * [x] The skinpack inpacts everytime an character card is shown, player role, rulebook, etc.
-  * [x] The players can choose their skinpack from a dropdown menu accessible in everypage, including in the rulebook
-  * [x] Moreover, in the rulebook, every character that has an alternative skin has a dropdown menu to (as long as that page is open, see an alternative skin)
-  * [x] When a skinpack is selected but a card has no skins in that pack, the default asset is used
-  * [x] For the dropdown menu, maybe using a card as an icon to represent the skinpack would be good. Use e04.
-  * [x] The choices for now are
-    * [x] Default (with seasonals)
-      * [x] e04_halloween for the dropdown image
-      * [x] This is the default for players devices
-      * [x] Seasonals change some roles only around certain times of the year
-        * [x] Carnival during the week before and after Shrove Tuesday
-        * [x] Christmas during Advent up to the 6th of January (included)
-        * [x] Easter during easter time, from Holy Week to Pentecost (included)
-        * [x] Halloween, during the week before and after Halloween
-        * [x] New Years, during the week before and after 1st January
-      * [x] When a player gets or sees a card with a seasonal skin, a visible box on top of the page warns them that "This is a seasonal skin, not a different card. You can change the skins on [top righ corner or wherever it is]". You can use "skin" for Portuguese and French, I think that's the most commonly used name, if there's another more commonly used term, use tha instead. This box has a (x) to close it permanenty during this game
-    * [x] Default
-      * [x] Default e04 for the icon
-      * [x] This the default for the GM
-      * [x] All the default assets
-    * [x] Thiercelieux/Miller's Hollow/Find the most used name for EU Portuguese
-      * [x] e04.thiercelieux for the icon
-      * [x] Replaces all the roles with the cards in the Thiercelieux folder
-  * [x] Since changing skins are being added, we also designed dynamic skins for the characters that can change objectives
-    * [x] They can be found in the dynamic_flexibles folder
-    * [x] These dynamic skins should only be used in the player's assigned role in their own device, and in the GM's player circle and player list, nowhere else, specifically not in modals, since no outside player is supposed to know the objectives of the flexible players in game
-    * [x] Seasonals and Thiercelieux (and future skinpacks) overide these flexible characters
-    * [x] These flexible skins also appear as options to see under the character's cards in the rulebook
+* [ ] Let's start adding player side interactions with the app (the point is that some actions rely less on needing to hide to tell things to the GM or complex GM interactions, so that the person can be less suspisious)
+  * [ ] v10 : In the player's device, in the character's screen, there's an "Assassinate" button with a lucide icon. When the player clicks the button, if he start has uses left, he enters killing mode, the screen changes for the player's circle, change of colour to indicate special screen, title indicating they are in assassination mode, the player can then click a person in the circle and click confirm to kill them, they can also just "exit" to close the killing mode. Once another player is selected, the GM receives a notification (in the normal GM screen if the GM is in hidden mode, it waits until it closes that mode) to confirm that he read that a player became redX by the powers of the v10
   
 ## Future Plans
 
