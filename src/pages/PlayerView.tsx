@@ -582,7 +582,7 @@ const PlayerView = () => {
         setPlayerActionState(latestState);
         setAssassinationMode(false);
         setAssassinationTargetId(null);
-        setAssassinationMessage(t("assassinationRequestPending", language));
+        setAssassinationMessage(null);
         return;
       }
 
@@ -613,7 +613,7 @@ const PlayerView = () => {
       setPlayerActionState(nextState);
       setAssassinationMode(false);
       setAssassinationTargetId(null);
-      setAssassinationMessage(t("assassinationRequestSent", language));
+      setAssassinationMessage(null);
     } finally {
       setAssassinationSubmitting(false);
     }

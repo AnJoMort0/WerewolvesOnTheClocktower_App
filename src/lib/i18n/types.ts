@@ -179,7 +179,6 @@ export interface UIStrings {
   assassinationChooseTarget: string;
   assassinationConfirm: string;
   assassinationExit: string;
-  assassinationRequestSent: string;
   assassinationRequestPending: string;
   assassinationRequestError: string;
   assassinationUnavailable: string;

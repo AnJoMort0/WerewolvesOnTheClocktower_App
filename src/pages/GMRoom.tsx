@@ -499,6 +499,7 @@ const GMRoom = () => {
   const pendingGameActionLogSourcesRef = useRef<Map<string, string>>(new Map());
   const suppressedPoisonLogAddsRef = useRef<Set<string>>(new Set());
   const suppressedEffectLogAddsRef = useRef<Set<string>>(new Set());
+  const resolvedPlayerActionRequestIdsRef = useRef<Set<string>>(new Set());
   const gameLogDiffReadyRef = useRef(false);
   const previousGameLogStateRef = useRef<{
     playerStatuses: Record<string, PlayerStatus>;
@@ -694,15 +695,37 @@ const GMRoom = () => {
     return uses;
   }, [abilityRoleAssignments, independentPowerStates, mimeMechanicalRole, mimePlayerId, paranoidCharges, roleAssignments]);
 
+  const pruneResolvedPlayerActionState = useCallback((state: PlayerActionState): PlayerActionState => {
+    const requests = state.requests.filter((request) => {
+      if (resolvedPlayerActionRequestIdsRef.current.has(request.id)) return false;
+      if (request.kind === "v10-assassinate") {
+        const targetStatus = playerStatuses[request.targetPlayerId];
+        return targetStatus !== "dead-this-night"
+          && targetStatus !== "dead"
+          && !permanentlyDead.has(request.targetPlayerId);
+      }
+      return true;
+    });
+    return requests.length === state.requests.length ? state : { ...state, requests };
+  }, [permanentlyDead, playerStatuses]);
+
   useEffect(() => {
     if (!roomId || !gmSnapshotLoaded || room?.status !== "playing") return;
     setPlayerActionState((current) => {
-      const next = upsertPowerUses(current, "v10", v10UsesByPlayerId);
-      if (JSON.stringify(current.powerUses.v10 ?? {}) === JSON.stringify(next.powerUses.v10 ?? {})) return current;
+      const cleaned = pruneResolvedPlayerActionState(current);
+      if (cleaned.requests.length > 0) {
+        if (cleaned !== current) void supabase.from("rooms").update({ player_action_state: cleaned }).eq("id", roomId);
+        return cleaned;
+      }
+      const next = upsertPowerUses(cleaned, "v10", v10UsesByPlayerId);
+      if (
+        cleaned === current
+        && JSON.stringify(current.powerUses.v10 ?? {}) === JSON.stringify(next.powerUses.v10 ?? {})
+      ) return current;
       void supabase.from("rooms").update({ player_action_state: next }).eq("id", roomId);
       return next;
     });
-  }, [gmSnapshotLoaded, room?.status, roomId, v10UsesByPlayerId]);
+  }, [gmSnapshotLoaded, pruneResolvedPlayerActionState, room?.status, roomId, v10UsesByPlayerId]);
 
   useEffect(() => {
     if (!drunkardPlayerId) {
@@ -1569,7 +1592,12 @@ const GMRoom = () => {
         (payload) => {
           const nextRoom = payload.new as Partial<Room>;
           if ("player_action_state" in nextRoom) {
-            setPlayerActionState(normalizePlayerActionState(nextRoom.player_action_state));
+            const incomingState = normalizePlayerActionState(nextRoom.player_action_state);
+            const nextState = pruneResolvedPlayerActionState(incomingState);
+            setPlayerActionState(nextState);
+            if (JSON.stringify(nextState.requests) !== JSON.stringify(incomingState.requests)) {
+              void supabase.from("rooms").update({ player_action_state: nextState }).eq("id", roomId);
+            }
           }
           setRoom((current) => current ? {
             ...current,
@@ -1584,7 +1612,7 @@ const GMRoom = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [roomId]);
+  }, [pruneResolvedPlayerActionState, roomId]);
 
   // Fetch & subscribe to players
   useEffect(() => {
@@ -1744,6 +1772,7 @@ const GMRoom = () => {
     pendingDogRoleChangeLogRef.current = [];
     pendingActorDogFallbackLogRef.current = null;
     pendingRoleChangeSourcesRef.current.clear();
+    resolvedPlayerActionRequestIdsRef.current.clear();
     previousGameLogStateRef.current = null;
     gameLogDiffReadyRef.current = false;
     setAutomaticWinKind(null);
@@ -4378,19 +4407,24 @@ const GMRoom = () => {
   const handleListDragOver = (e: React.DragEvent) => e.preventDefault();
 
   const resolvePlayerActionRequest = useCallback((request: PlayerActionRequest, accepted: boolean) => {
+    resolvedPlayerActionRequestIdsRef.current.add(request.id);
     const actorExists = players.some((player) => player.id === request.actorPlayerId);
     const targetExists = players.some((player) => player.id === request.targetPlayerId);
-    if (accepted && request.kind === "v10-assassinate" && actorExists && targetExists) {
+    const targetAlreadyKilled = playerStatuses[request.targetPlayerId] === "dead-this-night"
+      || playerStatuses[request.targetPlayerId] === "dead"
+      || permanentlyDead.has(request.targetPlayerId);
+    if (accepted && request.kind === "v10-assassinate" && actorExists && targetExists && !targetAlreadyKilled) {
       handleDragAction("role-v10", request.targetPlayerId, request.actorPlayerId);
     }
 
     setPlayerActionState((current) => {
-      let next = removePlayerActionRequest(current, request.id);
+      let next = removePlayerActionRequest(pruneResolvedPlayerActionState(current), request.id);
       if (
         accepted
         && request.kind === "v10-assassinate"
         && actorExists
         && targetExists
+        && !targetAlreadyKilled
         && !(request.actorPlayerId === mimePlayerId && mimeMechanicalRole === "v10")
         && v10UsesByPlayerId[request.actorPlayerId] !== undefined
       ) {
@@ -4402,7 +4436,7 @@ const GMRoom = () => {
       if (roomId) void supabase.from("rooms").update({ player_action_state: next }).eq("id", roomId);
       return next;
     });
-  }, [handleDragAction, mimeMechanicalRole, mimePlayerId, players, roomId, v10UsesByPlayerId]);
+  }, [handleDragAction, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerStatuses, players, pruneResolvedPlayerActionState, roomId, v10UsesByPlayerId]);
 
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
@@ -5213,8 +5247,8 @@ const GMRoom = () => {
   const roomDisplayLabel = lang === "fr" ? "Écran de salle" : "Ecrã da sala";
   const pendingPlayerActionRequest = useMemo(() => {
     if (hideScreenMode || room?.status !== "playing") return null;
-    return playerActionState.requests.find((request) => request.kind === "v10-assassinate") ?? null;
-  }, [hideScreenMode, playerActionState.requests, room?.status]);
+    return pruneResolvedPlayerActionState(playerActionState).requests.find((request) => request.kind === "v10-assassinate") ?? null;
+  }, [hideScreenMode, playerActionState, pruneResolvedPlayerActionState, room?.status]);
   const pendingPlayerActionActorName = pendingPlayerActionRequest
     ? players.find((player) => player.id === pendingPlayerActionRequest.actorPlayerId)?.name ?? tt("unknown")
     : "";

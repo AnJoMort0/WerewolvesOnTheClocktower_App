@@ -168,7 +168,6 @@ export const fr: Translation = {
     assassinationChooseTarget: "Choisis une victime dans le cercle.",
     assassinationConfirm: "Confirmer",
     assassinationExit: "Quitter",
-    assassinationRequestSent: "Demande envoyée au Maître du Jeu.",
     assassinationRequestPending: "Attends que le Maître du Jeu confirme.",
     assassinationRequestError: "Impossible d'envoyer la demande.",
     assassinationUnavailable: "Ce pouvoir n'est pas disponible maintenant.",
