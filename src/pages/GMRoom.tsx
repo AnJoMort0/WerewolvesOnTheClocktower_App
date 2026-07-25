@@ -4377,19 +4377,32 @@ const GMRoom = () => {
 
   const handleListDragOver = (e: React.DragEvent) => e.preventDefault();
 
-  const acknowledgePlayerActionRequest = useCallback((request: PlayerActionRequest) => {
+  const resolvePlayerActionRequest = useCallback((request: PlayerActionRequest, accepted: boolean) => {
     const actorExists = players.some((player) => player.id === request.actorPlayerId);
     const targetExists = players.some((player) => player.id === request.targetPlayerId);
-    if (request.kind === "v10-assassinate" && actorExists && targetExists) {
+    if (accepted && request.kind === "v10-assassinate" && actorExists && targetExists) {
       handleDragAction("role-v10", request.targetPlayerId, request.actorPlayerId);
     }
 
     setPlayerActionState((current) => {
-      const next = removePlayerActionRequest(current, request.id);
+      let next = removePlayerActionRequest(current, request.id);
+      if (
+        accepted
+        && request.kind === "v10-assassinate"
+        && actorExists
+        && targetExists
+        && !(request.actorPlayerId === mimePlayerId && mimeMechanicalRole === "v10")
+        && v10UsesByPlayerId[request.actorPlayerId] !== undefined
+      ) {
+        next = upsertPowerUses(next, "v10", {
+          ...(next.powerUses.v10 ?? {}),
+          [request.actorPlayerId]: Math.min((next.powerUses.v10?.[request.actorPlayerId] ?? v10UsesByPlayerId[request.actorPlayerId]) + 1, 2),
+        });
+      }
       if (roomId) void supabase.from("rooms").update({ player_action_state: next }).eq("id", roomId);
       return next;
     });
-  }, [handleDragAction, players, roomId]);
+  }, [handleDragAction, mimeMechanicalRole, mimePlayerId, players, roomId, v10UsesByPlayerId]);
 
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
@@ -5304,11 +5317,13 @@ const GMRoom = () => {
       {pendingPlayerActionRequest && (
         <Dialog
           open
-          onOpenChange={(open) => {
-            if (!open) acknowledgePlayerActionRequest(pendingPlayerActionRequest);
-          }}
+          onOpenChange={() => undefined}
         >
-          <DialogContent className="border-destructive/50">
+          <DialogContent
+            className="border-destructive/50 [&>button]:hidden"
+            onEscapeKeyDown={(event) => event.preventDefault()}
+            onPointerDownOutside={(event) => event.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle className="font-display text-2xl text-destructive">
                 {tt("gmPlayerActionTitle")}
@@ -5321,14 +5336,22 @@ const GMRoom = () => {
                 })}
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:space-x-0">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => resolvePlayerActionRequest(pendingPlayerActionRequest, false)}
+                className="font-display"
+              >
+                {tt("gmDenyAction")}
+              </Button>
               <Button
                 type="button"
                 variant="destructive"
-                onClick={() => acknowledgePlayerActionRequest(pendingPlayerActionRequest)}
+                onClick={() => resolvePlayerActionRequest(pendingPlayerActionRequest, true)}
                 className="font-display"
               >
-                {tt("gmAcknowledgeAction")}
+                {tt("gmAcceptAction")}
               </Button>
             </DialogFooter>
           </DialogContent>

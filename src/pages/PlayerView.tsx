@@ -543,6 +543,16 @@ const PlayerView = () => {
     setAssassinationTargetId(null);
   }, [isParanoidPower]);
 
+  const previousPendingV10RequestRef = useRef(pendingV10Request);
+  useEffect(() => {
+    if (previousPendingV10RequestRef.current && !pendingV10Request) {
+      setAssassinationMode(false);
+      setAssassinationTargetId(null);
+      setAssassinationMessage(null);
+    }
+    previousPendingV10RequestRef.current = pendingV10Request;
+  }, [pendingV10Request]);
+
   const sendAssassinationRequest = useCallback(async () => {
     if (!playerId || !currentRoomId || !assassinationTargetId || !isParanoidPower) return;
     if (assassinationTargetId === playerId) return;

@@ -186,7 +186,8 @@ export interface UIStrings {
   assassinationUsesLeft: string;
   gmPlayerActionTitle: string;
   gmV10AssassinationRequest: string;
-  gmAcknowledgeAction: string;
+  gmAcceptAction: string;
+  gmDenyAction: string;
   sessionEnded: string;
   sessionEndedDesc: string;
   backHome: string;
