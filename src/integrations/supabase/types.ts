@@ -71,6 +71,7 @@ export type Database = {
           id: string
           language: string
           last_activity_at: string
+          player_action_state: Json | null
           phase_state: Json | null
           status: string
           timer_defaults: Json
@@ -85,6 +86,7 @@ export type Database = {
           id?: string
           language?: string
           last_activity_at?: string
+          player_action_state?: Json | null
           phase_state?: Json | null
           status?: string
           timer_defaults?: Json
@@ -99,6 +101,7 @@ export type Database = {
           id?: string
           language?: string
           last_activity_at?: string
+          player_action_state?: Json | null
           phase_state?: Json | null
           status?: string
           timer_defaults?: Json

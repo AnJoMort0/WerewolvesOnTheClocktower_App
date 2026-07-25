@@ -15,6 +15,7 @@ import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -70,6 +71,13 @@ import {
   parsePlayerCharacterMetadata,
   type ObjectiveEffectId,
 } from "@/lib/playerCharacter";
+import {
+  normalizePlayerActionState,
+  removePlayerActionRequest,
+  upsertPowerUses,
+  type PlayerActionRequest,
+  type PlayerActionState,
+} from "@/lib/playerActions";
 import { ESSENTIAL_ROLES, getDuplicateUniqueRoles } from "@/lib/roleValidation";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
@@ -123,6 +131,7 @@ type Room = {
   code: string;
   status: string;
   language?: Language;
+  player_action_state?: PlayerActionState | null;
   phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
   timer_state?: TimerSyncState | null;
   timer_defaults?: TimerDefaults | null;
@@ -386,6 +395,7 @@ const GMRoom = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [copied, setCopied] = useState(false);
   const [copiedJoinLink, setCopiedJoinLink] = useState(false);
+  const [playerActionState, setPlayerActionState] = useState<PlayerActionState>(() => normalizePlayerActionState(null));
   const [joinBaseOverride, setJoinBaseOverride] = useState(() => {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(JOIN_BASE_URL_STORAGE_KEY) ?? "";
@@ -669,6 +679,30 @@ const GMRoom = () => {
     }
     return states;
   }, [actorCopiedRole, actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, mimeMechanicalRole, mimePlayerId, mimePowerState]);
+
+  const v10UsesByPlayerId = useMemo(() => {
+    const uses: Record<string, number> = {};
+    for (const [playerId, role] of Object.entries(abilityRoleAssignments)) {
+      if (role !== "v10") continue;
+      if (playerId === mimePlayerId && mimeMechanicalRole === "v10") {
+        uses[playerId] = 0;
+        continue;
+      }
+      uses[playerId] = independentPowerStates[playerId]?.paranoidCharges
+        ?? (roleAssignments[playerId] === "v10" ? paranoidCharges : 0);
+    }
+    return uses;
+  }, [abilityRoleAssignments, independentPowerStates, mimeMechanicalRole, mimePlayerId, paranoidCharges, roleAssignments]);
+
+  useEffect(() => {
+    if (!roomId || !gmSnapshotLoaded || room?.status !== "playing") return;
+    setPlayerActionState((current) => {
+      const next = upsertPowerUses(current, "v10", v10UsesByPlayerId);
+      if (JSON.stringify(current.powerUses.v10 ?? {}) === JSON.stringify(next.powerUses.v10 ?? {})) return current;
+      void supabase.from("rooms").update({ player_action_state: next }).eq("id", roomId);
+      return next;
+    });
+  }, [gmSnapshotLoaded, room?.status, roomId, v10UsesByPlayerId]);
 
   useEffect(() => {
     if (!drunkardPlayerId) {
@@ -1502,12 +1536,13 @@ const GMRoom = () => {
     const fetchRoom = async () => {
       const { data } = await supabase
         .from("rooms")
-        .select("id, code, status, language, phase_state, timer_state, timer_defaults")
+        .select("id, code, status, language, player_action_state, phase_state, timer_state, timer_defaults")
         .eq("id", roomId)
         .single();
       if (data) {
         const fetchedRoom = data as unknown as Room;
         setRoom(fetchedRoom);
+        setPlayerActionState(normalizePlayerActionState(fetchedRoom.player_action_state));
         setTimerDefaults(normalizeTimerDefaults(fetchedRoom.timer_defaults));
         if (fetchedRoom.timer_state) setSyncedTimerState(fetchedRoom.timer_state);
         if (fetchedRoom.phase_state) {
@@ -1522,6 +1557,33 @@ const GMRoom = () => {
       }
     };
     fetchRoom();
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    const channel = supabase
+      .channel(`room-${roomId}-player-actions`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomId}` },
+        (payload) => {
+          const nextRoom = payload.new as Partial<Room>;
+          if ("player_action_state" in nextRoom) {
+            setPlayerActionState(normalizePlayerActionState(nextRoom.player_action_state));
+          }
+          setRoom((current) => current ? {
+            ...current,
+            status: typeof nextRoom.status === "string" ? nextRoom.status : current.status,
+            language: nextRoom.language ?? current.language,
+            player_action_state: "player_action_state" in nextRoom
+              ? nextRoom.player_action_state ?? null
+              : current.player_action_state,
+          } : current);
+        },
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [roomId]);
 
   // Fetch & subscribe to players
@@ -1703,6 +1765,7 @@ const GMRoom = () => {
     setDogWolfStates({});
     setSourcedEffectTargets({});
     setSpiderCaughtBySource({});
+    setPlayerActionState(normalizePlayerActionState(null));
   }, []);
 
   const resetRoom = async () => {
@@ -1721,6 +1784,7 @@ const GMRoom = () => {
       phase_state: null,
       timer_state: null,
       game_over_state: null,
+      player_action_state: null,
     }).eq("id", roomId);
     const results = await Promise.all([...playerUpdates, roomUpdate]);
 
@@ -1731,7 +1795,7 @@ const GMRoom = () => {
 
     clearLocalGameState();
     clearGMSnapshot();
-    setRoom((prev) => (prev ? { ...prev, status: "lobby" } : prev));
+    setRoom((prev) => (prev ? { ...prev, status: "lobby", player_action_state: null } : prev));
     setPlayers((prev) => prev.map((player) => ({ ...player, character: null, is_alive: true, is_ready: false })));
     toast.success(getToast("okRoomReset", lang));
   };
@@ -1742,7 +1806,7 @@ const GMRoom = () => {
     if (!window.confirm(t("endRoomConfirm", lang))) return;
 
     const [roomResult, playersResult] = await Promise.all([
-      supabase.from("rooms").update({ status: "finished" }).eq("id", roomId),
+      supabase.from("rooms").update({ status: "finished", player_action_state: null }).eq("id", roomId),
       supabase.from("players").delete().eq("room_id", roomId),
     ]);
 
@@ -1753,7 +1817,7 @@ const GMRoom = () => {
 
     clearLocalGameState();
     clearGMSnapshot();
-    setRoom((prev) => (prev ? { ...prev, status: "finished" } : prev));
+    setRoom((prev) => (prev ? { ...prev, status: "finished", player_action_state: null } : prev));
     setPlayers([]);
     toast.success(getToast("okRoomEnded", lang));
   };
@@ -4313,6 +4377,20 @@ const GMRoom = () => {
 
   const handleListDragOver = (e: React.DragEvent) => e.preventDefault();
 
+  const acknowledgePlayerActionRequest = useCallback((request: PlayerActionRequest) => {
+    const actorExists = players.some((player) => player.id === request.actorPlayerId);
+    const targetExists = players.some((player) => player.id === request.targetPlayerId);
+    if (request.kind === "v10-assassinate" && actorExists && targetExists) {
+      handleDragAction("role-v10", request.targetPlayerId, request.actorPlayerId);
+    }
+
+    setPlayerActionState((current) => {
+      const next = removePlayerActionRequest(current, request.id);
+      if (roomId) void supabase.from("rooms").update({ player_action_state: next }).eq("id", roomId);
+      return next;
+    });
+  }, [handleDragAction, players, roomId]);
+
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
     const role = abilityRoleAssignments[playerId];
@@ -5120,6 +5198,16 @@ const GMRoom = () => {
   const tt = useCallback((key: Parameters<typeof t>[0]) => t(key, lang), [lang]);
   const gameLogLabel = lang === "fr" ? "Journal de partie" : "Registo do jogo";
   const roomDisplayLabel = lang === "fr" ? "Écran de salle" : "Ecrã da sala";
+  const pendingPlayerActionRequest = useMemo(() => {
+    if (hideScreenMode || room?.status !== "playing") return null;
+    return playerActionState.requests.find((request) => request.kind === "v10-assassinate") ?? null;
+  }, [hideScreenMode, playerActionState.requests, room?.status]);
+  const pendingPlayerActionActorName = pendingPlayerActionRequest
+    ? players.find((player) => player.id === pendingPlayerActionRequest.actorPlayerId)?.name ?? tt("unknown")
+    : "";
+  const pendingPlayerActionTargetName = pendingPlayerActionRequest
+    ? players.find((player) => player.id === pendingPlayerActionRequest.targetPlayerId)?.name ?? tt("unknown")
+    : "";
   const openRulebook = useCallback((roleId: RoleId | null = null) => {
     setRulebookRoleId(roleId);
     setRulebookOpen(true);
@@ -5213,6 +5301,39 @@ const GMRoom = () => {
   return (
     <LanguageContext.Provider value={lang}>
     <div className="min-h-screen p-4">
+      {pendingPlayerActionRequest && (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) acknowledgePlayerActionRequest(pendingPlayerActionRequest);
+          }}
+        >
+          <DialogContent className="border-destructive/50">
+            <DialogHeader>
+              <DialogTitle className="font-display text-2xl text-destructive">
+                {tt("gmPlayerActionTitle")}
+              </DialogTitle>
+              <DialogDescription>
+                {format(tt("gmV10AssassinationRequest"), {
+                  actor: pendingPlayerActionActorName,
+                  target: pendingPlayerActionTargetName,
+                  role: roleLabel("v10"),
+                })}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => acknowledgePlayerActionRequest(pendingPlayerActionRequest)}
+                className="font-display"
+              >
+                {tt("gmAcknowledgeAction")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
       <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 max-w-7xl mx-auto">

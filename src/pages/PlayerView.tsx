@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen } from "lucide-react";
+import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
@@ -21,6 +21,7 @@ import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/
 import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
 import { parsePlayerCharacter, shouldShowActorBadge } from "@/lib/actor";
 import { parsePlayerCharacterMetadata } from "@/lib/playerCharacter";
+import { createPlayerActionRequest, normalizePlayerActionState, type PlayerActionState } from "@/lib/playerActions";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 
@@ -72,6 +73,11 @@ const PlayerView = () => {
   const [mimeCards, setMimeCards] = useState<RevealCard[]>([]);
   const [phaseInfo, setPhaseInfo] = useState<{ phase: "night" | "day" | "tribunal"; number: number } | null>(null);
   const [timerState, setTimerState] = useState<{ phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null>(null);
+  const [playerActionState, setPlayerActionState] = useState<PlayerActionState>(() => normalizePlayerActionState(null));
+  const [assassinationMode, setAssassinationMode] = useState(false);
+  const [assassinationTargetId, setAssassinationTargetId] = useState<string | null>(null);
+  const [assassinationSubmitting, setAssassinationSubmitting] = useState(false);
+  const [assassinationMessage, setAssassinationMessage] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>("pt");
   const [gameOver, setGameOver] = useState<{ kind: WinKind; outcome: "victory" | "defeat" } | null>(null);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
@@ -188,7 +194,7 @@ const PlayerView = () => {
 
       const { data: roomData } = await supabase
         .from("rooms")
-        .select("status, language, phase_state, timer_state, game_over_state")
+        .select("status, language, player_action_state, phase_state, timer_state, game_over_state")
         .eq("id", data.room_id)
         .single();
       if (roomData) {
@@ -199,7 +205,9 @@ const PlayerView = () => {
           phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
           timer_state?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;
           game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat"> } | null;
+          player_action_state?: PlayerActionState | null;
         };
+        setPlayerActionState(normalizePlayerActionState(durable.player_action_state));
         if (durable.phase_state) setPhaseInfo(durable.phase_state);
         if (durable.timer_state) setTimerState(durable.timer_state);
         if (durable.game_over_state?.kind) {
@@ -265,6 +273,9 @@ const PlayerView = () => {
           { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomId}` },
           (payload) => {
             setRoomStatus(payload.new.status);
+            if ("player_action_state" in payload.new) {
+              setPlayerActionState(normalizePlayerActionState(payload.new.player_action_state));
+            }
             if (payload.new.phase_state) setPhaseInfo(payload.new.phase_state);
             if (payload.new.timer_state) setTimerState(payload.new.timer_state);
             const durableGameOver = payload.new.game_over_state as {
@@ -511,6 +522,92 @@ const PlayerView = () => {
   const isSpider = displayRole === "v23";
   const isSpy = displayRole === "f02";
   const isMime = parsedCharacter.baseRole === "a03";
+  const playerIsDead = !!player && !player.is_alive;
+  const currentRoomId = player?.room_id ?? null;
+  const isParanoidPower = displayRole === "v10";
+  const v10HasUnlimitedUses = parsedCharacter.baseRole === "a03" && characterMetadata.mimeCopiedRole === "v10";
+  const pendingV10Request = !!playerId && playerActionState.requests.some((request) => (
+    request.kind === "v10-assassinate" && request.actorPlayerId === playerId
+  ));
+  const v10Uses = playerId ? playerActionState.powerUses.v10?.[playerId] ?? 0 : 0;
+  const v10UsesLeft = Math.max(0, 2 - v10Uses);
+  const canStartAssassination = isParanoidPower
+    && roomStatus === "playing"
+    && !playerIsDead
+    && !pendingV10Request
+    && (v10HasUnlimitedUses || v10UsesLeft > 0);
+
+  useEffect(() => {
+    if (isParanoidPower) return;
+    setAssassinationMode(false);
+    setAssassinationTargetId(null);
+  }, [isParanoidPower]);
+
+  const sendAssassinationRequest = useCallback(async () => {
+    if (!playerId || !currentRoomId || !assassinationTargetId || !isParanoidPower) return;
+    if (assassinationTargetId === playerId) return;
+
+    setAssassinationSubmitting(true);
+    setAssassinationMessage(null);
+
+    try {
+      const { data, error } = await supabase
+        .from("rooms")
+        .select("player_action_state")
+        .eq("id", currentRoomId)
+        .single();
+
+      if (error) {
+        setAssassinationMessage(t("assassinationRequestError", language));
+        return;
+      }
+
+      const latestState = normalizePlayerActionState(
+        (data as { player_action_state?: PlayerActionState | null } | null)?.player_action_state,
+      );
+      const hasPending = latestState.requests.some((request) => (
+        request.kind === "v10-assassinate" && request.actorPlayerId === playerId
+      ));
+      if (hasPending) {
+        setPlayerActionState(latestState);
+        setAssassinationMode(false);
+        setAssassinationTargetId(null);
+        setAssassinationMessage(t("assassinationRequestPending", language));
+        return;
+      }
+
+      const latestUses = latestState.powerUses.v10?.[playerId] ?? v10Uses;
+      if (!v10HasUnlimitedUses && latestUses >= 2) {
+        setPlayerActionState(latestState);
+        setAssassinationMessage(t("assassinationUnavailable", language));
+        return;
+      }
+
+      const nextState: PlayerActionState = {
+        ...latestState,
+        requests: [
+          ...latestState.requests,
+          createPlayerActionRequest("v10-assassinate", playerId, assassinationTargetId),
+        ],
+      };
+      const { error: updateError } = await supabase
+        .from("rooms")
+        .update({ player_action_state: nextState })
+        .eq("id", currentRoomId);
+
+      if (updateError) {
+        setAssassinationMessage(t("assassinationRequestError", language));
+        return;
+      }
+
+      setPlayerActionState(nextState);
+      setAssassinationMode(false);
+      setAssassinationTargetId(null);
+      setAssassinationMessage(t("assassinationRequestSent", language));
+    } finally {
+      setAssassinationSubmitting(false);
+    }
+  }, [assassinationTargetId, currentRoomId, isParanoidPower, language, playerId, v10HasUnlimitedUses, v10Uses]);
 
   if (removed) {
     return (
@@ -539,9 +636,11 @@ const PlayerView = () => {
     );
   }
 
-  const isDead = !player.is_alive;
+  const isDead = playerIsDead;
   const seatedPlayers = roomPlayers.filter((p) => p.seat_position !== null).sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0));
   const totalSlots = seatedPlayers.length || roomPlayers.length;
+  const assassinationPlayers = seatedPlayers.length > 0 ? seatedPlayers : roomPlayers;
+  const assassinationTotalSlots = assassinationPlayers.length || 1;
   const openRulebook = (roleId: RoleId | null = null) => {
     setRulebookRoleId(roleId);
     setRulebookOpen(true);
@@ -620,7 +719,86 @@ const PlayerView = () => {
               </div>
             )}
             <AnimatePresence mode="wait">
-              {hidden ? (
+              {assassinationMode ? (
+                <motion.div
+                  key="assassination-mode"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-4 rounded-2xl border border-destructive/60 bg-destructive/10 p-4 shadow-lg"
+                >
+                  <div className="space-y-1">
+                    <Crosshair className="mx-auto h-8 w-8 text-destructive" />
+                    <h2 className="font-display text-2xl font-bold text-destructive">
+                      {t("assassinationMode", language)}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {t("assassinationChooseTarget", language)}
+                    </p>
+                  </div>
+                  <div className="relative mx-auto" style={{ width: 280, height: 280 }}>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="h-12 w-12 rounded-full border border-destructive/40 bg-destructive/10" />
+                    </div>
+                    {assassinationPlayers.map((p, i) => {
+                      const angle = (2 * Math.PI * i) / assassinationTotalSlots - Math.PI / 2;
+                      const r = 120;
+                      const cx = r * Math.cos(angle) + 140;
+                      const cy = r * Math.sin(angle) + 140;
+                      const isMe = p.id === playerId;
+                      const pDead = !p.is_alive;
+                      const selectable = !isMe && !pDead;
+                      const selected = assassinationTargetId === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          disabled={!selectable}
+                          onClick={() => setAssassinationTargetId(p.id)}
+                          className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-transform ${selectable ? "hover:scale-105" : "cursor-not-allowed opacity-45"}`}
+                          style={{ left: cx, top: cy }}
+                        >
+                          <span className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 ${selected ? "border-destructive bg-destructive/30 shadow-[0_0_18px_hsl(var(--destructive)/0.45)]" : isMe ? "border-primary bg-primary/20" : "border-border/50 bg-card"} ${pDead ? "grayscale" : ""}`}>
+                            <span className="font-display text-xs font-bold">
+                              {p.name.charAt(0).toUpperCase()}
+                            </span>
+                            {pDead && (
+                              <X className="absolute h-6 w-6 text-muted-foreground" strokeWidth={3} />
+                            )}
+                          </span>
+                          <span className={`mt-0.5 max-w-[64px] truncate text-[10px] font-body ${pDead ? "text-muted-foreground/50" : selected ? "text-destructive" : ""}`}>
+                            {p.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        setAssassinationMode(false);
+                        setAssassinationTargetId(null);
+                      }}
+                      className="font-display"
+                    >
+                      {t("assassinationExit", language)}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={!assassinationTargetId || assassinationSubmitting}
+                      onClick={sendAssassinationRequest}
+                      className="font-display"
+                    >
+                      <Crosshair className="mr-2 h-4 w-4" />
+                      {t("assassinationConfirm", language)}
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : hidden ? (
                 <motion.div
                   key="circle-view"
                   initial={{ opacity: 0, rotateY: -90 }}
@@ -784,27 +962,67 @@ const PlayerView = () => {
                   <p className="text-muted-foreground text-sm">
                     {t("keepSecret", language)}
                   </p>
+                  {isParanoidPower && (
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={!canStartAssassination}
+                        onClick={() => {
+                          setAssassinationMode(true);
+                          setAssassinationTargetId(null);
+                          setAssassinationMessage(null);
+                        }}
+                        className="w-full font-display tracking-wider"
+                      >
+                        <Crosshair className="mr-2 h-4 w-4" />
+                        {t("assassinate", language)}
+                        {!v10HasUnlimitedUses && (
+                          <span className="ml-2 text-xs opacity-80">
+                            {format(t("assassinationUsesLeft", language), { n: String(v10UsesLeft) })}
+                          </span>
+                        )}
+                      </Button>
+                      {pendingV10Request && (
+                        <p className="text-xs text-yellow-400">
+                          {t("assassinationRequestPending", language)}
+                        </p>
+                      )}
+                      {!pendingV10Request && !canStartAssassination && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("assassinationUnavailable", language)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {assassinationMessage && (
+                    <p className="text-xs text-muted-foreground">
+                      {assassinationMessage}
+                    </p>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <Button
-              variant="secondary"
-              onClick={() => setHidden(!hidden)}
-              className="w-full font-display tracking-wider"
-            >
-              {hidden ? (
-                <>
-                  <Eye className="h-4 w-4 mr-2" />
-                  {t("showRole", language)}
-                </>
-              ) : (
-                <>
-                  <EyeOff className="h-4 w-4 mr-2" />
-                  {t("hideRole", language)}
-                </>
-              )}
-            </Button>
+            {!assassinationMode && (
+              <Button
+                variant="secondary"
+                onClick={() => setHidden(!hidden)}
+                className="w-full font-display tracking-wider"
+              >
+                {hidden ? (
+                  <>
+                    <Eye className="h-4 w-4 mr-2" />
+                    {t("showRole", language)}
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="h-4 w-4 mr-2" />
+                    {t("hideRole", language)}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </motion.div>

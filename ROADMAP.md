@@ -31,8 +31,9 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] Let's start adding player side interactions with the app (the point is that some actions rely less on needing to hide to tell things to the GM or complex GM interactions, so that the person can be less suspisious)
-  * [ ] v10 : In the player's device, in the character's screen, there's an "Assassinate" button with a lucide icon. When the player clicks the button, if he start has uses left, he enters killing mode, the screen changes for the player's circle, change of colour to indicate special screen, title indicating they are in assassination mode, the player can then click a person in the circle and click confirm to kill them, they can also just "exit" to close the killing mode. Once another player is selected, the GM receives a notification (in the normal GM screen if the GM is in hidden mode, it waits until it closes that mode) to confirm that he read that a player became redX by the powers of the v10
+* [x] Let's start adding player side interactions with the app (the point is that some actions rely less on needing to hide to tell things to the GM or complex GM interactions, so that the person can be less suspisious)
+  * [x] v10 : In the player's device, in the character's screen, there's an "Assassinate" button with a lucide icon. When the player clicks the button, if he start has uses left, he enters killing mode, the screen changes for the player's circle, change of colour to indicate special screen, title indicating they are in assassination mode, the player can then click a person in the circle and click confirm to kill them, they can also just "exit" to close the killing mode. Once another player is selected, the GM receives a notification (in the normal GM screen if the GM is in hidden mode, it waits until it closes that mode) to confirm that he read that a player became redX by the powers of the v10
+    <!-- Codex 2026-07-25: Added persisted player action state, v10 player-side assassination mode, GM-side queued confirmation outside hidden mode, and shared use-count sync so the existing v10 kill logic remains authoritative. -->
   
 ## Future Plans
 
