@@ -19,11 +19,11 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] 
+* [ ] In the character selection screen before sending it to players, the GM player list is little too tight, making it hard to read the player's names.
 
 ## Fixes
 
-* [ ] 
+* [ ] Move the skin selection to be an icon (no text) next to the rulebook icon instead that opens the dropdown. No floating button.
 
 ## Balance Changes
 
@@ -36,11 +36,12 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
     <!-- Codex 2026-07-25: Added persisted player action state, v10 player-side assassination mode, GM-side queued confirmation outside hidden mode, and shared use-count sync so the existing v10 kill logic remains authoritative. -->
     <!-- Codex 2026-07-25: Tweaked the GM notification into explicit accept/deny choices; denying clears the request without spending a use, and player devices now clear the pending message when the GM resolves it. -->
     <!-- Codex 2026-07-26: Hardened the v10 request queue against stale realtime updates, pruned resolved/already-killed requests, and removed the redundant sent-message copy from the player screen. -->
+    <!-- Codex 2026-07-26: Added direct GM-to-player resolution broadcasts plus player-side polling while a v10 request is pending, so mobile devices recover even when a room update is missed. -->
   
 ## Future Plans
 
 * [ ] Adding phone interactions:
-    * [ ] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device screen changes to the player circle and a poison button option appears, when the player clicks that button, he is in poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script.
+  * [ ] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device screen changes to the player circle and a poison button option appears, when the player clicks that button, he is in poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script.
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)
 * [ ] Add an English rulebook and English UI.
 * [ ] Add better role-selection presets for different player counts and play styles (also better balance).

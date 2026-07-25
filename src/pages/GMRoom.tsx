@@ -4406,37 +4406,56 @@ const GMRoom = () => {
 
   const handleListDragOver = (e: React.DragEvent) => e.preventDefault();
 
-  const resolvePlayerActionRequest = useCallback((request: PlayerActionRequest, accepted: boolean) => {
+  const resolvePlayerActionRequest = useCallback(async (request: PlayerActionRequest, accepted: boolean) => {
+    if (resolvedPlayerActionRequestIdsRef.current.has(request.id)) return;
     resolvedPlayerActionRequestIdsRef.current.add(request.id);
     const actorExists = players.some((player) => player.id === request.actorPlayerId);
     const targetExists = players.some((player) => player.id === request.targetPlayerId);
     const targetAlreadyKilled = playerStatuses[request.targetPlayerId] === "dead-this-night"
       || playerStatuses[request.targetPlayerId] === "dead"
       || permanentlyDead.has(request.targetPlayerId);
-    if (accepted && request.kind === "v10-assassinate" && actorExists && targetExists && !targetAlreadyKilled) {
+    const shouldApply = accepted && request.kind === "v10-assassinate" && actorExists && targetExists && !targetAlreadyKilled;
+    const shouldSpendUse = shouldApply
+      && !(request.actorPlayerId === mimePlayerId && mimeMechanicalRole === "v10")
+      && v10UsesByPlayerId[request.actorPlayerId] !== undefined;
+
+    let nextState = removePlayerActionRequest(pruneResolvedPlayerActionState(playerActionState), request.id);
+    const currentUses = nextState.powerUses.v10?.[request.actorPlayerId]
+      ?? v10UsesByPlayerId[request.actorPlayerId]
+      ?? 0;
+    const resolvedUses = shouldSpendUse ? Math.min(currentUses + 1, 2) : currentUses;
+    if (shouldSpendUse) {
+      nextState = upsertPowerUses(nextState, "v10", {
+        ...(nextState.powerUses.v10 ?? {}),
+        [request.actorPlayerId]: resolvedUses,
+      });
+    }
+
+    setPlayerActionState(nextState);
+    if (shouldApply) {
       handleDragAction("role-v10", request.targetPlayerId, request.actorPlayerId);
     }
 
-    setPlayerActionState((current) => {
-      let next = removePlayerActionRequest(pruneResolvedPlayerActionState(current), request.id);
-      if (
-        accepted
-        && request.kind === "v10-assassinate"
-        && actorExists
-        && targetExists
-        && !targetAlreadyKilled
-        && !(request.actorPlayerId === mimePlayerId && mimeMechanicalRole === "v10")
-        && v10UsesByPlayerId[request.actorPlayerId] !== undefined
-      ) {
-        next = upsertPowerUses(next, "v10", {
-          ...(next.powerUses.v10 ?? {}),
-          [request.actorPlayerId]: Math.min((next.powerUses.v10?.[request.actorPlayerId] ?? v10UsesByPlayerId[request.actorPlayerId]) + 1, 2),
-        });
-      }
-      if (roomId) void supabase.from("rooms").update({ player_action_state: next }).eq("id", roomId);
-      return next;
-    });
-  }, [handleDragAction, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerStatuses, players, pruneResolvedPlayerActionState, roomId, v10UsesByPlayerId]);
+    if (!roomId) return;
+    const [, updateResult] = await Promise.all([
+      supabase.channel(`player-actions-${roomId}`).send({
+        type: "broadcast",
+        event: "player-action-resolved",
+        payload: {
+          requestId: request.id,
+          kind: request.kind,
+          actorPlayerId: request.actorPlayerId,
+          accepted,
+          role: "v10",
+          uses: resolvedUses,
+        },
+      }),
+      supabase.from("rooms").update({ player_action_state: nextState }).eq("id", roomId),
+    ]);
+    if (updateResult.error) {
+      toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
+    }
+  }, [handleDragAction, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionState, playerStatuses, players, pruneResolvedPlayerActionState, room?.language, roomId, v10UsesByPlayerId]);
 
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
@@ -5374,7 +5393,7 @@ const GMRoom = () => {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => resolvePlayerActionRequest(pendingPlayerActionRequest, false)}
+                onClick={() => { void resolvePlayerActionRequest(pendingPlayerActionRequest, false); }}
                 className="font-display"
               >
                 {tt("gmDenyAction")}
@@ -5382,7 +5401,7 @@ const GMRoom = () => {
               <Button
                 type="button"
                 variant="destructive"
-                onClick={() => resolvePlayerActionRequest(pendingPlayerActionRequest, true)}
+                onClick={() => { void resolvePlayerActionRequest(pendingPlayerActionRequest, true); }}
                 className="font-display"
               >
                 {tt("gmAcceptAction")}

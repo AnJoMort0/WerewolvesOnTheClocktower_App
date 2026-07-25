@@ -21,7 +21,7 @@ import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/
 import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
 import { parsePlayerCharacter, shouldShowActorBadge } from "@/lib/actor";
 import { parsePlayerCharacterMetadata } from "@/lib/playerCharacter";
-import { createPlayerActionRequest, normalizePlayerActionState, type PlayerActionState } from "@/lib/playerActions";
+import { createPlayerActionRequest, normalizePlayerActionState, upsertPowerUses, type PlayerActionState } from "@/lib/playerActions";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 
@@ -86,7 +86,16 @@ const PlayerView = () => {
   const playerRef = useRef<typeof player>(null);
   const gameOverEventRef = useRef<string | null>(null);
   const previousTimerAlarmStateRef = useRef<TimerAlarmState | null>(null);
+  const resolvedPlayerActionRequestIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => { playerRef.current = player; }, [player]);
+
+  const applyRoomPlayerActionState = useCallback((value: unknown) => {
+    const normalized = normalizePlayerActionState(value);
+    setPlayerActionState({
+      ...normalized,
+      requests: normalized.requests.filter((request) => !resolvedPlayerActionRequestIdsRef.current.has(request.id)),
+    });
+  }, []);
 
   useEffect(() => {
     const unlock = () => {
@@ -207,7 +216,7 @@ const PlayerView = () => {
           game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat"> } | null;
           player_action_state?: PlayerActionState | null;
         };
-        setPlayerActionState(normalizePlayerActionState(durable.player_action_state));
+        applyRoomPlayerActionState(durable.player_action_state);
         if (durable.phase_state) setPhaseInfo(durable.phase_state);
         if (durable.timer_state) setTimerState(durable.timer_state);
         if (durable.game_over_state?.kind) {
@@ -274,7 +283,7 @@ const PlayerView = () => {
           (payload) => {
             setRoomStatus(payload.new.status);
             if ("player_action_state" in payload.new) {
-              setPlayerActionState(normalizePlayerActionState(payload.new.player_action_state));
+              applyRoomPlayerActionState(payload.new.player_action_state);
             }
             if (payload.new.phase_state) setPhaseInfo(payload.new.phase_state);
             if (payload.new.timer_state) setTimerState(payload.new.timer_state);
@@ -428,6 +437,40 @@ const PlayerView = () => {
           setGameOverDismissed(false);
         }).subscribe();
 
+      const playerActionCh = supabase.channel(`player-actions-${roomId}`)
+        .on("broadcast", { event: "player-action-resolved" }, (payload) => {
+          const resolution = payload.payload as {
+            requestId?: string;
+            kind?: string;
+            actorPlayerId?: string;
+            role?: RoleId;
+            uses?: number;
+          };
+          if (resolution.actorPlayerId !== playerId) return;
+          if (typeof resolution.requestId === "string") {
+            resolvedPlayerActionRequestIdsRef.current.add(resolution.requestId);
+          }
+          setPlayerActionState((current) => {
+            let next: PlayerActionState = {
+              ...current,
+              requests: current.requests.filter((request) => (
+                request.id !== resolution.requestId
+                && !(request.kind === resolution.kind && request.actorPlayerId === playerId)
+              )),
+            };
+            if (resolution.role === "v10" && typeof resolution.uses === "number") {
+              next = upsertPowerUses(next, "v10", {
+                ...(next.powerUses.v10 ?? {}),
+                [playerId]: resolution.uses,
+              });
+            }
+            return next;
+          });
+          setAssassinationMode(false);
+          setAssassinationTargetId(null);
+          setAssassinationMessage(null);
+        }).subscribe();
+
       return () => {
         supabase.removeChannel(playerChannel);
         if (roomChannel) supabase.removeChannel(roomChannel);
@@ -442,6 +485,7 @@ const PlayerView = () => {
         supabase.removeChannel(phaseCh);
         supabase.removeChannel(timerCh);
         supabase.removeChannel(gameOverCh);
+        supabase.removeChannel(playerActionCh);
       };
     }
 
@@ -451,7 +495,7 @@ const PlayerView = () => {
       if (playersChannel) supabase.removeChannel(playersChannel);
       if (fortuneTellerChannel) supabase.removeChannel(fortuneTellerChannel);
     };
-  }, [playerId, navigate, player?.room_id]);
+  }, [applyRoomPlayerActionState, playerId, navigate, player?.room_id]);
 
   // Persist hidden state across reloads
   useEffect(() => {
@@ -552,6 +596,28 @@ const PlayerView = () => {
     }
     previousPendingV10RequestRef.current = pendingV10Request;
   }, [pendingV10Request]);
+
+  useEffect(() => {
+    if (!pendingV10Request || !currentRoomId) return;
+    let cancelled = false;
+
+    const refreshPlayerActionState = async () => {
+      const { data } = await supabase
+        .from("rooms")
+        .select("player_action_state")
+        .eq("id", currentRoomId)
+        .single();
+      if (cancelled) return;
+      applyRoomPlayerActionState((data as { player_action_state?: PlayerActionState | null } | null)?.player_action_state);
+    };
+
+    refreshPlayerActionState();
+    const interval = window.setInterval(refreshPlayerActionState, 1500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [applyRoomPlayerActionState, currentRoomId, pendingV10Request]);
 
   const sendAssassinationRequest = useCallback(async () => {
     if (!playerId || !currentRoomId || !assassinationTargetId || !isParanoidPower) return;
