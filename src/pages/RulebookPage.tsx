@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID, RULEBOOK_TOP_ID, isRulebookCharacterId } from "@/lib/rulebook";
 import { t, type Language } from "@/lib/i18n";
 import { useSkinPack } from "@/lib/skinPackContext";
@@ -85,6 +86,9 @@ export default function RulebookPage() {
             {t("backHome", language)}
           </Link>
         </Button>
+        <div className="pr-14 sm:pr-0">
+          <SkinPackSelectButton language={language} />
+        </div>
       </div>
       <article
         ref={articleRef}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Crown, BookOpen } from "lucide-react";
 import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorModal";
+import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import villagerIcon from "@/assets/icons/villager.png";
 import { SUPPORTED_LANGUAGES, getToast, t, type Language } from "@/lib/i18n";
 import { toast } from "sonner";
@@ -141,6 +142,11 @@ const Index = () => {
           <div className="-mt-3">
             <div className="flex flex-wrap items-center justify-center gap-2">
               <CharacterGeneratorButton language={language} />
+              <SkinPackSelectButton
+                language={language}
+                contentAlign="center"
+                className="h-8 w-9 border-transparent bg-transparent shadow-none text-muted-foreground hover:bg-accent hover:text-foreground"
+              />
               <Button
                 type="button"
                 variant="ghost"

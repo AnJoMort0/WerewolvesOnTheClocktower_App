@@ -10,6 +10,7 @@ import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealM
 import { RevealModal, type RevealCard } from "@/components/game/RevealModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
+import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { LanguageContext, format, getRoleLabel, t, type Language, type WinKind } from "@/lib/i18n";
 import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
@@ -77,6 +78,7 @@ const PlayerView = () => {
   const [assassinationMode, setAssassinationMode] = useState(false);
   const [assassinationTargetId, setAssassinationTargetId] = useState<string | null>(null);
   const [assassinationSubmitting, setAssassinationSubmitting] = useState(false);
+  const [fakeAssassinationPending, setFakeAssassinationPending] = useState(false);
   const [assassinationMessage, setAssassinationMessage] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>("pt");
   const [gameOver, setGameOver] = useState<{ kind: WinKind; outcome: "victory" | "defeat" } | null>(null);
@@ -87,7 +89,31 @@ const PlayerView = () => {
   const gameOverEventRef = useRef<string | null>(null);
   const previousTimerAlarmStateRef = useRef<TimerAlarmState | null>(null);
   const resolvedPlayerActionRequestIdsRef = useRef<Set<string>>(new Set());
+  const fakeAssassinationPendingTimeoutRef = useRef<number | null>(null);
   useEffect(() => { playerRef.current = player; }, [player]);
+
+  const clearFakeAssassinationPendingTimer = useCallback(() => {
+    if (fakeAssassinationPendingTimeoutRef.current === null) return;
+    window.clearTimeout(fakeAssassinationPendingTimeoutRef.current);
+    fakeAssassinationPendingTimeoutRef.current = null;
+  }, []);
+
+  const clearFakeAssassinationPending = useCallback(() => {
+    clearFakeAssassinationPendingTimer();
+    setFakeAssassinationPending(false);
+  }, [clearFakeAssassinationPendingTimer]);
+
+  const showFakeAssassinationPending = useCallback(() => {
+    clearFakeAssassinationPendingTimer();
+    setFakeAssassinationPending(true);
+    fakeAssassinationPendingTimeoutRef.current = window.setTimeout(() => {
+      fakeAssassinationPendingTimeoutRef.current = null;
+      setFakeAssassinationPending(false);
+      setAssassinationMessage(null);
+    }, 1800);
+  }, [clearFakeAssassinationPendingTimer]);
+
+  useEffect(() => clearFakeAssassinationPendingTimer, [clearFakeAssassinationPendingTimer]);
 
   const applyRoomPlayerActionState = useCallback((value: unknown) => {
     const normalized = normalizePlayerActionState(value);
@@ -469,6 +495,7 @@ const PlayerView = () => {
           setAssassinationMode(false);
           setAssassinationTargetId(null);
           setAssassinationMessage(null);
+          clearFakeAssassinationPending();
         }).subscribe();
 
       return () => {
@@ -495,7 +522,7 @@ const PlayerView = () => {
       if (playersChannel) supabase.removeChannel(playersChannel);
       if (fortuneTellerChannel) supabase.removeChannel(fortuneTellerChannel);
     };
-  }, [applyRoomPlayerActionState, playerId, navigate, player?.room_id]);
+  }, [applyRoomPlayerActionState, clearFakeAssassinationPending, playerId, navigate, player?.room_id]);
 
   // Persist hidden state across reloads
   useEffect(() => {
@@ -573,19 +600,19 @@ const PlayerView = () => {
   const pendingV10Request = !!playerId && playerActionState.requests.some((request) => (
     request.kind === "v10-assassinate" && request.actorPlayerId === playerId
   ));
+  const visiblePendingV10Request = pendingV10Request || fakeAssassinationPending;
   const v10Uses = playerId ? playerActionState.powerUses.v10?.[playerId] ?? 0 : 0;
-  const v10UsesLeft = Math.max(0, 2 - v10Uses);
   const canStartAssassination = isParanoidPower
     && roomStatus === "playing"
     && !playerIsDead
-    && !pendingV10Request
-    && (v10HasUnlimitedUses || v10UsesLeft > 0);
+    && !visiblePendingV10Request;
 
   useEffect(() => {
     if (isParanoidPower) return;
     setAssassinationMode(false);
     setAssassinationTargetId(null);
-  }, [isParanoidPower]);
+    clearFakeAssassinationPending();
+  }, [clearFakeAssassinationPending, isParanoidPower]);
 
   const previousPendingV10RequestRef = useRef(pendingV10Request);
   useEffect(() => {
@@ -655,7 +682,9 @@ const PlayerView = () => {
       const latestUses = latestState.powerUses.v10?.[playerId] ?? v10Uses;
       if (!v10HasUnlimitedUses && latestUses >= 2) {
         setPlayerActionState(latestState);
-        setAssassinationMessage(t("assassinationUnavailable", language));
+        setAssassinationMode(false);
+        setAssassinationTargetId(null);
+        showFakeAssassinationPending();
         return;
       }
 
@@ -683,7 +712,7 @@ const PlayerView = () => {
     } finally {
       setAssassinationSubmitting(false);
     }
-  }, [assassinationTargetId, currentRoomId, isParanoidPower, language, playerId, v10HasUnlimitedUses, v10Uses]);
+  }, [assassinationTargetId, currentRoomId, isParanoidPower, language, playerId, showFakeAssassinationPending, v10HasUnlimitedUses, v10Uses]);
 
   if (removed) {
     return (
@@ -731,16 +760,22 @@ const PlayerView = () => {
         className="w-full max-w-sm text-center space-y-6"
       >
         <div className="space-y-2 relative">
-          <button
-            type="button"
-            onClick={() => openRulebook()}
-            className="absolute top-0 right-0 text-muted-foreground/40 hover:text-foreground transition-colors p-1.5 rounded-md hover:bg-secondary"
-            title={t("rulebook", language)}
-            aria-label={t("rulebook", language)}
-          >
-            <BookOpen className="h-4 w-4" />
-          </button>
-          <h1 className="font-display text-3xl font-bold">{player.name}</h1>
+          <div className="absolute right-0 top-0 flex items-center gap-1">
+            <SkinPackSelectButton
+              language={language}
+              className="h-9 w-10 border-transparent bg-transparent shadow-none text-muted-foreground/40 hover:bg-secondary hover:text-foreground"
+            />
+            <button
+              type="button"
+              onClick={() => openRulebook()}
+              className="rounded-md p-1.5 text-muted-foreground/40 transition-colors hover:bg-secondary hover:text-foreground"
+              title={t("rulebook", language)}
+              aria-label={t("rulebook", language)}
+            >
+              <BookOpen className="h-4 w-4" />
+            </button>
+          </div>
+          <h1 className="px-14 font-display text-3xl font-bold">{player.name}</h1>
           <p className="text-muted-foreground/60 text-xs font-body">
             {t("appTitle", language)}
           </p>
@@ -1053,20 +1088,10 @@ const PlayerView = () => {
                       >
                         <Crosshair className="mr-2 h-4 w-4" />
                         {t("assassinate", language)}
-                        {!v10HasUnlimitedUses && (
-                          <span className="ml-2 text-xs opacity-80">
-                            {format(t("assassinationUsesLeft", language), { n: String(v10UsesLeft) })}
-                          </span>
-                        )}
                       </Button>
-                      {pendingV10Request && (
+                      {visiblePendingV10Request && (
                         <p className="text-xs text-yellow-400">
                           {t("assassinationRequestPending", language)}
-                        </p>
-                      )}
-                      {!pendingV10Request && !canStartAssassination && (
-                        <p className="text-xs text-muted-foreground">
-                          {t("assassinationUnavailable", language)}
                         </p>
                       )}
                     </div>

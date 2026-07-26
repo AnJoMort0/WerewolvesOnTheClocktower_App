@@ -13,6 +13,7 @@ import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealM
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
+import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -5494,6 +5495,7 @@ const GMRoom = () => {
               >
                 <ScrollText className="h-4 w-4" />
               </Button>
+              <SkinPackSelectButton language={lang} />
               <Button
                 type="button"
                 variant="secondary"
@@ -6247,7 +6249,7 @@ const GMRoom = () => {
               )}
             </div>
 
-            <div className="w-full lg:w-72 space-y-4">
+            <div className="w-full lg:w-[24rem] xl:w-[28rem] space-y-4">
               <h2 className="font-display text-sm tracking-widest uppercase text-muted-foreground">{tt("playersHeader")}</h2>
 
               {!rolesAssigned && <AddPlayerForm onAdd={addManualPlayer} existingNames={existingPlayerNames} />}

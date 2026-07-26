@@ -170,8 +170,6 @@ export const pt: Translation = {
     assassinationExit: "Sair",
     assassinationRequestPending: "Aguarda que o Mestre de Jogo confirme.",
     assassinationRequestError: "Não foi possível enviar o pedido.",
-    assassinationUnavailable: "Este poder não está disponível agora.",
-    assassinationUsesLeft: "{n}/2",
     gmPlayerActionTitle: "Ação de jogador",
     gmV10AssassinationRequest: "{actor} escolheu {target} com o poder de {role}. Aceitar marca o X vermelho.",
     gmAcceptAction: "Aceitar",

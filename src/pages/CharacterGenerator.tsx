@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RoleSelector } from "@/components/game/RoleSelector";
+import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { LanguageContext, getRoleLabel, t, type Language } from "@/lib/i18n";
 import { RULEBOOK_NIGHT_SCRIPT, type RulebookNightPhase } from "@/lib/rulebookContent";
 import { assignRoles, type RoleId } from "@/lib/roles";
@@ -251,12 +252,15 @@ export default function CharacterGeneratorPage() {
                 <p className="max-w-3xl text-muted-foreground">{text.subtitle}</p>
               </div>
             </div>
-            <Button asChild variant="outline" size="sm">
-              <Link to={`/rulebook?lang=${language}`}>
-                <BookOpen className="mr-2 h-4 w-4" />
-                {t("rulebook", language)}
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <SkinPackSelectButton language={language} />
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/rulebook?lang=${language}`}>
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  {t("rulebook", language)}
+                </Link>
+              </Button>
+            </div>
           </header>
 
           <section className="grid gap-3 rounded-lg border border-border/60 bg-card/60 p-3 md:grid-cols-[minmax(140px,180px)_1fr_auto] md:items-end">

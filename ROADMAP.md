@@ -19,15 +19,16 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] In the character selection screen before sending it to players, the GM player list is little too tight, making it hard to read the player's names.
+* [x] In the character selection screen before sending it to players, the GM player list is little too thin, making it hard to read the player's names.
 
 ## Fixes
 
-* [ ] Move the skin selection to be an icon (no text) next to the rulebook icon instead that opens the dropdown. No floating button.
+* [x] Move the skin selection to be an icon (no text) next to the rulebook icon instead that opens the dropdown. No floating button.
 
 ## Balance Changes
 
-* [ ] 
+* [x] Human error is a big part of the game design. The philosopy of this app is: Reduce GM human error and increase player accessibility, without giving them extra knowledge that they wouldn't have without the app. So actually we don't want the players to be able to see how many charges left they have in their device. So for the Paranoid (and any future characters) there's no x/2 or button being disabled, they can still click the button even if all the charges are fully used, choose someone, still get a "GM is confirming" for a small amount of time before disappearing automatically, doing nothing, no notification to the GM.
+  * Codex note 2026-07-26: Player devices no longer display v10 charges or disable the action because of exhausted charges; exhausted attempts now show only a short local pending confirmation and do not notify the GM.
 
 ## Additions
 
@@ -37,6 +38,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
     <!-- Codex 2026-07-25: Tweaked the GM notification into explicit accept/deny choices; denying clears the request without spending a use, and player devices now clear the pending message when the GM resolves it. -->
     <!-- Codex 2026-07-26: Hardened the v10 request queue against stale realtime updates, pruned resolved/already-killed requests, and removed the redundant sent-message copy from the player screen. -->
     <!-- Codex 2026-07-26: Added direct GM-to-player resolution broadcasts plus player-side polling while a v10 request is pending, so mobile devices recover even when a room update is missed. -->
+
+* [ ] 
   
 ## Future Plans
 

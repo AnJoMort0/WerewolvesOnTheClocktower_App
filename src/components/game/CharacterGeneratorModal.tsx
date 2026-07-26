@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import { RulebookModal } from "@/components/game/RulebookModal";
+import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { assignRoles, type RoleId } from "@/lib/roles";
 import { LanguageContext, getRoleLabel, type Language } from "@/lib/i18n";
 import { resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
@@ -197,9 +198,12 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="h-[calc(100vh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-6xl gap-4 border-border bg-background p-0 sm:rounded-lg md:h-[calc(100vh-3rem)] md:w-[calc(100vw-3rem)]">
           <DialogHeader className="border-b border-border px-4 py-3 sm:px-6">
-            <DialogTitle className="font-display text-xl text-gradient-blood">
-              {text.title}
-            </DialogTitle>
+            <div className="flex min-w-0 items-center gap-2 pr-9">
+              <DialogTitle className="min-w-0 flex-1 truncate font-display text-xl text-gradient-blood">
+                {text.title}
+              </DialogTitle>
+              <SkinPackSelectButton language={language} className="h-9 w-10" />
+            </div>
           </DialogHeader>
 
           <div className="grid min-h-0 flex-1 grid-rows-[auto_auto_1fr] gap-4 px-4 pb-4 sm:px-6">

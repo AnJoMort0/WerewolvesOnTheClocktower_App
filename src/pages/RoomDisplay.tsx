@@ -8,6 +8,7 @@ import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { GameLogModal } from "@/components/game/GameLogModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
+import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { LanguageContext, type Language } from "@/lib/i18n";
 import { getRoomDisplayStorageKey, readRoomDisplaySnapshot, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
 import type { StatusEffect } from "@/components/game/PlayerStatusPopover";
@@ -125,6 +126,7 @@ export default function RoomDisplay() {
               <Button type="button" size="icon" variant="secondary" onClick={() => setGameLogOpen(true)} title={copy.log} aria-label={copy.log}>
                 <ScrollText className="h-4 w-4" />
               </Button>
+              <SkinPackSelectButton language={language} />
               <Button type="button" size="icon" variant="secondary" onClick={() => setRulebookOpen(true)} title={copy.rulebook} aria-label={copy.rulebook}>
                 <BookOpen className="h-4 w-4" />
               </Button>

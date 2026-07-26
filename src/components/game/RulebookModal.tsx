@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } fr
 import { ArrowUp, List } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID, RULEBOOK_TOP_ID } from "@/lib/rulebook";
 import { t, type Language } from "@/lib/i18n";
 import type { RoleId } from "@/lib/roles";
@@ -107,12 +108,13 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[calc(100vh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden border-border bg-background p-0 sm:rounded-lg md:h-[calc(100vh-3rem)] md:w-[calc(100vw-3rem)]">
         <DialogHeader className="border-b border-border px-4 py-3 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3 pr-9">
+          <div className="flex min-w-0 items-center gap-2 pr-9">
             <DialogTitle className="min-w-0 flex-1 truncate font-display text-xl text-gradient-blood">
               {title}
             </DialogTitle>
+            <SkinPackSelectButton language={language} className="h-9 w-10" />
             {viewRoleId && (
-              <Button type="button" size="sm" variant="secondary" onClick={handleShowAllCharacters}>
+              <Button type="button" size="sm" variant="secondary" onClick={handleShowAllCharacters} className="shrink-0">
                 <List className="mr-2 h-4 w-4" />
                 {RULEBOOK_TEXT.singleCardAllCharacters[language]}
               </Button>

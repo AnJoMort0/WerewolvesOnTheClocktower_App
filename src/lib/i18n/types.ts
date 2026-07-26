@@ -181,8 +181,6 @@ export interface UIStrings {
   assassinationExit: string;
   assassinationRequestPending: string;
   assassinationRequestError: string;
-  assassinationUnavailable: string;
-  assassinationUsesLeft: string;
   gmPlayerActionTitle: string;
   gmV10AssassinationRequest: string;
   gmAcceptAction: string;
