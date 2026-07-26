@@ -550,6 +550,16 @@ const PlayerView = () => {
   const isDogActorCopying = !!characterMetadata.dogActorCopiedRole;
   const isMimeCopying = !!characterMetadata.mimeCopiedRole;
   const displayRole = characterMetadata.mimeCopiedRole ?? characterMetadata.dogActorCopiedRole ?? parsedCharacter.displayRole;
+  const copiedActionRole = characterMetadata.dogActorCopiedRole
+    ?? (
+      parsedCharacter.baseRole === "a02"
+      || parsedCharacter.actorCopiedRole === "a02"
+      || characterMetadata.mimeCopiedRole === "a02"
+        ? characterMetadata.ownerRole
+        : null
+    )
+    ?? characterMetadata.mimeCopiedRole
+    ?? parsedCharacter.displayRole;
   const roleDef = displayRole ? ROLES[displayRole] ?? null : null;
   const isActorCopying = shouldShowActorBadge(player?.character);
   const ownerRoleDef = characterMetadata.ownerRole ? ROLES[characterMetadata.ownerRole] : null;
@@ -608,12 +618,12 @@ const PlayerView = () => {
   const isMime = parsedCharacter.baseRole === "a03";
   const playerIsDead = !!player && !player.is_alive;
   const currentRoomId = player?.room_id ?? null;
-  const isParanoidPower = displayRole === "v10";
-  const isAngelPower = displayRole === "v18";
-  const isSpiderPower = displayRole === "v23";
-  const v10HasUnlimitedUses = parsedCharacter.baseRole === "a03" && characterMetadata.mimeCopiedRole === "v10";
-  const v18HasUnlimitedUses = parsedCharacter.baseRole === "a03" && characterMetadata.mimeCopiedRole === "v18";
-  const v23HasUnlimitedUses = parsedCharacter.baseRole === "a03" && characterMetadata.mimeCopiedRole === "v23";
+  const isParanoidPower = copiedActionRole === "v10";
+  const isAngelPower = copiedActionRole === "v18";
+  const isSpiderPower = copiedActionRole === "v23";
+  const v10HasUnlimitedUses = parsedCharacter.baseRole === "a03" && copiedActionRole === "v10";
+  const v18HasUnlimitedUses = parsedCharacter.baseRole === "a03" && copiedActionRole === "v18";
+  const v23HasUnlimitedUses = parsedCharacter.baseRole === "a03" && copiedActionRole === "v23";
   const hasPendingAction = useCallback((kind: PlayerActionKind) => !!playerId && playerActionState.requests.some((request) => (
     request.kind === kind && request.actorPlayerId === playerId
   )), [playerActionState.requests, playerId]);

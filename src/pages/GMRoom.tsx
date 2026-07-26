@@ -225,6 +225,7 @@ type GMSnapshot = {
   mimeDayImmunityTargetIds?: string[];
   mimeWitchPoison?: { targetPlayerId: string; nightNumber: number } | null;
   drunkardReplacementRole?: RoleId | null;
+  drunkardPowerState?: ActorPowerState;
   dogWolfStates?: DogWolfStates;
   sourcedEffectTargets?: Record<string, Partial<Record<StatusEffect, string>>>;
   spiderCaughtBySource?: Record<string, string[]>;
@@ -557,6 +558,7 @@ const GMRoom = () => {
   const [mimeDayImmunityTargetIds, setMimeDayImmunityTargetIds] = useState<string[]>([]);
   const [mimeWitchPoison, setMimeWitchPoison] = useState<{ targetPlayerId: string; nightNumber: number } | null>(null);
   const [drunkardReplacementRole, setDrunkardReplacementRole] = useState<RoleId | null>(null);
+  const [drunkardPowerState, setDrunkardPowerState] = useState<ActorPowerState>(() => ({ ...EMPTY_ACTOR_POWER_STATE }));
   const [dogWolfStates, setDogWolfStates] = useState<DogWolfStates>({});
   const [sourcedEffectTargets, setSourcedEffectTargets] = useState<Record<string, Partial<Record<StatusEffect, string>>>>({});
   const [spiderCaughtBySource, setSpiderCaughtBySource] = useState<Record<string, string[]>>({});
@@ -681,12 +683,13 @@ const GMRoom = () => {
     const states: Record<string, ActorPowerState> = {};
     if (actorPlayerId && actorCopiedRole && actorCopiedRole !== "a02") states[actorPlayerId] = actorPowerState;
     if (mimePlayerId && mimeMechanicalRole) states[mimePlayerId] = mimePowerState;
+    if (drunkardPlayerId && drunkardReplacementRole) states[drunkardPlayerId] = drunkardPowerState;
     for (const dogPlayerId of dogWolfPlayerIds) {
       const dogState = dogWolfStates[dogPlayerId];
       if (dogState) states[dogPlayerId] = dogState.powerState;
     }
     return states;
-  }, [actorCopiedRole, actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, mimeMechanicalRole, mimePlayerId, mimePowerState]);
+  }, [actorCopiedRole, actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, drunkardPowerState, drunkardReplacementRole, mimeMechanicalRole, mimePlayerId, mimePowerState]);
 
   const spiderWebbedDied = useMemo(() => Object.entries(playerEffects)
     .some(([playerId, effects]) => effects.has("webbed") && permanentlyDead.has(playerId)), [permanentlyDead, playerEffects]);
@@ -789,6 +792,7 @@ const GMRoom = () => {
   useEffect(() => {
     if (!drunkardPlayerId) {
       if (drunkardReplacementRole) setDrunkardReplacementRole(null);
+      setDrunkardPowerState({ ...EMPTY_ACTOR_POWER_STATE });
       return;
     }
     const otherRoles = Object.entries(roleAssignments)
@@ -796,6 +800,7 @@ const GMRoom = () => {
       .map(([, role]) => role);
     const candidates = getDrunkardReplacementCandidates(otherRoles);
     if (drunkardReplacementRole && candidates.includes(drunkardReplacementRole)) return;
+    setDrunkardPowerState({ ...EMPTY_ACTOR_POWER_STATE });
     setDrunkardReplacementRole(pickDrunkardReplacement(otherRoles));
   }, [drunkardPlayerId, drunkardReplacementRole, roleAssignments]);
 
@@ -1180,7 +1185,8 @@ const GMRoom = () => {
   const handleIndependentPowerStateChange = useCallback((playerId: string, next: ActorPowerState) => {
     const current = dogWolfStates[playerId]?.powerState
       ?? (playerId === mimePlayerId ? mimePowerState : null)
-      ?? (playerId === actorPlayerId ? actorPowerState : null);
+      ?? (playerId === actorPlayerId ? actorPowerState : null)
+      ?? (playerId === drunkardPlayerId ? drunkardPowerState : null);
     if (!current) return;
     if (next.bigBadWolfCharges > current.bigBadWolfCharges && !playerEffects[playerId]?.has("immunity_full")) {
       toggleEffect(playerId, "immunity_full", playerId);
@@ -1220,8 +1226,10 @@ const GMRoom = () => {
       setMimePowerState(next);
     } else if (playerId === actorPlayerId) {
       setActorPowerState(next);
+    } else if (playerId === drunkardPlayerId) {
+      setDrunkardPowerState(next);
     }
-  }, [abilityRoleAssignments, actorPlayerId, actorPowerState, dogWolfStates, isPlayerActingPoisoned, isWerewolfAttackSource, killSourcePlayerIds, killSources, mimePlayerId, mimePowerState, playerEffects, playerStatuses, room?.language, toggleEffect]);
+  }, [abilityRoleAssignments, actorPlayerId, actorPowerState, dogWolfStates, drunkardPlayerId, drunkardPowerState, isPlayerActingPoisoned, isWerewolfAttackSource, killSourcePlayerIds, killSources, mimePlayerId, mimePowerState, playerEffects, playerStatuses, room?.language, toggleEffect]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !roomId) return;
@@ -1312,6 +1320,7 @@ const GMRoom = () => {
       setMimeDayImmunityTargetIds(snapshot.mimeDayImmunityTargetIds ?? []);
       setMimeWitchPoison(snapshot.mimeWitchPoison ?? null);
       setDrunkardReplacementRole(snapshot.drunkardReplacementRole ?? null);
+      setDrunkardPowerState(restoreActorPowerState(snapshot.drunkardPowerState as LegacyActorPowerState | undefined));
       setDogWolfStates(restoreDogWolfStates(snapshot.dogWolfStates));
       setSourcedEffectTargets(snapshot.sourcedEffectTargets ?? {});
       setSpiderCaughtBySource(snapshot.spiderCaughtBySource ?? {});
@@ -1384,6 +1393,7 @@ const GMRoom = () => {
       mimeDayImmunityTargetIds,
       mimeWitchPoison,
       drunkardReplacementRole,
+      drunkardPowerState,
       dogWolfStates,
       sourcedEffectTargets,
       spiderCaughtBySource,
@@ -1450,6 +1460,7 @@ const GMRoom = () => {
     mimeDayImmunityTargetIds,
     mimeWitchPoison,
     drunkardReplacementRole,
+    drunkardPowerState,
     dogWolfStates,
     sourcedEffectTargets,
     spiderCaughtBySource,
@@ -1850,6 +1861,7 @@ const GMRoom = () => {
     setMimeDayImmunityTargetIds([]);
     setMimeWitchPoison(null);
     setDrunkardReplacementRole(null);
+    setDrunkardPowerState({ ...EMPTY_ACTOR_POWER_STATE });
     setDogWolfStates({});
     setSourcedEffectTargets({});
     setSpiderCaughtBySource({});
@@ -2076,7 +2088,10 @@ const GMRoom = () => {
         }),
       ));
     }
-    if (oldRole === "a01" && role !== "a01") setDrunkardReplacementRole(null);
+    if (oldRole === "a01" && role !== "a01") {
+      setDrunkardReplacementRole(null);
+      setDrunkardPowerState({ ...EMPTY_ACTOR_POWER_STATE });
+    }
     if (oldRole === "a03" && role !== "a03") {
       setMimeCopiedRole(null);
       setMimeMechanicalRole(null);
