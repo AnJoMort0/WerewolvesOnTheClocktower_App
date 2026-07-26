@@ -123,6 +123,14 @@ function getPlayerActionRole(kind: PlayerActionRequest["kind"]): RoleId {
   return "v10";
 }
 
+function getIndependentActionUses(powerState: ActorPowerState | undefined, role: RoleId): number | undefined {
+  if (!powerState) return undefined;
+  if (role === "v10") return powerState.paranoidCharges;
+  if (role === "v18") return powerState.angelCharges;
+  if (role === "v23") return powerState.spiderDayChangeUsed ? 1 : 0;
+  return undefined;
+}
+
 type Player = {
   id: string;
   name: string;
@@ -698,6 +706,16 @@ const GMRoom = () => {
     return states;
   }, [actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, drunkardPowerState, drunkardReplacementRole, effectiveActorCopiedRole, mimeMechanicalRole, mimePlayerId, mimePowerState]);
 
+  const getStoredDogWolfFallbackState = useCallback((playerId: string) => {
+    const player = players.find((candidate) => candidate.id === playerId);
+    if (!player?.character) return null;
+    const parsed = parsePlayerCharacter(player.character);
+    const metadata = parsePlayerCharacterMetadata(player.character);
+    if (!metadata.ownerPlayerId) return null;
+    if (parsed.baseRole !== "a02" && parsed.actorCopiedRole !== "a02") return null;
+    return createDogWolfState(metadata.ownerPlayerId);
+  }, [players]);
+
   const spiderWebbedDied = useMemo(() => Object.entries(playerEffects)
     .some(([playerId, effects]) => effects.has("webbed") && permanentlyDead.has(playerId)), [permanentlyDead, playerEffects]);
 
@@ -1190,7 +1208,9 @@ const GMRoom = () => {
   }, [activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, dogWolfStates, effectiveActorCopiedRole, effectiveRoleAssignments, isPlayerPoisoned, permanentlyDead, playerStatuses, room?.language, roomId, setDogWolfOwner]);
 
   const handleIndependentPowerStateChange = useCallback((playerId: string, next: ActorPowerState) => {
+    const storedDogFallbackState = getStoredDogWolfFallbackState(playerId);
     const current = dogWolfStates[playerId]?.powerState
+      ?? storedDogFallbackState?.powerState
       ?? (playerId === mimePlayerId ? mimePowerState : null)
       ?? (playerId === actorPlayerId ? actorPowerState : null)
       ?? (playerId === drunkardPlayerId ? drunkardPowerState : null);
@@ -1229,6 +1249,11 @@ const GMRoom = () => {
         ...previous,
         [playerId]: { ...previous[playerId], powerState: next },
       }));
+    } else if (storedDogFallbackState) {
+      setDogWolfStates((previous) => ({
+        ...previous,
+        [playerId]: { ...storedDogFallbackState, powerState: next },
+      }));
     } else if (playerId === mimePlayerId) {
       setMimePowerState(next);
     } else if (playerId === actorPlayerId) {
@@ -1236,7 +1261,7 @@ const GMRoom = () => {
     } else if (playerId === drunkardPlayerId) {
       setDrunkardPowerState(next);
     }
-  }, [abilityRoleAssignments, actorPlayerId, actorPowerState, dogWolfStates, drunkardPlayerId, drunkardPowerState, isPlayerActingPoisoned, isWerewolfAttackSource, killSourcePlayerIds, killSources, mimePlayerId, mimePowerState, playerEffects, playerStatuses, room?.language, toggleEffect]);
+  }, [abilityRoleAssignments, actorPlayerId, actorPowerState, dogWolfStates, drunkardPlayerId, drunkardPowerState, getStoredDogWolfFallbackState, isPlayerActingPoisoned, isWerewolfAttackSource, killSourcePlayerIds, killSources, mimePlayerId, mimePowerState, playerEffects, playerStatuses, room?.language, toggleEffect]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !roomId) return;
@@ -2641,7 +2666,9 @@ const GMRoom = () => {
   };
 
   const handleShamanDrop = useCallback((targetPlayerId: string, sourcePlayerId?: string | null) => {
-    const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
+    const independentPowerState = sourcePlayerId
+      ? independentPowerStates[sourcePlayerId] ?? getStoredDogWolfFallbackState(sourcePlayerId)?.powerState
+      : undefined;
     const sourceIsMimeShaman = !!sourcePlayerId && sourcePlayerId === mimePlayerId && mimeMechanicalRole === "e03";
     const charges = independentPowerState?.shamanCharges ?? shamanCharges;
     if (!sourceIsMimeShaman && charges >= 2) {
@@ -2665,7 +2692,7 @@ const GMRoom = () => {
     } else {
       toast.error(getToast("errShamanDragOnlyDead", (room?.language as Language) || "pt"));
     }
-  }, [shamanCharges, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, mimeMechanicalRole, mimePlayerId, playerStatuses, room?.language]);
+  }, [getStoredDogWolfFallbackState, shamanCharges, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, mimeMechanicalRole, mimePlayerId, playerStatuses, room?.language]);
 
   const endNight = async () => {
     const newPermanentlyDead = new Set(permanentlyDead);
@@ -3991,7 +4018,9 @@ const GMRoom = () => {
         return;
       }
     }
-    const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
+    const independentPowerState = sourcePlayerId
+      ? independentPowerStates[sourcePlayerId] ?? getStoredDogWolfFallbackState(sourcePlayerId)?.powerState
+      : undefined;
     const updateIndependentPowerState = (powerState: ActorPowerState) => {
       if (sourcePlayerId) handleIndependentPowerStateChange(sourcePlayerId, powerState);
     };
@@ -4487,7 +4516,7 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
@@ -4518,14 +4547,20 @@ const GMRoom = () => {
     const requestUsesByPlayerId = playerActionPowerUsesByRole[actionRole] ?? {};
     const maxUses = actionRole === "v23" ? 1 : 2;
     const preservesSpiderFreeWebChange = request.kind === "v23-web" && spiderWebbedDied;
+    const independentActionUses = getIndependentActionUses(
+      independentPowerStates[request.actorPlayerId] ?? getStoredDogWolfFallbackState(request.actorPlayerId)?.powerState,
+      actionRole,
+    );
+    const hasIndependentActionState = independentActionUses !== undefined;
     const shouldSpendUse = shouldApply
       && !preservesSpiderFreeWebChange
       && !(request.actorPlayerId === mimePlayerId && mimeMechanicalRole === actionRole)
-      && requestUsesByPlayerId[request.actorPlayerId] !== undefined;
+      && (requestUsesByPlayerId[request.actorPlayerId] !== undefined || hasIndependentActionState);
 
     let nextState = removePlayerActionRequest(pruneResolvedPlayerActionState(playerActionState), request.id);
-    const currentUses = nextState.powerUses[actionRole]?.[request.actorPlayerId]
-      ?? requestUsesByPlayerId[request.actorPlayerId]
+    const currentUses = requestUsesByPlayerId[request.actorPlayerId]
+      ?? independentActionUses
+      ?? nextState.powerUses[actionRole]?.[request.actorPlayerId]
       ?? 0;
     const resolvedUses = shouldSpendUse ? Math.min(currentUses + 1, maxUses) : currentUses;
     if (shouldSpendUse) {
@@ -4561,7 +4596,7 @@ const GMRoom = () => {
     if (updateResult.error) {
       toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
     }
-  }, [handleDragAction, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionPowerUsesByRole, playerActionState, playerStatuses, players, pruneResolvedPlayerActionState, room?.language, roomId, spiderWebbedDied]);
+  }, [getStoredDogWolfFallbackState, handleDragAction, independentPowerStates, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionPowerUsesByRole, playerActionState, playerStatuses, players, pruneResolvedPlayerActionState, room?.language, roomId, spiderWebbedDied]);
 
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
