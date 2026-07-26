@@ -33,6 +33,8 @@ type RoomPlayer = {
   is_alive: boolean;
 };
 
+const FAKE_ASSASSINATION_PENDING_MS = 10000;
+
 const PlayerView = () => {
   const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
@@ -110,7 +112,7 @@ const PlayerView = () => {
       fakeAssassinationPendingTimeoutRef.current = null;
       setFakeAssassinationPending(false);
       setAssassinationMessage(null);
-    }, 1800);
+    }, FAKE_ASSASSINATION_PENDING_MS);
   }, [clearFakeAssassinationPendingTimer]);
 
   useEffect(() => clearFakeAssassinationPendingTimer, [clearFakeAssassinationPendingTimer]);

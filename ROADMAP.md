@@ -19,25 +19,17 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [x] In the character selection screen before sending it to players, the GM player list is little too thin, making it hard to read the player's names.
+* [ ] 
 
 ## Fixes
 
-* [x] Move the skin selection to be an icon (no text) next to the rulebook icon instead that opens the dropdown. No floating button.
+* [ ] 
 
 ## Balance Changes
 
-* [x] Human error is a big part of the game design. The philosopy of this app is: Reduce GM human error and increase player accessibility, without giving them extra knowledge that they wouldn't have without the app. So actually we don't want the players to be able to see how many charges left they have in their device. So for the Paranoid (and any future characters) there's no x/2 or button being disabled, they can still click the button even if all the charges are fully used, choose someone, still get a "GM is confirming" for a small amount of time before disappearing automatically, doing nothing, no notification to the GM.
-  * Codex note 2026-07-26: Player devices no longer display v10 charges or disable the action because of exhausted charges; exhausted attempts now show only a short local pending confirmation and do not notify the GM.
+* [ ] 
 
 ## Additions
-
-* [x] Let's start adding player side interactions with the app (the point is that some actions rely less on needing to hide to tell things to the GM or complex GM interactions, so that the person can be less suspisious)
-  * [x] v10 : In the player's device, in the character's screen, there's an "Assassinate" button with a lucide icon. When the player clicks the button, if he start has uses left, he enters killing mode, the screen changes for the player's circle, change of colour to indicate special screen, title indicating they are in assassination mode, the player can then click a person in the circle and click confirm to kill them, they can also just "exit" to close the killing mode. Once another player is selected, the GM receives a notification (in the normal GM screen if the GM is in hidden mode, it waits until it closes that mode) to confirm that he read that a player became redX by the powers of the v10
-    <!-- Codex 2026-07-25: Added persisted player action state, v10 player-side assassination mode, GM-side queued confirmation outside hidden mode, and shared use-count sync so the existing v10 kill logic remains authoritative. -->
-    <!-- Codex 2026-07-25: Tweaked the GM notification into explicit accept/deny choices; denying clears the request without spending a use, and player devices now clear the pending message when the GM resolves it. -->
-    <!-- Codex 2026-07-26: Hardened the v10 request queue against stale realtime updates, pruned resolved/already-killed requests, and removed the redundant sent-message copy from the player screen. -->
-    <!-- Codex 2026-07-26: Added direct GM-to-player resolution broadcasts plus player-side polling while a v10 request is pending, so mobile devices recover even when a room update is missed. -->
 
 * [ ] 
   
