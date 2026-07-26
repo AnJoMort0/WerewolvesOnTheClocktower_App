@@ -573,6 +573,13 @@ const GMRoom = () => {
     () => Object.entries(roleAssignments).find(([, role]) => role === "a04")?.[0] ?? null,
     [roleAssignments],
   );
+  const actorCharacterCopiedRole = useMemo(() => {
+    if (!actorPlayerId) return null;
+    const actorCharacter = players.find((player) => player.id === actorPlayerId)?.character;
+    const parsed = parsePlayerCharacter(actorCharacter);
+    return parsed.baseRole === "a04" ? parsed.actorCopiedRole : null;
+  }, [actorPlayerId, players]);
+  const effectiveActorCopiedRole = actorCharacterCopiedRole ?? actorCopiedRole;
   const drunkardPlayerId = useMemo(
     () => Object.entries(roleAssignments).find(([, role]) => role === "a01")?.[0] ?? null,
     [roleAssignments],
@@ -586,8 +593,8 @@ const GMRoom = () => {
     [playerEffects],
   );
   const effectiveRoleAssignments = useMemo(
-    () => getEffectiveRoleAssignments(roleAssignments, actorCopiedRole, drunkardReplacementRole),
-    [actorCopiedRole, drunkardReplacementRole, roleAssignments],
+    () => getEffectiveRoleAssignments(roleAssignments, effectiveActorCopiedRole, drunkardReplacementRole),
+    [drunkardReplacementRole, effectiveActorCopiedRole, roleAssignments],
   );
   const displayRoleAssignments = useMemo(() => {
     const assignments = { ...effectiveRoleAssignments };
@@ -595,8 +602,8 @@ const GMRoom = () => {
     return assignments;
   }, [effectiveRoleAssignments, mimeCopiedRole, mimePlayerId]);
   const dogWolfPlayerIds = useMemo(
-    () => getDogWolfPlayerIds(roleAssignments, actorPlayerId, actorCopiedRole),
-    [actorCopiedRole, actorPlayerId, roleAssignments],
+    () => getDogWolfPlayerIds(roleAssignments, actorPlayerId, effectiveActorCopiedRole),
+    [actorPlayerId, effectiveActorCopiedRole, roleAssignments],
   );
   const activeDogWolfPlayerIds = useMemo(
     () => dogWolfPlayerIds.filter((playerId) => !permanentlyDead.has(playerId)),
@@ -622,10 +629,10 @@ const GMRoom = () => {
   const objectiveRoleAssignments = useMemo(() => {
     const assignments = { ...effectiveRoleAssignments };
     if (drunkardPlayerId) assignments[drunkardPlayerId] = "a01";
-    if (actorPlayerId && actorCopiedRole === "a01") assignments[actorPlayerId] = "a01";
+    if (actorPlayerId && effectiveActorCopiedRole === "a01") assignments[actorPlayerId] = "a01";
     if (mimePlayerId) assignments[mimePlayerId] = "a03";
     return getDogWolfObjectiveRoleAssignments(assignments, dogWolfStates);
-  }, [actorCopiedRole, actorPlayerId, dogWolfStates, drunkardPlayerId, effectiveRoleAssignments, mimePlayerId]);
+  }, [actorPlayerId, dogWolfStates, drunkardPlayerId, effectiveActorCopiedRole, effectiveRoleAssignments, mimePlayerId]);
   const poisonedPlayerIds = useMemo(
     () => new Set(Object.values(poisonTargetsBySource)),
     [poisonTargetsBySource],
@@ -643,7 +650,7 @@ const GMRoom = () => {
   const drunkardMechanicPlayerIds = useMemo(() => {
     const playerIds = new Set<string>();
     if (drunkardPlayerId) playerIds.add(drunkardPlayerId);
-    if (actorCopiedRole === "a01" && actorPlayerId) playerIds.add(actorPlayerId);
+    if (effectiveActorCopiedRole === "a01" && actorPlayerId) playerIds.add(actorPlayerId);
     if (mimeCopiedRole === "a01" && mimeMechanicalRole && mimePlayerId) playerIds.add(mimePlayerId);
     for (const dogPlayerId of dogWolfPlayerIds) {
       if (dogWolfStates[dogPlayerId]?.actorCopiedRole === "a01") {
@@ -653,11 +660,11 @@ const GMRoom = () => {
       const ownerPlayerId = dogWolfStates[dogPlayerId]?.ownerPlayerId;
       if (!ownerPlayerId) continue;
       const ownerIsDrunkard = roleAssignments[ownerPlayerId] === "a01"
-        || (ownerPlayerId === actorPlayerId && actorCopiedRole === "a01");
+        || (ownerPlayerId === actorPlayerId && effectiveActorCopiedRole === "a01");
       if (ownerIsDrunkard) playerIds.add(dogPlayerId);
     }
     return playerIds;
-  }, [actorCopiedRole, actorPlayerId, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, mimeCopiedRole, mimeMechanicalRole, mimePlayerId, roleAssignments]);
+  }, [actorPlayerId, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, effectiveActorCopiedRole, mimeCopiedRole, mimeMechanicalRole, mimePlayerId, roleAssignments]);
   const isPlayerActingPoisoned = useCallback((playerId: string | null | undefined) => (
     isDrunkardActingPoisoned(playerId, drunkardMechanicPlayerIds, poisonedPlayerIds)
   ), [drunkardMechanicPlayerIds, poisonedPlayerIds]);
@@ -681,7 +688,7 @@ const GMRoom = () => {
   ) as Record<string, RoleId>, [abilityRoleAssignments, dogWolfPlayerIds, dogWolfStates, effectiveRoleAssignments]);
   const independentPowerStates = useMemo(() => {
     const states: Record<string, ActorPowerState> = {};
-    if (actorPlayerId && actorCopiedRole && actorCopiedRole !== "a02") states[actorPlayerId] = actorPowerState;
+    if (actorPlayerId && effectiveActorCopiedRole && effectiveActorCopiedRole !== "a02") states[actorPlayerId] = actorPowerState;
     if (mimePlayerId && mimeMechanicalRole) states[mimePlayerId] = mimePowerState;
     if (drunkardPlayerId && drunkardReplacementRole) states[drunkardPlayerId] = drunkardPowerState;
     for (const dogPlayerId of dogWolfPlayerIds) {
@@ -689,7 +696,7 @@ const GMRoom = () => {
       if (dogState) states[dogPlayerId] = dogState.powerState;
     }
     return states;
-  }, [actorCopiedRole, actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, drunkardPowerState, drunkardReplacementRole, mimeMechanicalRole, mimePlayerId, mimePowerState]);
+  }, [actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, drunkardPowerState, drunkardReplacementRole, effectiveActorCopiedRole, mimeMechanicalRole, mimePlayerId, mimePowerState]);
 
   const spiderWebbedDied = useMemo(() => Object.entries(playerEffects)
     .some(([playerId, effects]) => effects.has("webbed") && permanentlyDead.has(playerId)), [permanentlyDead, playerEffects]);
@@ -863,9 +870,9 @@ const GMRoom = () => {
   const isWerewolfAttackSource = useCallback((source: string, sourcePlayerId?: string | null) => (
     source === "e01"
     || WEREWOLF_ROLES.includes(source as RoleId)
-    || (source === "a04" && !!actorCopiedRole && WEREWOLF_ROLES.includes(actorCopiedRole))
+    || (source === "a04" && !!effectiveActorCopiedRole && WEREWOLF_ROLES.includes(effectiveActorCopiedRole))
     || (!!sourcePlayerId && WEREWOLF_ROLES.includes(abilityRoleAssignments[sourcePlayerId]))
-  ), [abilityRoleAssignments, actorCopiedRole]);
+  ), [abilityRoleAssignments, effectiveActorCopiedRole]);
   // Derived states
   const isWitchPermaDead = useMemo(() => {
     const witchPlayerIds = Object.entries(abilityRoleAssignments)
@@ -1012,7 +1019,7 @@ const GMRoom = () => {
       const status = playerStatuses[playerId];
       if (status === "dead-this-night") {
         const source = killSources[playerId];
-        if (source === "e01" || (source && WEREWOLF_ROLES.includes(source as RoleId)) || (source === "a04" && !!actorCopiedRole && WEREWOLF_ROLES.includes(actorCopiedRole))) {
+        if (source === "e01" || (source && WEREWOLF_ROLES.includes(source as RoleId)) || (source === "a04" && !!effectiveActorCopiedRole && WEREWOLF_ROLES.includes(effectiveActorCopiedRole))) {
           effects.push("werewolf_turned");
         }
       }
@@ -1042,7 +1049,7 @@ const GMRoom = () => {
     if (assignedRoles.has("f02")) {
       effects.push("spied_on");
     }
-    if (actorPlayerId && playerId !== actorPlayerId && !permanentlyDead.has(playerId) && actorIdolUses < 2 && !actorCopiedRole) {
+    if (actorPlayerId && playerId !== actorPlayerId && !permanentlyDead.has(playerId) && actorIdolUses < 2 && !effectiveActorCopiedRole) {
       effects.push("idol");
     }
     const selectableDogPlayerId = activeDogWolfPlayerIds.find((dogPlayerId) => dogPlayerId !== playerId);
@@ -1051,7 +1058,7 @@ const GMRoom = () => {
     }
 
     return effects;
-  }, [activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, effectiveRoleAssignments, killSources, vampireWolfUsed, permanentlyDead, playerEffects, playerStatuses]);
+  }, [activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, effectiveActorCopiedRole, effectiveRoleAssignments, killSources, vampireWolfUsed, permanentlyDead, playerEffects, playerStatuses]);
 
   const toggleEffect = useCallback((playerId: string, effect: StatusEffect, sourcePlayerId?: string | null) => {
     if (effect === "owner") {
@@ -1072,7 +1079,7 @@ const GMRoom = () => {
       if (current.has(effect)) {
         current.delete(effect);
         newEffects[playerId] = current;
-        if (effect === "idol" && actorCopiedRole && actorPlayerId) {
+        if (effect === "idol" && effectiveActorCopiedRole && actorPlayerId) {
           setActorCopiedRole(null);
           setActorCopyNoticeNight(null);
           setActorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
@@ -1143,7 +1150,7 @@ const GMRoom = () => {
       }
 
       if (effect === "idol") {
-        if (!actorPlayerId || playerId === actorPlayerId || permanentlyDead.has(playerId) || actorIdolUses >= 2 || actorCopiedRole) {
+        if (!actorPlayerId || playerId === actorPlayerId || permanentlyDead.has(playerId) || actorIdolUses >= 2 || effectiveActorCopiedRole) {
           return prev;
         }
         setActorIdolUses((uses) => getActorIdolUsesAfterSelection(actorIdolPlayerId, playerId, uses));
@@ -1180,7 +1187,7 @@ const GMRoom = () => {
       }
       return newEffects;
     });
-  }, [activeDogWolfPlayerIds, actorCopiedRole, actorIdolPlayerId, actorIdolUses, actorPlayerId, dogWolfStates, effectiveRoleAssignments, isPlayerPoisoned, permanentlyDead, playerStatuses, room?.language, roomId, setDogWolfOwner]);
+  }, [activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, dogWolfStates, effectiveActorCopiedRole, effectiveRoleAssignments, isPlayerPoisoned, permanentlyDead, playerStatuses, room?.language, roomId, setDogWolfOwner]);
 
   const handleIndependentPowerStateChange = useCallback((playerId: string, next: ActorPowerState) => {
     const current = dogWolfStates[playerId]?.powerState
@@ -2196,7 +2203,7 @@ const GMRoom = () => {
   const getStoredCharacter = useCallback((playerId: string, role: RoleId) => {
     let identity: string;
     if (role === "a04" && playerId === actorPlayerId) {
-      identity = encodeActorCharacter(actorCopiedRole, drunkardReplacementRole);
+      identity = encodeActorCharacter(effectiveActorCopiedRole, drunkardReplacementRole);
     } else if (role === "a01" && playerId === drunkardPlayerId && drunkardReplacementRole) {
       identity = encodeDrunkardCharacter(drunkardReplacementRole);
     } else {
@@ -2218,11 +2225,11 @@ const GMRoom = () => {
       dogActorCopiedRole: getDogActorCopiedRoleForDisplay(
         dogWolfStates[playerId],
         actorPlayerId,
-        actorCopiedRole,
+        effectiveActorCopiedRole,
         drunkardReplacementRole,
       ),
     });
-  }, [actorCopiedRole, actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, mimeCopiedRole, mimeCornerRole, mimePlayerId, objectiveRoleAssignments]);
+  }, [actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveActorCopiedRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, mimeCopiedRole, mimeCornerRole, mimePlayerId, objectiveRoleAssignments]);
 
   const syncActorCharacter = useCallback((copiedRole: RoleId | null) => {
     if (!actorPlayerId) return;
@@ -2496,7 +2503,7 @@ const GMRoom = () => {
         broadcastPlayerSync([playerId]);
       });
 
-      if (playerId === actorIdolPlayerId && actorCopiedRole) {
+      if (playerId === actorIdolPlayerId && effectiveActorCopiedRole) {
         setActorCopiedRole(null);
         setActorCopyNoticeNight(null);
         setActorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
@@ -2525,10 +2532,10 @@ const GMRoom = () => {
       }
     }
   }, [
-    actorCopiedRole,
     actorIdolPlayerId,
     abilityRoleAssignments,
     broadcastPlayerSync,
+    effectiveActorCopiedRole,
     rustedKnightLinkedDeath,
     effectiveRoleAssignments,
     findClosestWerewolf,
@@ -2861,7 +2868,7 @@ const GMRoom = () => {
     }
     for (const { dogPlayerId, targetPlayerId, targetRole } of dogGraveSwaps) {
       pendingRoleChangeSourcesRef.current.set(targetPlayerId, { sourcePlayerId: dogPlayerId, sourceRole: "a02" });
-      if (dogPlayerId === actorPlayerId && actorCopiedRole === "a02") {
+      if (dogPlayerId === actorPlayerId && effectiveActorCopiedRole === "a02") {
         pendingActorCopyLogRef.current = targetRole;
         setActorCopiedRole(targetRole);
         setActorCopyNoticeNight(null);
@@ -3009,7 +3016,7 @@ const GMRoom = () => {
         && !dogWolfStates[dogPlayerId]?.ownerPlayerId
       ));
       for (const dogPlayerId of unownedDogPlayerIds) {
-        if (dogPlayerId === actorPlayerId && actorCopiedRole === "a02") {
+        if (dogPlayerId === actorPlayerId && effectiveActorCopiedRole === "a02") {
           pendingActorDogFallbackLogRef.current = dogPlayerId;
           setActorCopiedRole("e01");
           setActorCopyNoticeNight(null);
@@ -3128,7 +3135,7 @@ const GMRoom = () => {
       && !newPermanentlyDead.has(actorPlayerId)
     ) {
       const copiedRole = roleAssignments[actorIdolPlayerId];
-      if (copiedRole && copiedRole !== "a04" && !actorCopiedRole) {
+      if (copiedRole && copiedRole !== "a04" && !effectiveActorCopiedRole) {
         if (copiedRole === "a02") {
           const inherited = createInheritedDogWolfState(dogWolfStates[actorIdolPlayerId]);
           const ownerPlayerId = inherited.ownerPlayerId;
@@ -3346,7 +3353,7 @@ const GMRoom = () => {
 
   useEffect(() => {
     const copiedRole = pendingActorCopyLogRef.current;
-    if (!copiedRole || !actorCopiedRole || !actorPlayerId || !gmSnapshotLoaded || room?.status !== "playing") return;
+    if (!copiedRole || !effectiveActorCopiedRole || !actorPlayerId || !gmSnapshotLoaded || room?.status !== "playing") return;
     const actorSnapshot = getPlayerLogSnapshot(actorPlayerId);
     if (!actorSnapshot) return;
 
@@ -3359,7 +3366,7 @@ const GMRoom = () => {
       target: { ...actorSnapshot, role: copiedRole },
       detail: `${getRoleLabel("a04", language)} -> ${getRoleLabel(copiedRole, language)}`,
     });
-  }, [actorCopiedRole, actorPlayerId, getPlayerLogSnapshot, gmSnapshotLoaded, recordGameEvent, room?.language, room?.status]);
+  }, [actorPlayerId, effectiveActorCopiedRole, getPlayerLogSnapshot, gmSnapshotLoaded, recordGameEvent, room?.language, room?.status]);
 
   useEffect(() => {
     const replacementRole = pendingDrunkardSetupLogRef.current;
@@ -3424,7 +3431,7 @@ const GMRoom = () => {
 
   useEffect(() => {
     const playerId = pendingActorDogFallbackLogRef.current;
-    if (!playerId || actorCopiedRole !== "e01" || !gmSnapshotLoaded || room?.status !== "playing") return;
+    if (!playerId || effectiveActorCopiedRole !== "e01" || !gmSnapshotLoaded || room?.status !== "playing") return;
     const snapshot = getPlayerLogSnapshot(playerId);
     if (!snapshot) return;
     pendingActorDogFallbackLogRef.current = null;
@@ -3436,7 +3443,7 @@ const GMRoom = () => {
       target: { ...snapshot, role: "e01" },
       detail: `${getRoleLabel("a02", language)} -> ${getRoleLabel("e01", language)}`,
     });
-  }, [actorCopiedRole, getPlayerLogSnapshot, gmSnapshotLoaded, recordGameEvent, room?.language, room?.status]);
+  }, [effectiveActorCopiedRole, getPlayerLogSnapshot, gmSnapshotLoaded, recordGameEvent, room?.language, room?.status]);
 
   useEffect(() => {
     if (!gmSnapshotLoaded || room?.status !== "finished" || !pendingGameOverLogKindRef.current) return;
@@ -3865,12 +3872,12 @@ const GMRoom = () => {
 
   // Reset uses for resurrected player based on their role
   const resetUsesForRole = useCallback((playerId: string) => {
-    if (playerId === actorPlayerId && actorCopiedRole) {
+    if (playerId === actorPlayerId && effectiveActorCopiedRole) {
       setActorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
       return;
     }
     resetUsesForRoleId(roleAssignments[playerId]);
-  }, [actorCopiedRole, actorPlayerId, resetUsesForRoleId, roleAssignments]);
+  }, [actorPlayerId, effectiveActorCopiedRole, resetUsesForRoleId, roleAssignments]);
 
   const applySourcedEffect = useCallback((
     sourcePlayerId: string | null | undefined,
@@ -4072,7 +4079,7 @@ const GMRoom = () => {
             },
           }));
         } else {
-          if (!actorPlayerId || sourcePlayerId !== actorPlayerId || targetPlayerId === actorPlayerId || permanentlyDead.has(targetPlayerId) || actorIdolUses >= 2 || actorCopiedRole) return;
+          if (!actorPlayerId || sourcePlayerId !== actorPlayerId || targetPlayerId === actorPlayerId || permanentlyDead.has(targetPlayerId) || actorIdolUses >= 2 || effectiveActorCopiedRole) return;
           toggleActionEffect(targetPlayerId, "idol");
         }
       }
@@ -4480,7 +4487,7 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, getPlayerLogSnapshot, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
@@ -4981,10 +4988,10 @@ const GMRoom = () => {
   const werewolfSeerVictim = useMemo(() => {
     const victimId = Object.entries(playerStatuses).find(([pid, s]) => {
       const src = killSources[pid];
-      return s === "dead-this-night" && (src === "e01" || (src && WEREWOLF_ROLES.includes(src as RoleId)) || (src === "a04" && !!actorCopiedRole && WEREWOLF_ROLES.includes(actorCopiedRole)));
+      return s === "dead-this-night" && (src === "e01" || (src && WEREWOLF_ROLES.includes(src as RoleId)) || (src === "a04" && !!effectiveActorCopiedRole && WEREWOLF_ROLES.includes(effectiveActorCopiedRole)));
     })?.[0];
     return victimId ? players.find((p) => p.id === victimId) : null;
-  }, [actorCopiedRole, playerStatuses, killSources, players]);
+  }, [effectiveActorCopiedRole, playerStatuses, killSources, players]);
 
   const handleWerewolfSeerReveal = useCallback((sourcePlayerId?: string | null) => {
     if (!werewolfSeerVictim) return;
@@ -5259,10 +5266,10 @@ const GMRoom = () => {
     hunterDied: lastNightDeadPlayerIds.filter((playerId) => (
       roleAssignments[playerId] === "v08"
       || abilityRoleAssignments[playerId] === "v08"
-      || (playerId === actorPlayerId && actorCopiedRole === "v08")
+      || (playerId === actorPlayerId && effectiveActorCopiedRole === "v08")
     )),
     soldierDied: lastNightDeadPlayerIds.filter((playerId) => playerEffects[playerId]?.has("soldado")),
-  }), [abilityRoleAssignments, actorCopiedRole, actorPlayerId, lastNightDeadPlayerIds, playerEffects, roleAssignments]);
+  }), [abilityRoleAssignments, actorPlayerId, effectiveActorCopiedRole, lastNightDeadPlayerIds, playerEffects, roleAssignments]);
 
   // Condition keys for conditional script lines
   const conditionKeys = useMemo(() => {
@@ -5729,8 +5736,8 @@ const GMRoom = () => {
                   onVampireVictimToggle={() => setVampireVictimKeepsPower((v) => !v)}
                   hideSensitiveInfo={hideScreenMode}
                   actorIdolUses={actorIdolUses}
-                  actorCopyActive={!!actorCopiedRole}
-                  actorCopiesDrunkard={actorCopiedRole === "a01"}
+                  actorCopyActive={!!effectiveActorCopiedRole}
+                  actorCopiesDrunkard={effectiveActorCopiedRole === "a01"}
                   onActorIdolUseToggle={(idx) => setActorIdolUses((uses) => uses > idx ? idx : idx + 1)}
                   actorPowerState={actorPowerState}
                   onActorPowerStateChange={handleActorPowerStateChange}
@@ -5872,7 +5879,7 @@ const GMRoom = () => {
                     autoCompleteSourcePlayerIds={scriptAutoComplete.sourcePlayerIds}
                     autoCompleteVersion={scriptAutoComplete.version}
                     actorPlayerId={actorPlayerId}
-                    actorCopiedRole={actorCopiedRole}
+                    actorCopiedRole={effectiveActorCopiedRole}
                     actorCopyNoticeNight={actorCopyNoticeNight}
                     actorPowerState={actorPowerState}
                     onActorPowerStateChange={handleActorPowerStateChange}
@@ -6011,7 +6018,7 @@ const GMRoom = () => {
                                {isActor && roleId !== "a04" && (
                                  <img src={resolveRoleImage("a04", { skinPackId }).src} alt={roleLabel("a04")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-primary object-cover" />
                                )}
-                               {isActor && actorCopiedRole === "a01" && roleId !== "a01" && (
+                               {isActor && effectiveActorCopiedRole === "a01" && roleId !== "a01" && (
                                  <img src={resolveRoleImage("a01", { skinPackId }).src} alt={roleLabel("a01")} className="absolute -left-1 -top-1 h-4 w-4 rounded-sm border border-green-400 object-cover" />
                                )}
                                {isDrunkard && roleId !== "a01" && (
@@ -6345,7 +6352,7 @@ const GMRoom = () => {
                     baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                     compact
                     onDragAction={handleDragAction}
-                    actorCopiesDrunkard={actorCopiedRole === "a01"}
+                    actorCopiesDrunkard={effectiveActorCopiedRole === "a01"}
                     dogWolfOwnerRoles={dogWolfOwnerRoles}
                     dogWolfStates={dogWolfStates}
                   />
