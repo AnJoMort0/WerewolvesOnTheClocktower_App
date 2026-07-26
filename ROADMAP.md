@@ -19,7 +19,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] 
+* [ ] a02 and a01 should get the action buttons when they are copying a character that has action buttons. a01 already does it, but even if a01 has not used his charges, if the idol had used all charges the a01 player-side still doesn't the action go through. Make sure these characters always get updated when another character is, to make sure their copying abilities keep working as intended.
 
 ## Fixes
 
@@ -31,8 +31,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [x] Similar to v10, v18 should also get a player device button to ressurect perma-dead players and v23 to change webbed player (also quickly testing now, it looks like the v23 checkbox as not been implemented properly. v23 changes the webbed player every time the webbed player dies, but also once per game, he can freely choose to pick another player to web, when he does that is when the checkbox is ticked, so in the GM scren, if v23 is drag-dropped when the line "choose a new player to web" is present the checkbox is not used, but if the GM drag-drops him outside that scenario, the power is used)
-  <!-- Codex 2026-07-26: Added v18/v23 player-device request buttons through the shared GM accept/deny queue. v23 script-line re-webs, including the dead-webbed-player case, do not spend the once-per-game checkbox; manual/player-device web changes spend it unless that dead-webbed-player condition is active. -->
+* [ ] 
   
 ## Future Plans
 

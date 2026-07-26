@@ -4415,7 +4415,10 @@ const GMRoom = () => {
           if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, spiderDayChangeUsed: true });
           else setSpiderDayChangeUsed(true);
         }
-        applySourcedEffect(sourcePlayerId, targetPlayerId, "webbed");
+        const spiderSourcePlayerId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v23"
+          ? sourcePlayerId
+          : getRolePlayerId("v23");
+        applySourcedEffect(spiderSourcePlayerId ?? sourcePlayerId, targetPlayerId, "webbed");
       }
       else if (roleSource === "a05") {
         // Rouba-Túmulos: marks a red-X victim. The actual swap happens if that
