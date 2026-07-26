@@ -19,10 +19,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [x] a02, a04 and a01 should get the action buttons when they are copying a character that has action buttons. a01 and a04 already does it, but even if a01 has not used his charges, if the idol had used all charges the a01 player-side still doesn't the action go through. Make sure these characters always get updated when another character is, to make sure their copying abilities keep working as intended.
-  <!-- Codex 2026-07-26: a02 player devices now resolve action buttons from their copied/owner role, including Actor/Drunkard-derived owner powers. a01 now has its own persisted copied-power state so copied limited-use actions no longer read the original role holder's exhausted charges. -->
-  <!-- Codex 2026-07-26: Follow-up: a04 mechanics now also resolve copied roles from the Actor's stored card before falling back to the GM snapshot field, so Actor player actions and GM checks use the Actor's independent charges instead of the dead Idol/original role holder's exhausted uses. -->
-  <!-- Codex 2026-07-26: Follow-up: a02 copied actions now prefer the Dog's independent copied-power state over stale owner/room charge caches, and can rebuild Dog state from stored owner metadata before spending copied v10/v18/v23/e03 charges. -->
+* [ ] 
 
 ## Fixes
 
