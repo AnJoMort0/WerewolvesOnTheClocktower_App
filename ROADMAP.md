@@ -23,7 +23,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
-* [ ] 
+* [ ] There's still a few code things that are in Portuguese instead of English, for example the EffectKeys soldado, hospede, profecia, acusado, acusado_next, namorado, incendiado.
 
 ## Balance Changes
 

@@ -1,6 +1,6 @@
 import type { RoleId } from "@/lib/roles";
 
-export type Language = "pt" | "fr";
+export type Language = "pt" | "fr" | "en";
 
 export const SUPPORTED_LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: "pt", label: "Português", flag: "🇵🇹" },
