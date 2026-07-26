@@ -2,11 +2,11 @@ import { useMemo, useState } from "react";
 import { ArrowRight, CircleSlash, Clock, Minus, ScrollText, Trophy, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { getEffectLabel, getGameOver, getRoleLabel, getWinLabel, type Language } from "@/lib/i18n";
+import { getEffectLabel, getGameOver, getRoleLabel, getTranslation, getWinLabel, type Language } from "@/lib/i18n";
 import { ROLES, type RoleId } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
-import type { GameLogEvent, GameLogPlayerSnapshot, GameLogPhase } from "@/lib/gameLog";
+import type { GameLogEvent, GameLogPlayerSnapshot } from "@/lib/gameLog";
 import type { PlayerStatus, StatusEffect } from "@/components/game/PlayerStatusPopover";
 import { STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
@@ -42,120 +42,6 @@ interface GameLogModalProps {
   illusionPlayerIds?: Set<string>;
 }
 
-const TEXT: Record<Language, {
-  title: string;
-  finalCircle: string;
-  empty: string;
-  clearHighlight: string;
-  selected: string;
-  system: string;
-  village: string;
-  hideEvent: string;
-  unknownPlayer: string;
-  noRole: string;
-  close: string;
-  permanentDeath: string;
-  phaseLabels: Record<GameLogPhase, string>;
-  actionLabels: Record<GameLogEvent["action"], string>;
-}> = {
-  pt: {
-    title: "Registo do jogo",
-    finalCircle: "Círculo final",
-    empty: "Ainda não há acontecimentos registados.",
-    clearHighlight: "Limpar destaque",
-    selected: "A destacar",
-    system: "Sistema",
-    village: "Aldeia",
-    hideEvent: "Ocultar acontecimento",
-    unknownPlayer: "Jogador",
-    noRole: "Sem carta",
-    close: "Fechar",
-    permanentDeath: "Morte permanente",
-    phaseLabels: {
-      setup: "Preparação",
-      night: "Noite",
-      day: "Dia",
-      tribunal: "Tribunal",
-      "game-over": "Fim do jogo",
-    },
-    actionLabels: {
-      phase: "Mudança de fase",
-      kill: "Morte",
-      execute: "Execução",
-      resurrect: "Ressuscitou",
-      poison: "Envenenado",
-      illusion: "Ilusão",
-      effect_add: "Efeito aplicado",
-      role_change: "Carta alterada",
-      game_over: "Fim do jogo",
-    },
-  },
-  fr: {
-    title: "Journal de partie",
-    finalCircle: "Cercle final",
-    empty: "Aucun événement enregistré pour le moment.",
-    clearHighlight: "Effacer le surlignage",
-    selected: "Surligné",
-    system: "Système",
-    village: "Village",
-    hideEvent: "Masquer l’événement",
-    unknownPlayer: "Joueur",
-    noRole: "Sans carte",
-    close: "Fermer",
-    permanentDeath: "Mort permanente",
-    phaseLabels: {
-      setup: "Préparation",
-      night: "Nuit",
-      day: "Jour",
-      tribunal: "Tribunal",
-      "game-over": "Fin de partie",
-    },
-    actionLabels: {
-      phase: "Changement de phase",
-      kill: "Mort",
-      execute: "Exécution",
-      resurrect: "Ressuscité",
-      poison: "Empoisonné",
-      illusion: "Illusion",
-      effect_add: "Effet appliqué",
-      role_change: "Carte modifiée",
-      game_over: "Fin de partie",
-    },
-  },
-  en: {
-    title: "Game log",
-    finalCircle: "Final circle",
-    empty: "No events recorded yet.",
-    clearHighlight: "Clear highlight",
-    selected: "Highlighting",
-    system: "System",
-    village: "Village",
-    hideEvent: "Hide event",
-    unknownPlayer: "Player",
-    noRole: "No card",
-    close: "Close",
-    permanentDeath: "Permanent death",
-    phaseLabels: {
-      setup: "Setup",
-      night: "Night",
-      day: "Day",
-      tribunal: "Tribunal",
-      "game-over": "Game over",
-    },
-    actionLabels: {
-      phase: "Phase change",
-      kill: "Death",
-      execute: "Execution",
-      resurrect: "Resurrected",
-      poison: "Poisoned",
-      illusion: "Illusion",
-      effect_add: "Effect applied",
-      role_change: "Card changed",
-      game_over: "Game over",
-    },
-  },
-};
-
 function getEventIcon(event: GameLogEvent) {
   if (event.effect && STATUS_EFFECT_ICONS[event.effect]) return STATUS_EFFECT_ICONS[event.effect];
   if (event.action === "poison") return poisonedIcon;
@@ -181,7 +67,7 @@ function getPhaseGroupKey(event: GameLogEvent) {
 }
 
 function getPhaseGroupLabel(event: GameLogEvent, language: Language) {
-  const phase = TEXT[language].phaseLabels[event.phase];
+  const phase = getTranslation(language).ui.gameLog.phaseLabels[event.phase];
   if (event.phase === "setup" || event.phase === "game-over") return phase;
   return `${phase} ${event.phaseNumber}`;
 }
@@ -238,11 +124,12 @@ function VillageMiniCard({ label }: { label: string }) {
 }
 
 function StatusBadges({ player, language, compact = false }: { player: GameLogPlayerSnapshot; language: Language; compact?: boolean }) {
+  const copy = getTranslation(language).ui.gameLog;
   const badges: Array<{ key: string; icon: string; label: string; tone?: string }> = [];
-  if (player.permanentlyDead) badges.push({ key: "perma", icon: ghostIcon, label: TEXT[language].permanentDeath, tone: "opacity-60" });
-  else if (player.status === "dead-this-night") badges.push({ key: "redx", icon: ghostIcon, label: TEXT[language].actionLabels.kill });
-  if (player.poisoned) badges.push({ key: "poison", icon: poisonedIcon, label: TEXT[language].actionLabels.poison });
-  if (player.illusion) badges.push({ key: "illusion", icon: illusionIcon, label: TEXT[language].actionLabels.illusion });
+  if (player.permanentlyDead) badges.push({ key: "perma", icon: ghostIcon, label: copy.permanentDeath, tone: "opacity-60" });
+  else if (player.status === "dead-this-night") badges.push({ key: "redx", icon: ghostIcon, label: copy.actionLabels.kill });
+  if (player.poisoned) badges.push({ key: "poison", icon: poisonedIcon, label: copy.actionLabels.poison });
+  if (player.illusion) badges.push({ key: "illusion", icon: illusionIcon, label: copy.actionLabels.illusion });
   player.effects.forEach((effect) => badges.push({ key: effect, icon: STATUS_EFFECT_ICONS[effect], label: getEffectLabel(effect, language) }));
 
   if (badges.length === 0) return null;
@@ -327,7 +214,7 @@ export function GameLogModal({
 }: GameLogModalProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(() => new Set());
-  const copy = TEXT[language];
+  const copy = getTranslation(language).ui.gameLog;
   const selectedPlayer = selectedPlayerId ? players.find((player) => player.id === selectedPlayerId) : null;
 
   const groups = useMemo(() => {

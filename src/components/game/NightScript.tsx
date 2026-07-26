@@ -7,7 +7,7 @@ import {
   parseScriptText,
   type ScriptLine,
 } from "@/lib/nightScript";
-import { useLanguage, getScripts, getDynamic, getRoleLabel, t, getToast, type Language } from "@/lib/i18n";
+import { useLanguage, getScripts, getDynamic, getRoleLabel, getTranslation, t, getToast, type Language } from "@/lib/i18n";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
@@ -185,9 +185,7 @@ function getRawLineDragAction(line: ScriptLine): string | null {
 }
 
 function dogArticle(lang: Language): string {
-  if (lang === "fr") return "Le";
-  if (lang === "en") return "The";
-  return "O";
+  return getTranslation(lang).ui.nightScript.dogArticle;
 }
 
 function replaceRoleWithDog(text: string, lang: Language, copiedRole?: RoleId | null): string {
@@ -214,41 +212,8 @@ function replaceRoleWithDog(text: string, lang: Language, copiedRole?: RoleId | 
   return withArticle === text ? text.replace(/\{[^}]+\}/, dogToken) : withArticle;
 }
 
-const MIME_ONLY_SCRIPT_LINES: Record<Language, Partial<Record<RoleId, ScriptLine>>> = {
-  pt: {
-    v10: {
-      text: "O {Paranoico} acorda e escolhe um jogador para assassinar imediatamente.",
-      requires: ["v10"],
-    },
-    v18: {
-      text: "O {Anjo} acorda e escolhe um Fantasma para ressuscitar.",
-      requires: ["v18"],
-    },
-  },
-  fr: {
-    v10: {
-      text: "Le {Paranoïaque} se réveille et choisit un joueur à assassiner immédiatement.",
-      requires: ["v10"],
-    },
-    v18: {
-      text: "L'{Ange} se réveille et choisit un Fantôme à ressusciter.",
-      requires: ["v18"],
-    },
-  },
-  en: {
-    v10: {
-      text: "The {Paranoid} wakes up and chooses a player to assassinate immediately.",
-      requires: ["v10"],
-    },
-    v18: {
-      text: "The {Angel} wakes up and chooses a Ghost to resurrect.",
-      requires: ["v18"],
-    },
-  },
-};
-
 function getMimeOnlyScriptLine(role: RoleId, lang: Language): ScriptLine | null {
-  return MIME_ONLY_SCRIPT_LINES[lang][role] ?? null;
+  return getTranslation(lang).ui.nightScript.mimeOnlyLines[role] ?? null;
 }
 
 function ScriptLineDisplay({
@@ -925,9 +890,7 @@ export const NightScript = ({
         );
       }
       if (distances.length === 0) return undefined;
-      const baseLine = lang === "fr"
-        ? "Le {Chien} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée"
-        : "O {Cão} acorda e é-lhe revelada a distância até à pessoa envenenada";
+      const baseLine = getTranslation(lang).ui.nightScript.dogHousemaidDistance;
       return `${baseLine}: ${distances.join(", ")}`;
     }
     return undefined;

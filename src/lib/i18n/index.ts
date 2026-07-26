@@ -11,6 +11,13 @@ import type {
   ValidationWarningStrings,
   WinLabelStrings,
   GameOverStrings,
+  CharacterGeneratorStrings,
+  GameLogStrings,
+  RoomDisplayStrings,
+  SkinPackStrings,
+  RulebookUiStrings,
+  NightScriptUiStrings,
+  GMRoomStrings,
   WinKind,
 } from "./types";
 import { pt } from "./pt";
@@ -28,6 +35,13 @@ export type {
   ValidationWarningStrings,
   WinLabelStrings,
   GameOverStrings,
+  CharacterGeneratorStrings,
+  GameLogStrings,
+  RoomDisplayStrings,
+  SkinPackStrings,
+  RulebookUiStrings,
+  NightScriptUiStrings,
+  GMRoomStrings,
   WinKind,
 };
 export { SUPPORTED_LANGUAGES, coerceLanguage, isLanguage } from "./types";

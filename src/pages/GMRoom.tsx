@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { assignRoles, EVIL_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
-import { LanguageContext, coerceLanguage, getEffectLabel, getRoleLabel, getScripts, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
+import { LanguageContext, coerceLanguage, getEffectLabel, getRoleLabel, getScripts, getTranslation, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { getScriptOrderIndex } from "@/lib/nightScript";
@@ -4230,7 +4230,7 @@ const GMRoom = () => {
           const poisonStealerSnapshot = getPlayerLogSnapshot(poisonStealerId);
           const stolenFromSnapshot = getPlayerLogSnapshot(targetPlayerId);
           if (poisonStealerSnapshot && stolenFromSnapshot) {
-            const localLang: Language = (room?.language as Language) || "pt";
+            const localLang = coerceLanguage(room?.language);
             suppressedPoisonLogAddsRef.current.add(poisonStealerId);
             recordGameEvent({
               action: "poison",
@@ -4238,9 +4238,9 @@ const GMRoom = () => {
               actorRole: "v12",
               target: { ...poisonStealerSnapshot, poisoned: true },
               secondaryTarget: stolenFromSnapshot,
-              detail: localLang === "fr"
-                ? `Poison volé à ${stolenFromSnapshot.name}.`
-                : `Veneno roubado de ${stolenFromSnapshot.name}.`,
+              detail: format(getTranslation(localLang).ui.gameLog.gypsyPoisonStolen, {
+                name: stolenFromSnapshot.name,
+              }),
               participants: [
                 poisonStealerId,
                 targetPlayerId,
@@ -5403,8 +5403,9 @@ const GMRoom = () => {
   const lang = coerceLanguage(room?.language);
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
   const tt = useCallback((key: Parameters<typeof t>[0]) => t(key, lang), [lang]);
-  const gameLogLabel = lang === "fr" ? "Journal de partie" : lang === "en" ? "Game log" : "Registo do jogo";
-  const roomDisplayLabel = lang === "fr" ? "Écran de salle" : lang === "en" ? "Room display" : "Ecrã da sala";
+  const gmRoomCopy = getTranslation(lang).ui.gmRoom;
+  const gameLogLabel = gmRoomCopy.gameLog;
+  const roomDisplayLabel = gmRoomCopy.roomDisplay;
   const pendingPlayerActionRequest = useMemo(() => {
     if (hideScreenMode || room?.status !== "playing") return null;
     return pruneResolvedPlayerActionState(playerActionState).requests[0] ?? null;

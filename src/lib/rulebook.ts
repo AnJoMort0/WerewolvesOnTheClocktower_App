@@ -1,5 +1,5 @@
 import { ROLES, type RoleId } from "@/lib/roles";
-import type { Language } from "@/lib/i18n";
+import { getTranslation, type Language } from "@/lib/i18n";
 import {
   getRulebookSkinOptions,
   resolveRulebookRoleImage,
@@ -35,12 +35,6 @@ export interface RulebookRenderOptions {
   skinPreviewOverrides?: Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>;
 }
 
-const FALLBACK_MESSAGE: Record<Language, string> = {
-  pt: "Ficha nao encontrada.",
-  fr: "Fiche introuvable.",
-  en: "Card not found.",
-};
-
 const EXTRA_CARD_IMAGES: Partial<Record<RulebookCharacterId, string>> = {
   x01: x01Card,
   x02: x02Card,
@@ -60,38 +54,6 @@ const TEAM_FACTION_CLASS: Record<RulebookTeam, string> = {
   flexible: "faction-flex",
   villagersFlex: "faction-shifting",
   extra: "faction-extra",
-};
-
-const NIGHT_SCRIPT_LABELS: Record<Language, {
-  title: string;
-  firstNight: string;
-  secondNight: string;
-  normalNight: string;
-}> = {
-  pt: {
-    title: "A Noite",
-    firstNight: "Primeira Noite",
-    secondNight: "Início da Segunda Noite",
-    normalNight: "Noite Normal",
-  },
-  fr: {
-    title: "La Nuit",
-    firstNight: "Première Nuit",
-    secondNight: "Début de la Deuxième Nuit",
-    normalNight: "Nuit Normale",
-  },
-  en: {
-    title: "The Night",
-    firstNight: "First Night",
-    secondNight: "Start of the Second Night",
-    normalNight: "Normal Night",
-  },
-};
-
-const OBJECTIVE_LABELS: Record<Language, string> = {
-  pt: "Objetivo:",
-  fr: "Objectif :",
-  en: "Objective:",
 };
 
 function escapeHtml(value: string): string {
@@ -177,7 +139,7 @@ function renderSectionBlock(block: RulebookSectionBlock): string {
 }
 
 function renderNightScript(lang: Language): string {
-  const labels = NIGHT_SCRIPT_LABELS[lang];
+  const labels = getTranslation(lang).ui.rulebookUi.nightScript;
   const phases = [
     ["firstNight", labels.firstNight],
     ["secondNight", labels.secondNight],
@@ -274,7 +236,7 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language, option
     })
     .join("");
   const objectiveHtml = character.objective
-    ? `<p><strong>${OBJECTIVE_LABELS[lang]}</strong> ${renderInline(character.objective[lang])}</p>`
+    ? `<p><strong>${renderInline(getTranslation(lang).ui.rulebookUi.objectiveLabel)}</strong> ${renderInline(character.objective[lang])}</p>`
     : "";
 
   return `
@@ -305,7 +267,7 @@ function renderSkinPreviewSelect(characterId: RulebookCharacterId, lang: Languag
 
   return `
     <label class="rulebook-skin-preview">
-      <span>Skin</span>
+      <span>${renderInline(getTranslation(lang).ui.rulebookUi.skinPreviewLabel)}</span>
       <select data-rulebook-skin-select="${escapeAttribute(characterId)}">
         ${skinOptions.map((skinOption) => `
           <option value="${escapeAttribute(skinOption.value)}" data-preview-image="${escapeAttribute(resolveRulebookRoleImage(roleId, options.skinPackId ?? "default", skinOption.value).src)}"${skinOption.value === value ? " selected" : ""}>
@@ -330,7 +292,7 @@ function renderFullRulebook(lang: Language, options: RulebookRenderOptions = {})
 function renderCharacterRulebook(lang: Language, characterId: RulebookCharacterId, options: RulebookRenderOptions = {}): string {
   const character = RULEBOOK_CHARACTERS[characterId];
   if (!character) {
-    return `<p>${FALLBACK_MESSAGE[lang]}</p>`;
+    return `<p>${getTranslation(lang).ui.rulebookUi.fallbackMessage}</p>`;
   }
 
   return `

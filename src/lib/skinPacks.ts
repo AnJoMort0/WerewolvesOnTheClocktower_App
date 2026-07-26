@@ -1,5 +1,5 @@
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
-import type { Language } from "@/lib/i18n";
+import { getTranslation, type Language } from "@/lib/i18n";
 import { normalizeStatusEffectSet } from "@/lib/effects";
 
 export type SkinPackId = "seasonal" | "default" | "thiercelieux";
@@ -83,38 +83,6 @@ for (const [path, src] of Object.entries(SKIN_PACK_IMAGE_MODULES)) {
   }
 }
 
-const SKIN_PACK_LABELS: Record<SkinPackId, Record<Language, string>> = {
-  seasonal: {
-    pt: "Padrão (com sazonais)",
-    fr: "Défaut (saisonnier)",
-    en: "Default (with seasonals)",
-  },
-  default: {
-    pt: "Padrão",
-    fr: "Défaut",
-    en: "Default",
-  },
-  thiercelieux: {
-    pt: "Aldeia Velha",
-    fr: "Thiercelieux",
-    en: "Miller's Hollow",
-  },
-};
-
-const SEASONAL_LABELS: Record<SeasonalEventId, Record<Language, string>> = {
-  carnival: { pt: "Carnaval", fr: "Carnaval", en: "Carnival" },
-  christmas: { pt: "Natal", fr: "Noël", en: "Christmas" },
-  easter: { pt: "Páscoa", fr: "Pâques", en: "Easter" },
-  halloween: { pt: "Halloween", fr: "Halloween", en: "Halloween" },
-  new_years: { pt: "Ano Novo", fr: "Nouvel An", en: "New Year" },
-};
-
-const FLEXIBLE_LABELS: Record<FlexibleSkinVariant, Record<Language, string>> = {
-  good: { pt: "Flexível: aldeia", fr: "Flexible : village", en: "Flexible: village" },
-  evil: { pt: "Flexível: mal", fr: "Flexible : mal", en: "Flexible: evil" },
-  solo: { pt: "Flexível: solo", fr: "Flexible : solo", en: "Flexible: solo" },
-};
-
 export function isSkinPackId(value: string | null | undefined): value is SkinPackId {
   return value === "seasonal" || value === "default" || value === "thiercelieux";
 }
@@ -124,7 +92,7 @@ function isSeasonalEventId(value: string): value is SeasonalEventId {
 }
 
 export function getSkinPackLabel(skinPackId: SkinPackId, language: Language): string {
-  return SKIN_PACK_LABELS[skinPackId][language];
+  return getTranslation(language).ui.skinPacks.packs[skinPackId];
 }
 
 export function getSkinPackIcon(skinPackId: SkinPackId): string {
@@ -217,27 +185,28 @@ export function getRulebookSkinOptions(
     .filter((eventId) => !!seasonalImages[eventId][roleId])
     .map((eventId) => ({
       value: `seasonal:${eventId}` as RulebookSkinPreviewValue,
-      label: SEASONAL_LABELS[eventId][language],
+      label: getTranslation(language).ui.skinPacks.seasonals[eventId],
     }));
   const flexibleOptions = (Object.keys(flexibleImages[roleId] ?? {}) as FlexibleSkinVariant[])
     .map((variant) => ({
       value: `dynamic:${variant}` as RulebookSkinPreviewValue,
-      label: FLEXIBLE_LABELS[variant][language],
+      label: getTranslation(language).ui.skinPacks.flexible[variant],
     }));
+  const skinPackLabels = getTranslation(language).ui.skinPacks.packs;
   const hasThiercelieux = !!thiercelieuxImages[roleId];
   const alternatives = [
     ...seasonalOptions,
     ...(hasThiercelieux && skinPackId !== "thiercelieux"
-      ? [{ value: "thiercelieux" as RulebookSkinPreviewValue, label: SKIN_PACK_LABELS.thiercelieux[language] }]
+      ? [{ value: "thiercelieux" as RulebookSkinPreviewValue, label: skinPackLabels.thiercelieux }]
       : []),
     ...flexibleOptions,
   ];
 
   const options = [
-    { value: "device", label: SKIN_PACK_LABELS[skinPackId][language] },
+    { value: "device", label: skinPackLabels[skinPackId] },
     ...(skinPackId === "default"
       ? []
-      : [{ value: "default" as RulebookSkinPreviewValue, label: SKIN_PACK_LABELS.default[language] }]),
+      : [{ value: "default" as RulebookSkinPreviewValue, label: skinPackLabels.default }]),
     ...alternatives,
   ];
   return options.length > 1 ? options : [];

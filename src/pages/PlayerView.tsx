@@ -11,7 +11,7 @@ import { RevealModal, type RevealCard } from "@/components/game/RevealModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
-import { LanguageContext, format, getRoleLabel, t, type Language, type WinKind } from "@/lib/i18n";
+import { LanguageContext, format, getRoleLabel, isLanguage, t, type Language, type WinKind } from "@/lib/i18n";
 import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
 import loverIcon from "@/assets/icons/lover.png";
@@ -244,7 +244,7 @@ const PlayerView = () => {
       if (roomData) {
         setRoomStatus(roomData.status);
         const lang = (roomData as { language?: string }).language;
-        if (lang === "fr" || lang === "pt") setLanguage(lang);
+        if (isLanguage(lang)) setLanguage(lang);
         const durable = roomData as unknown as {
           phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
           timer_state?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;

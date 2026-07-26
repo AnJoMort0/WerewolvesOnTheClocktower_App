@@ -407,5 +407,150 @@ export const fr: Translation = {
     objectiveSecretLover: "rester parmi les deux derniers survivants en tant qu'Amant Secret",
     dogCopyLabel: "Chien",
     dogActorChooseIdolNotice: "Le {Meneur} indique discrètement au {Chien} qu'il doit choisir une Idole.",
+
+    // Générateur analogique de personnages.
+    characterGenerator: {
+      open: "Seulement générer les personnages",
+      title: "Générer les personnages",
+      subtitle: "Mode analogique pour distribuer les cartes et suivre seulement le script des personnages en jeu.",
+      players: "Nombre de joueurs",
+      advanced: "Inclure les personnages avancés",
+      generate: "Générer",
+      regenerate: "Générer à nouveau",
+      autoFix: "Corriger automatiquement",
+      copyAllRich: "Tout copier avec images",
+      copyAllText: "Tout copier en texte",
+      copyRich: "Copier image + texte",
+      copyText: "Copier texte",
+      copied: "Copié",
+      copiedFallback: "Texte copié",
+      empty: "Les personnages générés apparaissent ici.",
+      invalid: "Entre au moins 8 joueurs.",
+      ready: "{count} messages prêts.",
+      player: "Joueur {index}",
+      message: "Ton personnage est {id}.{name}",
+      messageWithRulebook: "Ton personnage est {id}.{name}\nRègles : {url}",
+      rulebook: "Fiche dans le livre",
+      richMessagePrefix: "Ton personnage est",
+      scriptTitle: "Script de nuit",
+      clearScript: "Effacer les coches",
+      permanentScriptLine: "Mort ou sans actions",
+      noScriptLines: "Aucune ligne pour ces personnages dans cette section.",
+      firstNight: "Première nuit",
+      secondNight: "Deuxième nuit",
+      normalNight: "Nuit normale",
+      warnings: "Avis",
+    },
+
+    // Journal de partie et libellés utilisés par les événements.
+    gameLog: {
+      title: "Journal de partie",
+      finalCircle: "Cercle final",
+      empty: "Aucun événement enregistré pour le moment.",
+      clearHighlight: "Effacer le surlignage",
+      selected: "Surligné",
+      system: "Système",
+      village: "Village",
+      hideEvent: "Masquer l’événement",
+      unknownPlayer: "Joueur",
+      noRole: "Sans carte",
+      close: "Fermer",
+      permanentDeath: "Mort permanente",
+      gypsyPoisonStolen: "Poison volé à {name}.",
+      phaseLabels: {
+        setup: "Préparation",
+        night: "Nuit",
+        day: "Jour",
+        tribunal: "Tribunal",
+        "game-over": "Fin de partie",
+      },
+      actionLabels: {
+        phase: "Changement de phase",
+        kill: "Mort",
+        execute: "Exécution",
+        resurrect: "Ressuscité",
+        poison: "Empoisonné",
+        illusion: "Illusion",
+        effect_add: "Effet appliqué",
+        role_change: "Carte modifiée",
+        game_over: "Fin de partie",
+      },
+    },
+
+    // Écran public de la salle.
+    roomDisplay: {
+      title: "Écran de salle",
+      waiting: "Ouvrez cet écran depuis la salle du Meneur de Jeu.",
+      log: "Journal de partie",
+      rulebook: "Règles",
+      fullscreen: "Plein écran",
+      exitFullscreen: "Quitter le plein écran",
+      close: "Fermer",
+      night: "Nuit",
+      day: "Jour",
+      tribunal: "Tribunal",
+    },
+
+    // Skinpacks, skins saisonniers et variantes flexibles.
+    skinPacks: {
+      notice: {
+        title: "Skin saisonnier",
+        body: "Ceci est un skin saisonnier, pas une carte différente. Tu peux changer les skins avec le bouton de skins.",
+        dismiss: "Fermer l'avertissement de skin saisonnier",
+        selector: "Choisir le skinpack",
+      },
+      packs: {
+        seasonal: "Défaut (saisonnier)",
+        default: "Défaut",
+        thiercelieux: "Thiercelieux",
+      },
+      seasonals: {
+        carnival: "Carnaval",
+        christmas: "Noël",
+        easter: "Pâques",
+        halloween: "Halloween",
+        new_years: "Nouvel An",
+      },
+      flexible: {
+        good: "Flexible : village",
+        evil: "Flexible : mal",
+        solo: "Flexible : solo",
+      },
+    },
+
+    // UI du livre de règles. Le contenu long reste dans rulebookContent.ts.
+    rulebookUi: {
+      fallbackMessage: "Fiche introuvable.",
+      objectiveLabel: "Objectif :",
+      skinPreviewLabel: "Skin",
+      nightScript: {
+        title: "La Nuit",
+        firstNight: "Première Nuit",
+        secondNight: "Début de la Deuxième Nuit",
+        normalNight: "Nuit Normale",
+      },
+    },
+
+    // Lignes auxiliaires du script de nuit créées par l'UI.
+    nightScript: {
+      dogArticle: "Le",
+      dogHousemaidDistance: "Le {Chien} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée",
+      mimeOnlyLines: {
+        v10: {
+          text: "Le {Paranoïaque} se réveille et choisit un joueur à assassiner immédiatement.",
+          requires: ["v10"],
+        },
+        v18: {
+          text: "L'{Ange} se réveille et choisit un Fantôme à ressusciter.",
+          requires: ["v18"],
+        },
+      },
+    },
+
+    // Libellés spécifiques à la salle du Meneur de Jeu.
+    gmRoom: {
+      gameLog: "Journal de partie",
+      roomDisplay: "Écran de salle",
+    },
   },
 };

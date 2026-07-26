@@ -11,71 +11,15 @@ import { RoleSelector } from "@/components/game/RoleSelector";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { assignRoles, type RoleId } from "@/lib/roles";
-import { LanguageContext, getRoleLabel, type Language } from "@/lib/i18n";
+import { LanguageContext, format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import { resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 
 const MIN_PLAYERS = 8;
 
-const strings = {
-  pt: {
-    open: "Só gerar personagens",
-    title: "Gerar personagens",
-    players: "Número de jogadores",
-    advanced: "Incluir personagens avançadas",
-    generate: "Gerar",
-    regenerate: "Gerar de novo",
-    copyAllRich: "Copiar tudo com imagens",
-    copyAllText: "Copiar tudo em texto",
-    copyRich: "Copiar imagem + texto",
-    copyText: "Copiar texto",
-    copied: "Copiado",
-    copiedFallback: "Texto copiado",
-    empty: "As personagens geradas aparecem aqui.",
-    invalid: "Insere pelo menos 8 jogadores.",
-    player: (index: number) => `Jogador ${index}`,
-    message: (id: RoleId, name: string) => `O teu personagem é ${id}.${name}`,
-  },
-  fr: {
-    open: "Seulement générer les personnages",
-    title: "Générer les personnages",
-    players: "Nombre de joueurs",
-    advanced: "Inclure les personnages avancés",
-    generate: "Générer",
-    regenerate: "Générer à nouveau",
-    copyAllRich: "Tout copier avec images",
-    copyAllText: "Tout copier en texte",
-    copyRich: "Copier image + texte",
-    copyText: "Copier texte",
-    copied: "Copié",
-    copiedFallback: "Texte copié",
-    empty: "Les personnages générés apparaissent ici.",
-    invalid: "Entre au moins 8 joueurs.",
-    player: (index: number) => `Joueur ${index}`,
-    message: (id: RoleId, name: string) => `Ton personnage est ${id}.${name}`,
-  },
-  en: {
-    open: "Generate characters only",
-    title: "Generate characters",
-    players: "Number of players",
-    advanced: "Include advanced characters",
-    generate: "Generate",
-    regenerate: "Generate again",
-    copyAllRich: "Copy all with images",
-    copyAllText: "Copy all as text",
-    copyRich: "Copy image + text",
-    copyText: "Copy text",
-    copied: "Copied",
-    copiedFallback: "Text copied",
-    empty: "Generated characters appear here.",
-    invalid: "Enter at least 8 players.",
-    player: (index: number) => `Player ${index}`,
-    message: (id: RoleId, name: string) => `Your character is ${id}.${name}`,
-  },
-};
-
 export function CharacterGeneratorButton({ language }: { language: Language }) {
   const navigate = useNavigate();
+  const text = getTranslation(language).ui.characterGenerator;
 
   return (
     <Button
@@ -89,7 +33,7 @@ export function CharacterGeneratorButton({ language }: { language: Language }) {
       className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
     >
       <Wand2 className="mr-2 h-3.5 w-3.5" />
-      {strings[language].open}
+      {text.open}
     </Button>
   );
 }
@@ -103,14 +47,17 @@ function escapeHtml(value: string): string {
 }
 
 function roleMessage(roleId: RoleId, language: Language): string {
-  return strings[language].message(roleId, getRoleLabel(roleId, language));
+  return format(getTranslation(language).ui.characterGenerator.message, {
+    id: roleId,
+    name: getRoleLabel(roleId, language),
+  });
 }
 
 function richPayload(roleId: RoleId, language: Language, skinPackId: SkinPackId): { html: string; text: string } {
   const label = getRoleLabel(roleId, language);
   const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
   const text = roleMessage(roleId, language);
-  const prefix = language === "fr" ? "Ton personnage est" : language === "en" ? "Your character is" : "O teu personagem é";
+  const prefix = getTranslation(language).ui.characterGenerator.richMessagePrefix;
   const html = `
     <div style="display:flex;gap:12px;align-items:center;font-family:Georgia,'Times New Roman',serif;color:#2d231f;max-width:520px;">
       <img src="${escapeHtml(roleImage)}" alt="${escapeHtml(`${roleId}.${label}`)}" style="width:92px;height:92px;object-fit:contain;border-radius:12px;border:1px solid #7d2424;background:#211d19;">
@@ -159,7 +106,7 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
   onOpenChange: (open: boolean) => void;
   language: Language;
 }) {
-  const text = strings[language];
+  const text = getTranslation(language).ui.characterGenerator;
   const { skinPackId } = useSkinPack();
   const [playerCount, setPlayerCount] = useState("10");
   const [advancedEnabled, setAdvancedEnabled] = useState(false);
@@ -261,7 +208,7 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
 
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className={`text-sm ${status === text.invalid ? "text-destructive" : "text-muted-foreground"}`}>
-                {status || `${roleIds.length} ${language === "fr" ? "messages prêts" : language === "en" ? "messages ready" : "mensagens prontas"}.`}
+                {status || format(text.ready, { count: roleIds.length })}
               </p>
               {roleIds.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -294,7 +241,7 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
                       <article key={`${index}-${roleId}`} className="grid gap-3 rounded-lg border border-border bg-card p-3">
                         <div className="flex items-start justify-between gap-3">
                           <span className="rounded-full bg-gold/10 px-2 py-1 font-display text-[10px] uppercase tracking-widest text-gold">
-                            {text.player(index + 1)}
+                            {format(text.player, { index: index + 1 })}
                           </span>
                           <span className="font-display text-xs uppercase tracking-wider text-primary">{roleId}</span>
                         </div>

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
-import { LanguageContext, coerceLanguage, getRoleLabel, t, type Language } from "@/lib/i18n";
+import { LanguageContext, coerceLanguage, format, getRoleLabel, getTranslation, t, type Language } from "@/lib/i18n";
 import { RULEBOOK_NIGHT_SCRIPT, type RulebookNightPhase } from "@/lib/rulebookContent";
 import { assignRoles, type RoleId } from "@/lib/roles";
 import { autoFixRoleSelection, validateRoleSelection } from "@/lib/roleValidation";
@@ -15,96 +15,6 @@ import { resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 
 const MIN_PLAYERS = 8;
-
-const strings = {
-  pt: {
-    title: "Gerar personagens",
-    subtitle: "Modo analógico para distribuir cartas e seguir só o guião das personagens em jogo.",
-    players: "Número de jogadores",
-    advanced: "Incluir personagens avançadas",
-    generate: "Gerar",
-    regenerate: "Gerar de novo",
-    autoFix: "Corrigir automaticamente",
-    copyAllRich: "Copiar tudo com imagens",
-    copyAllText: "Copiar tudo em texto",
-    copyRich: "Copiar imagem + texto",
-    copyText: "Copiar texto",
-    copied: "Copiado",
-    copiedFallback: "Texto copiado",
-    empty: "As personagens geradas aparecem aqui.",
-    invalid: "Insere pelo menos 8 jogadores.",
-    ready: (count: number) => `${count} mensagens prontas.`,
-    player: (index: number) => `Jogador ${index}`,
-    message: (id: RoleId, name: string, url: string) => `O teu personagem é ${id}.${name}\nRegras: ${url}`,
-    rulebook: "Ficha no livro",
-    scriptTitle: "Guião da noite",
-    clearScript: "Limpar marcações",
-    permanentScriptLine: "Morto ou sem ações",
-    noScriptLines: "Nenhuma linha para estas personagens nesta secção.",
-    firstNight: "Primeira noite",
-    secondNight: "Segunda noite",
-    normalNight: "Noite normal",
-    warnings: "Avisos",
-  },
-  fr: {
-    title: "Générer les personnages",
-    subtitle: "Mode analogique pour distribuer les cartes et suivre seulement le script des personnages en jeu.",
-    players: "Nombre de joueurs",
-    advanced: "Inclure les personnages avancés",
-    generate: "Générer",
-    regenerate: "Générer à nouveau",
-    autoFix: "Corriger automatiquement",
-    copyAllRich: "Tout copier avec images",
-    copyAllText: "Tout copier en texte",
-    copyRich: "Copier image + texte",
-    copyText: "Copier texte",
-    copied: "Copié",
-    copiedFallback: "Texte copié",
-    empty: "Les personnages générés apparaissent ici.",
-    invalid: "Entre au moins 8 joueurs.",
-    ready: (count: number) => `${count} messages prêts.`,
-    player: (index: number) => `Joueur ${index}`,
-    message: (id: RoleId, name: string, url: string) => `Ton personnage est ${id}.${name}\nRègles : ${url}`,
-    rulebook: "Fiche dans le livre",
-    scriptTitle: "Script de nuit",
-    clearScript: "Effacer les coches",
-    permanentScriptLine: "Mort ou sans actions",
-    noScriptLines: "Aucune ligne pour ces personnages dans cette section.",
-    firstNight: "Première nuit",
-    secondNight: "Deuxième nuit",
-    normalNight: "Nuit normale",
-    warnings: "Avis",
-  },
-  en: {
-    title: "Generate characters",
-    subtitle: "Analog mode for dealing cards and following only the night script for the characters in play.",
-    players: "Number of players",
-    advanced: "Include advanced characters",
-    generate: "Generate",
-    regenerate: "Generate again",
-    autoFix: "Auto-fix",
-    copyAllRich: "Copy all with images",
-    copyAllText: "Copy all as text",
-    copyRich: "Copy image + text",
-    copyText: "Copy text",
-    copied: "Copied",
-    copiedFallback: "Text copied",
-    empty: "Generated characters appear here.",
-    invalid: "Enter at least 8 players.",
-    ready: (count: number) => `${count} messages ready.`,
-    player: (index: number) => `Player ${index}`,
-    message: (id: RoleId, name: string, url: string) => `Your character is ${id}.${name}\nRules: ${url}`,
-    rulebook: "Rulebook card",
-    scriptTitle: "Night script",
-    clearScript: "Clear checks",
-    permanentScriptLine: "Dead or no actions",
-    noScriptLines: "No lines for these characters in this section.",
-    firstNight: "First night",
-    secondNight: "Second night",
-    normalNight: "Normal night",
-    warnings: "Warnings",
-  },
-};
 
 const phaseOrder: RulebookNightPhase[] = ["firstNight", "secondNight", "normalNight"];
 
@@ -131,9 +41,10 @@ function richPayload(roleId: RoleId, language: Language, skinPackId: SkinPackId)
   const label = getRoleLabel(roleId, language);
   const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
   const url = rulebookUrl(roleId, language);
-  const text = strings[language].message(roleId, label, url);
-  const prefix = language === "fr" ? "Ton personnage est" : language === "en" ? "Your character is" : "O teu personagem é";
-  const linkLabel = strings[language].rulebook;
+  const copy = getTranslation(language).ui.characterGenerator;
+  const text = format(copy.messageWithRulebook, { id: roleId, name: label, url });
+  const prefix = copy.richMessagePrefix;
+  const linkLabel = copy.rulebook;
   const html = `
     <div style="display:flex;gap:12px;align-items:center;font-family:Georgia,'Times New Roman',serif;color:#2d231f;max-width:560px;">
       <img src="${escapeHtml(roleImage)}" alt="${escapeHtml(`${roleId}.${label}`)}" style="width:92px;height:92px;object-fit:contain;border-radius:12px;border:1px solid #7d2424;background:#211d19;">
@@ -184,7 +95,7 @@ export default function CharacterGeneratorPage() {
   const [searchParams] = useSearchParams();
   const [language] = useState<Language>(() => getInitialLanguage(searchParams.get("lang")));
   const { skinPackId } = useSkinPack();
-  const text = strings[language];
+  const text = getTranslation(language).ui.characterGenerator;
   const [playerCount, setPlayerCount] = useState("10");
   const [advancedEnabled, setAdvancedEnabled] = useState(false);
   const [roleIds, setRoleIds] = useState<RoleId[]>([]);
@@ -328,7 +239,7 @@ export default function CharacterGeneratorPage() {
 
           <section className="flex flex-wrap items-center justify-between gap-2">
             <p className={`text-sm ${status === text.invalid ? "text-destructive" : "text-muted-foreground"}`}>
-              {status || text.ready(roleIds.length)}
+              {status || format(text.ready, { count: roleIds.length })}
             </p>
             {roleIds.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -382,7 +293,7 @@ export default function CharacterGeneratorPage() {
                     <article key={`${index}-${roleId}`} className="grid gap-3 rounded-lg border border-border bg-card p-3">
                       <div className="flex items-start justify-between gap-3">
                         <span className="rounded-full bg-gold/10 px-2 py-1 font-display text-[10px] uppercase tracking-widest text-gold">
-                          {text.player(index + 1)}
+                          {format(text.player, { index: index + 1 })}
                         </span>
                         <span className="font-display text-xs uppercase tracking-wider text-primary">{roleId}</span>
                       </div>

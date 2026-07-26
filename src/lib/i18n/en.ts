@@ -407,5 +407,150 @@ export const en: Translation = {
     objectiveSecretLover: "be one of the final two survivors as the Secret Lover",
     dogCopyLabel: "Dog",
     dogActorChooseIdolNotice: "The {Narrator} discreetly tells the {Dog} that they need to choose an Idol.",
+
+    // Analog character generator.
+    characterGenerator: {
+      open: "Generate characters only",
+      title: "Generate characters",
+      subtitle: "Analog mode for dealing cards and following only the night script for the characters in play.",
+      players: "Number of players",
+      advanced: "Include advanced characters",
+      generate: "Generate",
+      regenerate: "Generate again",
+      autoFix: "Auto-fix",
+      copyAllRich: "Copy all with images",
+      copyAllText: "Copy all as text",
+      copyRich: "Copy image + text",
+      copyText: "Copy text",
+      copied: "Copied",
+      copiedFallback: "Text copied",
+      empty: "Generated characters appear here.",
+      invalid: "Enter at least 8 players.",
+      ready: "{count} messages ready.",
+      player: "Player {index}",
+      message: "Your character is {id}.{name}",
+      messageWithRulebook: "Your character is {id}.{name}\nRules: {url}",
+      rulebook: "Rulebook card",
+      richMessagePrefix: "Your character is",
+      scriptTitle: "Night script",
+      clearScript: "Clear checks",
+      permanentScriptLine: "Dead or no actions",
+      noScriptLines: "No lines for these characters in this section.",
+      firstNight: "First night",
+      secondNight: "Second night",
+      normalNight: "Normal night",
+      warnings: "Warnings",
+    },
+
+    // Game log and event labels.
+    gameLog: {
+      title: "Game log",
+      finalCircle: "Final circle",
+      empty: "No events recorded yet.",
+      clearHighlight: "Clear highlight",
+      selected: "Highlighting",
+      system: "System",
+      village: "Village",
+      hideEvent: "Hide event",
+      unknownPlayer: "Player",
+      noRole: "No card",
+      close: "Close",
+      permanentDeath: "Permanent death",
+      gypsyPoisonStolen: "Poison stolen from {name}.",
+      phaseLabels: {
+        setup: "Setup",
+        night: "Night",
+        day: "Day",
+        tribunal: "Tribunal",
+        "game-over": "Game over",
+      },
+      actionLabels: {
+        phase: "Phase change",
+        kill: "Death",
+        execute: "Execution",
+        resurrect: "Resurrected",
+        poison: "Poisoned",
+        illusion: "Illusion",
+        effect_add: "Effect applied",
+        role_change: "Card changed",
+        game_over: "Game over",
+      },
+    },
+
+    // Public room display.
+    roomDisplay: {
+      title: "Room display",
+      waiting: "Open this screen from the Narrator room.",
+      log: "Game log",
+      rulebook: "Rulebook",
+      fullscreen: "Fullscreen",
+      exitFullscreen: "Exit fullscreen",
+      close: "Close",
+      night: "Night",
+      day: "Day",
+      tribunal: "Tribunal",
+    },
+
+    // Skinpacks, seasonal skins, and flexible variants.
+    skinPacks: {
+      notice: {
+        title: "Seasonal skin",
+        body: "This is a seasonal skin, not a different card. You can change skins with the skins button.",
+        dismiss: "Close seasonal skin notice",
+        selector: "Choose skinpack",
+      },
+      packs: {
+        seasonal: "Default (with seasonals)",
+        default: "Default",
+        thiercelieux: "Miller's Hollow",
+      },
+      seasonals: {
+        carnival: "Carnival",
+        christmas: "Christmas",
+        easter: "Easter",
+        halloween: "Halloween",
+        new_years: "New Year",
+      },
+      flexible: {
+        good: "Flexible: village",
+        evil: "Flexible: evil",
+        solo: "Flexible: solo",
+      },
+    },
+
+    // Rulebook UI. Long-form rulebook content stays in rulebookContent.ts.
+    rulebookUi: {
+      fallbackMessage: "Card not found.",
+      objectiveLabel: "Objective:",
+      skinPreviewLabel: "Skin",
+      nightScript: {
+        title: "The Night",
+        firstNight: "First Night",
+        secondNight: "Start of the Second Night",
+        normalNight: "Normal Night",
+      },
+    },
+
+    // Night script helper lines created by the UI.
+    nightScript: {
+      dogArticle: "The",
+      dogHousemaidDistance: "The {Dog} wakes up and learns the distance to the poisoned player",
+      mimeOnlyLines: {
+        v10: {
+          text: "The {Paranoid} wakes up and chooses a player to assassinate immediately.",
+          requires: ["v10"],
+        },
+        v18: {
+          text: "The {Angel} wakes up and chooses a Ghost to resurrect.",
+          requires: ["v18"],
+        },
+      },
+    },
+
+    // Narrator room labels.
+    gmRoom: {
+      gameLog: "Game log",
+      roomDisplay: "Room display",
+    },
   },
 };

@@ -407,5 +407,150 @@ export const pt: Translation = {
     objectiveSecretLover: "ser um dos dois últimos sobreviventes como Amante Secreto",
     dogCopyLabel: "Cão",
     dogActorChooseIdolNotice: "O {Narrador} diz discretamente ao {Cão} que precisa de escolher um Ídolo.",
+
+    // Gerador analógico de personagens.
+    characterGenerator: {
+      open: "Só gerar personagens",
+      title: "Gerar personagens",
+      subtitle: "Modo analógico para distribuir cartas e seguir só o guião das personagens em jogo.",
+      players: "Número de jogadores",
+      advanced: "Incluir personagens avançadas",
+      generate: "Gerar",
+      regenerate: "Gerar de novo",
+      autoFix: "Corrigir automaticamente",
+      copyAllRich: "Copiar tudo com imagens",
+      copyAllText: "Copiar tudo em texto",
+      copyRich: "Copiar imagem + texto",
+      copyText: "Copiar texto",
+      copied: "Copiado",
+      copiedFallback: "Texto copiado",
+      empty: "As personagens geradas aparecem aqui.",
+      invalid: "Insere pelo menos 8 jogadores.",
+      ready: "{count} mensagens prontas.",
+      player: "Jogador {index}",
+      message: "O teu personagem é {id}.{name}",
+      messageWithRulebook: "O teu personagem é {id}.{name}\nRegras: {url}",
+      rulebook: "Ficha no livro",
+      richMessagePrefix: "O teu personagem é",
+      scriptTitle: "Guião da noite",
+      clearScript: "Limpar marcações",
+      permanentScriptLine: "Morto ou sem ações",
+      noScriptLines: "Nenhuma linha para estas personagens nesta secção.",
+      firstNight: "Primeira noite",
+      secondNight: "Segunda noite",
+      normalNight: "Noite normal",
+      warnings: "Avisos",
+    },
+
+    // Registo do jogo e etiquetas usadas nos eventos.
+    gameLog: {
+      title: "Registo do jogo",
+      finalCircle: "Círculo final",
+      empty: "Ainda não há acontecimentos registados.",
+      clearHighlight: "Limpar destaque",
+      selected: "A destacar",
+      system: "Sistema",
+      village: "Aldeia",
+      hideEvent: "Ocultar acontecimento",
+      unknownPlayer: "Jogador",
+      noRole: "Sem carta",
+      close: "Fechar",
+      permanentDeath: "Morte permanente",
+      gypsyPoisonStolen: "Veneno roubado de {name}.",
+      phaseLabels: {
+        setup: "Preparação",
+        night: "Noite",
+        day: "Dia",
+        tribunal: "Tribunal",
+        "game-over": "Fim do jogo",
+      },
+      actionLabels: {
+        phase: "Mudança de fase",
+        kill: "Morte",
+        execute: "Execução",
+        resurrect: "Ressuscitou",
+        poison: "Envenenado",
+        illusion: "Ilusão",
+        effect_add: "Efeito aplicado",
+        role_change: "Carta alterada",
+        game_over: "Fim do jogo",
+      },
+    },
+
+    // Ecrã público da sala.
+    roomDisplay: {
+      title: "Ecrã da sala",
+      waiting: "Abre este ecrã a partir da sala do Mestre de Jogo.",
+      log: "Registo do jogo",
+      rulebook: "Regras",
+      fullscreen: "Ecrã inteiro",
+      exitFullscreen: "Sair do ecrã inteiro",
+      close: "Fechar",
+      night: "Noite",
+      day: "Dia",
+      tribunal: "Tribunal",
+    },
+
+    // Skinpacks, skins sazonais e variantes flexíveis.
+    skinPacks: {
+      notice: {
+        title: "Skin sazonal",
+        body: "Esta é uma skin sazonal, não uma carta diferente. Podes mudar as skins no botão de skins.",
+        dismiss: "Fechar aviso de skin sazonal",
+        selector: "Escolher skinpack",
+      },
+      packs: {
+        seasonal: "Padrão (com sazonais)",
+        default: "Padrão",
+        thiercelieux: "Aldeia Velha",
+      },
+      seasonals: {
+        carnival: "Carnaval",
+        christmas: "Natal",
+        easter: "Páscoa",
+        halloween: "Halloween",
+        new_years: "Ano Novo",
+      },
+      flexible: {
+        good: "Flexível: aldeia",
+        evil: "Flexível: mal",
+        solo: "Flexível: solo",
+      },
+    },
+
+    // UI do livro de regras. O conteúdo longo continua em rulebookContent.ts.
+    rulebookUi: {
+      fallbackMessage: "Ficha não encontrada.",
+      objectiveLabel: "Objetivo:",
+      skinPreviewLabel: "Skin",
+      nightScript: {
+        title: "A Noite",
+        firstNight: "Primeira Noite",
+        secondNight: "Início da Segunda Noite",
+        normalNight: "Noite Normal",
+      },
+    },
+
+    // Linhas auxiliares do script da noite criadas pela UI.
+    nightScript: {
+      dogArticle: "O",
+      dogHousemaidDistance: "O {Cão} acorda e é-lhe revelada a distância até à pessoa envenenada",
+      mimeOnlyLines: {
+        v10: {
+          text: "O {Paranoico} acorda e escolhe um jogador para assassinar imediatamente.",
+          requires: ["v10"],
+        },
+        v18: {
+          text: "O {Anjo} acorda e escolhe um Fantasma para ressuscitar.",
+          requires: ["v18"],
+        },
+      },
+    },
+
+    // Etiquetas específicas da sala do Mestre de Jogo.
+    gmRoom: {
+      gameLog: "Registo do jogo",
+      roomDisplay: "Ecrã da sala",
+    },
   },
 };

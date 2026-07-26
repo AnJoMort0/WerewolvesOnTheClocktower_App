@@ -10,7 +10,7 @@ import {
   type SkinPackId,
 } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
-import { coerceLanguage, type Language } from "@/lib/i18n";
+import { coerceLanguage, getTranslation, type Language } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -18,27 +18,6 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-
-const NOTICE_TEXT: Record<Language, { title: string; body: string; dismiss: string; selector: string }> = {
-  pt: {
-    title: "Skin sazonal",
-    body: "Esta é uma skin sazonal, não uma carta diferente. Podes mudar as skins no botão de skins.",
-    dismiss: "Fechar aviso de skin sazonal",
-    selector: "Escolher skinpack",
-  },
-  fr: {
-    title: "Skin saisonnier",
-    body: "Ceci est un skin saisonnier, pas une carte différente. Tu peux changer les skins avec le bouton de skins.",
-    dismiss: "Fermer l'avertissement de skin saisonnier",
-    selector: "Choisir le skinpack",
-  },
-  en: {
-    title: "Seasonal skin",
-    body: "This is a seasonal skin, not a different card. You can change skins with the skins button.",
-    dismiss: "Close seasonal skin notice",
-    selector: "Choose skinpack",
-  },
-};
 
 function getPreferredLanguage(): Language {
   if (typeof window === "undefined") return "pt";
@@ -84,7 +63,7 @@ export function SkinPackSelectButton({
   const [preferredLanguage, setPreferredLanguage] = useState<Language>(() => getPreferredLanguage());
   const language = providedLanguage ?? preferredLanguage;
   const label = getSkinPackLabel(skinPackId, language);
-  const selectorLabel = `${NOTICE_TEXT[language].selector}: ${label}`;
+  const selectorLabel = `${getTranslation(language).ui.skinPacks.notice.selector}: ${label}`;
 
   useEffect(() => {
     if (providedLanguage) return;
@@ -140,7 +119,7 @@ function SkinPackSeasonalNotice({ language, skinPackId }: { language: Language; 
     return null;
   }
 
-  const text = NOTICE_TEXT[language];
+  const text = getTranslation(language).ui.skinPacks.notice;
   return (
     <div className="fixed left-1/2 top-4 z-40 w-[min(calc(100vw-2rem),34rem)] -translate-x-1/2 rounded-md border border-amber-400/70 bg-card/95 p-3 pr-10 text-sm shadow-xl backdrop-blur">
       <div className="font-display text-sm text-amber-300">{text.title}</div>

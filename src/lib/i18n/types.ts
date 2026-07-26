@@ -130,6 +130,121 @@ export interface GameOverStrings {
   dismiss: string;
 }
 
+export interface CharacterGeneratorStrings {
+  open: string;
+  title: string;
+  subtitle: string;
+  players: string;
+  advanced: string;
+  generate: string;
+  regenerate: string;
+  autoFix: string;
+  copyAllRich: string;
+  copyAllText: string;
+  copyRich: string;
+  copyText: string;
+  copied: string;
+  copiedFallback: string;
+  empty: string;
+  invalid: string;
+  ready: string;                  // Supports {count}
+  player: string;                 // Supports {index}
+  message: string;                // Supports {id}, {name}
+  messageWithRulebook: string;    // Supports {id}, {name}, {url}
+  rulebook: string;
+  richMessagePrefix: string;
+  scriptTitle: string;
+  clearScript: string;
+  permanentScriptLine: string;
+  noScriptLines: string;
+  firstNight: string;
+  secondNight: string;
+  normalNight: string;
+  warnings: string;
+}
+
+export type GameLogPhaseKey = "setup" | "night" | "day" | "tribunal" | "game-over";
+export type GameLogActionKey =
+  | "phase"
+  | "kill"
+  | "execute"
+  | "resurrect"
+  | "poison"
+  | "illusion"
+  | "effect_add"
+  | "role_change"
+  | "game_over";
+
+export interface GameLogStrings {
+  title: string;
+  finalCircle: string;
+  empty: string;
+  clearHighlight: string;
+  selected: string;
+  system: string;
+  village: string;
+  hideEvent: string;
+  unknownPlayer: string;
+  noRole: string;
+  close: string;
+  permanentDeath: string;
+  gypsyPoisonStolen: string;      // Supports {name}
+  phaseLabels: Record<GameLogPhaseKey, string>;
+  actionLabels: Record<GameLogActionKey, string>;
+}
+
+export interface RoomDisplayStrings {
+  title: string;
+  waiting: string;
+  log: string;
+  rulebook: string;
+  fullscreen: string;
+  exitFullscreen: string;
+  close: string;
+  night: string;
+  day: string;
+  tribunal: string;
+}
+
+export type SkinPackLabelKey = "seasonal" | "default" | "thiercelieux";
+export type SeasonalLabelKey = "carnival" | "christmas" | "easter" | "halloween" | "new_years";
+export type FlexibleSkinLabelKey = "good" | "evil" | "solo";
+
+export interface SkinPackStrings {
+  notice: {
+    title: string;
+    body: string;
+    dismiss: string;
+    selector: string;
+  };
+  packs: Record<SkinPackLabelKey, string>;
+  seasonals: Record<SeasonalLabelKey, string>;
+  flexible: Record<FlexibleSkinLabelKey, string>;
+}
+
+export interface RulebookUiStrings {
+  fallbackMessage: string;
+  objectiveLabel: string;
+  skinPreviewLabel: string;
+  nightScript: {
+    title: string;
+    firstNight: string;
+    secondNight: string;
+    normalNight: string;
+  };
+}
+
+export interface NightScriptUiStrings {
+  dogArticle: string;
+  dogHousemaidDistance: string;
+  mimeOnlyLines: Partial<Record<RoleId, ScriptLine>>;
+}
+
+export interface GMRoomStrings {
+  gameLog: string;
+  roomDisplay: string;
+}
+
 /** Static translatable UI strings. */
 export interface UIStrings {
   appTitle: string;
@@ -277,6 +392,15 @@ export interface UIStrings {
   objectiveSecretLover: string;
   dogCopyLabel: string;
   dogActorChooseIdolNotice: string;
+
+  // Larger UI groups. These keep component/page copy in i18n instead of local maps.
+  characterGenerator: CharacterGeneratorStrings;
+  gameLog: GameLogStrings;
+  roomDisplay: RoomDisplayStrings;
+  skinPacks: SkinPackStrings;
+  rulebookUi: RulebookUiStrings;
+  nightScript: NightScriptUiStrings;
+  gmRoom: GMRoomStrings;
 }
 
 export interface ScriptDynamicStrings {

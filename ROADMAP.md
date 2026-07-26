@@ -26,6 +26,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 * [x] There's still a few code things that are in Portuguese instead of English, for example the EffectKeys soldado, anfitrião, profecia, acusado, acusado_next, namorado, incendiado.
   <!-- Codex 2026-07-26: StatusEffect keys were renamed to English (soldier, host, prophecy, accused, accused_next, lover, burned, plus acquitted). Legacy Portuguese effect/source IDs are normalized at load/metadata/log boundaries so old rooms keep working. -->
+* [x] Centralize scattered UI text into the i18n files while keeping rulebookContent independent.
+  <!-- Codex 2026-07-26: Moved local copy maps for the character generator, game log, room display, skinpacks, rulebook UI labels, GM toolbar labels, and NightScript helper lines into grouped i18n sections with comments. rulebookContent.ts remains the independent long-form rulebook source. -->
 
 ## Balance Changes
 

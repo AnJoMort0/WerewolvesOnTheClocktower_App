@@ -9,60 +9,10 @@ import { GameLogModal } from "@/components/game/GameLogModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
-import { LanguageContext, coerceLanguage, type Language } from "@/lib/i18n";
+import { LanguageContext, coerceLanguage, getTranslation } from "@/lib/i18n";
 import { getRoomDisplayStorageKey, readRoomDisplaySnapshot, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
 import { normalizeStatusEffectSet } from "@/lib/effects";
 import type { StatusEffect } from "@/components/game/PlayerStatusPopover";
-
-const COPY: Record<Language, {
-  title: string;
-  waiting: string;
-  log: string;
-  rulebook: string;
-  fullscreen: string;
-  exitFullscreen: string;
-  close: string;
-  night: string;
-  day: string;
-  tribunal: string;
-}> = {
-  pt: {
-    title: "Ecrã da sala",
-    waiting: "Abre este ecrã a partir da sala do Mestre de Jogo.",
-    log: "Registo do jogo",
-    rulebook: "Regras",
-    fullscreen: "Ecrã inteiro",
-    exitFullscreen: "Sair do ecrã inteiro",
-    close: "Fechar",
-    night: "Noite",
-    day: "Dia",
-    tribunal: "Tribunal",
-  },
-  fr: {
-    title: "Écran de salle",
-    waiting: "Ouvrez cet écran depuis la salle du Meneur de Jeu.",
-    log: "Journal de partie",
-    rulebook: "Règles",
-    fullscreen: "Plein écran",
-    exitFullscreen: "Quitter le plein écran",
-    close: "Fermer",
-    night: "Nuit",
-    day: "Jour",
-    tribunal: "Tribunal",
-  },
-  en: {
-    title: "Room display",
-    waiting: "Open this screen from the Narrator room.",
-    log: "Game log",
-    rulebook: "Rulebook",
-    fullscreen: "Fullscreen",
-    exitFullscreen: "Exit fullscreen",
-    close: "Close",
-    night: "Night",
-    day: "Day",
-    tribunal: "Tribunal",
-  },
-};
 
 function formatTimer(seconds: number) {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -103,7 +53,7 @@ export default function RoomDisplay() {
   };
 
   const language = coerceLanguage(snapshot?.language);
-  const copy = COPY[language];
+  const copy = getTranslation(language).ui.roomDisplay;
   const permanentlyDead = useMemo(() => new Set(snapshot?.permanentlyDead ?? []), [snapshot?.permanentlyDead]);
   const playerEffects = useMemo(() => Object.fromEntries(
     Object.entries(snapshot?.playerEffects ?? {}).map(([playerId, effects]) => [playerId, normalizeStatusEffectSet(effects)]),
