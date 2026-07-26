@@ -15,6 +15,7 @@ import type {
 } from "./types";
 import { pt } from "./pt";
 import { fr } from "./fr";
+import { en } from "./en";
 
 export type {
   Language,
@@ -29,9 +30,9 @@ export type {
   GameOverStrings,
   WinKind,
 };
-export { SUPPORTED_LANGUAGES } from "./types";
+export { SUPPORTED_LANGUAGES, coerceLanguage, isLanguage } from "./types";
 
-const TRANSLATIONS: Record<Language, Translation> = { pt, fr };
+const TRANSLATIONS: Record<Language, Translation> = { pt, fr, en };
 
 export function getTranslation(lang: Language): Translation {
   return TRANSLATIONS[lang] ?? TRANSLATIONS.pt;

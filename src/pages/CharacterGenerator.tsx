@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
-import { LanguageContext, getRoleLabel, t, type Language } from "@/lib/i18n";
+import { LanguageContext, coerceLanguage, getRoleLabel, t, type Language } from "@/lib/i18n";
 import { RULEBOOK_NIGHT_SCRIPT, type RulebookNightPhase } from "@/lib/rulebookContent";
 import { assignRoles, type RoleId } from "@/lib/roles";
 import { autoFixRoleSelection, validateRoleSelection } from "@/lib/roleValidation";
@@ -75,14 +75,43 @@ const strings = {
     normalNight: "Nuit normale",
     warnings: "Avis",
   },
+  en: {
+    title: "Generate characters",
+    subtitle: "Analog mode for dealing cards and following only the night script for the characters in play.",
+    players: "Number of players",
+    advanced: "Include advanced characters",
+    generate: "Generate",
+    regenerate: "Generate again",
+    autoFix: "Auto-fix",
+    copyAllRich: "Copy all with images",
+    copyAllText: "Copy all as text",
+    copyRich: "Copy image + text",
+    copyText: "Copy text",
+    copied: "Copied",
+    copiedFallback: "Text copied",
+    empty: "Generated characters appear here.",
+    invalid: "Enter at least 8 players.",
+    ready: (count: number) => `${count} messages ready.`,
+    player: (index: number) => `Player ${index}`,
+    message: (id: RoleId, name: string, url: string) => `Your character is ${id}.${name}\nRules: ${url}`,
+    rulebook: "Rulebook card",
+    scriptTitle: "Night script",
+    clearScript: "Clear checks",
+    permanentScriptLine: "Dead or no actions",
+    noScriptLines: "No lines for these characters in this section.",
+    firstNight: "First night",
+    secondNight: "Second night",
+    normalNight: "Normal night",
+    warnings: "Warnings",
+  },
 };
 
 const phaseOrder: RulebookNightPhase[] = ["firstNight", "secondNight", "normalNight"];
 
 function getInitialLanguage(searchLanguage: string | null): Language {
-  if (searchLanguage === "fr" || searchLanguage === "pt") return searchLanguage;
+  if (searchLanguage) return coerceLanguage(searchLanguage);
   const stored = typeof window === "undefined" ? null : window.localStorage.getItem("preferred_language");
-  return stored === "fr" || stored === "pt" ? stored : "pt";
+  return coerceLanguage(stored);
 }
 
 function escapeHtml(value: string): string {
@@ -103,7 +132,7 @@ function richPayload(roleId: RoleId, language: Language, skinPackId: SkinPackId)
   const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
   const url = rulebookUrl(roleId, language);
   const text = strings[language].message(roleId, label, url);
-  const prefix = language === "fr" ? "Ton personnage est" : "O teu personagem é";
+  const prefix = language === "fr" ? "Ton personnage est" : language === "en" ? "Your character is" : "O teu personagem é";
   const linkLabel = strings[language].rulebook;
   const html = `
     <div style="display:flex;gap:12px;align-items:center;font-family:Georgia,'Times New Roman',serif;color:#2d231f;max-width:560px;">

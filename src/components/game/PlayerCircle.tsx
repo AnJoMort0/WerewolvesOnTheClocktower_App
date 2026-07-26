@@ -286,7 +286,7 @@ export const PlayerCircle = ({
     if (hideSensitiveInfo) return "border-primary/40";
     const status = playerStatuses[playerId];
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
-    if (effects.has("incendiado")) return "border-orange-500";
+    if (effects.has("burned")) return "border-orange-500";
     if (illusionPlayerIds.has(playerId)) return "border-purple-500";
     if (poisonedPlayerIds.has(playerId)) return "border-green-500";
     if (status === "dead-this-night") return "border-destructive";

@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { assignRoles, EVIL_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
-import { LanguageContext, getEffectLabel, getRoleLabel, getScripts, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
+import { LanguageContext, coerceLanguage, getEffectLabel, getRoleLabel, getScripts, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { getScriptOrderIndex } from "@/lib/nightScript";
@@ -40,8 +40,9 @@ import {
 } from "@/lib/gameRules";
 import { detectAutomaticVictory, getVictoryStateSignature, playerWinsAnyVictoryGroup, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
-import { MAX_GAME_LOG_EVENTS, type GameLogEvent, type GameLogPhase, type GameLogPlayerSnapshot } from "@/lib/gameLog";
+import { MAX_GAME_LOG_EVENTS, normalizeGameLogEvents, type GameLogEvent, type GameLogPhase, type GameLogPlayerSnapshot } from "@/lib/gameLog";
 import { getRoomDisplayStorageKey, ROOM_DISPLAY_SNAPSHOT_VERSION, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
+import { normalizeStatusEffectSet } from "@/lib/effects";
 import {
   EMPTY_ACTOR_POWER_STATE,
   encodeActorCharacter,
@@ -275,7 +276,7 @@ type LegacyGMSnapshotFields = Partial<GMSnapshot> & {
 const getGMSnapshotStorageKey = (roomId: string) => `${GM_SNAPSHOT_STORAGE_PREFIX}${roomId}`;
 
 function serializeEffects(effects: Record<string, Set<StatusEffect>>): Record<string, StatusEffect[]> {
-  return Object.fromEntries(Object.entries(effects).map(([playerId, set]) => [playerId, Array.from(set)]));
+  return Object.fromEntries(Object.entries(effects).map(([playerId, set]) => [playerId, Array.from(normalizeStatusEffectSet(set))]));
 }
 
 function restoreActorPowerState(value: LegacyActorPowerState | null | undefined): ActorPowerState {
@@ -308,9 +309,9 @@ function restoreDogWolfStates(states: DogWolfStates | undefined): DogWolfStates 
   ])) as DogWolfStates;
 }
 
-function restoreEffects(effects: Record<string, StatusEffect[]> | undefined): Record<string, Set<StatusEffect>> {
+function restoreEffects(effects: Record<string, Iterable<unknown>> | undefined): Record<string, Set<StatusEffect>> {
   if (!effects) return {};
-  return Object.fromEntries(Object.entries(effects).map(([playerId, values]) => [playerId, new Set(values)]));
+  return Object.fromEntries(Object.entries(effects).map(([playerId, values]) => [playerId, normalizeStatusEffectSet(values)]));
 }
 
 function pruneOldGMSnapshots() {
@@ -342,36 +343,36 @@ const SHAMAN_ROLE: RoleId = "e03";
 const ILLUSION_DRAG_ROLE: RoleId = "a06";
 const RUSTED_KNIGHT_ROLE: RoleId = "v07";
 const DEAD_SOURCE_EFFECTS: Partial<Record<RoleId, StatusEffect[]>> = {
-  v09: ["soldado"],
+  v09: ["soldier"],
   v11: ["vote_against", "vote_double"],
-  v16: ["hospede"],
+  v16: ["host"],
   v17: ["immunity_full"],
-  v19: ["profecia"],
+  v19: ["prophecy"],
   v23: ["webbed"],
   f01: ["vote_revoked"],
 };
 
 const EFFECT_SOURCE_ROLES: Partial<Record<StatusEffect, RoleId>> = {
-  soldado: "v09",
+  soldier: "v09",
   vote_against: "v11",
   vote_double: "v11",
-  inocentado: "v15",
-  hospede: "v16",
+  acquitted: "v15",
+  host: "v16",
   immunity_full: "v17",
-  profecia: "v19",
+  prophecy: "v19",
   idol: "a04",
   owner: "a02",
-  acusado: "v22",
-  acusado_next: "v22",
+  accused: "v22",
+  accused_next: "v22",
   werewolf_turned: "m03",
   enemy: "m05",
   immunity_onetime: "m05",
-  namorado: "s01",
+  lover: "s01",
   immunity_cupid: "s01",
   evil_being: "f02",
   vote_revoked: "f01",
   adoptive_dad: "l02",
-  incendiado: "v15",
+  burned: "v15",
   immunity_werewolf: "v08b",
   tetanus: "v07",
   webbed: "v23",
@@ -386,16 +387,16 @@ const EFFECT_SOURCE_ROLES: Partial<Record<StatusEffect, RoleId>> = {
 };
 
 const SOURCE_SCOPED_EFFECTS = new Set<StatusEffect>([
-  "soldado",
+  "soldier",
   "vote_against",
   "vote_double",
-  "inocentado",
-  "hospede",
+  "acquitted",
+  "host",
   "immunity_full",
-  "profecia",
+  "prophecy",
   "vote_revoked",
   "adoptive_dad",
-  "incendiado",
+  "burned",
   "webbed",
   "dug_up",
   "adoptive_dad_dog",
@@ -482,8 +483,8 @@ const GMRoom = () => {
   const [lamplighterPickedRole, setLamplighterPickedRole] = useState<RoleId | null>(null);
   const [lamplighterPickedCharges, setLamplighterPickedCharges] = useState<boolean[]>([]);
 
-  // Track when profecia-tagged player became perma-dead (for +1 night persistence)
-  // Key: playerId. Value: nightNumber the player perma-died with profecia status.
+  // Track when a prophecy-tagged player became perma-dead (for +1 night persistence).
+  // Key: playerId. Value: nightNumber the player perma-died with prophecy status.
   // The player's role line still appears during nightNumber === storedNight + 1.
   const [prophecyDeadAtNight, setProphecyDeadAtNight] = useState<Record<string, number>>({});
 
@@ -956,9 +957,9 @@ const GMRoom = () => {
       warnings.push(format(getValidation("tooManyEnemies", lng), { n: inimigosCount }));
     }
 
-    const namoradosCount = Object.entries(playerEffects).filter(([, e]) => e.has("namorado")).length;
-    if (namoradosCount > 2) {
-      warnings.push(format(getValidation("tooManyLovers", lng), { n: namoradosCount }));
+    const loverCount = Object.entries(playerEffects).filter(([, e]) => e.has("lover")).length;
+    if (loverCount > 2) {
+      warnings.push(format(getValidation("tooManyLovers", lng), { n: loverCount }));
     }
 
     return warnings;
@@ -1021,16 +1022,16 @@ const GMRoom = () => {
     const playerRole = effectiveRoleAssignments[playerId];
     const playerEffectsSet = playerEffects[playerId] || new Set();
 
-    if (assignedRoles.has("v09")) effects.push("soldado");
+    if (assignedRoles.has("v09")) effects.push("soldier");
     if (assignedRoles.has("v11")) effects.push("vote_against", "vote_double");
     if (assignedRoles.has("v15")) {
-      effects.push("inocentado");
-      if (playerEffectsSet.has("inocentado")) effects.push("incendiado");
+      effects.push("acquitted");
+      if (playerEffectsSet.has("acquitted")) effects.push("burned");
     }
-    if (assignedRoles.has("v16")) effects.push("hospede");
+    if (assignedRoles.has("v16")) effects.push("host");
     if (assignedRoles.has("v17")) effects.push("immunity_full");
-    if (assignedRoles.has("v19")) effects.push("profecia");
-    if (assignedRoles.has("v22") && !playerEffectsSet.has("acusado")) effects.push("acusado_next");
+    if (assignedRoles.has("v19")) effects.push("prophecy");
+    if (assignedRoles.has("v22") && !playerEffectsSet.has("accused")) effects.push("accused_next");
     if (assignedRoles.has("a05") && playerStatuses[playerId] === "dead-this-night" && playerRole !== "a05") effects.push("dug_up");
     // Vampiro: only available to red X victims of werewolves
     if (assignedRoles.has("m03") && !vampireWolfUsed) {
@@ -1048,9 +1049,9 @@ const GMRoom = () => {
       if (playerEffectsSet.has("enemy")) effects.push("immunity_onetime");
     }
     if (assignedRoles.has("s01")) {
-      effects.push("namorado");
+      effects.push("lover");
       // Imunidade de Cúpido only for Namorado players
-      if (playerEffectsSet.has("namorado")) effects.push("immunity_cupid");
+      if (playerEffectsSet.has("lover")) effects.push("immunity_cupid");
     }
     if (assignedRoles.has("f01") || assignedRoles.has("l03") || assignedRoles.has("f02")) {
       if (playerRole === "f01" || playerRole === "l03" || playerRole === "f02") effects.push("evil_being");
@@ -1111,7 +1112,7 @@ const GMRoom = () => {
       }
 
       // Singleton effects: remove from other players first
-      const singletonEffects: StatusEffect[] = ["soldado", "hospede", "vote_revoked", "adoptive_dad", "profecia", "dug_up", "idol"];
+      const singletonEffects: StatusEffect[] = ["soldier", "host", "vote_revoked", "adoptive_dad", "prophecy", "dug_up", "idol"];
       if (singletonEffects.includes(effect)) {
         for (const [pid, effs] of Object.entries(newEffects)) {
           if (pid !== playerId && effs.has(effect)) {
@@ -1123,8 +1124,8 @@ const GMRoom = () => {
       }
 
       // Namorado max 2
-      if (effect === "namorado") {
-        const existing = Object.entries(newEffects).filter(([pid, e]) => pid !== playerId && e.has("namorado"));
+      if (effect === "lover") {
+        const existing = Object.entries(newEffects).filter(([pid, e]) => pid !== playerId && e.has("lover"));
         if (existing.length >= 2) {
           toast.warning(getToast("warn2Lovers", (room?.language as Language) || "pt"));
           return prev;
@@ -1140,7 +1141,7 @@ const GMRoom = () => {
         }
       }
 
-      // Cupid checkbox sync: when immunity_cupid is given to one namorado, apply to both
+      // Cupid checkbox sync: when immunity_cupid is given to one lover, apply to both
       if (effect === "immunity_cupid") {
         // Check if cupid is poisoned
         const cupidId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "s01")?.[0];
@@ -1148,9 +1149,9 @@ const GMRoom = () => {
           toast.warning(getToast("warnCupidPoisoned", (room?.language as Language) || "pt"));
           return prev;
         }
-        // Apply to both namorados
+        // Apply to both lovers
         for (const [pid, effs] of Object.entries(newEffects)) {
-          if (effs.has("namorado")) {
+          if (effs.has("lover")) {
             const updated = new Set(effs);
             updated.add("immunity_cupid");
             newEffects[pid] = updated;
@@ -1184,7 +1185,7 @@ const GMRoom = () => {
       }
 
       // Prophecy: check Prophet not poisoned
-      if (effect === "profecia") {
+      if (effect === "prophecy") {
         const profetaId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "v19")?.[0];
         if (profetaId && isPlayerPoisoned(profetaId)) {
           toast.warning(getToast("warnProphetPoisoned", (room?.language as Language) || "pt"));
@@ -1227,7 +1228,7 @@ const GMRoom = () => {
         return;
       }
       setPlayerEffects((previous) => Object.fromEntries(Object.entries(previous).map(([targetPlayerId, effects]) => {
-        if (!effects.has("namorado")) return [targetPlayerId, effects];
+        if (!effects.has("lover")) return [targetPlayerId, effects];
         const updated = new Set(effects);
         if (next.cupidCharges > 0) updated.add("immunity_cupid");
         else updated.delete("immunity_cupid");
@@ -1339,7 +1340,7 @@ const GMRoom = () => {
       setHideScreenMode(!!snapshot.hideScreenMode);
       setSyncedTimerState(snapshot.syncedTimerState ?? null);
       setCompletedScriptLineKeys(new Set(snapshot.completedScriptLineKeys ?? []));
-      setGameLogEvents(snapshot.gameLogEvents ?? []);
+      setGameLogEvents(normalizeGameLogEvents(snapshot.gameLogEvents));
       setDeclinedAutomaticVictory(snapshot.declinedAutomaticVictory ?? null);
       setActorIdolUses(snapshot.actorIdolUses ?? 0);
       setActorCopiedRole(snapshot.actorCopiedRole ?? null);
@@ -1582,20 +1583,20 @@ const GMRoom = () => {
     }, [abilityRoleAssignments, permanentlyDead, killSources]);
 
   // Auto-kill werewolves (or werewolf_turned players) marked Incendiado (instant red X, source = piromaníaco).
-  // Balance: if the wolf is immune, the fire is shrugged off entirely — remove the incendiado effect.
+  // Balance: if the wolf is immune, the fire is shrugged off entirely: remove the burned effect.
   useEffect(() => {
     for (const [pid, effs] of Object.entries(playerEffects)) {
       const isWolf = WEREWOLF_ROLES.includes(objectiveRoleAssignments[pid]) || effs.has("werewolf_turned");
-      if (!effs.has("incendiado") || !isWolf) continue;
+      if (!effs.has("burned") || !isWolf) continue;
       if (permanentlyDead.has(pid)) continue;
       if (playerStatuses[pid] === "dead-this-night" || playerStatuses[pid] === "dead") continue;
-      // Immunities → survive AND lose the incendiado tag
+      // Immunities: survive and lose the burned tag.
       if (effs.has("immunity_full") || effs.has("immunity_cupid") || effs.has("immunity_onetime") || effs.has("immunity_werewolf")) {
         setPlayerEffects((prev) => {
           const cur = prev[pid];
-          if (!cur || !cur.has("incendiado")) return prev;
+          if (!cur || !cur.has("burned")) return prev;
           const cleaned = new Set(cur);
-          cleaned.delete("incendiado");
+          cleaned.delete("burned");
           return { ...prev, [pid]: cleaned };
         });
         continue;
@@ -2582,7 +2583,7 @@ const GMRoom = () => {
   // A red-X lover immediately causes the other lover to receive a red X unless protected.
   useEffect(() => {
     const loverIds = Object.entries(playerEffects)
-      .filter(([, effects]) => effects.has("namorado"))
+      .filter(([, effects]) => effects.has("lover"))
       .map(([playerId]) => playerId);
     if (!loverIds.some((playerId) => playerStatuses[playerId] === "dead-this-night")) return;
 
@@ -2722,7 +2723,7 @@ const GMRoom = () => {
 
     // Flush the lover chain synchronously too, so a quick End Night click cannot skip it.
     const loverIds = Object.entries(playerEffects)
-      .filter(([, effects]) => effects.has("namorado"))
+      .filter(([, effects]) => effects.has("lover"))
       .map(([playerId]) => playerId);
     if (loverIds.some((playerId) => newStatuses[playerId] === "dead-this-night")) {
       for (const playerId of loverIds) {
@@ -2761,11 +2762,11 @@ const GMRoom = () => {
     const newEffects = { ...newEffectsForTetanus };
     for (const [pid, effects] of Object.entries(newEffects)) {
       const cleaned = new Set(effects);
-      if (cleaned.has("acusado_next")) {
-        cleaned.delete("acusado_next");
-        cleaned.add("acusado");
+      if (cleaned.has("accused_next")) {
+        cleaned.delete("accused_next");
+        cleaned.add("accused");
       }
-      cleaned.delete("inocentado");
+      cleaned.delete("acquitted");
       // 'caught' is a per-night marker — clear at night end
       cleaned.delete("caught");
       const dogSaviourTargeted = Object.values(dogWolfStates)
@@ -2782,15 +2783,15 @@ const GMRoom = () => {
       { ...state, powerState: { ...state.powerState, saviourLastTarget: null } },
     ])));
 
-    // Werewolf incendiado victims die (red X) — also covers werewolf_turned victims, respecting immunities.
-    // If immune, the wolf survives AND the incendiado effect is removed (balance rule).
+    // Burned werewolf victims die (red X), also covering werewolf_turned victims and respecting immunities.
+    // If immune, the wolf survives and the burned effect is removed.
     for (const [pid, effects] of Object.entries(newEffects)) {
       const isWolf = WEREWOLF_ROLES.includes(objectiveRoleAssignments[pid]) || effects.has("werewolf_turned");
-      if (!effects.has("incendiado") || !isWolf) continue;
+      if (!effects.has("burned") || !isWolf) continue;
       if (newPermanentlyDead.has(pid)) continue;
       if (effects.has("immunity_full") || effects.has("immunity_cupid") || effects.has("immunity_onetime") || effects.has("immunity_werewolf")) {
         const cleaned = new Set(effects);
-        cleaned.delete("incendiado");
+        cleaned.delete("burned");
         newEffects[pid] = cleaned;
         continue;
       }
@@ -2802,11 +2803,11 @@ const GMRoom = () => {
       }
     }
 
-    // Track profecia perma-deaths for +1 night persistence
+    // Track prophecy perma-deaths for +1 night persistence
     setProphecyDeadAtNight((prev) => {
       const next = { ...prev };
       for (const pid of newlyDead) {
-        if (newEffects[pid]?.has("profecia")) {
+        if (newEffects[pid]?.has("prophecy")) {
           next[pid] = nightNumber;
         }
       }
@@ -3254,11 +3255,11 @@ const GMRoom = () => {
       setMimeDayImmunityTargetIds([]);
     }
 
-    // Track profecia perma-deaths for +1 night persistence
+    // Track prophecy perma-deaths for +1 night persistence
     setProphecyDeadAtNight((prev) => {
       const next = { ...prev };
       for (const pid of newlyDead) {
-        if (newEffects[pid]?.has("profecia")) {
+        if (newEffects[pid]?.has("prophecy")) {
           next[pid] = nightNumber;
         }
       }
@@ -3834,7 +3835,7 @@ const GMRoom = () => {
     setPlayerEffects((prev) => {
       const next = { ...prev };
       for (const [playerId, effects] of Object.entries(next)) {
-        if (!effects.has("namorado")) continue;
+        if (!effects.has("lover")) continue;
         const updated = new Set(effects);
         if (newCharges > 0) updated.add("immunity_cupid");
         else updated.delete("immunity_cupid");
@@ -4118,10 +4119,10 @@ const GMRoom = () => {
           toast.warning(getToast("warnProphetPoisoned", (room?.language as Language) || "pt"));
           return;
         }
-        toggleActionEffect(targetPlayerId, "profecia");
+        toggleActionEffect(targetPlayerId, "prophecy");
       }
       else if (roleSource === "v22") {
-        if (!playerEffects[targetPlayerId]?.has("acusado")) toggleActionEffect(targetPlayerId, "acusado_next");
+        if (!playerEffects[targetPlayerId]?.has("accused")) toggleActionEffect(targetPlayerId, "accused_next");
       }
       else if (roleSource === "v16") {
         // Sonâmbulo: if poisoned → random (excluding intended target & sleepwalker)
@@ -4129,11 +4130,11 @@ const GMRoom = () => {
         if (sleepwalkerId && isPlayerActingPoisoned(sleepwalkerId)) {
           const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== sleepwalkerId);
           if (random) {
-            toggleActionEffect(random.id, "hospede");
+            toggleActionEffect(random.id, "host");
             toast.info(format(getToast("infoSleepwalkerPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
           }
         } else {
-          toggleActionEffect(targetPlayerId, "hospede");
+          toggleActionEffect(targetPlayerId, "host");
         }
       }
       else if (roleSource === "v17") {
@@ -4195,7 +4196,7 @@ const GMRoom = () => {
           if (!random) return;
           soldierId = random.id;
         }
-        toggleActionEffect(soldierId, "soldado");
+        toggleActionEffect(soldierId, "soldier");
       }
       else if (roleSource === "v11") {
         const villageElderId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v11" ? sourcePlayerId : getRolePlayerId("v11");
@@ -4300,7 +4301,7 @@ const GMRoom = () => {
           return;
         }
         if (cupidId && dogWolfStates[cupidId]) return;
-        toggleActionEffect(targetPlayerId, "namorado");
+        toggleActionEffect(targetPlayerId, "lover");
       }
       else if (roleSource === "m05") {
         const evilCupidId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "m05" ? sourcePlayerId : getRolePlayerId("m05");
@@ -4328,26 +4329,26 @@ const GMRoom = () => {
         }
       }
       else if (roleSource === "v15") {
-        // Piromaníaco: poisoned → random Inocentado target gets incendiado
+        // Pyromaniac: poisoned -> random acquitted target gets burned.
         const piroId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v15" ? sourcePlayerId : getRolePlayerId("v15");
         const targetEffects = playerEffects[targetPlayerId] || new Set();
         if (piroId && isPlayerActingPoisoned(piroId)) {
-          const ownedInnocentTarget = sourcedEffectTargets[piroId]?.inocentado;
-          const inocentados = players.filter((p) =>
-            playerEffects[p.id]?.has("inocentado")
+          const ownedInnocentTarget = sourcedEffectTargets[piroId]?.acquitted;
+          const acquittedPlayers = players.filter((p) =>
+            playerEffects[p.id]?.has("acquitted")
             && (!ownedInnocentTarget || p.id === ownedInnocentTarget)
             && p.id !== piroId
             && p.id !== targetPlayerId
           );
-          if (inocentados.length > 0) {
-            const victim = inocentados[Math.floor(Math.random() * inocentados.length)];
-            toggleActionEffect(victim.id, "incendiado");
+          if (acquittedPlayers.length > 0) {
+            const victim = acquittedPlayers[Math.floor(Math.random() * acquittedPlayers.length)];
+            toggleActionEffect(victim.id, "burned");
             toast.info(format(getToast("infoPiromaniacPoisoned", (room?.language as Language) || "pt"), { name: victim.name }));
           }
-        } else if (targetEffects.has("inocentado") && (!piroId || sourcedEffectTargets[piroId]?.inocentado === targetPlayerId)) {
-          toggleActionEffect(targetPlayerId, "incendiado");
+        } else if (targetEffects.has("acquitted") && (!piroId || sourcedEffectTargets[piroId]?.acquitted === targetPlayerId)) {
+          toggleActionEffect(targetPlayerId, "burned");
         } else {
-          toggleActionEffect(targetPlayerId, "inocentado");
+          toggleActionEffect(targetPlayerId, "acquitted");
         }
       }
       else if (roleSource === "v18") {
@@ -4787,9 +4788,9 @@ const GMRoom = () => {
       status === "dead-this-night"
       && isWerewolfAttackSource(killSources[playerId], killSourcePlayerIds[playerId])
     ));
-    const hasInnocentPlayer = Object.values(playerEffects).some((effects) => effects.has("inocentado"));
+    const hasInnocentPlayer = Object.values(playerEffects).some((effects) => effects.has("acquitted"));
     const hasAliveLover = Object.entries(playerEffects).some(([playerId, effects]) => (
-      effects.has("namorado")
+      effects.has("lover")
       && !permanentlyDead.has(playerId)
       && playerStatuses[playerId] !== "dead"
       && playerStatuses[playerId] !== "dead-this-night"
@@ -5303,7 +5304,7 @@ const GMRoom = () => {
       || abilityRoleAssignments[playerId] === "v08"
       || (playerId === actorPlayerId && effectiveActorCopiedRole === "v08")
     )),
-    soldierDied: lastNightDeadPlayerIds.filter((playerId) => playerEffects[playerId]?.has("soldado")),
+    soldierDied: lastNightDeadPlayerIds.filter((playerId) => playerEffects[playerId]?.has("soldier")),
   }), [abilityRoleAssignments, actorPlayerId, effectiveActorCopiedRole, lastNightDeadPlayerIds, playerEffects, roleAssignments]);
 
   // Condition keys for conditional script lines
@@ -5355,10 +5356,10 @@ const GMRoom = () => {
     keys["poisonedCharacterPresent"] = poisonedPlayerIds.size > 0;
 
     // Piromaníaco visible: only when someone has Inocentado status
-    keys["pyromaniacVisible"] = Object.values(playerEffects).some((e) => e.has("inocentado"));
+    keys["pyromaniacVisible"] = Object.values(playerEffects).some((e) => e.has("acquitted"));
 
     const hasAliveLover = Object.entries(playerEffects).some(([playerId, effects]) => (
-      effects.has("namorado")
+      effects.has("lover")
       && !permanentlyDead.has(playerId)
       && playerStatuses[playerId] !== "dead"
       && playerStatuses[playerId] !== "dead-this-night"
@@ -5392,18 +5393,18 @@ const GMRoom = () => {
     const inGamePlayerIds = players.filter((p) => p.seat_position !== null).map((p) => p.id);
     keys["spyHasUnseen"] = inGamePlayerIds.some((pid) => !(playerEffects[pid]?.has("spied_on")));
 
-    // SecretLover Secreto traído: as01b is in game, poisoned, AND has namorado effect
+    // Betrayed Secret Lover: as01b is in game, poisoned, and has the lover effect.
     const secretLoverId = Object.entries(effectiveRoleAssignments).find(([, r]) => r === "as01b")?.[0];
-    keys["secretLoverBetrayed"] = !!(secretLoverId && isPlayerPoisoned(secretLoverId) && playerEffects[secretLoverId]?.has("namorado"));
+    keys["secretLoverBetrayed"] = !!(secretLoverId && isPlayerPoisoned(secretLoverId) && playerEffects[secretLoverId]?.has("lover"));
 
     return keys;
   }, [abilityRoleAssignments, astronomerBlocksWerewolvesTonight, deathTriggeredSourcePlayerIds, effectiveRoleAssignments, getRolePlayerId, independentPowerStates, playerStatuses, lastNightDeadPlayerIds, permanentlyDead, killSources, playerEffects, nightNumber, poisonedPlayerIds, cupidCharges, bigBadWolfCharges, vampireWolfUsed, werewolfSeerRevealedVictim, werewolfSeerVictim, players, isPlayerPoisoned, mimeMechanicalRole, spiderWebbedDied]);
 
-  const lang: Language = (room?.language as Language) || "pt";
+  const lang = coerceLanguage(room?.language);
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
   const tt = useCallback((key: Parameters<typeof t>[0]) => t(key, lang), [lang]);
-  const gameLogLabel = lang === "fr" ? "Journal de partie" : "Registo do jogo";
-  const roomDisplayLabel = lang === "fr" ? "Écran de salle" : "Ecrã da sala";
+  const gameLogLabel = lang === "fr" ? "Journal de partie" : lang === "en" ? "Game log" : "Registo do jogo";
+  const roomDisplayLabel = lang === "fr" ? "Écran de salle" : lang === "en" ? "Room display" : "Ecrã da sala";
   const pendingPlayerActionRequest = useMemo(() => {
     if (hideScreenMode || room?.status !== "playing") return null;
     return pruneResolvedPlayerActionState(playerActionState).requests[0] ?? null;
@@ -5989,7 +5990,7 @@ const GMRoom = () => {
                         handleIndependentPowerStateChange(player.id, powerState)
                       );
                       const effects = displayedPlayerEffects[player.id] || new Set<StatusEffect>();
-                      const isIncendiado = effects.has("incendiado");
+                      const isBurned = effects.has("burned");
                       const isWerewolfTurned = effects.has("werewolf_turned");
                       const isEvilBeing = effects.has("evil_being");
                       const objectiveRoleId = objectiveRoleAssignments[player.id] ?? mechanicalRoleId;
@@ -6008,7 +6009,7 @@ const GMRoom = () => {
 
                       const borderClass = isDuplicate
                         ? "border-yellow-500"
-                        : isIncendiado
+                        : isBurned
                         ? "border-orange-500"
                         : isThisIllusion
                         ? "border-purple-500"

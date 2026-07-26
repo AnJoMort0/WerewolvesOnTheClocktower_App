@@ -122,6 +122,38 @@ const TEXT: Record<Language, {
       game_over: "Fin de partie",
     },
   },
+  en: {
+    title: "Game log",
+    finalCircle: "Final circle",
+    empty: "No events recorded yet.",
+    clearHighlight: "Clear highlight",
+    selected: "Highlighting",
+    system: "System",
+    village: "Village",
+    hideEvent: "Hide event",
+    unknownPlayer: "Player",
+    noRole: "No card",
+    close: "Close",
+    permanentDeath: "Permanent death",
+    phaseLabels: {
+      setup: "Setup",
+      night: "Night",
+      day: "Day",
+      tribunal: "Tribunal",
+      "game-over": "Game over",
+    },
+    actionLabels: {
+      phase: "Phase change",
+      kill: "Death",
+      execute: "Execution",
+      resurrect: "Resurrected",
+      poison: "Poisoned",
+      illusion: "Illusion",
+      effect_add: "Effect applied",
+      role_change: "Card changed",
+      game_over: "Game over",
+    },
+  },
 };
 
 function getEventIcon(event: GameLogEvent) {

@@ -1,11 +1,23 @@
 import type { RoleId } from "@/lib/roles";
+import type { StatusEffect } from "@/lib/effects";
 
 export type Language = "pt" | "fr" | "en";
 
 export const SUPPORTED_LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: "pt", label: "Português", flag: "🇵🇹" },
   { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "en", label: "English", flag: "🇬🇧" },
 ];
+
+const SUPPORTED_LANGUAGE_CODES = new Set<string>(SUPPORTED_LANGUAGES.map(({ code }) => code));
+
+export function isLanguage(value: unknown): value is Language {
+  return typeof value === "string" && SUPPORTED_LANGUAGE_CODES.has(value);
+}
+
+export function coerceLanguage(value: unknown, fallback: Language = "pt"): Language {
+  return isLanguage(value) ? value : fallback;
+}
 
 export interface ScriptLine {
   text: string;
@@ -14,38 +26,7 @@ export interface ScriptLine {
 }
 
 /** All status effect IDs known to the app. */
-export type EffectKey =
-  | "soldado"
-  | "vote_against"
-  | "vote_double"
-  | "inocentado"
-  | "hospede"
-  | "immunity_full"
-  | "profecia"
-  | "acusado"
-  | "acusado_next"
-  | "werewolf_turned"
-  | "enemy"
-  | "immunity_onetime"
-  | "namorado"
-  | "immunity_cupid"
-  | "evil_being"
-  | "vote_revoked"
-  | "adoptive_dad"
-  | "incendiado"
-  | "immunity_werewolf"
-  | "tetanus"
-  | "webbed"
-  | "caught"
-  | "spied_on"
-  | "dug_up"
-  | "idol"
-  | "idol_dog"
-  | "adoptive_dad_dog"
-  | "enemy_dog"
-  | "dug_up_dog"
-  | "dug_up_mime"
-  | "owner";
+export type EffectKey = StatusEffect;
 
 export type WinKind = "village" | "werewolves" | "lovers" | "whiteWolf" | "secretLover" | "tie";
 
@@ -304,9 +285,9 @@ export interface ScriptDynamicStrings {
   bearConfused: string;
   crowReveal: string;
   crowConfused: string;
-  rabbitHeard: string;
-  rabbitNothing: string;
-  rabbitConfused: string;
+  bunnyHeard: string;
+  bunnyNothing: string;
+  bunnyConfused: string;
   werewolvesAsleep: string;
   whiteWolfSoloKill: string;
   priestAsleep: string;

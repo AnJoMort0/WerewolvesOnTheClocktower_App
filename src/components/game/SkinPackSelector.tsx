@@ -10,7 +10,7 @@ import {
   type SkinPackId,
 } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
-import type { Language } from "@/lib/i18n";
+import { coerceLanguage, type Language } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -32,12 +32,18 @@ const NOTICE_TEXT: Record<Language, { title: string; body: string; dismiss: stri
     dismiss: "Fermer l'avertissement de skin saisonnier",
     selector: "Choisir le skinpack",
   },
+  en: {
+    title: "Seasonal skin",
+    body: "This is a seasonal skin, not a different card. You can change skins with the skins button.",
+    dismiss: "Close seasonal skin notice",
+    selector: "Choose skinpack",
+  },
 };
 
 function getPreferredLanguage(): Language {
   if (typeof window === "undefined") return "pt";
   const stored = window.localStorage.getItem("preferred_language");
-  return stored === "fr" || stored === "pt" ? stored : "pt";
+  return coerceLanguage(stored);
 }
 
 function getNoticeScope(pathname: string): string {

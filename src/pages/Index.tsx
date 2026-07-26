@@ -8,7 +8,7 @@ import { Users, Crown, BookOpen } from "lucide-react";
 import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import villagerIcon from "@/assets/icons/villager.png";
-import { SUPPORTED_LANGUAGES, getToast, t, type Language } from "@/lib/i18n";
+import { SUPPORTED_LANGUAGES, coerceLanguage, getToast, t, type Language } from "@/lib/i18n";
 import { toast } from "sonner";
 import { cleanupObsoleteGameStorage } from "@/lib/playerSession";
 import {
@@ -34,7 +34,7 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState<Language>(() => {
     const stored = localStorage.getItem("preferred_language");
-    return (stored === "fr" || stored === "pt") ? stored : "pt";
+    return coerceLanguage(stored);
   });
 
   const createRoom = async () => {

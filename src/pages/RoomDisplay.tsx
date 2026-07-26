@@ -9,8 +9,9 @@ import { GameLogModal } from "@/components/game/GameLogModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
-import { LanguageContext, type Language } from "@/lib/i18n";
+import { LanguageContext, coerceLanguage, type Language } from "@/lib/i18n";
 import { getRoomDisplayStorageKey, readRoomDisplaySnapshot, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
+import { normalizeStatusEffectSet } from "@/lib/effects";
 import type { StatusEffect } from "@/components/game/PlayerStatusPopover";
 
 const COPY: Record<Language, {
@@ -47,6 +48,18 @@ const COPY: Record<Language, {
     close: "Fermer",
     night: "Nuit",
     day: "Jour",
+    tribunal: "Tribunal",
+  },
+  en: {
+    title: "Room display",
+    waiting: "Open this screen from the Narrator room.",
+    log: "Game log",
+    rulebook: "Rulebook",
+    fullscreen: "Fullscreen",
+    exitFullscreen: "Exit fullscreen",
+    close: "Close",
+    night: "Night",
+    day: "Day",
     tribunal: "Tribunal",
   },
 };
@@ -89,11 +102,11 @@ export default function RoomDisplay() {
     }
   };
 
-  const language = snapshot?.language ?? "pt";
+  const language = coerceLanguage(snapshot?.language);
   const copy = COPY[language];
   const permanentlyDead = useMemo(() => new Set(snapshot?.permanentlyDead ?? []), [snapshot?.permanentlyDead]);
   const playerEffects = useMemo(() => Object.fromEntries(
-    Object.entries(snapshot?.playerEffects ?? {}).map(([playerId, effects]) => [playerId, new Set(effects)]),
+    Object.entries(snapshot?.playerEffects ?? {}).map(([playerId, effects]) => [playerId, normalizeStatusEffectSet(effects)]),
   ) as Record<string, Set<StatusEffect>>, [snapshot?.playerEffects]);
   const totalSlots = Math.max(snapshot?.players.filter((player) => player.seat_position !== null).length ?? 0, 1);
   const visibleTimer = snapshot?.phase !== "night" && snapshot?.timerState?.phase === snapshot?.phase

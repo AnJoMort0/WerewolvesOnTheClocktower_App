@@ -79,6 +79,7 @@ interface NightScriptProps {
   onLittleGirlReveal?: (sourcePlayerId?: string | null) => void;
   onLamplighterReveal?: (sourcePlayerId?: string | null) => void;
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
+  onMimeReveal?: (sourcePlayerId?: string | null) => void;
   // Inline checkbox state for roles with limited uses
   paranoidCharges?: number;
   onParanoidChargeToggle?: (idx: number) => void;
@@ -168,7 +169,7 @@ function getLineDragAction(line: ScriptLine): "poison" | "kill" | "shaman" | "il
 }
 
 function getRawLineDragAction(line: ScriptLine): string | null {
-  // Soldado ghost line: drag to kill, sourced as soldado
+  // Soldier ghost line: drag to kill, sourced as soldier.
   if (line.conditionKey === "soldierDied") return "role-soldier-kill";
   // Caçador ghost lines also draggable as v08 kill
   if (line.conditionKey === "hunterDied" || line.conditionKey === "redHoodExecuted") return "role-v08";
@@ -183,23 +184,33 @@ function getRawLineDragAction(line: ScriptLine): string | null {
   return null;
 }
 
-function replaceRoleWithDog(text: string, lang: "pt" | "fr", copiedRole?: RoleId | null): string {
+function dogArticle(lang: Language): string {
+  if (lang === "fr") return "Le";
+  if (lang === "en") return "The";
+  return "O";
+}
+
+function replaceRoleWithDog(text: string, lang: Language, copiedRole?: RoleId | null): string {
   const dogToken = `{${t("dogCopyLabel", lang)}}`;
   if (copiedRole) {
     const escapedLabel = getRoleLabel(copiedRole, lang).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const roleWithArticlePattern = lang === "fr"
       ? new RegExp(`(?:La|Le)\\s+\\{${escapedLabel}\\}|L['’]\\{${escapedLabel}\\}`)
+      : lang === "en"
+      ? new RegExp(`The\\s+\\{${escapedLabel}\\}`)
       : new RegExp(`(?:A|O)\\s+\\{${escapedLabel}\\}`);
     const roleWithArticleGlobal = new RegExp(roleWithArticlePattern.source, "g");
     const rolePattern = new RegExp(`\\{${escapedLabel}\\}`, "g");
     return text
-      .replace(roleWithArticleGlobal, `${lang === "fr" ? "Le" : "O"} ${dogToken}`)
+      .replace(roleWithArticleGlobal, `${dogArticle(lang)} ${dogToken}`)
       .replace(rolePattern, dogToken);
   }
   const articlePattern = lang === "fr"
     ? /(?:La|Le)\s+\{[^}]+\}|L['’]\{[^}]+\}/
+    : lang === "en"
+    ? /The\s+\{[^}]+\}/
     : /(?:A|O)\s+\{[^}]+\}/;
-  const withArticle = text.replace(articlePattern, `${lang === "fr" ? "Le" : "O"} ${dogToken}`);
+  const withArticle = text.replace(articlePattern, `${dogArticle(lang)} ${dogToken}`);
   return withArticle === text ? text.replace(/\{[^}]+\}/, dogToken) : withArticle;
 }
 
@@ -221,6 +232,16 @@ const MIME_ONLY_SCRIPT_LINES: Record<Language, Partial<Record<RoleId, ScriptLine
     },
     v18: {
       text: "L'{Ange} se réveille et choisit un Fantôme à ressusciter.",
+      requires: ["v18"],
+    },
+  },
+  en: {
+    v10: {
+      text: "The {Paranoid} wakes up and chooses a player to assassinate immediately.",
+      requires: ["v10"],
+    },
+    v18: {
+      text: "The {Angel} wakes up and chooses a Ghost to resurrect.",
       requires: ["v18"],
     },
   },
@@ -790,22 +811,22 @@ export const NightScript = ({
     return dyn.crowReveal.replace("{n}", String(aliveEvilCount));
   }, [roleAssignments, effectivelyDead, alivePlayers, illusionPlayerIds, _permanentlyDeadPlayerIds, countsAsEvilBeing, dyn, isPlayerActingPoisoned]);
 
-  // Dynamic rabbit tamer text
-  const rabbitDynamicText = useMemo(() => {
-    const rabbitPlayerId = Object.entries(roleAssignments).find(([playerId, role]) => role === "v05" && !effectivelyDead.has(playerId))?.[0];
-    if (!rabbitPlayerId) return undefined;
-    const rabbitPlayer = players.find((p) => p.id === rabbitPlayerId);
-    if (!rabbitPlayer || rabbitPlayer.seat_position === null) return undefined;
+  // Dynamic bunny tamer text
+  const bunnyDynamicText = useMemo(() => {
+    const bunnyPlayerId = Object.entries(roleAssignments).find(([playerId, role]) => role === "v05" && !effectivelyDead.has(playerId))?.[0];
+    if (!bunnyPlayerId) return undefined;
+    const bunnyPlayer = players.find((p) => p.id === bunnyPlayerId);
+    if (!bunnyPlayer || bunnyPlayer.seat_position === null) return undefined;
 
     const sorted = players
       .filter((p) => p.seat_position !== null)
       .sort((a, b) => a.seat_position! - b.seat_position!);
-    const rabbitIndex = sorted.findIndex((p) => p.id === rabbitPlayerId);
-    if (rabbitIndex === -1) return undefined;
+    const bunnyIndex = sorted.findIndex((p) => p.id === bunnyPlayerId);
+    if (bunnyIndex === -1) return undefined;
 
     const findNeighbor = (dir: 1 | -1) => {
       for (let i = 1; i < sorted.length; i++) {
-        const idx = (rabbitIndex + dir * i + sorted.length) % sorted.length;
+        const idx = (bunnyIndex + dir * i + sorted.length) % sorted.length;
         const p = sorted[idx];
         if (!_permanentlyDeadPlayerIds.has(p.id)) return p;
       }
@@ -815,18 +836,18 @@ export const NightScript = ({
     const left = findNeighbor(-1);
     const right = findNeighbor(1);
     const neighbors = [left, right].filter(Boolean) as typeof players;
-    const relevantIds = [rabbitPlayerId, ...neighbors.map((n) => n.id)];
+    const relevantIds = [bunnyPlayerId, ...neighbors.map((n) => n.id)];
     const wasTargeted = relevantIds.some((id) => nightTargetedPlayerIds.has(id));
-    const isRabbitPoisoned = isPlayerActingPoisoned(rabbitPlayerId);
+    const isBunnyPoisoned = isPlayerActingPoisoned(bunnyPlayerId);
 
-    if (isRabbitPoisoned) return wasTargeted ? `~~${dyn.rabbitNothing}~~` : dyn.rabbitHeard;
+    if (isBunnyPoisoned) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
 
     const hasIllusionNeighbor = neighbors.some((n) => illusionPlayerIds.has(n.id));
-    if (hasIllusionNeighbor) return dyn.rabbitConfused;
+    if (hasIllusionNeighbor) return dyn.bunnyConfused;
 
-    if (wasTargeted) return dyn.rabbitHeard;
+    if (wasTargeted) return dyn.bunnyHeard;
 
-    return `~~${dyn.rabbitNothing}~~`;
+    return `~~${dyn.bunnyNothing}~~`;
   }, [roleAssignments, effectivelyDead, players, _permanentlyDeadPlayerIds, illusionPlayerIds, nightTargetedPlayerIds, dyn, isPlayerActingPoisoned]);
 
   const spiderConfusedText = useMemo(() => {
@@ -881,9 +902,9 @@ export const NightScript = ({
       const neighbors = getLivingNeighbors(dogPlayerId);
       const relevantIds = [dogPlayerId, ...neighbors.map((neighbor) => neighbor.id)];
       const wasTargeted = relevantIds.some((playerId) => nightTargetedPlayerIds.has(playerId));
-      if (isPlayerActingPoisoned(dogPlayerId)) return wasTargeted ? `~~${dyn.rabbitNothing}~~` : dyn.rabbitHeard;
-      if (neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id))) return dyn.rabbitConfused;
-      return wasTargeted ? dyn.rabbitHeard : `~~${dyn.rabbitNothing}~~`;
+      if (isPlayerActingPoisoned(dogPlayerId)) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
+      if (neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id))) return dyn.bunnyConfused;
+      return wasTargeted ? dyn.bunnyHeard : `~~${dyn.bunnyNothing}~~`;
     }
     if (role === "v20") {
       const sorted = players
@@ -936,9 +957,9 @@ export const NightScript = ({
       const neighbors = getLivingNeighbors(sourcePlayerId);
       const relevantIds = [sourcePlayerId, ...neighbors.map((neighbor) => neighbor.id)];
       const wasTargeted = relevantIds.some((playerId) => nightTargetedPlayerIds.has(playerId));
-      if (isPlayerActingPoisoned(sourcePlayerId)) return wasTargeted ? `~~${dyn.rabbitNothing}~~` : dyn.rabbitHeard;
-      if (neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id))) return dyn.rabbitConfused;
-      return wasTargeted ? dyn.rabbitHeard : `~~${dyn.rabbitNothing}~~`;
+      if (isPlayerActingPoisoned(sourcePlayerId)) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
+      if (neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id))) return dyn.bunnyConfused;
+      return wasTargeted ? dyn.bunnyHeard : `~~${dyn.bunnyNothing}~~`;
     }
     if (role === "v20") {
       const sorted = players
@@ -975,7 +996,7 @@ export const NightScript = ({
     }
     if (line.requires?.length === 1 && line.requires[0] === "v02") return bearDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v03") return crowDynamicText;
-    if (line.requires?.length === 1 && line.requires[0] === "v05") return rabbitDynamicText;
+    if (line.requires?.length === 1 && line.requires[0] === "v05") return bunnyDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v20") return houseMaidDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "s02" && line.conditionKey === "whitewolfNight" && conditionKeys.whitewolfSolo) {
       return dyn.whiteWolfSoloKill;
@@ -990,7 +1011,7 @@ export const NightScript = ({
     return undefined;
   };
 
-  // True if every player matching this role has hospede or incendiado effect
+  // True if every player matching this role has host or burned effect.
   const isLineForcedStrikethrough = useCallback((line: ScriptLine): boolean => {
     if (!line.requires || line.requires.length !== 1) return false;
     const r = line.requires[0];
@@ -998,7 +1019,7 @@ export const NightScript = ({
     if (playersWithRole.length === 0) return false;
     return playersWithRole.every((pid) => {
       const eff = _playerEffects[pid] || new Set<string>();
-      return eff.has("hospede") || eff.has("incendiado");
+      return eff.has("host") || eff.has("burned");
     });
   }, [roleAssignments, _playerEffects]);
 
@@ -1015,7 +1036,7 @@ export const NightScript = ({
     }
     if (l.requires?.length === 1 && l.requires[0] === ("as01b" as RoleId) && !l.conditionKey) {
       const secretLoverId = Object.entries(roleAssignments).find(([, role]) => role === "as01b")?.[0];
-      if (secretLoverId && _playerEffects[secretLoverId]?.has("namorado")) return false;
+      if (secretLoverId && _playerEffects[secretLoverId]?.has("lover")) return false;
     }
     return true;
   }, [activeRoles, permanentlyDeadRoles, roleAssignments, effectivelyDead, conditionKeys, shamanCharges, shouldShowFortuneTellerLine, foxDisabled, prophecyGhostPlayerIds, _playerEffects, actorCopiedRole, actorPowerState.foxDisabled, drunkardReplacementRole]);
@@ -1025,7 +1046,7 @@ export const NightScript = ({
     if (l.requires?.length === 1 && l.requires[0] === ("e04" as RoleId) && !shouldShowFortuneTellerLine) return false;
     if (l.requires?.length === 1 && l.requires[0] === ("as01b" as RoleId) && !l.conditionKey) {
       const secretLoverId = Object.entries(roleAssignments).find(([, role]) => role === "as01b")?.[0];
-      if (secretLoverId && _playerEffects[secretLoverId]?.has("namorado")) return false;
+      if (secretLoverId && _playerEffects[secretLoverId]?.has("lover")) return false;
     }
     return true;
   }, [conditionKeys, roleAssignments, shouldShowFortuneTellerLine, _playerEffects]);
@@ -1395,7 +1416,7 @@ export const NightScript = ({
                 onFoxDisabledToggle={usesIndependentPowerState ? () => toggleBoolean("foxDisabled") : onFoxDisabledToggle}
                 showFoxCheckbox={nightNumber > 1}
                 forceStrikethrough={item.dogWolfLine && sourcePlayerId
-                  ? !!(_playerEffects[sourcePlayerId]?.has("hospede") || _playerEffects[sourcePlayerId]?.has("incendiado"))
+                  ? !!(_playerEffects[sourcePlayerId]?.has("host") || _playerEffects[sourcePlayerId]?.has("burned"))
                   : isLineForcedStrikethrough(item.line)}
                 paranoidCharges={usesIndependentPowerState ? powerState.paranoidCharges : paranoidCharges}
                 onParanoidChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("paranoidCharges", idx) : onParanoidChargeToggle}

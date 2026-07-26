@@ -1,5 +1,6 @@
 import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { WinKind } from "@/lib/i18n";
+import { normalizeStatusEffectSet, type StatusEffect } from "@/lib/effects";
 
 export type AutomaticWinKind = Exclude<WinKind, "tie">;
 
@@ -10,8 +11,8 @@ export type VictoryPlayer = {
   effects?: Iterable<string>;
 };
 
-const hasEffect = (player: VictoryPlayer, effect: string) =>
-  player.effects ? new Set(player.effects).has(effect) : false;
+const hasEffect = (player: VictoryPlayer, effect: StatusEffect) =>
+  player.effects ? normalizeStatusEffectSet(player.effects).has(effect) : false;
 
 const isEvil = (player: VictoryPlayer) =>
   EVIL_ROLES.includes(player.role)
@@ -22,7 +23,7 @@ const isEvil = (player: VictoryPlayer) =>
 const isWerewolf = (player: VictoryPlayer) =>
   WEREWOLF_ROLES.includes(player.role) || hasEffect(player, "werewolf_turned");
 
-const isLover = (player: VictoryPlayer) => hasEffect(player, "namorado");
+const isLover = (player: VictoryPlayer) => hasEffect(player, "lover");
 
 export function playerWinsVictoryGroup(
   player: VictoryPlayer,
@@ -91,10 +92,11 @@ export function getVictoryStateSignature(players: VictoryPlayer[], phaseKey: str
   const playerState = [...players]
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((player) => {
-      const relevantEffects = ["evil_being", "namorado", "werewolf_turned"]
+      const relevantEffects: StatusEffect[] = ["evil_being", "lover", "werewolf_turned"];
+      const relevantEffectLabels = relevantEffects
         .filter((effect) => hasEffect(player, effect))
         .join(",");
-      return `${player.id}:${player.role}:${player.alive ? "1" : "0"}:${relevantEffects}`;
+      return `${player.id}:${player.role}:${player.alive ? "1" : "0"}:${relevantEffectLabels}`;
     })
     .join("|");
   return `${phaseKey}|${playerState}`;

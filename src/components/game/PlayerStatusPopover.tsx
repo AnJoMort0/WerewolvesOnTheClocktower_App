@@ -1,6 +1,7 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useT, useLanguage, getEffectLabel } from "@/lib/i18n";
+import type { StatusEffect } from "@/lib/effects";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import ghostIcon from "@/assets/icons/ghost.png";
 import illusionIcon from "@/assets/icons/illusion.png";
@@ -39,59 +40,27 @@ import dogDugUpIcon from "@/assets/icons/dug_up_dog.png";
 import mimeDugUpIcon from "@/assets/icons/dug_up_mime.png";
 
 export type PlayerStatus = "alive" | "poisoned" | "dead-this-night" | "dead";
-
-export type StatusEffect =
-  | "soldado"
-  | "vote_against"
-  | "vote_double"
-  | "inocentado"
-  | "hospede"
-  | "immunity_full"
-  | "profecia"
-  | "acusado"
-  | "acusado_next"
-  | "werewolf_turned"
-  | "enemy"
-  | "immunity_onetime"
-  | "namorado"
-  | "immunity_cupid"
-  | "evil_being"
-  | "vote_revoked"
-  | "adoptive_dad"
-  | "incendiado"
-  | "immunity_werewolf"
-  | "tetanus"
-  | "webbed"
-  | "caught"
-  | "spied_on"
-  | "dug_up"
-  | "idol"
-  | "idol_dog"
-  | "adoptive_dad_dog"
-  | "enemy_dog"
-  | "dug_up_dog"
-  | "dug_up_mime"
-  | "owner";
+export type { StatusEffect };
 
 export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
-  soldado: soldierIcon,
+  soldier: soldierIcon,
   vote_against: voteAgainstIcon,
   vote_double: voteDoubleIcon,
-  inocentado: voteInnocentIcon,
-  hospede: asleepIcon,
+  acquitted: voteInnocentIcon,
+  host: asleepIcon,
   immunity_full: immunityFullIcon,
-  profecia: ghostProphecyIcon,
-  acusado: voteAccusedIcon,
-  acusado_next: voteAccusedLastNightIcon,
+  prophecy: ghostProphecyIcon,
+  accused: voteAccusedIcon,
+  accused_next: voteAccusedLastNightIcon,
   werewolf_turned: werewolfIcon,
   enemy: enemyIcon,
   immunity_onetime: immunityOnetimeIcon,
-  namorado: loverIcon,
+  lover: loverIcon,
   immunity_cupid: immunityCupidIcon,
   evil_being: evilBeingIcon,
   vote_revoked: voteRevokedIcon,
   adoptive_dad: adoptiveDadIcon,
-  incendiado: burnedIcon,
+  burned: burnedIcon,
   immunity_werewolf: immunityWerewolfIcon,
   tetanus: tetanusIcon,
   webbed: webbedIcon,

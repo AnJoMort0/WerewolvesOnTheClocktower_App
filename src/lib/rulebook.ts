@@ -38,6 +38,7 @@ export interface RulebookRenderOptions {
 const FALLBACK_MESSAGE: Record<Language, string> = {
   pt: "Ficha nao encontrada.",
   fr: "Fiche introuvable.",
+  en: "Card not found.",
 };
 
 const EXTRA_CARD_IMAGES: Partial<Record<RulebookCharacterId, string>> = {
@@ -79,6 +80,18 @@ const NIGHT_SCRIPT_LABELS: Record<Language, {
     secondNight: "Début de la Deuxième Nuit",
     normalNight: "Nuit Normale",
   },
+  en: {
+    title: "The Night",
+    firstNight: "First Night",
+    secondNight: "Start of the Second Night",
+    normalNight: "Normal Night",
+  },
+};
+
+const OBJECTIVE_LABELS: Record<Language, string> = {
+  pt: "Objetivo:",
+  fr: "Objectif :",
+  en: "Objective:",
 };
 
 function escapeHtml(value: string): string {
@@ -261,7 +274,7 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language, option
     })
     .join("");
   const objectiveHtml = character.objective
-    ? `<p><strong>${lang === "fr" ? "Objectif :" : "Objetivo:"}</strong> ${renderInline(character.objective[lang])}</p>`
+    ? `<p><strong>${OBJECTIVE_LABELS[lang]}</strong> ${renderInline(character.objective[lang])}</p>`
     : "";
 
   return `

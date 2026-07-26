@@ -582,7 +582,7 @@ const PlayerView = () => {
   const objectiveIndicators = (() => {
     const indicators: Array<{ id: string; image: string; label: string }> = [];
     for (const effect of characterMetadata.objectiveEffects) {
-      if (effect === "namorado") {
+      if (effect === "lover") {
         indicators.push({ id: effect, image: loverIcon, label: t("objectiveLovers", language) });
       } else if (effect === "evil_being") {
         indicators.push({ id: effect, image: evilBeingIcon, label: t("objectiveEvilBeing", language) });

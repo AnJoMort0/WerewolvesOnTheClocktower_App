@@ -19,11 +19,13 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] 
+* [x] Added english translations with en.ts and rulebookContent. Fix the repo so that English is a working option.
+  <!-- Codex 2026-07-26: English is now in SUPPORTED_LANGUAGES, language parsing accepts en across home/rulebook/generator/skin controls/display, local component copy has en entries, and build/test pass with the English rulebook/UI path. -->
 
 ## Fixes
 
-* [ ] There's still a few code things that are in Portuguese instead of English, for example the EffectKeys soldado, hospede, profecia, acusado, acusado_next, namorado, incendiado.
+* [x] There's still a few code things that are in Portuguese instead of English, for example the EffectKeys soldado, anfitrião, profecia, acusado, acusado_next, namorado, incendiado.
+  <!-- Codex 2026-07-26: StatusEffect keys were renamed to English (soldier, host, prophecy, accused, accused_next, lover, burned, plus acquitted). Legacy Portuguese effect/source IDs are normalized at load/metadata/log boundaries so old rooms keep working. -->
 
 ## Balance Changes
 

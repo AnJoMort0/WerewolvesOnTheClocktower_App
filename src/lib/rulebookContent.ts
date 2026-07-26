@@ -620,7 +620,7 @@ export const RULEBOOK_CHARACTERS = {
         name: {
             pt: `Domador dos Coelhos`,
             fr: `Maître des Lapins`,
-            en: `Rabbit Tamer`
+            en: `Bunny Tamer`
         },
         mainDescription: {
             pt: [
@@ -630,7 +630,7 @@ export const RULEBOOK_CHARACTERS = {
                 `<red>Chaque nuit</red>, si un de ces voisins ou soi-même est attaqué par les Loups-garous ou empoisonné par la Sorcière, les lapins auront peur.`,
             ],
             en: [
-                `<red>Each night</red>, if the Rabbit Tamer or either neighbor was attacked by the Werewolves or poisoned by the Witch, the rabbits become frightened.`
+                `<red>Each night</red>, if the Bunny Tamer or either neighbor was attacked by the Werewolves or poisoned by the Witch, the bunnies become frightened.`
             ]
         },
         details: [
@@ -2044,7 +2044,7 @@ export const RULEBOOK_CHARACTERS = {
             ],
             en: [
                 `<red>Does not know they are the Drunkard</red>.`,
-                `<red>Replaces</red> the Fortune Teller, Bear Tamer, Rabbit Tamer, Raven Tamer, Fox Tamer, or Spider Tamer, chosen randomly each game.`,
+                `<red>Replaces</red> the Fortune Teller, Bear Tamer, Bunny Tamer, Raven Tamer, Fox Tamer, or Spider Tamer, chosen randomly each game.`,
                 `All information received is given as though that character were poisoned.`
             ]
         },
@@ -2369,7 +2369,7 @@ export const RULEBOOK_CHARACTERS = {
         name: {
             pt: `Aldeão Triste`,
             fr: `Villageois Triste`,
-            en: `Sad Villager`
+            en: `Ordinary Townsfolk`
         },
         mainDescription: {
             pt: [
@@ -3449,7 +3449,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Domador dos Coelhos ouviu os Coelhos assustados esta noite / [nada] (/os Coelhos estão confusos).`,
                 fr: `Le Maître des Lapins a entendu les Lapins effrayés cette nuit / [rien] (/ les Lapins sont confus).`,
-                en: `The Rabbit Tamer heard the frightened Rabbits tonight / [nothing] (/ the Rabbits are confused).`
+                en: `The Bunny Tamer heard the frightened Bunnies tonight / [nothing] (/ the Bunnies are confused).`
             }
         },
         {

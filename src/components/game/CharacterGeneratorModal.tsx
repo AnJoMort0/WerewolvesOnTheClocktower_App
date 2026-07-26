@@ -54,6 +54,24 @@ const strings = {
     player: (index: number) => `Joueur ${index}`,
     message: (id: RoleId, name: string) => `Ton personnage est ${id}.${name}`,
   },
+  en: {
+    open: "Generate characters only",
+    title: "Generate characters",
+    players: "Number of players",
+    advanced: "Include advanced characters",
+    generate: "Generate",
+    regenerate: "Generate again",
+    copyAllRich: "Copy all with images",
+    copyAllText: "Copy all as text",
+    copyRich: "Copy image + text",
+    copyText: "Copy text",
+    copied: "Copied",
+    copiedFallback: "Text copied",
+    empty: "Generated characters appear here.",
+    invalid: "Enter at least 8 players.",
+    player: (index: number) => `Player ${index}`,
+    message: (id: RoleId, name: string) => `Your character is ${id}.${name}`,
+  },
 };
 
 export function CharacterGeneratorButton({ language }: { language: Language }) {
@@ -92,7 +110,7 @@ function richPayload(roleId: RoleId, language: Language, skinPackId: SkinPackId)
   const label = getRoleLabel(roleId, language);
   const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
   const text = roleMessage(roleId, language);
-  const prefix = language === "fr" ? "Ton personnage est" : "O teu personagem é";
+  const prefix = language === "fr" ? "Ton personnage est" : language === "en" ? "Your character is" : "O teu personagem é";
   const html = `
     <div style="display:flex;gap:12px;align-items:center;font-family:Georgia,'Times New Roman',serif;color:#2d231f;max-width:520px;">
       <img src="${escapeHtml(roleImage)}" alt="${escapeHtml(`${roleId}.${label}`)}" style="width:92px;height:92px;object-fit:contain;border-radius:12px;border:1px solid #7d2424;background:#211d19;">
@@ -243,7 +261,7 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
 
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className={`text-sm ${status === text.invalid ? "text-destructive" : "text-muted-foreground"}`}>
-                {status || `${roleIds.length} ${language === "fr" ? "messages prêts" : "mensagens prontas"}.`}
+                {status || `${roleIds.length} ${language === "fr" ? "messages prêts" : language === "en" ? "messages ready" : "mensagens prontas"}.`}
               </p>
               {roleIds.length > 0 && (
                 <div className="flex flex-wrap gap-2">

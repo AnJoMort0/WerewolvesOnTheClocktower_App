@@ -1,4 +1,5 @@
 import { ROLES, type RoleId } from "@/lib/roles";
+import { normalizeStatusEffect } from "@/lib/effects";
 
 const METADATA_SEPARATOR = "|";
 const OWNER_ROLE_KEY = "owner";
@@ -8,7 +9,7 @@ const OBJECTIVE_EFFECTS_KEY = "objectives";
 const DOG_ACTOR_COPY_KEY = "dogActorCopy";
 const MIME_COPY_KEY = "mimeCopy";
 
-export const OBJECTIVE_EFFECT_IDS = ["namorado", "evil_being", "werewolf_turned"] as const;
+export const OBJECTIVE_EFFECT_IDS = ["lover", "evil_being", "werewolf_turned"] as const;
 export type ObjectiveEffectId = typeof OBJECTIVE_EFFECT_IDS[number];
 
 export type PlayerCharacterMetadata = {
@@ -42,9 +43,11 @@ export function parsePlayerCharacterMetadata(character: string | null | undefine
   const objectiveRole = params.get(OBJECTIVE_ROLE_KEY) as RoleId | null;
   if (objectiveRole && ROLES[objectiveRole]) metadata.objectiveRole = objectiveRole;
   const objectiveEffects = params.get(OBJECTIVE_EFFECTS_KEY)?.split(",") ?? [];
-  metadata.objectiveEffects = objectiveEffects.filter(
-    (effect): effect is ObjectiveEffectId => OBJECTIVE_EFFECT_IDS.includes(effect as ObjectiveEffectId),
-  );
+  metadata.objectiveEffects = objectiveEffects
+    .map((effect) => normalizeStatusEffect(effect))
+    .filter((effect): effect is ObjectiveEffectId => (
+      !!effect && OBJECTIVE_EFFECT_IDS.includes(effect as ObjectiveEffectId)
+    ));
   const dogActorCopiedRole = params.get(DOG_ACTOR_COPY_KEY) as RoleId | null;
   if (dogActorCopiedRole && ROLES[dogActorCopiedRole]) metadata.dogActorCopiedRole = dogActorCopiedRole;
   const mimeCopiedRole = params.get(MIME_COPY_KEY) as RoleId | null;

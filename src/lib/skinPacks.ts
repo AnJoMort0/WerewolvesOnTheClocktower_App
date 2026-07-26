@@ -1,5 +1,6 @@
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { Language } from "@/lib/i18n";
+import { normalizeStatusEffectSet } from "@/lib/effects";
 
 export type SkinPackId = "seasonal" | "default" | "thiercelieux";
 export type SeasonalEventId = "carnival" | "christmas" | "easter" | "halloween" | "new_years";
@@ -86,29 +87,32 @@ const SKIN_PACK_LABELS: Record<SkinPackId, Record<Language, string>> = {
   seasonal: {
     pt: "Padrão (com sazonais)",
     fr: "Défaut (saisonnier)",
+    en: "Default (with seasonals)",
   },
   default: {
     pt: "Padrão",
     fr: "Défaut",
+    en: "Default",
   },
   thiercelieux: {
     pt: "Aldeia Velha",
     fr: "Thiercelieux",
+    en: "Miller's Hollow",
   },
 };
 
 const SEASONAL_LABELS: Record<SeasonalEventId, Record<Language, string>> = {
-  carnival: { pt: "Carnaval", fr: "Carnaval" },
-  christmas: { pt: "Natal", fr: "Noël" },
-  easter: { pt: "Páscoa", fr: "Pâques" },
-  halloween: { pt: "Halloween", fr: "Halloween" },
-  new_years: { pt: "Ano Novo", fr: "Nouvel An" },
+  carnival: { pt: "Carnaval", fr: "Carnaval", en: "Carnival" },
+  christmas: { pt: "Natal", fr: "Noël", en: "Christmas" },
+  easter: { pt: "Páscoa", fr: "Pâques", en: "Easter" },
+  halloween: { pt: "Halloween", fr: "Halloween", en: "Halloween" },
+  new_years: { pt: "Ano Novo", fr: "Nouvel An", en: "New Year" },
 };
 
 const FLEXIBLE_LABELS: Record<FlexibleSkinVariant, Record<Language, string>> = {
-  good: { pt: "Flexível: aldeia", fr: "Flexible : village" },
-  evil: { pt: "Flexível: mal", fr: "Flexible : mal" },
-  solo: { pt: "Flexível: solo", fr: "Flexible : solo" },
+  good: { pt: "Flexível: aldeia", fr: "Flexible : village", en: "Flexible: village" },
+  evil: { pt: "Flexível: mal", fr: "Flexible : mal", en: "Flexible: evil" },
+  solo: { pt: "Flexível: solo", fr: "Flexible : solo", en: "Flexible: solo" },
 };
 
 export function isSkinPackId(value: string | null | undefined): value is SkinPackId {
@@ -244,7 +248,7 @@ function resolveFlexibleVariant(
   flexible: ResolveRoleImageOptions["flexible"],
 ): FlexibleSkinVariant | null {
   if (!flexible || !flexibleImages[roleId]) return null;
-  const effects = new Set(flexible?.effects ?? []);
+  const effects = normalizeStatusEffectSet(flexible?.effects);
   const objectiveRoleId = flexible?.objectiveRoleId ?? null;
   const isWerewolfObjective = !!objectiveRoleId && WEREWOLF_ROLES.includes(objectiveRoleId);
   const isEvilObjective = !!objectiveRoleId && EVIL_ROLES.includes(objectiveRoleId);

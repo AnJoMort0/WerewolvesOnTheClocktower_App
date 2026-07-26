@@ -35,8 +35,8 @@ describe("detectAutomaticVictory", () => {
 
   it("detects lovers and Cupid victory", () => {
     expect(detectAutomaticVictory([
-      player("lover-a", "v02", true, ["namorado"]),
-      player("lover-b", "e01", true, ["namorado"]),
+      player("lover-a", "v02", true, ["lover"]),
+      player("lover-b", "e01", true, ["lover"]),
       player("cupid", "s01"),
       player("other", "v03", false),
     ])).toBe("lovers");
@@ -44,16 +44,16 @@ describe("detectAutomaticVictory", () => {
 
   it("does not award lovers victory to only one surviving tagged lover", () => {
     expect(detectAutomaticVictory([
-      player("lover", "v02", true, ["namorado"]),
+      player("lover", "v02", true, ["lover"]),
       player("cupid", "s01"),
-      player("other-lover", "v03", false, ["namorado"]),
+      player("other-lover", "v03", false, ["lover"]),
     ])).toBeNull();
   });
 
   it("keeps the game running when the secret lover prevents the lovers condition", () => {
     expect(detectAutomaticVictory([
-      player("secret", "as01b", true, ["namorado"]),
-      player("lover", "v02", true, ["namorado"]),
+      player("secret", "as01b", true, ["lover"]),
+      player("lover", "v02", true, ["lover"]),
       player("cupid", "s01"),
     ])).toBeNull();
   });
@@ -61,7 +61,7 @@ describe("detectAutomaticVictory", () => {
   it("blocks village victory while a tagged lover remains alive", () => {
     expect(detectAutomaticVictory([
       player("wolf", "e01", false),
-      player("lover", "v02", true, ["namorado"]),
+      player("lover", "v02", true, ["lover"]),
       player("villager", "v03"),
     ])).toBeNull();
   });
@@ -69,14 +69,14 @@ describe("detectAutomaticVictory", () => {
   it("allows village victory after all tagged lovers are dead", () => {
     expect(detectAutomaticVictory([
       player("wolf", "e01", false),
-      player("lover", "v02", false, ["namorado"]),
+      player("lover", "v02", false, ["lover"]),
       player("villager", "v03"),
     ])).toBe("village");
   });
 
   it("blocks werewolf victory while a tagged lover remains alive", () => {
     expect(detectAutomaticVictory([
-      player("lover-wolf", "e01", true, ["namorado"]),
+      player("lover-wolf", "e01", true, ["lover"]),
       player("witch", "e02"),
       player("villager", "v03", false),
     ])).toBeNull();
@@ -126,7 +126,7 @@ describe("detectAutomaticVictory", () => {
   it("detects Secret Lover victory with one surviving lover", () => {
     expect(detectAutomaticVictory([
       player("secret", "as01b"),
-      player("lover", "v02", true, ["namorado"]),
+      player("lover", "v02", true, ["lover"]),
       player("other", "e01", false),
     ])).toBe("secretLover");
   });
@@ -135,7 +135,7 @@ describe("detectAutomaticVictory", () => {
     expect(detectAutomaticVictory([
       player("secret", "as01b"),
       player("dog", "as01b"),
-      player("lover", "v02", true, ["namorado"]),
+      player("lover", "v02", true, ["lover"]),
     ])).toBe("secretLover");
   });
 
@@ -148,8 +148,8 @@ describe("detectAutomaticVictory", () => {
 
   it("awards Secret Lover victory to the Secret Lover and the surviving lover", () => {
     const secret = player("secret", "as01b");
-    const survivingLover = player("lover", "v02", true, ["namorado"]);
-    const deadFormerLover = player("former", "v03", false, ["namorado"]);
+    const survivingLover = player("lover", "v02", true, ["lover"]);
+    const deadFormerLover = player("former", "v03", false, ["lover"]);
 
     const players = [secret, survivingLover, deadFormerLover];
     expect(playerWinsVictoryGroup(secret, "secretLover", players)).toBe(true);
@@ -158,7 +158,7 @@ describe("detectAutomaticVictory", () => {
   });
 
   it("supports no, some, or multiple winner groups for a tie", () => {
-    const lover = player("lover", "v02", true, ["namorado"]);
+    const lover = player("lover", "v02", true, ["lover"]);
     const wolf = player("wolf", "e01");
 
     expect(playerWinsAnyVictoryGroup(lover, [])).toBe(false);

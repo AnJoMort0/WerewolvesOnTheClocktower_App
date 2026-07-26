@@ -12,7 +12,7 @@ describe("private player character metadata", () => {
       ownerRole: "e02",
       ownerPlayerId: "owner-player",
       objectiveRole: "a01",
-      objectiveEffects: ["evil_being", "namorado"],
+      objectiveEffects: ["evil_being", "lover"],
       dogActorCopiedRole: "v16",
     });
     expect(stripPlayerCharacterMetadata(character)).toBe("a02");
@@ -20,7 +20,7 @@ describe("private player character metadata", () => {
       ownerRole: "e02",
       ownerPlayerId: "owner-player",
       objectiveRole: "a01",
-      objectiveEffects: ["evil_being", "namorado"],
+      objectiveEffects: ["evil_being", "lover"],
       dogActorCopiedRole: "v16",
     });
     expect(parsePlayerCharacter(character).baseRole).toBe("a02");
@@ -37,6 +37,12 @@ describe("private player character metadata", () => {
       baseRole: "a04",
       displayRole: "a02",
       actorCopiedRole: "a02",
+    });
+  });
+
+  it("normalizes legacy Portuguese objective effect metadata", () => {
+    expect(parsePlayerCharacterMetadata("a02|objectives=namorado")).toMatchObject({
+      objectiveEffects: ["lover"],
     });
   });
 });

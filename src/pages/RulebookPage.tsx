@@ -4,16 +4,16 @@ import { ArrowLeft, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID, RULEBOOK_TOP_ID, isRulebookCharacterId } from "@/lib/rulebook";
-import { t, type Language } from "@/lib/i18n";
+import { coerceLanguage, t, type Language } from "@/lib/i18n";
 import { useSkinPack } from "@/lib/skinPackContext";
 import type { RulebookSkinPreviewValue } from "@/lib/skinPacks";
 import { handleRulebookSkinPreviewChange } from "@/lib/rulebookSkinPreview";
 import type { RulebookCharacterId } from "@/lib/rulebookContent";
 
 function getInitialLanguage(searchLanguage: string | null): Language {
-  if (searchLanguage === "fr" || searchLanguage === "pt") return searchLanguage;
+  if (searchLanguage) return coerceLanguage(searchLanguage);
   const stored = typeof window === "undefined" ? null : window.localStorage.getItem("preferred_language");
-  return stored === "fr" || stored === "pt" ? stored : "pt";
+  return coerceLanguage(stored);
 }
 
 export default function RulebookPage() {

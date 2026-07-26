@@ -1,5 +1,6 @@
-import type { PlayerStatus, StatusEffect } from "@/components/game/PlayerStatusPopover";
-import type { GameLogEvent } from "@/lib/gameLog";
+import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
+import { normalizeStatusEffectSet, type StatusEffect } from "@/lib/effects";
+import { normalizeGameLogEvents, type GameLogEvent } from "@/lib/gameLog";
 import type { Language, WinKind } from "@/lib/i18n";
 import type { RoleId } from "@/lib/roles";
 
@@ -53,7 +54,16 @@ export function readRoomDisplaySnapshot(roomId: string): RoomDisplaySnapshot | n
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<RoomDisplaySnapshot>;
     if (value.version !== ROOM_DISPLAY_SNAPSHOT_VERSION || value.roomId !== roomId) return null;
-    return value as RoomDisplaySnapshot;
+    return {
+      ...value,
+      playerEffects: Object.fromEntries(
+        Object.entries(value.playerEffects ?? {}).map(([playerId, effects]) => [
+          playerId,
+          Array.from(normalizeStatusEffectSet(effects)),
+        ]),
+      ),
+      gameLogEvents: normalizeGameLogEvents(value.gameLogEvents),
+    } as RoomDisplaySnapshot;
   } catch {
     return null;
   }
