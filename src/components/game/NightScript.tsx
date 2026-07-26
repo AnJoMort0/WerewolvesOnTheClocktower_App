@@ -410,6 +410,8 @@ function ScriptLineDisplay({
       }
       e.dataTransfer.setData("action", dragAction);
       if (sourcePlayerId) e.dataTransfer.setData("sourcePlayerId", sourcePlayerId);
+      e.dataTransfer.setData("fromScriptLine", "1");
+      if (line.conditionKey) e.dataTransfer.setData("scriptConditionKey", line.conditionKey);
       e.dataTransfer.effectAllowed = "move";
     }
   };

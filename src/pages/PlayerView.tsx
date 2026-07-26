@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen } from "lucide-react";
+import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
@@ -22,7 +22,7 @@ import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/
 import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
 import { parsePlayerCharacter, shouldShowActorBadge } from "@/lib/actor";
 import { parsePlayerCharacterMetadata } from "@/lib/playerCharacter";
-import { createPlayerActionRequest, normalizePlayerActionState, upsertPowerUses, type PlayerActionState } from "@/lib/playerActions";
+import { createPlayerActionRequest, normalizePlayerActionState, upsertPowerUses, type PlayerActionKind, type PlayerActionState } from "@/lib/playerActions";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 
@@ -33,7 +33,8 @@ type RoomPlayer = {
   is_alive: boolean;
 };
 
-const FAKE_ASSASSINATION_PENDING_MS = 10000;
+const FAKE_PLAYER_ACTION_PENDING_MS = 10000;
+type PlayerDeviceActionMode = "v10" | "v18" | "v23";
 
 const PlayerView = () => {
   const { playerId } = useParams<{ playerId: string }>();
@@ -80,7 +81,13 @@ const PlayerView = () => {
   const [assassinationMode, setAssassinationMode] = useState(false);
   const [assassinationTargetId, setAssassinationTargetId] = useState<string | null>(null);
   const [assassinationSubmitting, setAssassinationSubmitting] = useState(false);
-  const [fakeAssassinationPending, setFakeAssassinationPending] = useState(false);
+  const [resurrectionMode, setResurrectionMode] = useState(false);
+  const [resurrectionTargetId, setResurrectionTargetId] = useState<string | null>(null);
+  const [resurrectionSubmitting, setResurrectionSubmitting] = useState(false);
+  const [webMode, setWebMode] = useState(false);
+  const [webTargetId, setWebTargetId] = useState<string | null>(null);
+  const [webSubmitting, setWebSubmitting] = useState(false);
+  const [fakePlayerActionKind, setFakePlayerActionKind] = useState<PlayerActionKind | null>(null);
   const [assassinationMessage, setAssassinationMessage] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>("pt");
   const [gameOver, setGameOver] = useState<{ kind: WinKind; outcome: "victory" | "defeat" } | null>(null);
@@ -91,31 +98,31 @@ const PlayerView = () => {
   const gameOverEventRef = useRef<string | null>(null);
   const previousTimerAlarmStateRef = useRef<TimerAlarmState | null>(null);
   const resolvedPlayerActionRequestIdsRef = useRef<Set<string>>(new Set());
-  const fakeAssassinationPendingTimeoutRef = useRef<number | null>(null);
+  const fakePlayerActionPendingTimeoutRef = useRef<number | null>(null);
   useEffect(() => { playerRef.current = player; }, [player]);
 
-  const clearFakeAssassinationPendingTimer = useCallback(() => {
-    if (fakeAssassinationPendingTimeoutRef.current === null) return;
-    window.clearTimeout(fakeAssassinationPendingTimeoutRef.current);
-    fakeAssassinationPendingTimeoutRef.current = null;
+  const clearFakePlayerActionPendingTimer = useCallback(() => {
+    if (fakePlayerActionPendingTimeoutRef.current === null) return;
+    window.clearTimeout(fakePlayerActionPendingTimeoutRef.current);
+    fakePlayerActionPendingTimeoutRef.current = null;
   }, []);
 
-  const clearFakeAssassinationPending = useCallback(() => {
-    clearFakeAssassinationPendingTimer();
-    setFakeAssassinationPending(false);
-  }, [clearFakeAssassinationPendingTimer]);
+  const clearFakePlayerActionPending = useCallback(() => {
+    clearFakePlayerActionPendingTimer();
+    setFakePlayerActionKind(null);
+  }, [clearFakePlayerActionPendingTimer]);
 
-  const showFakeAssassinationPending = useCallback(() => {
-    clearFakeAssassinationPendingTimer();
-    setFakeAssassinationPending(true);
-    fakeAssassinationPendingTimeoutRef.current = window.setTimeout(() => {
-      fakeAssassinationPendingTimeoutRef.current = null;
-      setFakeAssassinationPending(false);
+  const showFakePlayerActionPending = useCallback((kind: PlayerActionKind) => {
+    clearFakePlayerActionPendingTimer();
+    setFakePlayerActionKind(kind);
+    fakePlayerActionPendingTimeoutRef.current = window.setTimeout(() => {
+      fakePlayerActionPendingTimeoutRef.current = null;
+      setFakePlayerActionKind(null);
       setAssassinationMessage(null);
-    }, FAKE_ASSASSINATION_PENDING_MS);
-  }, [clearFakeAssassinationPendingTimer]);
+    }, FAKE_PLAYER_ACTION_PENDING_MS);
+  }, [clearFakePlayerActionPendingTimer]);
 
-  useEffect(() => clearFakeAssassinationPendingTimer, [clearFakeAssassinationPendingTimer]);
+  useEffect(() => clearFakePlayerActionPendingTimer, [clearFakePlayerActionPendingTimer]);
 
   const applyRoomPlayerActionState = useCallback((value: unknown) => {
     const normalized = normalizePlayerActionState(value);
@@ -486,9 +493,9 @@ const PlayerView = () => {
                 && !(request.kind === resolution.kind && request.actorPlayerId === playerId)
               )),
             };
-            if (resolution.role === "v10" && typeof resolution.uses === "number") {
-              next = upsertPowerUses(next, "v10", {
-                ...(next.powerUses.v10 ?? {}),
+            if (resolution.role && typeof resolution.uses === "number") {
+              next = upsertPowerUses(next, resolution.role, {
+                ...(next.powerUses[resolution.role] ?? {}),
                 [playerId]: resolution.uses,
               });
             }
@@ -496,8 +503,12 @@ const PlayerView = () => {
           });
           setAssassinationMode(false);
           setAssassinationTargetId(null);
+          setResurrectionMode(false);
+          setResurrectionTargetId(null);
+          setWebMode(false);
+          setWebTargetId(null);
           setAssassinationMessage(null);
-          clearFakeAssassinationPending();
+          clearFakePlayerActionPending();
         }).subscribe();
 
       return () => {
@@ -524,7 +535,7 @@ const PlayerView = () => {
       if (playersChannel) supabase.removeChannel(playersChannel);
       if (fortuneTellerChannel) supabase.removeChannel(fortuneTellerChannel);
     };
-  }, [applyRoomPlayerActionState, clearFakeAssassinationPending, playerId, navigate, player?.room_id]);
+  }, [applyRoomPlayerActionState, clearFakePlayerActionPending, playerId, navigate, player?.room_id]);
 
   // Persist hidden state across reloads
   useEffect(() => {
@@ -598,36 +609,70 @@ const PlayerView = () => {
   const playerIsDead = !!player && !player.is_alive;
   const currentRoomId = player?.room_id ?? null;
   const isParanoidPower = displayRole === "v10";
+  const isAngelPower = displayRole === "v18";
+  const isSpiderPower = displayRole === "v23";
   const v10HasUnlimitedUses = parsedCharacter.baseRole === "a03" && characterMetadata.mimeCopiedRole === "v10";
-  const pendingV10Request = !!playerId && playerActionState.requests.some((request) => (
-    request.kind === "v10-assassinate" && request.actorPlayerId === playerId
-  ));
-  const visiblePendingV10Request = pendingV10Request || fakeAssassinationPending;
+  const v18HasUnlimitedUses = parsedCharacter.baseRole === "a03" && characterMetadata.mimeCopiedRole === "v18";
+  const v23HasUnlimitedUses = parsedCharacter.baseRole === "a03" && characterMetadata.mimeCopiedRole === "v23";
+  const hasPendingAction = useCallback((kind: PlayerActionKind) => !!playerId && playerActionState.requests.some((request) => (
+    request.kind === kind && request.actorPlayerId === playerId
+  )), [playerActionState.requests, playerId]);
+  const pendingV10Request = hasPendingAction("v10-assassinate");
+  const pendingV18Request = hasPendingAction("v18-resurrect");
+  const pendingV23Request = hasPendingAction("v23-web");
+  const hasActualPendingPlayerAction = pendingV10Request || pendingV18Request || pendingV23Request;
+  const visiblePendingV10Request = pendingV10Request || fakePlayerActionKind === "v10-assassinate";
+  const visiblePendingV18Request = pendingV18Request || fakePlayerActionKind === "v18-resurrect";
+  const visiblePendingV23Request = pendingV23Request || fakePlayerActionKind === "v23-web";
   const v10Uses = playerId ? playerActionState.powerUses.v10?.[playerId] ?? 0 : 0;
+  const v18Uses = playerId ? playerActionState.powerUses.v18?.[playerId] ?? 0 : 0;
+  const v23Uses = playerId ? playerActionState.powerUses.v23?.[playerId] ?? 0 : 0;
   const canStartAssassination = isParanoidPower
     && roomStatus === "playing"
     && !playerIsDead
     && !visiblePendingV10Request;
+  const canStartResurrection = isAngelPower
+    && roomStatus === "playing"
+    && !playerIsDead
+    && !visiblePendingV18Request
+    && roomPlayers.some((roomPlayer) => !roomPlayer.is_alive);
+  const canStartWebChange = isSpiderPower
+    && roomStatus === "playing"
+    && !playerIsDead
+    && !visiblePendingV23Request;
 
   useEffect(() => {
-    if (isParanoidPower) return;
-    setAssassinationMode(false);
-    setAssassinationTargetId(null);
-    clearFakeAssassinationPending();
-  }, [clearFakeAssassinationPending, isParanoidPower]);
-
-  const previousPendingV10RequestRef = useRef(pendingV10Request);
-  useEffect(() => {
-    if (previousPendingV10RequestRef.current && !pendingV10Request) {
+    if (!isParanoidPower) {
       setAssassinationMode(false);
       setAssassinationTargetId(null);
+    }
+    if (!isAngelPower) {
+      setResurrectionMode(false);
+      setResurrectionTargetId(null);
+    }
+    if (!isSpiderPower) {
+      setWebMode(false);
+      setWebTargetId(null);
+    }
+    if (!isParanoidPower && !isAngelPower && !isSpiderPower) clearFakePlayerActionPending();
+  }, [clearFakePlayerActionPending, isAngelPower, isParanoidPower, isSpiderPower]);
+
+  const previousPendingPlayerActionRef = useRef(hasActualPendingPlayerAction);
+  useEffect(() => {
+    if (previousPendingPlayerActionRef.current && !hasActualPendingPlayerAction) {
+      setAssassinationMode(false);
+      setAssassinationTargetId(null);
+      setResurrectionMode(false);
+      setResurrectionTargetId(null);
+      setWebMode(false);
+      setWebTargetId(null);
       setAssassinationMessage(null);
     }
-    previousPendingV10RequestRef.current = pendingV10Request;
-  }, [pendingV10Request]);
+    previousPendingPlayerActionRef.current = hasActualPendingPlayerAction;
+  }, [hasActualPendingPlayerAction]);
 
   useEffect(() => {
-    if (!pendingV10Request || !currentRoomId) return;
+    if (!hasActualPendingPlayerAction || !currentRoomId) return;
     let cancelled = false;
 
     const refreshPlayerActionState = async () => {
@@ -646,75 +691,144 @@ const PlayerView = () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [applyRoomPlayerActionState, currentRoomId, pendingV10Request]);
+  }, [applyRoomPlayerActionState, currentRoomId, hasActualPendingPlayerAction]);
 
-  const sendAssassinationRequest = useCallback(async () => {
-    if (!playerId || !currentRoomId || !assassinationTargetId || !isParanoidPower) return;
-    if (assassinationTargetId === playerId) return;
-
-    setAssassinationSubmitting(true);
+  const sendPlayerActionRequest = useCallback(async ({
+    kind,
+    role,
+    targetPlayerId,
+    maxUses,
+    currentUses,
+    hasUnlimitedUses,
+    closeMode,
+  }: {
+    kind: PlayerActionKind;
+    role: RoleId;
+    targetPlayerId: string | null;
+    maxUses: number;
+    currentUses: number;
+    hasUnlimitedUses: boolean;
+    closeMode: () => void;
+  }) => {
+    if (!playerId || !currentRoomId || !targetPlayerId) return;
     setAssassinationMessage(null);
 
-    try {
-      const { data, error } = await supabase
-        .from("rooms")
-        .select("player_action_state")
-        .eq("id", currentRoomId)
-        .single();
+    const { data, error } = await supabase
+      .from("rooms")
+      .select("player_action_state")
+      .eq("id", currentRoomId)
+      .single();
 
-      if (error) {
-        setAssassinationMessage(t("assassinationRequestError", language));
-        return;
-      }
+    if (error) {
+      setAssassinationMessage(t("assassinationRequestError", language));
+      return;
+    }
 
-      const latestState = normalizePlayerActionState(
-        (data as { player_action_state?: PlayerActionState | null } | null)?.player_action_state,
-      );
-      const hasPending = latestState.requests.some((request) => (
-        request.kind === "v10-assassinate" && request.actorPlayerId === playerId
-      ));
-      if (hasPending) {
-        setPlayerActionState(latestState);
-        setAssassinationMode(false);
-        setAssassinationTargetId(null);
-        setAssassinationMessage(null);
-        return;
-      }
-
-      const latestUses = latestState.powerUses.v10?.[playerId] ?? v10Uses;
-      if (!v10HasUnlimitedUses && latestUses >= 2) {
-        setPlayerActionState(latestState);
-        setAssassinationMode(false);
-        setAssassinationTargetId(null);
-        showFakeAssassinationPending();
-        return;
-      }
-
-      const nextState: PlayerActionState = {
-        ...latestState,
-        requests: [
-          ...latestState.requests,
-          createPlayerActionRequest("v10-assassinate", playerId, assassinationTargetId),
-        ],
-      };
-      const { error: updateError } = await supabase
-        .from("rooms")
-        .update({ player_action_state: nextState })
-        .eq("id", currentRoomId);
-
-      if (updateError) {
-        setAssassinationMessage(t("assassinationRequestError", language));
-        return;
-      }
-
-      setPlayerActionState(nextState);
-      setAssassinationMode(false);
-      setAssassinationTargetId(null);
+    const latestState = normalizePlayerActionState(
+      (data as { player_action_state?: PlayerActionState | null } | null)?.player_action_state,
+    );
+    const hasPending = latestState.requests.some((request) => (
+      request.kind === kind && request.actorPlayerId === playerId
+    ));
+    if (hasPending) {
+      setPlayerActionState(latestState);
+      closeMode();
       setAssassinationMessage(null);
+      return;
+    }
+
+    const latestUses = latestState.powerUses[role]?.[playerId] ?? currentUses;
+    if (!hasUnlimitedUses && latestUses >= maxUses) {
+      setPlayerActionState(latestState);
+      closeMode();
+      showFakePlayerActionPending(kind);
+      return;
+    }
+
+    const nextState: PlayerActionState = {
+      ...latestState,
+      requests: [
+        ...latestState.requests,
+        createPlayerActionRequest(kind, playerId, targetPlayerId),
+      ],
+    };
+    const { error: updateError } = await supabase
+      .from("rooms")
+      .update({ player_action_state: nextState })
+      .eq("id", currentRoomId);
+
+    if (updateError) {
+      setAssassinationMessage(t("assassinationRequestError", language));
+      return;
+    }
+
+    setPlayerActionState(nextState);
+    closeMode();
+    setAssassinationMessage(null);
+  }, [currentRoomId, language, playerId, showFakePlayerActionPending]);
+
+  const sendAssassinationRequest = useCallback(async () => {
+    if (!assassinationTargetId || !isParanoidPower || assassinationTargetId === playerId) return;
+    setAssassinationSubmitting(true);
+    try {
+      await sendPlayerActionRequest({
+        kind: "v10-assassinate",
+        role: "v10",
+        targetPlayerId: assassinationTargetId,
+        maxUses: 2,
+        currentUses: v10Uses,
+        hasUnlimitedUses: v10HasUnlimitedUses,
+        closeMode: () => {
+          setAssassinationMode(false);
+          setAssassinationTargetId(null);
+        },
+      });
     } finally {
       setAssassinationSubmitting(false);
     }
-  }, [assassinationTargetId, currentRoomId, isParanoidPower, language, playerId, showFakeAssassinationPending, v10HasUnlimitedUses, v10Uses]);
+  }, [assassinationTargetId, isParanoidPower, playerId, sendPlayerActionRequest, v10HasUnlimitedUses, v10Uses]);
+
+  const sendResurrectionRequest = useCallback(async () => {
+    if (!resurrectionTargetId || !isAngelPower) return;
+    setResurrectionSubmitting(true);
+    try {
+      await sendPlayerActionRequest({
+        kind: "v18-resurrect",
+        role: "v18",
+        targetPlayerId: resurrectionTargetId,
+        maxUses: 2,
+        currentUses: v18Uses,
+        hasUnlimitedUses: v18HasUnlimitedUses,
+        closeMode: () => {
+          setResurrectionMode(false);
+          setResurrectionTargetId(null);
+        },
+      });
+    } finally {
+      setResurrectionSubmitting(false);
+    }
+  }, [isAngelPower, resurrectionTargetId, sendPlayerActionRequest, v18HasUnlimitedUses, v18Uses]);
+
+  const sendWebRequest = useCallback(async () => {
+    if (!webTargetId || !isSpiderPower) return;
+    setWebSubmitting(true);
+    try {
+      await sendPlayerActionRequest({
+        kind: "v23-web",
+        role: "v23",
+        targetPlayerId: webTargetId,
+        maxUses: 1,
+        currentUses: v23Uses,
+        hasUnlimitedUses: v23HasUnlimitedUses,
+        closeMode: () => {
+          setWebMode(false);
+          setWebTargetId(null);
+        },
+      });
+    } finally {
+      setWebSubmitting(false);
+    }
+  }, [isSpiderPower, sendPlayerActionRequest, v23HasUnlimitedUses, v23Uses, webTargetId]);
 
   if (removed) {
     return (
@@ -746,8 +860,84 @@ const PlayerView = () => {
   const isDead = playerIsDead;
   const seatedPlayers = roomPlayers.filter((p) => p.seat_position !== null).sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0));
   const totalSlots = seatedPlayers.length || roomPlayers.length;
-  const assassinationPlayers = seatedPlayers.length > 0 ? seatedPlayers : roomPlayers;
-  const assassinationTotalSlots = assassinationPlayers.length || 1;
+  const actionMode: PlayerDeviceActionMode | null = assassinationMode ? "v10" : resurrectionMode ? "v18" : webMode ? "v23" : null;
+  const actionPlayers = seatedPlayers.length > 0 ? seatedPlayers : roomPlayers;
+  const actionTotalSlots = actionPlayers.length || 1;
+  const actionIcon = actionMode === "v18" ? RotateCcw : actionMode === "v23" ? Eye : Crosshair;
+  const ActionIcon = actionIcon;
+  const actionTitle = actionMode === "v18"
+    ? t("resurrectionMode", language)
+    : actionMode === "v23"
+    ? t("webMode", language)
+    : t("assassinationMode", language);
+  const actionInstructions = actionMode === "v18"
+    ? t("resurrectionChooseTarget", language)
+    : actionMode === "v23"
+    ? t("webChooseTarget", language)
+    : t("assassinationChooseTarget", language);
+  const actionConfirmLabel = actionMode === "v18"
+    ? t("resurrectPlayer", language)
+    : actionMode === "v23"
+    ? t("changeWeb", language)
+    : t("assassinationConfirm", language);
+  const actionTargetId = actionMode === "v18"
+    ? resurrectionTargetId
+    : actionMode === "v23"
+    ? webTargetId
+    : assassinationTargetId;
+  const actionSubmitting = actionMode === "v18"
+    ? resurrectionSubmitting
+    : actionMode === "v23"
+    ? webSubmitting
+    : assassinationSubmitting;
+  const actionAccentClass = actionMode === "v18"
+    ? "text-emerald-300"
+    : actionMode === "v23"
+    ? "text-cyan-300"
+    : "text-destructive";
+  const actionBorderClass = actionMode === "v18"
+    ? "border-emerald-400/60 bg-emerald-500/10"
+    : actionMode === "v23"
+    ? "border-cyan-400/60 bg-cyan-500/10"
+    : "border-destructive/60 bg-destructive/10";
+  const actionCenterClass = actionMode === "v18"
+    ? "border-emerald-400/40 bg-emerald-500/10"
+    : actionMode === "v23"
+    ? "border-cyan-400/40 bg-cyan-500/10"
+    : "border-destructive/40 bg-destructive/10";
+  const actionSelectedClass = actionMode === "v18"
+    ? "border-emerald-400 bg-emerald-500/30 shadow-[0_0_18px_rgba(52,211,153,0.45)]"
+    : actionMode === "v23"
+    ? "border-cyan-400 bg-cyan-500/30 shadow-[0_0_18px_rgba(34,211,238,0.45)]"
+    : "border-destructive bg-destructive/30 shadow-[0_0_18px_hsl(var(--destructive)/0.45)]";
+  const setActionTargetId = (targetPlayerId: string) => {
+    if (actionMode === "v18") setResurrectionTargetId(targetPlayerId);
+    else if (actionMode === "v23") setWebTargetId(targetPlayerId);
+    else setAssassinationTargetId(targetPlayerId);
+  };
+  const closeActionMode = () => {
+    if (actionMode === "v18") {
+      setResurrectionMode(false);
+      setResurrectionTargetId(null);
+    } else if (actionMode === "v23") {
+      setWebMode(false);
+      setWebTargetId(null);
+    } else {
+      setAssassinationMode(false);
+      setAssassinationTargetId(null);
+    }
+  };
+  const confirmActionMode = () => {
+    if (actionMode === "v18") void sendResurrectionRequest();
+    else if (actionMode === "v23") void sendWebRequest();
+    else void sendAssassinationRequest();
+  };
+  const isActionTargetSelectable = (targetPlayer: RoomPlayer) => {
+    const targetIsDead = !targetPlayer.is_alive;
+    if (actionMode === "v18") return targetIsDead;
+    if (actionMode === "v23") return !targetIsDead;
+    return targetPlayer.id !== playerId && !targetIsDead;
+  };
   const openRulebook = (roleId: RoleId | null = null) => {
     setRulebookRoleId(roleId);
     setRulebookOpen(true);
@@ -832,47 +1022,47 @@ const PlayerView = () => {
               </div>
             )}
             <AnimatePresence mode="wait">
-              {assassinationMode ? (
+              {actionMode ? (
                 <motion.div
-                  key="assassination-mode"
+                  key={`${actionMode}-mode`}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.25 }}
-                  className="space-y-4 rounded-2xl border border-destructive/60 bg-destructive/10 p-4 shadow-lg"
+                  className={`space-y-4 rounded-2xl border p-4 shadow-lg ${actionBorderClass}`}
                 >
                   <div className="space-y-1">
-                    <Crosshair className="mx-auto h-8 w-8 text-destructive" />
-                    <h2 className="font-display text-2xl font-bold text-destructive">
-                      {t("assassinationMode", language)}
+                    <ActionIcon className={`mx-auto h-8 w-8 ${actionAccentClass}`} />
+                    <h2 className={`font-display text-2xl font-bold ${actionAccentClass}`}>
+                      {actionTitle}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      {t("assassinationChooseTarget", language)}
+                      {actionInstructions}
                     </p>
                   </div>
                   <div className="relative mx-auto" style={{ width: 280, height: 280 }}>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-12 w-12 rounded-full border border-destructive/40 bg-destructive/10" />
+                      <div className={`h-12 w-12 rounded-full border ${actionCenterClass}`} />
                     </div>
-                    {assassinationPlayers.map((p, i) => {
-                      const angle = (2 * Math.PI * i) / assassinationTotalSlots - Math.PI / 2;
+                    {actionPlayers.map((p, i) => {
+                      const angle = (2 * Math.PI * i) / actionTotalSlots - Math.PI / 2;
                       const r = 120;
                       const cx = r * Math.cos(angle) + 140;
                       const cy = r * Math.sin(angle) + 140;
                       const isMe = p.id === playerId;
                       const pDead = !p.is_alive;
-                      const selectable = !isMe && !pDead;
-                      const selected = assassinationTargetId === p.id;
+                      const selectable = isActionTargetSelectable(p);
+                      const selected = actionTargetId === p.id;
                       return (
                         <button
                           key={p.id}
                           type="button"
                           disabled={!selectable}
-                          onClick={() => setAssassinationTargetId(p.id)}
+                          onClick={() => setActionTargetId(p.id)}
                           className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-transform ${selectable ? "hover:scale-105" : "cursor-not-allowed opacity-45"}`}
                           style={{ left: cx, top: cy }}
                         >
-                          <span className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 ${selected ? "border-destructive bg-destructive/30 shadow-[0_0_18px_hsl(var(--destructive)/0.45)]" : isMe ? "border-primary bg-primary/20" : "border-border/50 bg-card"} ${pDead ? "grayscale" : ""}`}>
+                          <span className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 ${selected ? actionSelectedClass : isMe ? "border-primary bg-primary/20" : "border-border/50 bg-card"} ${pDead ? "grayscale" : ""}`}>
                             <span className="font-display text-xs font-bold">
                               {p.name.charAt(0).toUpperCase()}
                             </span>
@@ -880,7 +1070,7 @@ const PlayerView = () => {
                               <X className="absolute h-6 w-6 text-muted-foreground" strokeWidth={3} />
                             )}
                           </span>
-                          <span className={`mt-0.5 max-w-[64px] truncate text-[10px] font-body ${pDead ? "text-muted-foreground/50" : selected ? "text-destructive" : ""}`}>
+                          <span className={`mt-0.5 max-w-[64px] truncate text-[10px] font-body ${pDead ? "text-muted-foreground/50" : selected ? actionAccentClass : ""}`}>
                             {p.name}
                           </span>
                         </button>
@@ -891,23 +1081,20 @@ const PlayerView = () => {
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={() => {
-                        setAssassinationMode(false);
-                        setAssassinationTargetId(null);
-                      }}
+                      onClick={closeActionMode}
                       className="font-display"
                     >
                       {t("assassinationExit", language)}
                     </Button>
                     <Button
                       type="button"
-                      variant="destructive"
-                      disabled={!assassinationTargetId || assassinationSubmitting}
-                      onClick={sendAssassinationRequest}
+                      variant={actionMode === "v10" ? "destructive" : "default"}
+                      disabled={!actionTargetId || actionSubmitting}
+                      onClick={confirmActionMode}
                       className="font-display"
                     >
-                      <Crosshair className="mr-2 h-4 w-4" />
-                      {t("assassinationConfirm", language)}
+                      <ActionIcon className="mr-2 h-4 w-4" />
+                      {actionConfirmLabel}
                     </Button>
                   </div>
                 </motion.div>
@@ -1098,6 +1285,52 @@ const PlayerView = () => {
                       )}
                     </div>
                   )}
+                  {isAngelPower && (
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={!canStartResurrection}
+                        onClick={() => {
+                          setResurrectionMode(true);
+                          setResurrectionTargetId(null);
+                          setAssassinationMessage(null);
+                        }}
+                        className="w-full border-emerald-400/50 bg-emerald-500/10 font-display tracking-wider text-emerald-100 hover:bg-emerald-500/20"
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        {t("resurrectPlayer", language)}
+                      </Button>
+                      {visiblePendingV18Request && (
+                        <p className="text-xs text-yellow-400">
+                          {t("assassinationRequestPending", language)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {isSpiderPower && (
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={!canStartWebChange}
+                        onClick={() => {
+                          setWebMode(true);
+                          setWebTargetId(null);
+                          setAssassinationMessage(null);
+                        }}
+                        className="w-full border-cyan-400/50 bg-cyan-500/10 font-display tracking-wider text-cyan-100 hover:bg-cyan-500/20"
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        {t("changeWeb", language)}
+                      </Button>
+                      {visiblePendingV23Request && (
+                        <p className="text-xs text-yellow-400">
+                          {t("assassinationRequestPending", language)}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {assassinationMessage && (
                     <p className="text-xs text-muted-foreground">
                       {assassinationMessage}
@@ -1107,7 +1340,7 @@ const PlayerView = () => {
               )}
             </AnimatePresence>
 
-            {!assassinationMode && (
+            {!actionMode && (
               <Button
                 variant="secondary"
                 onClick={() => setHidden(!hidden)}

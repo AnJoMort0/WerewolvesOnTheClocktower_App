@@ -23,6 +23,11 @@ type Player = {
   is_alive: boolean;
 };
 
+type DragActionMeta = {
+  fromScriptLine?: boolean;
+  scriptConditionKey?: string | null;
+};
+
 const POISON_DRAG_ROLE: RoleId = "e02";
 const KILL_DRAG_ROLE: RoleId = "e01";
 const SHAMAN_ROLE: RoleId = "e03";
@@ -104,7 +109,7 @@ interface PlayerCircleProps {
   availableEffects?: (playerId: string) => StatusEffect[];
   onToggleEffect?: (playerId: string, effect: StatusEffect) => void;
   onExecute?: (playerId: string) => void;
-  onDragAction?: (action: string, targetPlayerId: string, sourcePlayerId?: string | null) => void;
+  onDragAction?: (action: string, targetPlayerId: string, sourcePlayerId?: string | null, meta?: DragActionMeta) => void;
   hideSensitiveInfo?: boolean;
   onPlayerClick?: (playerId: string) => void;
   selectedPlayerId?: string | null;
@@ -212,33 +217,37 @@ export const PlayerCircle = ({
     e.preventDefault();
     const action = e.dataTransfer.getData("action");
     const sourcePlayerId = e.dataTransfer.getData("sourcePlayerId") || null;
+    const meta: DragActionMeta = {
+      fromScriptLine: e.dataTransfer.getData("fromScriptLine") === "1",
+      scriptConditionKey: e.dataTransfer.getData("scriptConditionKey") || null,
+    };
     if (action && isPlaying && onPlayerStatusChange) {
       const seated = seatedPlayers.find((p) => p.seat_position === position);
       if (!seated) return;
       if (onDragAction) {
-        onDragAction(action, seated.id, sourcePlayerId);
+        onDragAction(action, seated.id, sourcePlayerId, meta);
         return;
       }
 
       if (action === "poison") {
         onPlayerStatusChange(seated.id, "poisoned");
-        onDragAction?.("__catch__", seated.id, sourcePlayerId);
+        onDragAction?.("__catch__", seated.id, sourcePlayerId, meta);
       } else if (action === "kill") {
         onPlayerStatusChange(seated.id, "dead-this-night", "e01");
-        onDragAction?.("__catch__", seated.id, sourcePlayerId);
+        onDragAction?.("__catch__", seated.id, sourcePlayerId, meta);
       } else if (action === "shaman") {
         if (isShamanPoisoned) {
           toast.warning(getToast("warnShamanPoisoned", lang));
           return;
         }
         onShamanDrop?.(seated.id);
-        onDragAction?.("__catch__", seated.id, sourcePlayerId);
+        onDragAction?.("__catch__", seated.id, sourcePlayerId, meta);
       } else if (action === "illusion") {
-        if (onDragAction) onDragAction(action, seated.id, sourcePlayerId);
+        if (onDragAction) onDragAction(action, seated.id, sourcePlayerId, meta);
         else onSetIllusion?.(seated.id);
       } else {
         // Generic drag-drop action
-        onDragAction?.(action, seated.id, sourcePlayerId);
+        onDragAction?.(action, seated.id, sourcePlayerId, meta);
       }
       return;
     }

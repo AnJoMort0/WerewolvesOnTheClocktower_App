@@ -117,6 +117,12 @@ const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   l06: "role-l06",
 };
 
+function getPlayerActionRole(kind: PlayerActionRequest["kind"]): RoleId {
+  if (kind === "v18-resurrect") return "v18";
+  if (kind === "v23-web") return "v23";
+  return "v10";
+}
+
 type Player = {
   id: string;
   name: string;
@@ -682,6 +688,9 @@ const GMRoom = () => {
     return states;
   }, [actorCopiedRole, actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, mimeMechanicalRole, mimePlayerId, mimePowerState]);
 
+  const spiderWebbedDied = useMemo(() => Object.entries(playerEffects)
+    .some(([playerId, effects]) => effects.has("webbed") && permanentlyDead.has(playerId)), [permanentlyDead, playerEffects]);
+
   const v10UsesByPlayerId = useMemo(() => {
     const uses: Record<string, number> = {};
     for (const [playerId, role] of Object.entries(abilityRoleAssignments)) {
@@ -696,11 +705,58 @@ const GMRoom = () => {
     return uses;
   }, [abilityRoleAssignments, independentPowerStates, mimeMechanicalRole, mimePlayerId, paranoidCharges, roleAssignments]);
 
+  const v18UsesByPlayerId = useMemo(() => {
+    const uses: Record<string, number> = {};
+    for (const [playerId, role] of Object.entries(abilityRoleAssignments)) {
+      if (role !== "v18") continue;
+      if (playerId === mimePlayerId && mimeMechanicalRole === "v18") {
+        uses[playerId] = 0;
+        continue;
+      }
+      uses[playerId] = independentPowerStates[playerId]?.angelCharges
+        ?? (roleAssignments[playerId] === "v18" ? angelCharges : 0);
+    }
+    return uses;
+  }, [abilityRoleAssignments, angelCharges, independentPowerStates, mimeMechanicalRole, mimePlayerId, roleAssignments]);
+
+  const v23UsesByPlayerId = useMemo(() => {
+    const uses: Record<string, number> = {};
+    for (const [playerId, role] of Object.entries(abilityRoleAssignments)) {
+      if (role !== "v23") continue;
+      if (playerId === mimePlayerId && mimeMechanicalRole === "v23") {
+        uses[playerId] = 0;
+        continue;
+      }
+      if (spiderWebbedDied) {
+        uses[playerId] = 0;
+        continue;
+      }
+      const used = independentPowerStates[playerId]?.spiderDayChangeUsed
+        ?? (roleAssignments[playerId] === "v23" ? spiderDayChangeUsed : false);
+      uses[playerId] = used ? 1 : 0;
+    }
+    return uses;
+  }, [abilityRoleAssignments, independentPowerStates, mimeMechanicalRole, mimePlayerId, roleAssignments, spiderDayChangeUsed, spiderWebbedDied]);
+
+  const playerActionPowerUsesByRole = useMemo(() => ({
+    v10: v10UsesByPlayerId,
+    v18: v18UsesByPlayerId,
+    v23: v23UsesByPlayerId,
+  }) satisfies Partial<Record<RoleId, Record<string, number>>>, [v10UsesByPlayerId, v18UsesByPlayerId, v23UsesByPlayerId]);
+
   const pruneResolvedPlayerActionState = useCallback((state: PlayerActionState): PlayerActionState => {
     const requests = state.requests.filter((request) => {
       if (resolvedPlayerActionRequestIdsRef.current.has(request.id)) return false;
+      const targetStatus = playerStatuses[request.targetPlayerId];
       if (request.kind === "v10-assassinate") {
-        const targetStatus = playerStatuses[request.targetPlayerId];
+        return targetStatus !== "dead-this-night"
+          && targetStatus !== "dead"
+          && !permanentlyDead.has(request.targetPlayerId);
+      }
+      if (request.kind === "v18-resurrect") {
+        return permanentlyDead.has(request.targetPlayerId);
+      }
+      if (request.kind === "v23-web") {
         return targetStatus !== "dead-this-night"
           && targetStatus !== "dead"
           && !permanentlyDead.has(request.targetPlayerId);
@@ -718,15 +774,17 @@ const GMRoom = () => {
         if (cleaned !== current) void supabase.from("rooms").update({ player_action_state: cleaned }).eq("id", roomId);
         return cleaned;
       }
-      const next = upsertPowerUses(cleaned, "v10", v10UsesByPlayerId);
+      const next = Object.entries(playerActionPowerUsesByRole).reduce((state, [roleId, uses]) => (
+        upsertPowerUses(state, roleId as RoleId, uses)
+      ), cleaned);
       if (
         cleaned === current
-        && JSON.stringify(current.powerUses.v10 ?? {}) === JSON.stringify(next.powerUses.v10 ?? {})
+        && JSON.stringify(current.powerUses) === JSON.stringify(next.powerUses)
       ) return current;
       void supabase.from("rooms").update({ player_action_state: next }).eq("id", roomId);
       return next;
     });
-  }, [gmSnapshotLoaded, pruneResolvedPlayerActionState, room?.status, roomId, v10UsesByPlayerId]);
+  }, [gmSnapshotLoaded, playerActionPowerUsesByRole, pruneResolvedPlayerActionState, room?.status, roomId]);
 
   useEffect(() => {
     if (!drunkardPlayerId) {
@@ -3840,7 +3898,12 @@ const GMRoom = () => {
   }, [sourcedEffectTargets, toggleEffect]);
 
   // Handle drag-drop actions (both list and circle)
-  const handleDragAction = useCallback((action: string, targetPlayerId: string, sourcePlayerId?: string | null) => {
+  const handleDragAction = useCallback((
+    action: string,
+    targetPlayerId: string,
+    sourcePlayerId?: string | null,
+    meta: { fromScriptLine?: boolean; scriptConditionKey?: string | null; preserveSpiderFreeWebChange?: boolean } = {},
+  ) => {
     // Universal "caught" tagging — any drag onto a webbed player tags the source
     const applyCaughtIfWebbed = () => {
       if (!sourcePlayerId || sourcePlayerId === targetPlayerId) return;
@@ -4340,7 +4403,10 @@ const GMRoom = () => {
         setDayKilledPlayerIds((prev) => [...prev, killId]);
       }
       else if (roleSource === "v23") {
-        if (gameCyclePhase !== "night") {
+        const preserveSpiderFreeWebChange = !!meta.preserveSpiderFreeWebChange
+          || !!meta.fromScriptLine
+          || (meta.scriptConditionKey === "spiderWebbedDied" && spiderWebbedDied);
+        if (!preserveSpiderFreeWebChange && !sourceIsMimeCopying("v23")) {
           const used = independentPowerState?.spiderDayChangeUsed ?? spiderDayChangeUsed;
           if (used) {
             toast.warning(getToast("warnNoTargets", (room?.language as Language) || "pt"));
@@ -4396,13 +4462,16 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, getPlayerLogSnapshot, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, gameCyclePhase, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorCopiedRole, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, getPlayerLogSnapshot, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
     const action = e.dataTransfer.getData("action");
     const sourcePlayerId = e.dataTransfer.getData("sourcePlayerId") || null;
-    if (action) handleDragAction(action, targetPlayerId, sourcePlayerId);
+    if (action) handleDragAction(action, targetPlayerId, sourcePlayerId, {
+      fromScriptLine: e.dataTransfer.getData("fromScriptLine") === "1",
+      scriptConditionKey: e.dataTransfer.getData("scriptConditionKey") || null,
+    });
   };
 
   const handleListDragOver = (e: React.DragEvent) => e.preventDefault();
@@ -4412,29 +4481,40 @@ const GMRoom = () => {
     resolvedPlayerActionRequestIdsRef.current.add(request.id);
     const actorExists = players.some((player) => player.id === request.actorPlayerId);
     const targetExists = players.some((player) => player.id === request.targetPlayerId);
-    const targetAlreadyKilled = playerStatuses[request.targetPlayerId] === "dead-this-night"
+    const actionRole = getPlayerActionRole(request.kind);
+    const targetIsDead = playerStatuses[request.targetPlayerId] === "dead-this-night"
       || playerStatuses[request.targetPlayerId] === "dead"
       || permanentlyDead.has(request.targetPlayerId);
-    const shouldApply = accepted && request.kind === "v10-assassinate" && actorExists && targetExists && !targetAlreadyKilled;
+    const shouldApply = accepted && actorExists && targetExists && (
+      (request.kind === "v10-assassinate" && !targetIsDead)
+      || (request.kind === "v18-resurrect" && permanentlyDead.has(request.targetPlayerId))
+      || (request.kind === "v23-web" && !targetIsDead)
+    );
+    const requestUsesByPlayerId = playerActionPowerUsesByRole[actionRole] ?? {};
+    const maxUses = actionRole === "v23" ? 1 : 2;
+    const preservesSpiderFreeWebChange = request.kind === "v23-web" && spiderWebbedDied;
     const shouldSpendUse = shouldApply
-      && !(request.actorPlayerId === mimePlayerId && mimeMechanicalRole === "v10")
-      && v10UsesByPlayerId[request.actorPlayerId] !== undefined;
+      && !preservesSpiderFreeWebChange
+      && !(request.actorPlayerId === mimePlayerId && mimeMechanicalRole === actionRole)
+      && requestUsesByPlayerId[request.actorPlayerId] !== undefined;
 
     let nextState = removePlayerActionRequest(pruneResolvedPlayerActionState(playerActionState), request.id);
-    const currentUses = nextState.powerUses.v10?.[request.actorPlayerId]
-      ?? v10UsesByPlayerId[request.actorPlayerId]
+    const currentUses = nextState.powerUses[actionRole]?.[request.actorPlayerId]
+      ?? requestUsesByPlayerId[request.actorPlayerId]
       ?? 0;
-    const resolvedUses = shouldSpendUse ? Math.min(currentUses + 1, 2) : currentUses;
+    const resolvedUses = shouldSpendUse ? Math.min(currentUses + 1, maxUses) : currentUses;
     if (shouldSpendUse) {
-      nextState = upsertPowerUses(nextState, "v10", {
-        ...(nextState.powerUses.v10 ?? {}),
+      nextState = upsertPowerUses(nextState, actionRole, {
+        ...(nextState.powerUses[actionRole] ?? {}),
         [request.actorPlayerId]: resolvedUses,
       });
     }
 
     setPlayerActionState(nextState);
     if (shouldApply) {
-      handleDragAction("role-v10", request.targetPlayerId, request.actorPlayerId);
+      handleDragAction(`role-${actionRole}`, request.targetPlayerId, request.actorPlayerId, {
+        preserveSpiderFreeWebChange: preservesSpiderFreeWebChange,
+      });
     }
 
     if (!roomId) return;
@@ -4447,7 +4527,7 @@ const GMRoom = () => {
           kind: request.kind,
           actorPlayerId: request.actorPlayerId,
           accepted,
-          role: "v10",
+          role: actionRole,
           uses: resolvedUses,
         },
       }),
@@ -4456,7 +4536,7 @@ const GMRoom = () => {
     if (updateResult.error) {
       toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
     }
-  }, [handleDragAction, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionState, playerStatuses, players, pruneResolvedPlayerActionState, room?.language, roomId, v10UsesByPlayerId]);
+  }, [handleDragAction, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionPowerUsesByRole, playerActionState, playerStatuses, players, pruneResolvedPlayerActionState, room?.language, roomId, spiderWebbedDied]);
 
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
@@ -5244,8 +5324,7 @@ const GMRoom = () => {
     keys["werewolfSeerHasCharges"] = hasWerewolfVictim;
 
     // v23 Domador da Aranha — webbed target became perma-dead (need to choose a new one)
-    keys["spiderWebbedDied"] = Object.entries(playerEffects)
-      .some(([playerId, effects]) => effects.has("webbed") && permanentlyDead.has(playerId));
+    keys["spiderWebbedDied"] = spiderWebbedDied;
     // v23 — at least one player has 'caught' effect this night
     keys["spiderHasCaught"] = Object.values(playerEffects).some((e) => e.has("caught"));
 
@@ -5258,7 +5337,7 @@ const GMRoom = () => {
     keys["secretLoverBetrayed"] = !!(secretLoverId && isPlayerPoisoned(secretLoverId) && playerEffects[secretLoverId]?.has("namorado"));
 
     return keys;
-  }, [abilityRoleAssignments, astronomerBlocksWerewolvesTonight, deathTriggeredSourcePlayerIds, effectiveRoleAssignments, getRolePlayerId, independentPowerStates, playerStatuses, lastNightDeadPlayerIds, permanentlyDead, killSources, playerEffects, nightNumber, poisonedPlayerIds, cupidCharges, bigBadWolfCharges, vampireWolfUsed, werewolfSeerRevealedVictim, werewolfSeerVictim, players, isPlayerPoisoned, mimeMechanicalRole]);
+  }, [abilityRoleAssignments, astronomerBlocksWerewolvesTonight, deathTriggeredSourcePlayerIds, effectiveRoleAssignments, getRolePlayerId, independentPowerStates, playerStatuses, lastNightDeadPlayerIds, permanentlyDead, killSources, playerEffects, nightNumber, poisonedPlayerIds, cupidCharges, bigBadWolfCharges, vampireWolfUsed, werewolfSeerRevealedVictim, werewolfSeerVictim, players, isPlayerPoisoned, mimeMechanicalRole, spiderWebbedDied]);
 
   const lang: Language = (room?.language as Language) || "pt";
   const roleLabel = useCallback((id: RoleId) => getRoleLabel(id, lang), [lang]);
@@ -5267,13 +5346,29 @@ const GMRoom = () => {
   const roomDisplayLabel = lang === "fr" ? "Écran de salle" : "Ecrã da sala";
   const pendingPlayerActionRequest = useMemo(() => {
     if (hideScreenMode || room?.status !== "playing") return null;
-    return pruneResolvedPlayerActionState(playerActionState).requests.find((request) => request.kind === "v10-assassinate") ?? null;
+    return pruneResolvedPlayerActionState(playerActionState).requests[0] ?? null;
   }, [hideScreenMode, playerActionState, pruneResolvedPlayerActionState, room?.status]);
+  const pendingPlayerActionRole = pendingPlayerActionRequest
+    ? getPlayerActionRole(pendingPlayerActionRequest.kind)
+    : "v10";
   const pendingPlayerActionActorName = pendingPlayerActionRequest
     ? players.find((player) => player.id === pendingPlayerActionRequest.actorPlayerId)?.name ?? tt("unknown")
     : "";
   const pendingPlayerActionTargetName = pendingPlayerActionRequest
     ? players.find((player) => player.id === pendingPlayerActionRequest.targetPlayerId)?.name ?? tt("unknown")
+    : "";
+  const pendingPlayerActionDescription = pendingPlayerActionRequest
+    ? format(tt(
+      pendingPlayerActionRequest.kind === "v18-resurrect"
+        ? "gmV18ResurrectionRequest"
+        : pendingPlayerActionRequest.kind === "v23-web"
+        ? "gmV23WebRequest"
+        : "gmV10AssassinationRequest",
+    ), {
+      actor: pendingPlayerActionActorName,
+      target: pendingPlayerActionTargetName,
+      role: roleLabel(pendingPlayerActionRole),
+    })
     : "";
   const openRulebook = useCallback((roleId: RoleId | null = null) => {
     setRulebookRoleId(roleId);
@@ -5383,11 +5478,7 @@ const GMRoom = () => {
                 {tt("gmPlayerActionTitle")}
               </DialogTitle>
               <DialogDescription>
-                {format(tt("gmV10AssassinationRequest"), {
-                  actor: pendingPlayerActionActorName,
-                  target: pendingPlayerActionTargetName,
-                  role: roleLabel("v10"),
-                })}
+                {pendingPlayerActionDescription}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 sm:space-x-0">

@@ -2,7 +2,13 @@ import type { RoleId } from "@/lib/roles";
 
 export const PLAYER_ACTION_STATE_VERSION = 1;
 
-export type PlayerActionKind = "v10-assassinate";
+export type PlayerActionKind = "v10-assassinate" | "v18-resurrect" | "v23-web";
+
+const PLAYER_ACTION_KINDS = new Set<PlayerActionKind>([
+  "v10-assassinate",
+  "v18-resurrect",
+  "v23-web",
+]);
 
 export type PlayerActionRequest = {
   id: string;
@@ -32,7 +38,7 @@ function normalizeRequests(value: unknown): PlayerActionRequest[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((request): PlayerActionRequest[] => {
     if (!isRecord(request)) return [];
-    if (request.kind !== "v10-assassinate") return [];
+    if (typeof request.kind !== "string" || !PLAYER_ACTION_KINDS.has(request.kind as PlayerActionKind)) return [];
     if (typeof request.actorPlayerId !== "string" || typeof request.targetPlayerId !== "string") return [];
     const requestedAt = typeof request.requestedAt === "number" ? request.requestedAt : Date.now();
     const id = typeof request.id === "string" && request.id.trim()
@@ -40,7 +46,7 @@ function normalizeRequests(value: unknown): PlayerActionRequest[] {
       : createPlayerActionRequestId(request.actorPlayerId, request.targetPlayerId, requestedAt);
     return [{
       id,
-      kind: request.kind,
+      kind: request.kind as PlayerActionKind,
       actorPlayerId: request.actorPlayerId,
       targetPlayerId: request.targetPlayerId,
       requestedAt,

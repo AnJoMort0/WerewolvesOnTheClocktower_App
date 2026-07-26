@@ -20,15 +20,19 @@ describe("player action state", () => {
       version: 1,
       requests: [
         { id: "request-1", kind: "v10-assassinate", actorPlayerId: "p1", targetPlayerId: "p2", requestedAt: 123 },
+        { id: "request-2", kind: "v18-resurrect", actorPlayerId: "p3", targetPlayerId: "p4", requestedAt: 124 },
+        { id: "request-3", kind: "v23-web", actorPlayerId: "p5", targetPlayerId: "p6", requestedAt: 125 },
         { id: "bad", kind: "unknown", actorPlayerId: "p1", targetPlayerId: "p2", requestedAt: 123 },
       ],
-      powerUses: { v10: { p1: 1.8, p2: -1 }, e02: "bad" },
+      powerUses: { v10: { p1: 1.8, p2: -1 }, v18: { p3: 2 }, v23: { p5: 1 }, e02: "bad" },
     });
 
     expect(state.requests).toEqual([
       { id: "request-1", kind: "v10-assassinate", actorPlayerId: "p1", targetPlayerId: "p2", requestedAt: 123 },
+      { id: "request-2", kind: "v18-resurrect", actorPlayerId: "p3", targetPlayerId: "p4", requestedAt: 124 },
+      { id: "request-3", kind: "v23-web", actorPlayerId: "p5", targetPlayerId: "p6", requestedAt: 125 },
     ]);
-    expect(state.powerUses).toEqual({ v10: { p1: 1, p2: 0 } });
+    expect(state.powerUses).toEqual({ v10: { p1: 1, p2: 0 }, v18: { p3: 2 }, v23: { p5: 1 } });
   });
 
   it("updates uses and removes acknowledged requests", () => {
