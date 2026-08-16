@@ -144,6 +144,8 @@ export const en: Translation = {
     appTagline: "The village falls asleep tonight…",
     byline: "by AnJoMorto and L_PT_1463",
     createRoom: "Create Room",
+    installApp: "Install App",
+    installAppUnavailable: "Use your browser menu to install this app or add it to the home screen.",
     orJoin: "or join",
     roomCode: "Room code",
     language: "Language",

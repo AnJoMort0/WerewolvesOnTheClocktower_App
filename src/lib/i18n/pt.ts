@@ -144,6 +144,8 @@ export const pt: Translation = {
     appTagline: "A aldeia adormece esta noite…",
     byline: "por AnJoMorto e L_PT_1463",
     createRoom: "Criar Sala",
+    installApp: "Instalar App",
+    installAppUnavailable: "Usa o menu do navegador para instalar esta app ou adicioná-la ao ecrã inicial.",
     orJoin: "ou entrar",
     roomCode: "Código da sala",
     language: "Idioma",

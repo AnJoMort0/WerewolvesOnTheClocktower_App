@@ -251,6 +251,8 @@ export interface UIStrings {
   appTagline: string;
   byline: string;
   createRoom: string;
+  installApp: string;
+  installAppUnavailable: string;
   orJoin: string;
   roomCode: string;
   language: string;

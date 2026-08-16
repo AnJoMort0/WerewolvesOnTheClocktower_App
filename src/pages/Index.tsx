@@ -4,13 +4,14 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Crown, BookOpen } from "lucide-react";
+import { Users, Crown, BookOpen, Download } from "lucide-react";
 import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import villagerIcon from "@/assets/icons/villager.png";
 import { SUPPORTED_LANGUAGES, coerceLanguage, getToast, t, type Language } from "@/lib/i18n";
 import { toast } from "sonner";
 import { cleanupObsoleteGameStorage } from "@/lib/playerSession";
+import { usePwaInstallPrompt } from "@/lib/pwaInstall";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ const Index = () => {
     const stored = localStorage.getItem("preferred_language");
     return coerceLanguage(stored);
   });
+  const { isInstalled, install } = usePwaInstallPrompt();
 
   const createRoom = async () => {
     cleanupObsoleteGameStorage();
@@ -160,6 +162,23 @@ const Index = () => {
                 <BookOpen className="mr-2 h-3.5 w-3.5" />
                 {t("rulebook", language)}
               </Button>
+              {!isInstalled && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    const outcome = await install();
+                    if (outcome === "unavailable") {
+                      toast.info(t("installAppUnavailable", language));
+                    }
+                  }}
+                  className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <Download className="mr-2 h-3.5 w-3.5" />
+                  {t("installApp", language)}
+                </Button>
+              )}
             </div>
           </div>
 
