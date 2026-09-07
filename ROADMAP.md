@@ -4,6 +4,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Human Tests to Do
 
+* [ ] Check English translations
 * [ ] Touch screen compatibility
 * [ ] Human-test local Wi-Fi mode with at least one phone.
 * [ ] Human-test hosted mode with at least one phone.
@@ -19,15 +20,12 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [x] Added english translations with en.ts and rulebookContent. Fix the repo so that English is a working option.
-  <!-- Codex 2026-07-26: English is now in SUPPORTED_LANGUAGES, language parsing accepts en across home/rulebook/generator/skin controls/display, local component copy has en entries, and build/test pass with the English rulebook/UI path. -->
+* [x] Looks like if a player is killed first (red-x) and then given imunity (of course check type as well to not add imunities when not needed) the player still dies
+  <!-- Codex 2026-09-07: All immunity application paths now resolve pending red-X deaths using the attack type, including before dawn/night transitions. Covers Cupid and linked Lover suicides, one-use shields, copied attacks, and the Big Bad Wolf execution exception; permanently dead players are not revived. Added 22 regression tests; all 154 tests pass. -->
 
 ## Fixes
 
-* [x] There's still a few code things that are in Portuguese instead of English, for example the EffectKeys soldado, anfitrião, profecia, acusado, acusado_next, namorado, incendiado.
-  <!-- Codex 2026-07-26: StatusEffect keys were renamed to English (soldier, host, prophecy, accused, accused_next, lover, burned, plus acquitted). Legacy Portuguese effect/source IDs are normalized at load/metadata/log boundaries so old rooms keep working. -->
-* [x] Centralize scattered UI text into the i18n files while keeping rulebookContent independent.
-  <!-- Codex 2026-07-26: Moved local copy maps for the character generator, game log, room display, skinpacks, rulebook UI labels, GM toolbar labels, and NightScript helper lines into grouped i18n sections with comments. rulebookContent.ts remains the independent long-form rulebook source. -->
+* [ ] 
 
 ## Balance Changes
 

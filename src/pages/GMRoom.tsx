@@ -43,6 +43,7 @@ import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmMod
 import { MAX_GAME_LOG_EVENTS, normalizeGameLogEvents, type GameLogEvent, type GameLogPhase, type GameLogPlayerSnapshot } from "@/lib/gameLog";
 import { getRoomDisplayStorageKey, ROOM_DISPLAY_SNAPSHOT_VERSION, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
 import { normalizeStatusEffectSet } from "@/lib/effects";
+import { hasAttackImmunity, resolveProtectedDeaths } from "@/lib/immunity";
 import {
   EMPTY_ACTOR_POWER_STATE,
   encodeActorCharacter,
@@ -199,6 +200,7 @@ type GMSnapshot = {
   dayPhase: "day" | "tribunal";
   killSources: Record<string, string>;
   killSourcePlayerIds?: Record<string, string>;
+  savedLoverSuicideIds?: string[];
   fortuneTellerFakeMap: Record<string, string> | null;
   witchDeathNight: number | null;
   playerEffects: Record<string, StatusEffect[]>;
@@ -447,6 +449,7 @@ const GMRoom = () => {
 
   // Kill tracking
   const [killSources, setKillSources] = useState<Record<string, string>>({});
+  const [savedLoverSuicideIds, setSavedLoverSuicideIds] = useState<string[]>([]);
   const [killSourcePlayerIds, setKillSourcePlayerIds] = useState<Record<string, string>>({});
 
   // FortuneTeller fake map
@@ -1198,7 +1201,7 @@ const GMRoom = () => {
       if (sourcePlayerId) {
         pendingGameActionLogSourcesRef.current.set(`effect:${playerId}:${effect}`, sourcePlayerId);
       }
-      if (["werewolf_turned", "immunity_full", "immunity_onetime", "immunity_cupid"].includes(effect)) {
+      if (effect === "werewolf_turned") {
         if (sourcePlayerId && (playerStatuses[playerId] === "dead" || playerStatuses[playerId] === "dead-this-night" || permanentlyDead.has(playerId))) {
           pendingGameActionLogSourcesRef.current.set(`resurrect:${playerId}`, sourcePlayerId);
         }
@@ -1317,6 +1320,7 @@ const GMRoom = () => {
       setGameCyclePhase(snapshot.gameCyclePhase ?? "night");
       setDayPhase(snapshot.dayPhase ?? "day");
       setKillSources(snapshot.killSources ?? {});
+      setSavedLoverSuicideIds(snapshot.savedLoverSuicideIds ?? []);
       setKillSourcePlayerIds(snapshot.killSourcePlayerIds ?? {});
       setFortuneTellerFakeMap(snapshot.fortuneTellerFakeMap ?? legacySnapshot.videnteFakeMap ?? null);
       setWitchDeathNight(snapshot.witchDeathNight ?? legacySnapshot.bruxaDeathNight ?? null);
@@ -1391,6 +1395,7 @@ const GMRoom = () => {
       dayPhase,
       killSources,
       killSourcePlayerIds,
+      savedLoverSuicideIds,
       fortuneTellerFakeMap,
       witchDeathNight,
       playerEffects: serializeEffects(playerEffects),
@@ -1458,6 +1463,7 @@ const GMRoom = () => {
     dayPhase,
     killSources,
     killSourcePlayerIds,
+    savedLoverSuicideIds,
     fortuneTellerFakeMap,
     witchDeathNight,
     playerEffects,
@@ -1814,6 +1820,7 @@ const GMRoom = () => {
     setPendingChanges(false);
     setNightNumber(1);
     setPlayerStatuses({});
+    setSavedLoverSuicideIds([]);
     setPermanentlyDead(new Set());
     setPoisonTargetsBySource({});
     setIllusionTargetsBySource({});
@@ -2362,16 +2369,37 @@ const GMRoom = () => {
 
   // Check immunity
   const hasImmunity = useCallback((playerId: string, source: string): boolean => {
-    const effects = playerEffects[playerId] || new Set();
-    if (effects.has("immunity_full")) return true;
-    if (effects.has("immunity_cupid")) return true;
-    if (effects.has("immunity_onetime")) return true;
-    // Werewolf immunity (redHood)
-    if (isWerewolfAttackSource(source)) {
-      if (effects.has("immunity_werewolf")) return true;
-    }
-    return false;
+    return hasAttackImmunity(playerEffects[playerId] ?? new Set(), isWerewolfAttackSource(source));
   }, [isWerewolfAttackSource, playerEffects]);
+
+  const protectedDeaths = useMemo(() => resolveProtectedDeaths({
+    statuses: playerStatuses,
+    effects: playerEffects,
+    killSources,
+    killSourcePlayerIds,
+    permanentlyDead,
+    abilityRoles: abilityRoleAssignments,
+    isWerewolfAttack: isWerewolfAttackSource,
+  }), [playerStatuses, playerEffects, killSources, killSourcePlayerIds, permanentlyDead, abilityRoleAssignments, isWerewolfAttackSource]);
+
+  useEffect(() => {
+    if (protectedDeaths.savedPlayerIds.length === 0) return;
+    for (const playerId of protectedDeaths.savedPlayerIds) {
+      for (const effect of ["immunity_full", "immunity_cupid", "immunity_onetime", "immunity_werewolf"]) {
+        const sourcePlayerId = pendingGameActionLogSourcesRef.current.get(`effect:${playerId}:${effect}`);
+        if (sourcePlayerId) pendingGameActionLogSourcesRef.current.set(`resurrect:${playerId}`, sourcePlayerId);
+      }
+    }
+    setPlayerStatuses(protectedDeaths.statuses);
+    setPlayerEffects(protectedDeaths.effects);
+    setKillSources(protectedDeaths.killSources);
+    setKillSourcePlayerIds(protectedDeaths.killSourcePlayerIds);
+    setDayKilledPlayerIds((previous) => previous.filter((id) => !protectedDeaths.savedPlayerIds.includes(id)));
+    // A spent shield must not let the same linked suicide fire again on the next render.
+    if (protectedDeaths.savedSuicidePlayerIds.length > 0) {
+      setSavedLoverSuicideIds((previous) => [...new Set([...previous, ...protectedDeaths.savedSuicidePlayerIds])]);
+    }
+  }, [protectedDeaths]);
 
   // Player status management
   const handlePlayerStatusChange = useCallback((playerId: string, newStatus: PlayerStatus, _source?: string, sourcePlayerId?: string | null) => {
@@ -2582,15 +2610,20 @@ const GMRoom = () => {
 
   // A red-X lover immediately causes the other lover to receive a red X unless protected.
   useEffect(() => {
+    if (protectedDeaths.savedPlayerIds.length > 0) return;
     const loverIds = Object.entries(playerEffects)
       .filter(([, effects]) => effects.has("lover"))
       .map(([playerId]) => playerId);
-    if (!loverIds.some((playerId) => playerStatuses[playerId] === "dead-this-night")) return;
+    if (!loverIds.some((playerId) => playerStatuses[playerId] === "dead-this-night")) {
+      if (savedLoverSuicideIds.length > 0) setSavedLoverSuicideIds([]);
+      return;
+    }
 
     const suicideIds = loverIds.filter((playerId) =>
       !permanentlyDead.has(playerId)
       && playerStatuses[playerId] !== "dead"
       && playerStatuses[playerId] !== "dead-this-night"
+      && !savedLoverSuicideIds.includes(playerId)
       && !hasImmunity(playerId, "s01-suicide")
     );
     if (suicideIds.length === 0) return;
@@ -2605,7 +2638,7 @@ const GMRoom = () => {
       suicideIds.forEach((playerId) => { next[playerId] = "s01-suicide"; });
       return next;
     });
-  }, [hasImmunity, permanentlyDead, playerEffects, playerStatuses]);
+  }, [hasImmunity, permanentlyDead, playerEffects, playerStatuses, protectedDeaths, savedLoverSuicideIds]);
 
   // Executed handler (during tribunal). Big Bad Wolf is always executable when Red Hood is in game.
   const handleExecute = useCallback((playerId: string) => {
@@ -2697,7 +2730,7 @@ const GMRoom = () => {
 
   const endNight = async () => {
     const newPermanentlyDead = new Set(permanentlyDead);
-    const newStatuses = { ...playerStatuses };
+    const newStatuses = { ...protectedDeaths.statuses };
     const newlyDead: string[] = [];
 
     // Irmãos survival check (l04)
@@ -2718,8 +2751,9 @@ const GMRoom = () => {
 
     // Tetanus is no longer resolved here — moved to startTribunal (red X like Paranoid),
     // so it perma-dies at "Próxima Noite" via the normal dead-this-night → perma flow.
-    const newKillSources: Record<string, string> = { ...killSources };
-    const newEffectsForTetanus = { ...playerEffects };
+    const newKillSources: Record<string, string> = { ...protectedDeaths.killSources };
+    const newEffectsForTetanus = { ...protectedDeaths.effects };
+    setKillSourcePlayerIds(protectedDeaths.killSourcePlayerIds);
 
     // Flush the lover chain synchronously too, so a quick End Night click cannot skip it.
     const loverIds = Object.entries(playerEffects)
@@ -2729,7 +2763,8 @@ const GMRoom = () => {
       for (const playerId of loverIds) {
         if (newPermanentlyDead.has(playerId)) continue;
         if (newStatuses[playerId] === "dead" || newStatuses[playerId] === "dead-this-night") continue;
-        if (hasImmunity(playerId, "s01-suicide")) continue;
+        if (savedLoverSuicideIds.includes(playerId) || protectedDeaths.savedSuicidePlayerIds.includes(playerId)) continue;
+        if (hasAttackImmunity(protectedDeaths.effects[playerId] ?? new Set(), false)) continue;
         newStatuses[playerId] = "dead-this-night";
         newKillSources[playerId] = "s01-suicide";
       }
@@ -2988,6 +3023,7 @@ const GMRoom = () => {
 
     setPermanentlyDead(newPermanentlyDead);
     setPlayerStatuses(newStatuses);
+    setSavedLoverSuicideIds([]);
     setNightTargetedPlayerIds(new Set());
     setRustedKnightLinkedDeath(null);
     setFortuneTellerFakeMap(null);
@@ -3122,7 +3158,9 @@ const GMRoom = () => {
   const startNextNight = async () => {
     // Make day-killed and red-X players permanently dead
     const newPermanentlyDead = new Set(permanentlyDead);
-    const newStatuses = { ...playerStatuses };
+    const newStatuses = { ...protectedDeaths.statuses };
+    setKillSources(protectedDeaths.killSources);
+    setKillSourcePlayerIds(protectedDeaths.killSourcePlayerIds);
     const newlyDead: string[] = [];
 
     // All red X players (from day kills or remaining) become perma-dead
@@ -3153,6 +3191,7 @@ const GMRoom = () => {
 
     setPermanentlyDead(newPermanentlyDead);
     setPlayerStatuses(newStatuses);
+    setSavedLoverSuicideIds([]);
     setDayKilledPlayerIds([]);
 
     let dogStatesForNight = dogWolfStates;
@@ -3212,7 +3251,7 @@ const GMRoom = () => {
     // At night start, remove m01's disguise immunity, Vintner/Mime day-long immunity,
     // and tribunal-only voting effects.
     // Saviour immunity is cleared at dawn in endNight.
-    const newEffects = { ...playerEffects };
+    const newEffects = { ...protectedDeaths.effects };
     for (const [pid, effects] of Object.entries(newEffects)) {
       const cleaned = new Set(effects);
       if (abilityRoleAssignments[pid] === "m01") cleaned.delete("immunity_full");
