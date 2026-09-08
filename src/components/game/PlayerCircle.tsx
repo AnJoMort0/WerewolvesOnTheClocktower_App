@@ -457,7 +457,7 @@ export const PlayerCircle = ({
               layout
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`flex flex-col items-center cursor-pointer rounded-xl ${getStatusClasses(seated.id)} ${hasDrag ? "cursor-grab active:cursor-grabbing" : ""} ${selectedPlayerId === seated.id ? "outline outline-4 outline-primary/70 outline-offset-4" : ""}`}
+              className={`flex cursor-pointer flex-col items-center rounded-lg ${getStatusClasses(seated.id)} ${hasDrag ? "cursor-grab active:cursor-grabbing" : ""} ${selectedPlayerId === seated.id ? "outline outline-4 outline-primary/70 outline-offset-4" : ""}`}
               onClick={() => {
                 if (onPlayerClick) {
                   onPlayerClick(seated.id);
@@ -479,7 +479,7 @@ export const PlayerCircle = ({
               <div className="relative">
                 {roleDef ? (
                   <div
-                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 ${getBorderClass(seated.id)} shadow-lg flex-shrink-0`}
+                    className={`h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border-2 shadow-md ${getBorderClass(seated.id)}`}
                     style={getGlowStyle(seated.id)}
                   >
                     <img

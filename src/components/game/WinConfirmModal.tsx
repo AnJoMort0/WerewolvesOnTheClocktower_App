@@ -32,13 +32,13 @@ export const WinConfirmModal = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-background p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.85, opacity: 0 }}
-            className="bg-card border border-border rounded-2xl p-6 max-w-md w-full space-y-4"
+            className="w-full max-w-md space-y-4 rounded-lg border border-border bg-card p-6 shadow-xl paper-texture"
           >
             <div className="flex items-center gap-3">
               <Trophy className="h-6 w-6 text-yellow-400" />
@@ -91,21 +91,21 @@ export const WinPickerModal = ({ open, onPick, onClose }: WinPickerModalProps) =
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-background p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.85, opacity: 0 }}
-            className="bg-card border border-border rounded-2xl p-6 max-w-md w-full space-y-4"
+            className="w-full max-w-md space-y-4 rounded-lg border border-border bg-card p-6 shadow-xl paper-texture"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-gradient-blood">{getGameOver("manualGameOver", lang)}</h2>
-              <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+              <Button type="button" size="icon" variant="ghost" onClick={onClose} aria-label={getGameOver("dismiss", lang)} title={getGameOver("dismiss", lang)}>
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
             <p className="text-sm text-muted-foreground">{getGameOver("selectWinCondition", lang)}</p>
             <div className="flex flex-col gap-2">

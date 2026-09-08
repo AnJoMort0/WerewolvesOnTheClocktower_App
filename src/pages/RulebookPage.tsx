@@ -72,7 +72,7 @@ export default function RulebookPage() {
         type="button"
         size="icon"
         variant="secondary"
-        className="fixed right-4 top-4 z-20 h-11 w-11 rounded-full shadow-lg"
+        className="fixed right-4 top-4 z-20 h-10 w-10 rounded-md shadow-md"
         onClick={leaveRulebook}
         aria-label={t("close", language)}
         title={t("close", language)}
@@ -99,7 +99,7 @@ export default function RulebookPage() {
         type="button"
         size="icon"
         variant="secondary"
-        className="fixed bottom-4 right-4 z-20 h-11 w-11 rounded-full shadow-lg"
+        className="fixed bottom-4 right-4 z-20 h-10 w-10 rounded-md shadow-md"
         onClick={scrollUp}
         aria-label={t("rulebook", language)}
       >

@@ -19,19 +19,27 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const selected = session.mode === "hunt" ? session.votes[playerId] : selectedId;
   const target = session.players.find((p) => p.id === selected && p.selectable);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
-  const diameter = Math.max(280, players.length * 30);
+  const diameter = Math.min(304, Math.max(264, players.length * 24));
   const Icon = session.mode === "poison" ? FlaskConical : session.mode === "shaman" ? RotateCcw
     : session.mode === "allies" ? Users : Crosshair;
-  const theme = session.mode === "poison" ? "bg-green-950 text-green-100 border-green-500"
-    : session.mode === "shaman" ? "bg-cyan-950 text-cyan-100 border-cyan-400"
-    : "bg-red-950 text-red-100 border-red-400";
+  const theme = session.mode === "poison"
+    ? { border: "border-emerald-500/50 ring-emerald-500/10", accent: "text-emerald-300" }
+    : session.mode === "shaman"
+    ? { border: "border-moon/50 ring-moon/10", accent: "text-moon" }
+    : { border: "border-primary/60 ring-primary/10", accent: "text-primary" };
 
   return (
-    <section aria-label={text[session.mode]} className={`space-y-4 border-y px-2 py-5 ${theme}`}>
-      <h2 className="flex items-center justify-center gap-2 font-display text-xl font-bold">
-        <Icon className="h-6 w-6 shrink-0" />{text[session.mode]}
-      </h2>
-      <div className="overflow-auto pb-2">
+    <section
+      aria-label={text[session.mode]}
+      className={`space-y-4 overflow-hidden rounded-lg border bg-card/90 p-4 shadow-md ring-1 ring-inset paper-texture ${theme.border}`}
+    >
+      <header className="flex items-center justify-center gap-2 border-b border-border/60 pb-3">
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background/40 ${theme.accent}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <h2 className={`font-display text-xl font-bold ${theme.accent}`}>{text[session.mode]}</h2>
+      </header>
+      <div className="overflow-x-auto pb-1">
         <div className="relative mx-auto" style={{ width: diameter, height: diameter }}>
           <Icon className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 opacity-50" />
           {players.map((player, index) => {
@@ -47,31 +55,31 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 aria-pressed={session.mode === "allies" ? undefined : selected === player.id}
                 disabled={!player.selectable || !connected || (pending && session.mode !== "hunt")}
                 onClick={() => session.mode === "hunt" ? onSend("select", player.id) : setSelectedId(player.id)}
-                className="absolute flex w-[68px] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
+                className={`absolute flex w-14 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
                 style={{ left: diameter / 2 + radius * Math.cos(angle), top: diameter / 2 + radius * Math.sin(angle) }}
                 title={player.name}
               >
                 <span className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 ${
-                  selected === player.id ? "border-white ring-2 ring-white/50" : player.marker ? "border-red-400" : "border-white/40"
-                } ${player.marker ? "bg-red-800" : "bg-black/30"} ${player.dead ? "opacity-40" : ""}`}>
+                  selected === player.id ? "border-gold ring-2 ring-gold/30" : player.marker ? "border-primary" : "border-border"
+                } ${player.marker ? "bg-primary/25" : "bg-background/70"} ${player.dead ? "opacity-40" : ""}`}>
                   {player.marker
                     ? <img src={player.marker === "werewolf" ? werewolfIcon : evilBeingIcon} alt="" draggable={false} className="h-8 w-8 object-contain" />
                     : <span className="font-bold">{player.name.charAt(0).toUpperCase()}</span>}
-                  {(player.redX || player.dead) && <X className={`absolute h-9 w-9 ${player.redX ? "text-red-500" : "text-gray-400"}`} strokeWidth={3} />}
+                  {(player.redX || player.dead) && <X className={`absolute h-9 w-9 ${player.redX ? "text-destructive" : "text-muted-foreground"}`} strokeWidth={3} />}
                   {voters.length > 0 && (
-                    <span title={voters.join(", ")} className="absolute -right-3 -top-2 flex items-center gap-0.5 rounded bg-white px-1 text-xs font-bold text-red-900">
+                    <span title={voters.join(", ")} className="absolute -right-2 -top-2 flex min-w-5 items-center justify-center gap-0.5 rounded-sm border border-primary/50 bg-card px-1 text-xs font-bold text-foreground shadow">
                       <Crosshair className="h-3 w-3" />{voters.length}
                     </span>
                   )}
                 </span>
-                <span className="max-w-full truncate text-xs">{player.name}</span>
+                <span className="max-w-full truncate text-xs text-foreground">{player.name}</span>
               </button>
             );
           })}
         </div>
       </div>
       {!connected && <p role="status" className="text-sm">{text.reconnecting}</p>}
-      {pending && <p role="status" className="text-sm">{text.waiting}</p>}
+      {pending && session.mode !== "hunt" && <p role="status" className="text-sm text-muted-foreground">{text.waiting}</p>}
       {session.mode === "poison" && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
       {(session.mode === "poison" || session.mode === "shaman") && (
         <div className="flex justify-center gap-2">

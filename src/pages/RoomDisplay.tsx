@@ -167,7 +167,7 @@ export default function RoomDisplay() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[70] flex items-center justify-center bg-background p-4"
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
               onClick={() => setQrPopupOpen(false)}
             >
               <motion.div
@@ -177,7 +177,7 @@ export default function RoomDisplay() {
                 className="flex max-h-[calc(100vh-2rem)] flex-col items-center gap-5"
                 onClick={(event) => event.stopPropagation()}
               >
-                <div className="rounded-2xl bg-parchment p-4">
+                <div className="rounded-lg bg-parchment p-4 shadow-md">
                   <QRCodeSVG
                     value={joinUrl}
                     size={512}

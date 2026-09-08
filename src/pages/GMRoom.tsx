@@ -6771,7 +6771,7 @@ const GMRoom = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-background p-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-background/90 p-4 backdrop-blur-sm"
             onClick={() => setQrPopupOpen(false)}
           >
             <motion.div
@@ -6781,7 +6781,7 @@ const GMRoom = () => {
               className="flex max-h-[calc(100vh-2rem)] flex-col items-center gap-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-parchment p-4 rounded-2xl">
+              <div className="rounded-lg bg-parchment p-4 shadow-md">
                 <QRCodeSVG
                   value={joinUrl}
                   size={512}

@@ -5,6 +5,7 @@ import { ROLES, type RoleId } from "@/lib/roles";
 import { useLanguage, getRoleLabel, useT } from "@/lib/i18n";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
+import { Button } from "@/components/ui/button";
 
 interface FortuneTellerRevealModalProps {
   open: boolean;
@@ -74,22 +75,22 @@ export const FortuneTellerRevealModal = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
           onClick={dismissible ? onClose : undefined}
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full space-y-6 max-h-[80vh] overflow-y-auto"
+            className="max-h-[80vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-xl paper-texture sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-blue-400">{t("revealFortuneTellerTitle")}</h2>
               {dismissible && (
-                <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+                <Button type="button" size="icon" variant="ghost" onClick={onClose} aria-label={t("close")} title={t("close")}>
                   <X className="h-5 w-5" />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -117,13 +118,13 @@ export const FortuneTellerRevealModal = ({
                     key={pid}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-secondary border border-border rounded-xl p-4 flex flex-col items-center gap-2"
+                    className="flex flex-col items-center gap-2 rounded-lg border border-border bg-secondary p-4"
                   >
                     {roleDef && (
                       <button
                         type="button"
                         onClick={() => onRoleClick?.(displayRole)}
-                        className="w-24 h-24 rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg block"
+                        className="block h-24 w-24 overflow-hidden rounded-md border-2 border-primary/40 shadow-md"
                       >
                         <img
                           src={resolveRoleImage(displayRole, { skinPackId }).src}

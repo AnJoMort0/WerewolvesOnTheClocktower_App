@@ -45,22 +45,22 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language = 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
           onClick={dismissible ? onClose : undefined}
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full space-y-4 max-h-[80vh] overflow-y-auto"
+            className="max-h-[80vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-xl paper-texture sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-blue-400">{title}</h2>
               {dismissible && (
-                <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+                <Button type="button" size="icon" variant="ghost" onClick={onClose} aria-label={t("close", language)} title={t("close", language)}>
                   <X className="h-5 w-5" />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -72,7 +72,7 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language = 
                 const cardImage = c.roleId ? resolveRoleImage(c.roleId, { skinPackId }).src : c.image;
                 const cornerImage = c.cornerRoleId ? resolveRoleImage(c.cornerRoleId, { skinPackId }).src : null;
                 const imageBlock = (
-                  <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg">
+                  <div className="relative h-24 w-24 overflow-hidden rounded-md border-2 border-primary/40 shadow-md">
                     <img src={cardImage} alt={c.label} className="w-full h-full object-cover" />
                     {cornerRole && (
                       <img
@@ -89,10 +89,10 @@ export const RevealModal = ({ open, onClose, title, subtitle, cards, language = 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="bg-secondary border border-border rounded-xl p-4 flex flex-col items-center gap-2"
+                    className="flex flex-col items-center gap-2 rounded-lg border border-border bg-secondary p-4"
                   >
                     {c.roleId && onRoleClick ? (
-                      <button type="button" onClick={() => onRoleClick(c.roleId!)} className="block rounded-xl">
+                      <button type="button" onClick={() => onRoleClick(c.roleId!)} className="block rounded-md">
                         {imageBlock}
                       </button>
                     ) : imageBlock}

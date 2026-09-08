@@ -27,7 +27,11 @@ describe("NightScript phone controls", () => {
     const onPhoneToggle = vi.fn();
     const onLineCompletedChange = vi.fn();
     const { container } = render(<NightScript {...baseProps} onPhoneToggle={onPhoneToggle} onLineCompletedChange={onLineCompletedChange} />);
-    container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
+    const phoneButtons = container.querySelectorAll("button[data-phone-control]");
+    phoneButtons.forEach((button) => {
+      expect(button).toHaveClass("h-6", "w-6");
+      fireEvent.click(button);
+    });
     expect(onPhoneToggle).toHaveBeenCalledWith("allies", expect.any(String), null);
     expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), "witch");
     expect(onLineCompletedChange).not.toHaveBeenCalled();

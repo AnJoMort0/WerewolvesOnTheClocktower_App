@@ -19,13 +19,13 @@ export const GameOverModal = ({ open, kind, outcome, onDismiss }: GameOverModalP
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.85, opacity: 0 }}
-            className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full space-y-4 text-center"
+            className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6 text-center shadow-xl paper-texture"
           >
             <Trophy className={`h-12 w-12 mx-auto ${outcome === "victory" ? "text-yellow-400" : "text-muted-foreground"}`} />
             <h2 className={`font-display text-3xl ${outcome === "victory" ? "text-gradient-blood" : "text-muted-foreground"}`}>

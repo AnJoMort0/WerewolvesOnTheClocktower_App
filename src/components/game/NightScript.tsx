@@ -1383,8 +1383,8 @@ export const NightScript = ({
                     aria-pressed={phoneActive}
                     title={phoneLabel}
                     onClick={(event) => { event.stopPropagation(); onPhoneToggle(phoneMode, item.key, sourcePlayerId); }}
-                    className={`ml-2 inline-flex h-9 w-9 items-center justify-center rounded hover:bg-primary/20 ${phoneActive ? "bg-primary/20 text-primary" : "text-blue-400"}`}
-                  ><Smartphone className="h-5 w-5" /></button>
+                    className={`relative -top-px ml-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm align-middle transition-colors hover:bg-primary/20 ${phoneActive ? "bg-primary/20 text-primary" : "text-blue-400"}`}
+                  ><Smartphone className="h-3.5 w-3.5" /></button>
                 ) : null}
                 line={item.line}
                 poisonedRoles={poisonedRoles}

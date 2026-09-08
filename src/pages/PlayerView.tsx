@@ -1048,7 +1048,7 @@ const PlayerView = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.25 }}
-                  className={`space-y-4 rounded-2xl border p-4 shadow-lg ${actionBorderClass}`}
+                  className={`space-y-4 rounded-lg border bg-card/90 p-4 shadow-md paper-texture ${actionBorderClass}`}
                 >
                   <div className="space-y-1">
                     <ActionIcon className={`mx-auto h-8 w-8 ${actionAccentClass}`} />
@@ -1172,12 +1172,12 @@ const PlayerView = () => {
                   transition={{ duration: 0.8, ease: "easeOut" }}
                   className="space-y-4"
                 >
-                  <div className={`bg-card border border-border rounded-2xl p-6 paper-texture glow-blood space-y-4 ${isDead ? "grayscale opacity-60" : ""}`}>
+                  <div className={`space-y-4 rounded-lg border border-border bg-card p-6 shadow-md paper-texture ${isDead ? "grayscale opacity-60" : ""}`}>
                     {roleDef ? (
                       <button
                         type="button"
                         onClick={() => openRulebook(roleDef.id)}
-                        className="relative w-48 h-48 mx-auto rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg block"
+                        className="relative mx-auto block h-48 w-48 overflow-hidden rounded-lg border-2 border-primary/40 shadow-md"
                       >
                         <img
                           src={displayedRoleImage ?? roleDef.image}
