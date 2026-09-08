@@ -26,6 +26,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 ## Fixes
 
 <!-- Codex 2026-09-08: Compacted the game log into collapsible phase sections with dense actor/action/target rows, direct participant highlighting, timestamps, and a collapsed-by-default final circle. -->
+<!-- Codex 2026-09-08: On wide displays, log phases now use two columns with larger rows, cards, status icons, labels, and controls for better distance readability. The player victory-log control now shares the aligned header button row. -->
 
 * [ ] 
 

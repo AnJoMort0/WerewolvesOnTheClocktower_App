@@ -91,7 +91,7 @@ function ParticipantCell({
   const primaryLabel = player?.name ?? label ?? roleLabel(displayRole, language, noRoleLabel);
   const content = (
     <>
-      <div className="h-7 w-7 shrink-0 overflow-hidden rounded-sm border border-border/70 bg-muted">
+      <div className="h-7 w-7 shrink-0 overflow-hidden rounded-sm border border-border/70 bg-muted xl:h-10 xl:w-10">
         {roleDef ? (
           <img src={resolveRoleImage(roleDef.id, { skinPackId }).src} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -99,12 +99,12 @@ function ParticipantCell({
         )}
       </div>
       <div className="min-w-0 flex-1 text-left">
-        <div className="truncate font-display text-xs leading-tight text-foreground" title={primaryLabel}>
+        <div className="truncate font-display text-xs leading-tight text-foreground xl:text-sm" title={primaryLabel}>
           {primaryLabel}
         </div>
         {player && (
           <div className="flex min-w-0 items-center gap-1">
-            <span className="truncate text-[10px] leading-tight text-muted-foreground" title={roleLabel(displayRole, language, noRoleLabel)}>
+            <span className="truncate text-[10px] leading-tight text-muted-foreground xl:text-xs" title={roleLabel(displayRole, language, noRoleLabel)}>
               {roleLabel(displayRole, language, noRoleLabel)}
             </span>
             <StatusBadges player={player} language={language} inline />
@@ -113,7 +113,7 @@ function ParticipantCell({
       </div>
     </>
   );
-  const className = `flex min-w-0 items-center gap-1.5 rounded-sm px-1 py-0.5 transition ${selected ? "bg-primary/15 ring-1 ring-inset ring-primary/40" : "hover:bg-muted/60"}`;
+  const className = `flex min-w-0 items-center gap-1.5 rounded-sm px-1 py-0.5 transition xl:gap-2 xl:px-1.5 xl:py-1 ${selected ? "bg-primary/15 ring-1 ring-inset ring-primary/40" : "hover:bg-muted/60"}`;
   return player && onSelect ? (
     <button type="button" className={className} onClick={() => onSelect(player.id)} title={primaryLabel} aria-pressed={selected}>
       {content}
@@ -140,7 +140,7 @@ function StatusBadges({ player, language, compact = false, inline = false }: { p
           src={badge.icon}
           alt=""
           title={badge.label}
-          className={`${inline ? "h-3 w-3" : "h-3.5 w-3.5"} rounded-sm ${badge.tone ?? ""}`}
+          className={`${inline ? "h-3 w-3 xl:h-4 xl:w-4" : "h-3.5 w-3.5"} rounded-sm ${badge.tone ?? ""}`}
         />
       ))}
       {visible.length < badges.length && (
@@ -272,7 +272,7 @@ export function GameLogModal({
           </div>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 sm:px-6">
-          <section className="mx-auto max-w-7xl space-y-2 py-3">
+          <section className="mx-auto max-w-[1700px] space-y-2 py-3">
             <details className="group rounded-md border border-border bg-card/40">
               <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 marker:content-none">
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
@@ -306,13 +306,14 @@ export function GameLogModal({
                 {copy.empty}
               </div>
             ) : (
-              groups.map((group) => (
-                <details key={group.key} open className="group rounded-md border border-border bg-card/40">
-                  <summary className={`flex cursor-pointer list-none items-center gap-2 px-3 py-1.5 marker:content-none ${group.events.length > 0 ? "border-b border-border" : ""}`}>
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-                    <Clock className="h-4 w-4 text-primary" />
-                    <h3 className="min-w-0 flex-1 truncate font-display text-sm text-foreground">{group.label}</h3>
-                    <span className="min-w-5 rounded-sm bg-muted px-1.5 text-center text-[10px] text-muted-foreground">{group.events.length}</span>
+              <div data-log-groups className="grid items-start gap-2 xl:grid-cols-2">
+                {groups.map((group) => (
+                  <details key={group.key} open className="group rounded-md border border-border bg-card/40">
+                  <summary className={`flex cursor-pointer list-none items-center gap-2 px-3 py-1.5 marker:content-none xl:px-4 xl:py-2.5 ${group.events.length > 0 ? "border-b border-border" : ""}`}>
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180 xl:h-4 xl:w-4" />
+                    <Clock className="h-4 w-4 text-primary xl:h-5 xl:w-5" />
+                    <h3 className="min-w-0 flex-1 truncate font-display text-sm text-foreground xl:text-base">{group.label}</h3>
+                    <span className="min-w-5 rounded-sm bg-muted px-1.5 text-center text-[10px] text-muted-foreground xl:text-xs">{group.events.length}</span>
                   </summary>
                   <div className="divide-y divide-border/70">
                     {group.events.map((event) => {
@@ -329,9 +330,9 @@ export function GameLogModal({
                         <div
                           key={event.id}
                           data-log-row
-                          className={`grid grid-cols-[minmax(0,1fr)_1.5rem] items-center gap-1 px-1.5 py-1 transition sm:grid-cols-[3rem_minmax(0,1fr)_1.5rem] ${highlighted ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : "bg-transparent"}`}
+                          className={`grid grid-cols-[minmax(0,1fr)_1.5rem] items-center gap-1 px-1.5 py-1 transition sm:grid-cols-[3rem_minmax(0,1fr)_1.5rem] xl:min-h-16 xl:grid-cols-[3.5rem_minmax(0,1fr)_2rem] xl:gap-2 xl:px-2 xl:py-1.5 ${highlighted ? "bg-primary/10 ring-1 ring-inset ring-primary/30" : "bg-transparent"}`}
                         >
-                          <time className="hidden text-center font-mono text-[10px] text-muted-foreground sm:block" dateTime={new Date(event.createdAt).toISOString()}>
+                          <time className="hidden text-center font-mono text-[10px] text-muted-foreground sm:block xl:text-xs" dateTime={new Date(event.createdAt).toISOString()}>
                             {new Date(event.createdAt).toLocaleTimeString(language, { hour: "2-digit", minute: "2-digit" })}
                           </time>
                           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.9fr)_minmax(0,1fr)] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(5.5rem,1.15fr)_minmax(0,1fr)] sm:gap-1.5">
@@ -353,17 +354,17 @@ export function GameLogModal({
                             <div className="flex min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-center">
                               <div className="flex min-w-0 items-center justify-center gap-1">
                                 {event.action === "game_over" ? (
-                                  <Trophy className="h-4 w-4 shrink-0 text-yellow-400" />
+                                  <Trophy className="h-4 w-4 shrink-0 text-yellow-400 xl:h-5 xl:w-5" />
                                 ) : eventIcon ? (
-                                  <img src={eventIcon} alt="" className="h-4 w-4 shrink-0" />
+                                  <img src={eventIcon} alt="" className="h-4 w-4 shrink-0 xl:h-5 xl:w-5" />
                                 ) : (
-                                  <CircleSlash className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                  <CircleSlash className="h-4 w-4 shrink-0 text-muted-foreground xl:h-5 xl:w-5" />
                                 )}
-                                <span className="text-[11px] font-medium leading-tight text-foreground">{actionLabel}</span>
+                                <span className="text-[11px] font-medium leading-tight text-foreground xl:text-xs">{actionLabel}</span>
                               </div>
-                              {event.detail && <div className="text-[10px] leading-tight text-muted-foreground">{event.detail}</div>}
+                              {event.detail && <div className="text-[10px] leading-tight text-muted-foreground xl:text-xs">{event.detail}</div>}
                               {event.winKind && (
-                                <div className="text-[10px] leading-tight text-muted-foreground">
+                                <div className="text-[10px] leading-tight text-muted-foreground xl:text-xs">
                                   {getGameOver("winSubtitlePrefix", language)} {getWinLabel(event.winKind, language)}
                                 </div>
                               )}
@@ -395,18 +396,19 @@ export function GameLogModal({
                           <button
                             type="button"
                             onClick={() => setHiddenEventIds((current) => new Set(current).add(event.id))}
-                            className="flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                            className="flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition hover:bg-muted hover:text-foreground xl:h-8 xl:w-8"
                             title={copy.hideEvent}
                             aria-label={copy.hideEvent}
                           >
-                            <Minus className="h-3.5 w-3.5" />
+                            <Minus className="h-3.5 w-3.5 xl:h-4 xl:w-4" />
                           </button>
                         </div>
                       );
                     })}
                   </div>
-                </details>
-              ))
+                  </details>
+                ))}
+              </div>
             )}
           </section>
         </div>

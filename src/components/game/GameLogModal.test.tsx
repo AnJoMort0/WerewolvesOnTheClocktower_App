@@ -48,6 +48,7 @@ describe("GameLogModal", () => {
     const details = document.querySelectorAll("details");
     expect(details[0]).not.toHaveAttribute("open");
     expect(details[1]).toHaveAttribute("open");
+    expect(document.querySelector("[data-log-groups]")).toHaveClass("xl:grid-cols-2");
     expect(document.querySelectorAll("[data-log-row]")).toHaveLength(2);
 
     fireEvent.click(screen.getAllByTitle("Beatrice")[0]);

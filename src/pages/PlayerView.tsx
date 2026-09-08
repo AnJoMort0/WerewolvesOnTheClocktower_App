@@ -985,20 +985,18 @@ const PlayerView = () => {
         className="w-full max-w-sm text-center space-y-6"
       >
         <div className="space-y-2 relative">
-          {gameOver && gameLogSnapshot && (
-            <div className="absolute left-0 top-0">
+          <div className="absolute right-0 top-0 flex h-9 items-center gap-1">
+            {gameOver && gameLogSnapshot && (
               <button
                 type="button"
                 onClick={() => setGameLogOpen(true)}
-                className="rounded-md p-1.5 text-muted-foreground/40 transition-colors hover:bg-secondary hover:text-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:bg-secondary hover:text-foreground"
                 title={getTranslation(language).ui.gameLog.title}
                 aria-label={getTranslation(language).ui.gameLog.title}
               >
                 <ScrollText className="h-4 w-4" />
               </button>
-            </div>
-          )}
-          <div className="absolute right-0 top-0 flex items-center gap-1">
+            )}
             <SkinPackSelectButton
               language={language}
               className="h-9 w-10 border-transparent bg-transparent shadow-none text-muted-foreground/40 hover:bg-secondary hover:text-foreground"
@@ -1006,14 +1004,16 @@ const PlayerView = () => {
             <button
               type="button"
               onClick={() => openRulebook()}
-              className="rounded-md p-1.5 text-muted-foreground/40 transition-colors hover:bg-secondary hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:bg-secondary hover:text-foreground"
               title={t("rulebook", language)}
               aria-label={t("rulebook", language)}
             >
               <BookOpen className="h-4 w-4" />
             </button>
           </div>
-          <h1 className="px-14 font-display text-3xl font-bold">{player.name}</h1>
+          <h1 className={`font-display text-3xl font-bold ${gameOver && gameLogSnapshot ? "px-28" : "px-14"}`}>
+            {player.name}
+          </h1>
           <p className="text-muted-foreground/60 text-xs font-body">
             {t("appTitle", language)}
           </p>
