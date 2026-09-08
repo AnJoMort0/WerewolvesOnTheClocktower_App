@@ -6,6 +6,37 @@ import type { PhoneCommand, PhoneView } from "@/lib/phoneActions";
 import werewolfIcon from "@/assets/icons/werewolf.png";
 import evilBeingIcon from "@/assets/icons/evil_being.png";
 
+const MAP_MAX_WIDTH = 304;
+const MAP_MIN_HEIGHT = 264;
+const MAP_HORIZONTAL_RADIUS = 0.38;
+const PLAYER_EDGE_SPACE = 38;
+const PLAYER_ARC_SPACE = 34;
+
+function getEllipseAngles(count: number, radiusX: number, radiusY: number): number[] {
+  if (count <= 0) return [];
+  const sampleCount = Math.max(360, count * 24);
+  const startAngle = -Math.PI / 2;
+  const samples = [{ angle: startAngle, distance: 0 }];
+  let previousX = radiusX * Math.cos(startAngle);
+  let previousY = radiusY * Math.sin(startAngle);
+
+  for (let index = 1; index <= sampleCount; index += 1) {
+    const angle = startAngle + (2 * Math.PI * index) / sampleCount;
+    const x = radiusX * Math.cos(angle);
+    const y = radiusY * Math.sin(angle);
+    samples.push({ angle, distance: samples[index - 1].distance + Math.hypot(x - previousX, y - previousY) });
+    previousX = x;
+    previousY = y;
+  }
+
+  const perimeter = samples[samples.length - 1].distance;
+  return Array.from({ length: count }, (_, index) => {
+    const target = (perimeter * index) / count;
+    const sample = samples.find((candidate) => candidate.distance >= target) ?? samples[samples.length - 1];
+    return sample.angle;
+  });
+}
+
 export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend }: {
   session: PhoneView;
   playerId: string;
@@ -19,7 +50,9 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const selected = session.mode === "hunt" ? session.votes[playerId] : selectedId;
   const target = session.players.find((p) => p.id === selected && p.selectable);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
-  const diameter = Math.min(304, Math.max(264, players.length * 24));
+  const mapHeight = Math.max(MAP_MIN_HEIGHT, players.length * PLAYER_ARC_SPACE);
+  const verticalRadius = mapHeight / 2 - PLAYER_EDGE_SPACE;
+  const angles = getEllipseAngles(players.length, MAP_MAX_WIDTH * MAP_HORIZONTAL_RADIUS, verticalRadius);
   const Icon = session.mode === "poison" ? FlaskConical : session.mode === "shaman" ? RotateCcw
     : session.mode === "allies" ? Users : Crosshair;
   const theme = session.mode === "poison"
@@ -39,12 +72,15 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
         </span>
         <h2 className={`font-display text-xl font-bold ${theme.accent}`}>{text[session.mode]}</h2>
       </header>
-      <div className="overflow-x-auto pb-1">
-        <div className="relative mx-auto" style={{ width: diameter, height: diameter }}>
+      <div className="min-w-0 overflow-hidden pb-1">
+        <div
+          data-testid="phone-action-map"
+          className="relative mx-auto w-full max-w-[19rem]"
+          style={{ height: mapHeight }}
+        >
           <Icon className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 opacity-50" />
           {players.map((player, index) => {
-            const angle = 2 * Math.PI * index / Math.max(1, players.length) - Math.PI / 2;
-            const radius = diameter / 2 - 38;
+            const angle = angles[index];
             const voters = Object.entries(session.votes).filter(([, id]) => id === player.id)
               .map(([id]) => session.players.find((p) => p.id === id)?.name ?? "");
             return (
@@ -55,8 +91,11 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 aria-pressed={session.mode === "allies" ? undefined : selected === player.id}
                 disabled={!player.selectable || !connected || (pending && session.mode !== "hunt")}
                 onClick={() => session.mode === "hunt" ? onSend("select", player.id) : setSelectedId(player.id)}
-                className={`absolute flex w-14 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
-                style={{ left: diameter / 2 + radius * Math.cos(angle), top: diameter / 2 + radius * Math.sin(angle) }}
+                className={`absolute flex w-[3.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
+                style={{
+                  left: `${50 + MAP_HORIZONTAL_RADIUS * 100 * Math.cos(angle)}%`,
+                  top: mapHeight / 2 + verticalRadius * Math.sin(angle),
+                }}
                 title={player.name}
               >
                 <span className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 ${

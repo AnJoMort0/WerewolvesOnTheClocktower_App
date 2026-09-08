@@ -45,4 +45,32 @@ describe("PhoneActionScreen", () => {
 
     expect(screen.getByText(getTranslation("en").ui.phoneActions.waiting)).toBeInTheDocument();
   });
+
+  it("uses a fluid map without a horizontal scroll container for large games", () => {
+    const players = Array.from({ length: 24 }, (_, index) => ({
+      id: `player-${index}`,
+      name: `Player ${index + 1}`,
+      seat_position: index,
+      selectable: true,
+      redX: false,
+      dead: false,
+      marker: null,
+    }));
+    const { container } = render(
+      <PhoneActionScreen
+        session={{ ...baseView, players }}
+        playerId="wolf"
+        language="en"
+        pending={false}
+        connected
+        onSend={vi.fn()}
+      />,
+    );
+
+    const map = screen.getByTestId("phone-action-map");
+    expect(map).toHaveClass("w-full", "max-w-[19rem]");
+    expect(map.parentElement).toHaveClass("overflow-hidden");
+    expect(container.querySelector(".overflow-x-auto")).not.toBeInTheDocument();
+    expect(map.querySelector("button")?.style.left).toMatch(/%$/);
+  });
 });
