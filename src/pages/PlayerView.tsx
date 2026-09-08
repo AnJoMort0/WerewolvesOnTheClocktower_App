@@ -2,16 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw } from "lucide-react";
+import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealModal";
 import { RevealModal, type RevealCard } from "@/components/game/RevealModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
+import { GameLogModal } from "@/components/game/GameLogModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
-import { LanguageContext, format, getRoleLabel, isLanguage, t, type Language, type WinKind } from "@/lib/i18n";
+import { LanguageContext, format, getRoleLabel, getTranslation, isLanguage, t, type Language, type WinKind } from "@/lib/i18n";
 import villagerIcon from "@/assets/icons/villager.png";
 import ghostImg from "@/assets/icons/ghost.png";
 import loverIcon from "@/assets/icons/lover.png";
@@ -27,6 +28,7 @@ import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { usePlayerPhoneActions } from "@/hooks/usePhoneActions";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
+import { normalizeGameLogSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
 
 type RoomPlayer = {
   id: string;
@@ -95,6 +97,8 @@ const PlayerView = () => {
   const [language, setLanguage] = useState<Language>("pt");
   const [gameOver, setGameOver] = useState<{ kind: WinKind; outcome: "victory" | "defeat" } | null>(null);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
+  const [gameLogOpen, setGameLogOpen] = useState(false);
+  const [gameLogSnapshot, setGameLogSnapshot] = useState<GameLogSnapshot | null>(null);
   const [rulebookOpen, setRulebookOpen] = useState(false);
   const [rulebookRoleId, setRulebookRoleId] = useState<RoleId | null>(null);
   useEffect(() => {
@@ -254,7 +258,7 @@ const PlayerView = () => {
         const durable = roomData as unknown as {
           phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
           timer_state?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;
-          game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat"> } | null;
+          game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat">; gameLog?: unknown } | null;
           player_action_state?: PlayerActionState | null;
         };
         applyRoomPlayerActionState(durable.player_action_state);
@@ -267,9 +271,14 @@ const PlayerView = () => {
             kind: durable.game_over_state.kind,
             outcome,
           });
+          setGameLogSnapshot(normalizeGameLogSnapshot(durable.game_over_state.gameLog));
           setGameOverDismissed(false);
         } else {
           gameOverEventRef.current = null;
+          setGameOver(null);
+          setGameOverDismissed(false);
+          setGameLogOpen(false);
+          setGameLogSnapshot(null);
         }
       }
 
@@ -331,6 +340,7 @@ const PlayerView = () => {
             const durableGameOver = payload.new.game_over_state as {
               kind?: WinKind;
               perPlayer?: Record<string, "victory" | "defeat">;
+              gameLog?: unknown;
             } | null;
             if (durableGameOver?.kind) {
               const outcome = durableGameOver.perPlayer?.[playerId] ?? "defeat";
@@ -338,10 +348,15 @@ const PlayerView = () => {
               if (gameOverEventRef.current !== eventKey) {
                 gameOverEventRef.current = eventKey;
                 setGameOver({ kind: durableGameOver.kind, outcome });
+                setGameLogSnapshot(normalizeGameLogSnapshot(durableGameOver.gameLog));
                 setGameOverDismissed(false);
               }
             } else {
               gameOverEventRef.current = null;
+              setGameOver(null);
+              setGameOverDismissed(false);
+              setGameLogOpen(false);
+              setGameLogSnapshot(null);
             }
           }
         )
@@ -467,6 +482,7 @@ const PlayerView = () => {
             kind: WinKind;
             perPlayer?: Record<string, "victory" | "defeat">;
             perRole?: Record<string, "victory" | "defeat">;
+            gameLog?: unknown;
           };
           if (!d?.kind) return;
           const myRole = parsePlayerCharacter(playerRef.current?.character).displayRole;
@@ -475,6 +491,7 @@ const PlayerView = () => {
           else if (myRole && d.perRole && d.perRole[myRole]) outcome = d.perRole[myRole];
           gameOverEventRef.current = `${d.kind}:${outcome}`;
           setGameOver({ kind: d.kind, outcome });
+          setGameLogSnapshot(normalizeGameLogSnapshot(d.gameLog));
           setGameOverDismissed(false);
         }).subscribe();
 
@@ -968,6 +985,19 @@ const PlayerView = () => {
         className="w-full max-w-sm text-center space-y-6"
       >
         <div className="space-y-2 relative">
+          {gameOver && gameLogSnapshot && (
+            <div className="absolute left-0 top-0">
+              <button
+                type="button"
+                onClick={() => setGameLogOpen(true)}
+                className="rounded-md p-1.5 text-muted-foreground/40 transition-colors hover:bg-secondary hover:text-foreground"
+                title={getTranslation(language).ui.gameLog.title}
+                aria-label={getTranslation(language).ui.gameLog.title}
+              >
+                <ScrollText className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           <div className="absolute right-0 top-0 flex items-center gap-1">
             <SkinPackSelectButton
               language={language}
@@ -1429,6 +1459,25 @@ const PlayerView = () => {
         outcome={gameOver?.outcome ?? "defeat"}
         onDismiss={() => setGameOverDismissed(true)}
       />
+      {gameLogSnapshot && (
+        <GameLogModal
+          open={gameLogOpen}
+          onOpenChange={setGameLogOpen}
+          language={language}
+          events={gameLogSnapshot.events}
+          players={gameLogSnapshot.players}
+          roleAssignments={gameLogSnapshot.roleAssignments}
+          playerStatuses={gameLogSnapshot.playerStatuses}
+          permanentlyDead={new Set(gameLogSnapshot.permanentlyDead)}
+          playerEffects={Object.fromEntries(
+            Object.entries(gameLogSnapshot.playerEffects).map(([id, effects]) => [id, new Set(effects)]),
+          )}
+          poisonedPlayerId={gameLogSnapshot.poisonedPlayerId}
+          poisonedPlayerIds={new Set(gameLogSnapshot.poisonedPlayerIds)}
+          illusionPlayerId={gameLogSnapshot.illusionPlayerId}
+          illusionPlayerIds={new Set(gameLogSnapshot.illusionPlayerIds)}
+        />
+      )}
     </div>
     </LanguageContext.Provider>
   );

@@ -25,6 +25,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
+<!-- Codex 2026-09-08: Compacted the game log into collapsible phase sections with dense actor/action/target rows, direct participant highlighting, timestamps, and a collapsed-by-default final circle. -->
+
 * [ ] 
 
 ## Balance Changes
@@ -32,6 +34,9 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 * [ ] 
 
 ## Additions
+
+* [x] Show the completed game's log on player devices after victory, and hide it when the GM resends roles to continue playing.
+  <!-- Codex 2026-09-08: The GM now publishes a durable final log snapshot only at game over. Players can open the same compact log from their header after dismissing the result; resending roles clears the victory and removes the player log immediately. -->
 
 * [x] Adding phone interactions:
   <!-- Codex 2026-09-08: Added GM-controlled, reconnectable phone sessions for group hunting, ally identification, Witch poisoning, and Shaman saving. Actor, Dog-Wolf, Drunkard, and Mime copies use their own player identity and power state; kills, poison owners, resurrection charges, and logs go through the existing GM action paths. Covered by rules, multi-device synchronization, script integration, and browser smoke tests. -->

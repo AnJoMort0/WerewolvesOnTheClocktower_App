@@ -40,7 +40,7 @@ import {
 } from "@/lib/gameRules";
 import { detectAutomaticVictory, getVictoryStateSignature, playerWinsAnyVictoryGroup, type AutomaticWinKind, type VictoryPlayer } from "@/lib/victory";
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
-import { MAX_GAME_LOG_EVENTS, normalizeGameLogEvents, type GameLogEvent, type GameLogPhase, type GameLogPlayerSnapshot } from "@/lib/gameLog";
+import { MAX_GAME_LOG_EVENTS, normalizeGameLogEvents, type GameLogEvent, type GameLogPhase, type GameLogPlayerSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
 import { getRoomDisplayStorageKey, ROOM_DISPLAY_SNAPSHOT_VERSION, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
 import { normalizeStatusEffectSet } from "@/lib/effects";
 import { hasAttackImmunity, resolveProtectedDeaths } from "@/lib/immunity";
@@ -511,7 +511,6 @@ const GMRoom = () => {
   const [hiddenTimerMinutes, setHiddenTimerMinutes] = useState("0");
   const [hiddenTimerSeconds, setHiddenTimerSeconds] = useState("0");
   const dayPanelRef = useRef<DayTribunalPanelHandle>(null);
-  const pendingGameOverLogKindRef = useRef<WinKind | null>(null);
   const pendingActorCopyLogRef = useRef<RoleId | null>(null);
   const pendingDrunkardSetupLogRef = useRef<RoleId | null>(null);
   const pendingDogOwnerLogRef = useRef<Array<{ dogPlayerId: string; ownerPlayerId: string }>>([]);
@@ -2002,13 +2001,42 @@ const GMRoom = () => {
 
   const sendGameOver = async (kind: WinKind) => {
     if (!roomId) return;
-    pendingGameOverLogKindRef.current = kind;
     const perPlayer = Object.fromEntries(players.map((player) => [player.id, getGameOverOutcome(kind, player.id)]));
+    const createdAt = Date.now();
+    const gameOverEvent: GameLogEvent = {
+      id: `${createdAt}-${Math.random().toString(36).slice(2, 9)}`,
+      createdAt,
+      phase: "game-over",
+      phaseNumber: nightNumber,
+      action: "game_over",
+      winKind: kind,
+    };
+    const finalizedEvents = [...gameLogEvents, gameOverEvent].slice(-MAX_GAME_LOG_EVENTS);
+    const gameLog: GameLogSnapshot = {
+      events: finalizedEvents,
+      players: players.map(({ id, name, seat_position, character, is_alive }) => ({
+        id,
+        name,
+        seat_position,
+        character,
+        is_alive,
+      })),
+      roleAssignments,
+      playerStatuses,
+      permanentlyDead: Array.from(permanentlyDead),
+      playerEffects: serializeEffects(playerEffects),
+      poisonedPlayerId,
+      poisonedPlayerIds: Array.from(poisonedPlayerIds),
+      illusionPlayerId,
+      illusionPlayerIds: Array.from(illusionPlayerIds),
+    };
     const gameOverState = {
       kind,
       perPlayer,
+      gameLog,
       ...(kind === "tie" ? { tieWinnerGroups: Array.from(tieWinnerGroups) } : {}),
     };
+    setGameLogEvents(finalizedEvents);
     await supabase.channel(`game-over-${roomId}`).send({
       type: "broadcast",
       event: "game-over",
@@ -2331,7 +2359,7 @@ const GMRoom = () => {
       supabase.from("players").update({ character: getStoredCharacter(playerId, roleId) }).eq("id", playerId)
     );
     await Promise.all(updates);
-    await supabase.from("rooms").update({ status: "playing" }).eq("id", roomId);
+    await supabase.from("rooms").update({ status: "playing", game_over_state: null }).eq("id", roomId);
     setRoom((prev) => (prev ? { ...prev, status: "playing" } : prev));
     // f02 Espião auto-spawn: knows himself, so seed spied_on on himself
     const spyId = Object.entries(roleAssignments).find(([, r]) => r === "f02")?.[0];
@@ -3520,18 +3548,6 @@ const GMRoom = () => {
       detail: `${getRoleLabel("a02", language)} -> ${getRoleLabel("e01", language)}`,
     });
   }, [effectiveActorCopiedRole, getPlayerLogSnapshot, gmSnapshotLoaded, recordGameEvent, room?.language, room?.status]);
-
-  useEffect(() => {
-    if (!gmSnapshotLoaded || room?.status !== "finished" || !pendingGameOverLogKindRef.current) return;
-    const kind = pendingGameOverLogKindRef.current;
-    pendingGameOverLogKindRef.current = null;
-    recordGameEvent({
-      action: "game_over",
-      phase: "game-over",
-      phaseNumber: nightNumber,
-      winKind: kind,
-    });
-  }, [gmSnapshotLoaded, nightNumber, recordGameEvent, room?.status]);
 
   useEffect(() => {
     const cloneEffects = (effects: Record<string, Set<StatusEffect>>) => (
