@@ -30,8 +30,11 @@ describe("NightScript phone controls", () => {
     const phoneButtons = container.querySelectorAll("button[data-phone-control]");
     phoneButtons.forEach((button) => {
       expect(button).toHaveClass("h-6", "w-6");
+      expect(button.closest("[data-script-actions]")).toHaveClass("absolute", "right-10");
       fireEvent.click(button);
     });
+    expect(container.querySelector('[data-phone-mode="allies"] .lucide-users')).toBeInTheDocument();
+    expect(container.querySelector('[data-phone-mode="poison"] .lucide-flask-conical')).toBeInTheDocument();
     expect(onPhoneToggle).toHaveBeenCalledWith("allies", expect.any(String), null);
     expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), "witch");
     expect(onLineCompletedChange).not.toHaveBeenCalled();
@@ -65,8 +68,20 @@ describe("NightScript phone controls", () => {
       conditionKeys={{ hasRedXPlayers: true }} onPhoneToggle={onPhoneToggle}
     />);
     container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
+    expect(container.querySelector('[data-phone-mode="shaman"] .lucide-rotate-ccw')).toBeInTheDocument();
     expect(onPhoneToggle).toHaveBeenCalledWith("shaman", expect.any(String), "mime");
     expect(onPhoneToggle).not.toHaveBeenCalledWith("shaman", expect.any(String), "shaman");
+  });
+
+  it("uses a crosshair for the pack hunt action", () => {
+    const { container } = render(<NightScript {...baseProps}
+      activeRoles={new Set(["e01"])}
+      roleAssignments={{ wolf: "e01" }}
+      players={[{ id: "wolf", name: "Wolf", seat_position: 0 }]}
+      onPhoneToggle={vi.fn()}
+    />);
+
+    expect(container.querySelector('[data-phone-mode="hunt"] .lucide-crosshair')).toBeInTheDocument();
   });
 });
 

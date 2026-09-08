@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, Eye, Smartphone } from "lucide-react";
+import { Crosshair, Eye, FlaskConical, Moon, RotateCcw, Sun, Users } from "lucide-react";
 import { getScriptPhoneMode, type PhoneMode } from "@/lib/phoneActions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -371,6 +371,17 @@ function ScriptLineDisplay({
   const isA05Line = line.requires?.length === 1 && line.requires[0] === ("a05" as RoleId);
   const isA05Poisoned = sourcePlayerId ? isPoisonedLine : !!poisonedPlayerId && roleAssignments[poisonedPlayerId] === "a05";
   const a05Strike = isA05Line && isA05Poisoned;
+  const hasRevealAction = (
+    (isFortuneTellerLine && lastNightDeadPlayerIds.length > 0 && !!onFortuneTellerReveal)
+    || (isLittleGirlLine && !!onLittleGirlReveal)
+    || (isLamplighterLine && !!onLamplighterReveal)
+    || (isWerewolfSeerLine && !!onWerewolfSeerReveal)
+    || (isMimeRevealLine && !!onMimeReveal)
+    || (isSpiderCaughtLine && !dynamicText && !!onSpiderReveal)
+    || (isSpyLine && !!onSpyReveal)
+  );
+  const hasActionControl = !!phoneControl || hasRevealAction;
+  const revealButtonClass = "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-blue-400 transition-colors hover:bg-primary/20";
 
   const isShamanPoisoned = useMemo(() => {
     if (sourcePlayerId) return isShamanLine && isPoisonedLine;
@@ -424,7 +435,7 @@ function ScriptLineDisplay({
       <motion.div
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
-        className={`relative py-2 pl-3 pr-10 rounded-lg text-sm font-body leading-relaxed ${
+        className={`relative rounded-lg py-2 pl-3 ${hasActionControl ? "pr-[4.75rem]" : "pr-10"} text-sm font-body leading-relaxed ${
           isPoisonedLine
             ? "bg-green-900/30 border border-green-500/40 text-green-300"
             : "bg-card/50 border border-border/30"
@@ -438,6 +449,40 @@ function ScriptLineDisplay({
           title={t("completeScriptLine", lang)}
           className="absolute right-3 top-3 h-5 w-5 border-primary data-[state=checked]:bg-primary"
         />
+        {hasActionControl && (
+          <div data-script-actions className="absolute right-10 top-2.5 flex items-center gap-1">
+            {phoneControl}
+            {isFortuneTellerLine && lastNightDeadPlayerIds.length > 0 && onFortuneTellerReveal && (
+              <button
+                type="button"
+                onClick={(event) => { event.stopPropagation(); onFortuneTellerReveal(sourcePlayerId); }}
+                className={revealButtonClass}
+                aria-label={t("revealFortuneTellerTitle", lang)}
+                title={t("revealFortuneTellerTitle", lang)}
+              >
+                <Eye className="h-4 w-4" />
+              </button>
+            )}
+            {isLittleGirlLine && onLittleGirlReveal && (
+              <button type="button" onClick={(event) => { event.stopPropagation(); onLittleGirlReveal(sourcePlayerId); }} className={revealButtonClass} aria-label={t("revealLittleGirlTitle", lang)} title={t("revealLittleGirlTitle", lang)}><Eye className="h-4 w-4" /></button>
+            )}
+            {isLamplighterLine && onLamplighterReveal && (
+              <button type="button" onClick={(event) => { event.stopPropagation(); onLamplighterReveal(sourcePlayerId); }} className={revealButtonClass} aria-label={t("revealLamplighterTitle", lang)} title={t("revealLamplighterTitle", lang)}><Eye className="h-4 w-4" /></button>
+            )}
+            {isWerewolfSeerLine && onWerewolfSeerReveal && (
+              <button type="button" onClick={(event) => { event.stopPropagation(); onWerewolfSeerReveal(sourcePlayerId); }} className={revealButtonClass} aria-label={t("revealVampireWolfTitle", lang)} title={t("revealVampireWolfTitle", lang)}><Eye className="h-4 w-4" /></button>
+            )}
+            {isMimeRevealLine && onMimeReveal && (
+              <button type="button" onClick={(event) => { event.stopPropagation(); onMimeReveal(sourcePlayerId); }} className={revealButtonClass} aria-label={getRoleLabel("a03", lang)} title={getRoleLabel("a03", lang)}><Eye className="h-4 w-4" /></button>
+            )}
+            {isSpiderCaughtLine && !dynamicText && onSpiderReveal && (
+              <button type="button" onClick={(event) => { event.stopPropagation(); onSpiderReveal(sourcePlayerId); }} className={revealButtonClass} aria-label={t("spiderEyeReveal", lang)} title={t("spiderEyeReveal", lang)}><Eye className="h-4 w-4" /></button>
+            )}
+            {isSpyLine && onSpyReveal && (
+              <button type="button" onClick={(event) => { event.stopPropagation(); onSpyReveal(sourcePlayerId); }} className={revealButtonClass} aria-label={t("spyEyeReveal", lang)} title={t("spyEyeReveal", lang)}><Eye className="h-4 w-4" /></button>
+            )}
+          </div>
+        )}
         {drunkardLine && (
           <img
             src={resolveRoleImage("a01", { skinPackId }).src}
@@ -487,8 +532,6 @@ function ScriptLineDisplay({
             )}
           </div>
         )}
-
-        {phoneControl}
 
         {/* Fox checkbox */}
         {isFoxLine && showFoxCheckbox && onFoxDisabledToggle != null && (
@@ -551,33 +594,6 @@ function ScriptLineDisplay({
           </div>
         )}
 
-        {/* FortuneTeller eye icon */}
-        {isFortuneTellerLine && lastNightDeadPlayerIds.length > 0 && onFortuneTellerReveal && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onFortuneTellerReveal(sourcePlayerId); }}
-            className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20 transition-colors"
-          >
-            <Eye className="h-4 w-4 text-blue-400" />
-          </button>
-        )}
-        {isLittleGirlLine && onLittleGirlReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onLittleGirlReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
-        )}
-        {isLamplighterLine && onLamplighterReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onLamplighterReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
-        )}
-        {isWerewolfSeerLine && onWerewolfSeerReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onWerewolfSeerReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
-        )}
-        {isMimeRevealLine && onMimeReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onMimeReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
-        )}
-        {isSpiderCaughtLine && !dynamicText && onSpiderReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onSpiderReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
-        )}
-        {isSpyLine && onSpyReveal && (
-          <button onClick={(e) => { e.stopPropagation(); onSpyReveal(sourcePlayerId); }} className="inline-flex items-center ml-2 p-1 rounded hover:bg-primary/20"><Eye className="h-4 w-4 text-blue-400" /></button>
-        )}
       </motion.div>
     </div>
   );
@@ -1353,6 +1369,14 @@ export const NightScript = ({
               const phoneMode = item.actorNotice ? null : getScriptPhoneMode(item.line);
               const phoneActive = activePhoneLineKey === item.key;
               const phoneLabel = getTranslation(lang).ui.phoneActions[phoneActive ? "close" : "open"];
+              const PhoneActionIcon = phoneMode === "hunt" ? Crosshair
+                : phoneMode === "allies" ? Users
+                : phoneMode === "poison" ? FlaskConical
+                : RotateCcw;
+              const phoneIconClass = phoneMode === "poison" ? "text-green-400"
+                : phoneMode === "shaman" ? "text-moon"
+                : phoneMode === "allies" ? "text-gold"
+                : "text-primary";
               const usesIndependentPowerState = !!independentPowerState || !!item.actorLine
                 || (!!item.drunkardLine && sourcePlayerId === actorPlayerId);
               const powerState = independentPowerState ?? actorPowerState;
@@ -1377,14 +1401,15 @@ export const NightScript = ({
                   <button
                     type="button"
                     data-phone-control
+                    data-phone-mode={phoneMode}
                     draggable={false}
                     onDragStart={(event) => { event.preventDefault(); event.stopPropagation(); }}
                     aria-label={phoneLabel}
                     aria-pressed={phoneActive}
                     title={phoneLabel}
                     onClick={(event) => { event.stopPropagation(); onPhoneToggle(phoneMode, item.key, sourcePlayerId); }}
-                    className={`relative -top-px ml-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm align-middle transition-colors hover:bg-primary/20 ${phoneActive ? "bg-primary/20 text-primary" : "text-blue-400"}`}
-                  ><Smartphone className="h-3.5 w-3.5" /></button>
+                    className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-primary/20 ${phoneActive ? "bg-primary/20 ring-1 ring-inset ring-primary/30" : ""} ${phoneIconClass}`}
+                  ><PhoneActionIcon className="h-4 w-4" /></button>
                 ) : null}
                 line={item.line}
                 poisonedRoles={poisonedRoles}
