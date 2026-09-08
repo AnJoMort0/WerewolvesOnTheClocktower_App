@@ -22,6 +22,50 @@ const baseProps = {
   nightTargetedPlayerIds: new Set<string>(),
 };
 
+describe("NightScript phone controls", () => {
+  it("opens Witch and allies modes without marking either line completed", () => {
+    const onPhoneToggle = vi.fn();
+    const onLineCompletedChange = vi.fn();
+    const { container } = render(<NightScript {...baseProps} onPhoneToggle={onPhoneToggle} onLineCompletedChange={onLineCompletedChange} />);
+    container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
+    expect(onPhoneToggle).toHaveBeenCalledWith("allies", expect.any(String), null);
+    expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), "witch");
+    expect(onLineCompletedChange).not.toHaveBeenCalled();
+  });
+
+  it("gives a copied Witch line its own phone source for Actor, Dog, Drunkard, and Mime", () => {
+    const onPhoneToggle = vi.fn();
+    const { container } = render(<NightScript {...baseProps}
+      activeRoles={new Set(["e02", "a01", "a02", "a03", "a04"])}
+      roleAssignments={{ witch: "e02", actor: "e02", drunkard: "e02", dog: "a02", mime: "a03" }}
+      baseRoleAssignments={{ witch: "e02", actor: "a04", drunkard: "a01", dog: "a02", mime: "a03" }}
+      abilityRoleAssignments={{ witch: "e02", actor: "e02", drunkard: "e02", dog: "e02", mime: "e02" }}
+      players={["witch", "actor", "drunkard", "dog", "mime"].map((id, index) => ({ id, name: id, seat_position: index }))}
+      actorPlayerId="actor" actorCopiedRole="e02" actorCopyNoticeNight={1}
+      dogWolfPlayerIds={["dog"]} dogWolfStates={{ dog: createDogWolfState("witch") }}
+      mimePlayerId="mime" mimeMechanicalRole="e02"
+      onPhoneToggle={onPhoneToggle}
+    />);
+    container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
+    for (const id of ["witch", "actor", "drunkard", "dog", "mime"]) {
+      expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), id);
+    }
+  });
+
+  it("gives the Mime a Shaman phone action even when the original Shaman has used both charges", () => {
+    const onPhoneToggle = vi.fn();
+    const { container } = render(<NightScript {...baseProps}
+      activeRoles={new Set(["e03", "a03"])} roleAssignments={{ shaman: "e03", mime: "a03" }}
+      players={[{ id: "shaman", name: "Shaman", seat_position: 0 }, { id: "mime", name: "Mime", seat_position: 1 }]}
+      shamanCharges={2} mimePlayerId="mime" mimeMechanicalRole="e03"
+      conditionKeys={{ hasRedXPlayers: true }} onPhoneToggle={onPhoneToggle}
+    />);
+    container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
+    expect(onPhoneToggle).toHaveBeenCalledWith("shaman", expect.any(String), "mime");
+    expect(onPhoneToggle).not.toHaveBeenCalledWith("shaman", expect.any(String), "shaman");
+  });
+});
+
 describe("NightScript progress", () => {
   it("does not replay a historical auto-complete event after remounting", async () => {
     const onLineCompletedChange = vi.fn();

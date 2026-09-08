@@ -14,7 +14,7 @@ import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/ga
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
-import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp } from "lucide-react";
+import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -44,6 +44,8 @@ import { MAX_GAME_LOG_EVENTS, normalizeGameLogEvents, type GameLogEvent, type Ga
 import { getRoomDisplayStorageKey, ROOM_DISPLAY_SNAPSHOT_VERSION, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
 import { normalizeStatusEffectSet } from "@/lib/effects";
 import { hasAttackImmunity, resolveProtectedDeaths } from "@/lib/immunity";
+import { useGMPhoneActions } from "@/hooks/usePhoneActions";
+import type { PhoneAction, PhoneWorld } from "@/lib/phoneActions";
 import {
   EMPTY_ACTOR_POWER_STATE,
   encodeActorCharacter,
@@ -1912,6 +1914,7 @@ const GMRoom = () => {
     if (!roomId) return;
     const lang = (room?.language as Language) || "pt";
     if (!window.confirm(t("resetRoomConfirm", lang))) return;
+    phone.close();
 
     const playerUpdates = players.map((player) =>
       supabase
@@ -2700,6 +2703,10 @@ const GMRoom = () => {
   };
 
   const handleShamanDrop = useCallback((targetPlayerId: string, sourcePlayerId?: string | null) => {
+    if (sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)) {
+      toast.warning(getToast("warnShamanPoisoned", (room?.language as Language) || "pt"));
+      return;
+    }
     const independentPowerState = sourcePlayerId
       ? independentPowerStates[sourcePlayerId] ?? getStoredDogWolfFallbackState(sourcePlayerId)?.powerState
       : undefined;
@@ -2726,9 +2733,10 @@ const GMRoom = () => {
     } else {
       toast.error(getToast("errShamanDragOnlyDead", (room?.language as Language) || "pt"));
     }
-  }, [getStoredDogWolfFallbackState, shamanCharges, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, mimeMechanicalRole, mimePlayerId, playerStatuses, room?.language]);
+  }, [getStoredDogWolfFallbackState, shamanCharges, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, playerStatuses, room?.language]);
 
   const endNight = async () => {
+    phone.close();
     const newPermanentlyDead = new Set(permanentlyDead);
     const newStatuses = { ...protectedDeaths.statuses };
     const newlyDead: string[] = [];
@@ -3156,6 +3164,7 @@ const GMRoom = () => {
   };
 
   const startNextNight = async () => {
+    phone.close();
     // Make day-killed and red-X players permanently dead
     const newPermanentlyDead = new Set(permanentlyDead);
     const newStatuses = { ...protectedDeaths.statuses };
@@ -3991,7 +4000,7 @@ const GMRoom = () => {
     action: string,
     targetPlayerId: string,
     sourcePlayerId?: string | null,
-    meta: { fromScriptLine?: boolean; scriptConditionKey?: string | null; preserveSpiderFreeWebChange?: boolean } = {},
+    meta: { fromScriptLine?: boolean; scriptConditionKey?: string | null; preserveSpiderFreeWebChange?: boolean; fromPhone?: boolean } = {},
   ) => {
     // Universal "caught" tagging — any drag onto a webbed player tags the source
     const applyCaughtIfWebbed = () => {
@@ -4101,9 +4110,15 @@ const GMRoom = () => {
           return next;
         });
       }
-      handlePlayerStatusChange(targetPlayerId, "poisoned", undefined, sourcePlayerId);
+      const renewsExistingPoison = meta.fromPhone && sourcePlayerId
+        && poisonTargetsBySource[sourcePlayerId] === targetPlayerId && !dueMimeWitchPoison;
+      if (!renewsExistingPoison) handlePlayerStatusChange(targetPlayerId, "poisoned", undefined, sourcePlayerId);
+      if (meta.fromPhone && poisonedPlayerIds.has(targetPlayerId)) {
+        recordGameEvent({ action: "poison", actor: sourcePlayerId ? getPlayerLogSnapshot(sourcePlayerId) : null,
+          actorRole: "e02", target: getPlayerLogSnapshot(targetPlayerId) });
+      }
       if (sourceIsMimeCopying("e02") && sourcePlayerId) {
-        setMimeWitchPoison(previousMimeWitchTarget === targetPlayerId
+        setMimeWitchPoison(!meta.fromPhone && previousMimeWitchTarget === targetPlayerId
           ? null
           : { targetPlayerId, nightNumber });
       }
@@ -4556,7 +4571,33 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+
+  const phoneWorld = useMemo<PhoneWorld>(() => ({
+    packBlocked: werewolfPackPoisoned,
+    players: players.map((player) => {
+      const effects = playerEffects[player.id] ?? new Set<StatusEffect>();
+      const dead = permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead";
+      return {
+        id: player.id, name: player.name, seat_position: player.seat_position,
+        dead, redX: playerStatuses[player.id] === "dead-this-night",
+        abilityRole: abilityRoleAssignments[player.id], objectiveRole: objectiveRoleAssignments[player.id],
+        werewolfTurned: effects.has("werewolf_turned"), evil: effects.has("evil_being"),
+        mime: player.id === mimePlayerId,
+        canWake: (!dead || prophecyGhostPlayerIds.has(player.id)) && !effects.has("host") && !effects.has("burned")
+          && !(abilityRoleAssignments[player.id] === "v06" && isPlayerActingPoisoned(player.id)),
+        powerless: powerlessPlayerIds.has(player.id),
+      };
+    }),
+  }), [abilityRoleAssignments, isPlayerActingPoisoned, mimePlayerId, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
+  const applyPhoneAction = useCallback(({ action, targetPlayerId, sourcePlayerId }: PhoneAction) => {
+    handleDragAction(action, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
+  }, [handleDragAction]);
+  const phone = useGMPhoneActions({
+    roomId, contextKey: `${room?.status}:${gameCyclePhase}:${nightNumber}`,
+    enabled: gmSnapshotLoaded && room?.status === "playing" && gameCyclePhase === "night",
+    world: phoneWorld, onAction: applyPhoneAction,
+  });
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
@@ -5564,6 +5605,27 @@ const GMRoom = () => {
   return (
     <LanguageContext.Provider value={lang}>
     <div className="min-h-screen p-4">
+      {phone.session && phone.consensus && !hideScreenMode && !pendingPlayerActionRequest && (
+        <Dialog open onOpenChange={() => {}}>
+          <DialogContent className="border-destructive/50 [&>button]:hidden"
+            onEscapeKeyDown={(event) => event.preventDefault()} onPointerDownOutside={(event) => event.preventDefault()}>
+            <DialogHeader>
+              <DialogTitle>{getTranslation(lang).ui.phoneActions.hunt}</DialogTitle>
+              <DialogDescription>{format(
+                getTranslation(lang).ui.phoneActions[phone.session.sourcePlayerId ? "soloHuntRequest" : "huntRequest"],
+                { target: players.find((p) => p.id === phone.consensus)?.name ?? tt("unknown"),
+                  actor: players.find((p) => p.id === phone.session?.sourcePlayerId)?.name ?? tt("unknown") },
+              )}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button size="icon" variant="secondary" aria-label={getTranslation(lang).ui.phoneActions.close}
+                title={getTranslation(lang).ui.phoneActions.close} onClick={phone.close}><Smartphone className="h-4 w-4" /></Button>
+              <Button variant="secondary" onClick={() => phone.resolveHunt(phone.session!.id, phone.consensus!, false)}>{tt("gmDenyAction")}</Button>
+              <Button variant="destructive" onClick={() => phone.resolveHunt(phone.session!.id, phone.consensus!, true)}>{tt("gmAcceptAction")}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
       {pendingPlayerActionRequest && (
         <Dialog
           open
@@ -5914,6 +5976,8 @@ const GMRoom = () => {
                     baseRoleAssignments={roleAssignments}
                     nightNumber={nightNumber}
                     onEndNight={endNight}
+                    onPhoneToggle={phone.toggle}
+                    activePhoneLineKey={phone.session?.lineKey}
                     shamanCharges={shamanCharges}
                     onShamanChargeToggle={handleShamanChargeToggle}
                     lastNightDeadPlayerIds={lastNightDeadPlayerIds}

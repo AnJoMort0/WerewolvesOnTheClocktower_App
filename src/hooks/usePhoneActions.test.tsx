@@ -1,0 +1,150 @@
+import { act, cleanup, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useGMPhoneActions, usePlayerPhoneActions } from "./usePhoneActions";
+import type { PhonePlayer, PhoneWorld } from "@/lib/phoneActions";
+
+const bus = vi.hoisted(() => {
+  type Message = { event: string; payload: Record<string, unknown> };
+  type Receiver = { receive: (message: Message) => void; topic: string };
+  const receivers = new Set<Receiver>();
+  let dropStates = false;
+  return {
+    receivers,
+    dropStates: (drop: boolean) => { dropStates = drop; },
+    channel: (topic: string) => {
+      const listeners = new Map<string, (message: { payload: Record<string, unknown> }) => void>();
+      const channel = {
+        topic,
+        receive: (message: Message) => listeners.get(message.event)?.({ payload: message.payload }),
+        on: (_type: string, filter: { event: string }, handler: (message: { payload: Record<string, unknown> }) => void) => {
+          listeners.set(filter.event, handler);
+          return channel;
+        },
+        subscribe: (callback: (status: string) => void) => {
+          receivers.add(channel);
+          callback("SUBSCRIBED");
+          return channel;
+        },
+        send: (message: Message) => {
+          if (!dropStates || message.event !== "state") {
+            for (const receiver of receivers) {
+              if (receiver !== channel && receiver.topic === topic) receiver.receive(message);
+            }
+          }
+          return Promise.resolve("ok");
+        },
+      };
+      return channel;
+    },
+  };
+});
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {
+  channel: bus.channel,
+  removeChannel: (channel: Parameters<typeof bus.receivers.delete>[0]) => { bus.receivers.delete(channel); return Promise.resolve("ok"); },
+} }));
+
+const player = (id: string, role: PhonePlayer["abilityRole"]): PhonePlayer => ({
+  id, name: id, seat_position: 0, abilityRole: role, objectiveRole: role, dead: false, redX: false,
+  werewolfTurned: false, evil: false, mime: false, canWake: true, powerless: false,
+});
+const world: PhoneWorld = { packBlocked: false, players: [
+  player("wolf", "e01"), player("puppet", "v06"), player("witch", "e02"), player("victim", "v01"),
+] };
+
+beforeEach(() => { vi.useFakeTimers(); window.localStorage.clear(); bus.dropStates(false); });
+afterEach(() => { cleanup(); bus.receivers.clear(); vi.useRealTimers(); });
+
+describe("phone synchronization across GM and player devices", () => {
+  const setup = () => {
+    const onAction = vi.fn();
+    const gm = renderHook((props) => useGMPhoneActions(props), { initialProps: {
+      roomId: "room", contextKey: "playing:night:2", enabled: true, world, onAction,
+    } });
+    const wolf = renderHook(() => usePlayerPhoneActions("room", "wolf"));
+    const puppet = renderHook(() => usePlayerPhoneActions("room", "puppet"));
+    const witch = renderHook(() => usePlayerPhoneActions("room", "witch"));
+    return { onAction, gm, wolf, puppet, witch };
+  };
+
+  it("shares selections, waits for the Puppeteer, and executes an accepted kill once", () => {
+    const { gm, wolf, puppet, witch, onAction } = setup();
+    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    expect(wolf.result.current.session?.mode).toBe("hunt");
+    expect(puppet.result.current.session?.mode).toBe("hunt");
+    expect(witch.result.current.session).toBeNull();
+    act(() => wolf.result.current.send("select", "victim"));
+    expect(puppet.result.current.session?.votes.wolf).toBe("victim");
+    expect(gm.result.current.consensus).toBeNull();
+    act(() => puppet.result.current.send("select", "victim"));
+    const sessionId = gm.result.current.session!.id;
+    expect(gm.result.current.consensus).toBe("victim");
+    act(() => {
+      gm.result.current.resolveHunt(sessionId, "victim", true);
+      gm.result.current.resolveHunt(sessionId, "victim", true);
+    });
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "kill", sourcePlayerId: null, targetPlayerId: "victim" });
+    expect(wolf.result.current.session).toBeNull();
+    expect(puppet.result.current.session).toBeNull();
+  });
+
+  it("denial clears votes without killing or repeating the prompt", () => {
+    const { gm, wolf, puppet, onAction } = setup();
+    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    act(() => wolf.result.current.send("select", "victim"));
+    act(() => puppet.result.current.send("select", "victim"));
+    act(() => gm.result.current.resolveHunt(gm.result.current.session!.id, "victim", false));
+    act(() => vi.advanceTimersByTime(5000));
+    expect(gm.result.current.consensus).toBeNull();
+    expect(wolf.result.current.session?.votes).toEqual({});
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
+  it("cancellation reaches phones even when the first close broadcast was lost", () => {
+    const { gm, wolf, puppet } = setup();
+    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    bus.dropStates(true);
+    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    expect(wolf.result.current.session).not.toBeNull();
+    bus.dropStates(false);
+    act(() => vi.advanceTimersByTime(2500));
+    expect(wolf.result.current.session).toBeNull();
+    expect(puppet.result.current.session).toBeNull();
+  });
+
+  it("retries an unacknowledged poison without applying it again or leaving the phone stuck", () => {
+    const { gm, witch, onAction } = setup();
+    act(() => gm.result.current.toggle("poison", "witch-line", "witch"));
+    bus.dropStates(true);
+    act(() => witch.result.current.send("confirm", "victim"));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(witch.result.current.pending).toBe(true);
+    bus.dropStates(false);
+    act(() => vi.advanceTimersByTime(2500));
+    expect(witch.result.current.session).toBeNull();
+    expect(witch.result.current.pending).toBe(false);
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "poison", sourcePlayerId: "witch", targetPlayerId: "victim" });
+  });
+
+  it("recovers an active session after a phone reload and after a GM reload", () => {
+    const { gm, wolf, puppet, onAction } = setup();
+    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    act(() => wolf.result.current.send("select", "victim"));
+    wolf.unmount();
+    const reloadedWolf = renderHook(() => usePlayerPhoneActions("room", "wolf"));
+    expect(reloadedWolf.result.current.session?.votes.wolf).toBe("victim");
+    gm.unmount();
+    const reloadedGM = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "playing:night:2", enabled: true, world, onAction }));
+    act(() => puppet.result.current.send("select", "victim"));
+    expect(reloadedGM.result.current.consensus).toBe("victim");
+  });
+
+  it("cancels on phase change and never revives a previous night's session", () => {
+    const { gm, wolf, onAction } = setup();
+    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    gm.rerender({ roomId: "room", contextKey: "playing:day:2", enabled: false, world, onAction });
+    expect(wolf.result.current.session).toBeNull();
+    gm.rerender({ roomId: "room", contextKey: "playing:night:3", enabled: true, world, onAction });
+    expect(wolf.result.current.session).toBeNull();
+    expect(gm.result.current.session).toBeNull();
+  });
+});

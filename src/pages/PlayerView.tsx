@@ -25,6 +25,8 @@ import { parsePlayerCharacterMetadata } from "@/lib/playerCharacter";
 import { createPlayerActionRequest, normalizePlayerActionState, upsertPowerUses, type PlayerActionKind, type PlayerActionState } from "@/lib/playerActions";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
+import { usePlayerPhoneActions } from "@/hooks/usePhoneActions";
+import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 
 type RoomPlayer = {
   id: string;
@@ -47,6 +49,7 @@ const PlayerView = () => {
     room_id?: string;
   } | null>(null);
   const [removed, setRemoved] = useState(false);
+  const phone = usePlayerPhoneActions(player?.room_id, playerId);
   const [roomStatus, setRoomStatus] = useState<string>("lobby");
   const [hidden, setHidden] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -94,6 +97,9 @@ const PlayerView = () => {
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
   const [rulebookOpen, setRulebookOpen] = useState(false);
   const [rulebookRoleId, setRulebookRoleId] = useState<RoleId | null>(null);
+  useEffect(() => {
+    if (phone.session?.id) setRulebookOpen(false);
+  }, [phone.session?.id]);
   const playerRef = useRef<typeof player>(null);
   const gameOverEventRef = useRef<string | null>(null);
   const previousTimerAlarmStateRef = useRef<TimerAlarmState | null>(null);
@@ -1032,7 +1038,10 @@ const PlayerView = () => {
               </div>
             )}
             <AnimatePresence mode="wait">
-              {actionMode ? (
+              {phone.session && roomStatus === "playing" && playerId ? (
+                <PhoneActionScreen key={phone.session.id} session={phone.session} playerId={playerId}
+                  language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send} />
+              ) : actionMode ? (
                 <motion.div
                   key={`${actionMode}-mode`}
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -1350,7 +1359,7 @@ const PlayerView = () => {
               )}
             </AnimatePresence>
 
-            {!actionMode && (
+            {!actionMode && !phone.session && (
               <Button
                 variant="secondary"
                 onClick={() => setHidden(!hidden)}

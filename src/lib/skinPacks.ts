@@ -202,7 +202,7 @@ export function getRulebookSkinOptions(
     ...flexibleOptions,
   ];
 
-  const options = [
+  const options: Array<{ value: RulebookSkinPreviewValue; label: string }> = [
     { value: "device", label: skinPackLabels[skinPackId] },
     ...(skinPackId === "default"
       ? []

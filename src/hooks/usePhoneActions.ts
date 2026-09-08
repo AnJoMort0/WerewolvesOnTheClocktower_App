@@ -1,0 +1,183 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { createPlayerActionRequestId } from "@/lib/playerActions";
+import {
+  applyPhoneCommand, getHuntConsensus, getPhoneParticipants, getPhoneView, reconcilePhoneSession,
+  type PhoneAction, type PhoneCommand, type PhoneMode, type PhoneSession, type PhoneView, type PhoneWorld,
+} from "@/lib/phoneActions";
+
+type Channel = ReturnType<typeof supabase.channel>;
+const topic = (roomId: string, playerId: string) => `phone-${roomId}-${playerId}`;
+
+export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction }: {
+  roomId?: string;
+  contextKey: string;
+  enabled: boolean;
+  world: PhoneWorld;
+  onAction: (action: PhoneAction) => void;
+}) {
+  const [session, setSession] = useState<PhoneSession | null>(null);
+  const current = useRef({ session, world, onAction, enabled, contextKey });
+  current.current = { ...current.current, world, onAction, enabled, contextKey };
+  const channels = useRef(new Map<string, Channel>());
+  const acknowledgments = useRef(new Map<string, string>());
+  const revision = useRef(Date.now());
+  const storageKey = roomId ? `wotct_phone_${roomId}` : null;
+
+  const publish = useCallback((playerId?: string) => {
+    const state = current.current;
+    for (const [id, channel] of channels.current) {
+      if (playerId && id !== playerId) continue;
+      revision.current = Math.max(Date.now(), revision.current + 1);
+      void channel.send({ type: "broadcast", event: "state", payload: {
+        revision: revision.current,
+        session: state.enabled ? getPhoneView(state.session, id, state.world) : null,
+        acknowledged: acknowledgments.current.get(id),
+      } });
+    }
+  }, []);
+
+  // Commit before executing an action, so retried phone messages cannot execute it twice.
+  const commit = useCallback((next: PhoneSession | null) => {
+    current.current.session = next;
+    setSession(next);
+    if (storageKey) {
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify({ contextKey: current.current.contextKey, session: next }));
+      } catch { /* Gameplay still works when browser storage is unavailable. */ }
+    }
+    publish();
+  }, [publish, storageKey]);
+
+  useEffect(() => {
+    let restored: PhoneSession | null = null;
+    if (storageKey && enabled) {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? "null");
+        if (stored?.contextKey === contextKey && stored.session?.id
+          && Array.isArray(stored.session.participantIds) && stored.session.votes && stored.session.sequences) {
+          restored = reconcilePhoneSession(stored.session, current.current.world);
+        }
+      } catch { /* Ignore obsolete or invalid local snapshots. */ }
+    }
+    // Wait for the GM snapshot to load before touching a recoverable phone session.
+    if (enabled) commit(restored);
+    else {
+      current.current.session = null;
+      setSession(null);
+      publish();
+    }
+  }, [commit, contextKey, enabled, publish, storageKey]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const next = reconcilePhoneSession(current.current.session, world);
+    if (next !== current.current.session) commit(next);
+    else publish();
+  }, [commit, enabled, publish, world]);
+
+  const playerIdsKey = world.players.map((p) => p.id).sort().join(",");
+  useEffect(() => {
+    if (!roomId) return;
+    const ids = playerIdsKey ? playerIdsKey.split(",") : [];
+    for (const playerId of ids) {
+      const channel = supabase.channel(topic(roomId, playerId));
+      channels.current.set(playerId, channel);
+      channel.on("broadcast", { event: "request" }, ({ payload }) => {
+        if (payload?.type === "sync") { publish(playerId); return; }
+        if (!current.current.enabled || !payload || typeof payload.id !== "string") return;
+        const result = applyPhoneCommand(current.current.session, playerId, payload as PhoneCommand, current.current.world);
+        acknowledgments.current.set(playerId, payload.id);
+        commit(result.session);
+        if (result.action) current.current.onAction(result.action);
+      }).subscribe((status) => { if (status === "SUBSCRIBED") publish(playerId); });
+    }
+    const activeChannels = channels.current;
+    return () => {
+      for (const channel of activeChannels.values()) void supabase.removeChannel(channel);
+      activeChannels.clear();
+    };
+  }, [commit, playerIdsKey, publish, roomId]);
+
+  const toggle = useCallback((mode: PhoneMode, lineKey: string, sourcePlayerId: string | null) => {
+    if (current.current.session?.lineKey === lineKey) { commit(null); return; }
+    if (!current.current.enabled) return;
+    const participantIds = getPhoneParticipants(mode, sourcePlayerId, current.current.world);
+    if (participantIds.length === 0) return;
+    commit({ id: createPlayerActionRequestId("gm", lineKey), lineKey, mode, sourcePlayerId, participantIds, votes: {}, sequences: {} });
+  }, [commit]);
+
+  const resolveHunt = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
+    const latest = reconcilePhoneSession(current.current.session, current.current.world);
+    if (!latest || latest.id !== sessionId || getHuntConsensus(latest) !== targetPlayerId) { commit(latest); return; }
+    if (!accepted) { commit({ ...latest, votes: {} }); return; }
+    commit(null);
+    // A pending victim remains selectable so the phones do not reveal other night kills.
+    if (current.current.world.players.find((p) => p.id === targetPlayerId)?.redX) return;
+    current.current.onAction({ action: "kill", targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
+  }, [commit]);
+
+  const active = enabled ? reconcilePhoneSession(session, world) : null;
+  return { session: active, toggle, close: () => commit(null), consensus: getHuntConsensus(active), resolveHunt };
+}
+
+export function usePlayerPhoneActions(roomId?: string, playerId?: string) {
+  const [session, setSession] = useState<PhoneView | null>(null);
+  const [pending, setPending] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const channelRef = useRef<Channel | null>(null);
+  const pendingCommand = useRef<PhoneCommand | null>(null);
+  const sequence = useRef(0);
+  const lastRevision = useRef(0);
+  const lastResponse = useRef(0);
+
+  useEffect(() => {
+    setSession(null);
+    setPending(false);
+    pendingCommand.current = null;
+    lastRevision.current = 0;
+    lastResponse.current = 0;
+    setConnected(false);
+    if (!roomId || !playerId) return;
+    const channel = supabase.channel(topic(roomId, playerId));
+    channelRef.current = channel;
+    const sync = () => {
+      if (Date.now() - lastResponse.current > 8000) setConnected(false);
+      void channel.send({ type: "broadcast", event: "request", payload: pendingCommand.current ?? { type: "sync" } });
+    };
+    channel.on("broadcast", { event: "state" }, ({ payload }) => {
+      if (typeof payload?.revision !== "number" || payload.revision <= lastRevision.current) return;
+      lastRevision.current = payload.revision;
+      lastResponse.current = Date.now();
+      setConnected(true);
+      setSession(payload.session ?? null);
+      if (!payload.session || pendingCommand.current?.sessionId !== payload.session.id
+        || payload.acknowledged === pendingCommand.current?.id) {
+        pendingCommand.current = null;
+        setPending(false);
+      }
+    }).subscribe((status) => {
+      if (status !== "SUBSCRIBED") setConnected(false);
+      if (status === "SUBSCRIBED") sync();
+    });
+    const interval = window.setInterval(sync, 2500);
+    window.addEventListener("focus", sync);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", sync);
+      void supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [roomId, playerId]);
+
+  const send = useCallback((type: PhoneCommand["type"], targetPlayerId?: string) => {
+    if (!session || !channelRef.current) return;
+    sequence.current = Math.max(Date.now(), sequence.current + 1);
+    const command: PhoneCommand = { id: createPlayerActionRequestId(playerId ?? "phone", targetPlayerId ?? type), sessionId: session.id, sequence: sequence.current, type, targetPlayerId };
+    pendingCommand.current = command;
+    setPending(true);
+    void channelRef.current.send({ type: "broadcast", event: "request", payload: command });
+  }, [playerId, session]);
+
+  return { session, pending, connected, send };
+}

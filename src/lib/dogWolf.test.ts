@@ -18,7 +18,7 @@ describe("Dog-Wolf role model", () => {
 
   it("gives Actor the copied Dog-Wolf's owner with fresh power state", () => {
     const original = createDogWolfState("owner");
-    original.powerState.chamanCharges = 2;
+    original.powerState.shamanCharges = 2;
     original.powerState.foxDisabled = true;
 
     expect(createInheritedDogWolfState(original)).toEqual(createDogWolfState("owner"));

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, Eye } from "lucide-react";
+import { Moon, Sun, Eye, Smartphone } from "lucide-react";
+import { getScriptPhoneMode, type PhoneMode } from "@/lib/phoneActions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -81,6 +82,8 @@ interface NightScriptProps {
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
   onMimeReveal?: (sourcePlayerId?: string | null) => void;
   // Inline checkbox state for roles with limited uses
+  onPhoneToggle?: (mode: PhoneMode, lineKey: string, sourcePlayerId: string | null) => void;
+  activePhoneLineKey?: string | null;
   paranoidCharges?: number;
   onParanoidChargeToggle?: (idx: number) => void;
   angelCharges?: number;
@@ -269,6 +272,7 @@ function ScriptLineDisplay({
   dogWolfActingPoisoned,
   mimeLine,
   actingPoisoned,
+  phoneControl,
 }: {
   line: ScriptLine;
   poisonedRoles: Set<RoleId>;
@@ -322,6 +326,7 @@ function ScriptLineDisplay({
   dogWolfActingPoisoned?: boolean;
   mimeLine?: boolean;
   actingPoisoned?: boolean;
+  phoneControl?: ReactNode;
 }) {
   const lang = useLanguage();
   const { skinPackId } = useSkinPack();
@@ -413,7 +418,7 @@ function ScriptLineDisplay({
       onDragStart={handleNativeDragStart}
       onClickCapture={(event) => {
         const button = (event.target as HTMLElement).closest("button");
-        if (button && !button.hasAttribute("data-line-checkbox")) onLineCompletedChange(true);
+        if (button && !button.hasAttribute("data-line-checkbox") && !button.hasAttribute("data-phone-control")) onLineCompletedChange(true);
       }}
     >
       <motion.div
@@ -482,6 +487,8 @@ function ScriptLineDisplay({
             )}
           </div>
         )}
+
+        {phoneControl}
 
         {/* Fox checkbox */}
         {isFoxLine && showFoxCheckbox && onFoxDisabledToggle != null && (
@@ -577,6 +584,8 @@ function ScriptLineDisplay({
 }
 
 export const NightScript = ({
+  onPhoneToggle,
+  activePhoneLineKey,
   activeRoles,
   permanentlyDead: _permanentlyDeadPlayerIds,
   poisonedPlayerId,
@@ -1341,6 +1350,9 @@ export const NightScript = ({
                 ? Object.entries(baseRoleAssignments).find(([, role]) => role === lineRole)?.[0] ?? null
                 : null);
               const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
+              const phoneMode = item.actorNotice ? null : getScriptPhoneMode(item.line);
+              const phoneActive = activePhoneLineKey === item.key;
+              const phoneLabel = getTranslation(lang).ui.phoneActions[phoneActive ? "close" : "open"];
               const usesIndependentPowerState = !!independentPowerState || !!item.actorLine
                 || (!!item.drunkardLine && sourcePlayerId === actorPlayerId);
               const powerState = independentPowerState ?? actorPowerState;
@@ -1361,6 +1373,19 @@ export const NightScript = ({
               return (
               <ScriptLineDisplay
                 key={item.key}
+                phoneControl={phoneMode && onPhoneToggle ? (
+                  <button
+                    type="button"
+                    data-phone-control
+                    draggable={false}
+                    onDragStart={(event) => { event.preventDefault(); event.stopPropagation(); }}
+                    aria-label={phoneLabel}
+                    aria-pressed={phoneActive}
+                    title={phoneLabel}
+                    onClick={(event) => { event.stopPropagation(); onPhoneToggle(phoneMode, item.key, sourcePlayerId); }}
+                    className={`ml-2 inline-flex h-9 w-9 items-center justify-center rounded hover:bg-primary/20 ${phoneActive ? "bg-primary/20 text-primary" : "text-blue-400"}`}
+                  ><Smartphone className="h-5 w-5" /></button>
+                ) : null}
                 line={item.line}
                 poisonedRoles={poisonedRoles}
                 poisonedPlayerId={poisonedPlayerId}

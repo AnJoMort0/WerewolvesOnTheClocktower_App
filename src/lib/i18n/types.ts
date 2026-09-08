@@ -21,6 +21,8 @@ export function coerceLanguage(value: unknown, fallback: Language = "pt"): Langu
 
 export interface ScriptLine {
   text: string;
+  /** GM-controlled phone interaction; independent of the translated wording. */
+  phoneMode?: "hunt" | "allies" | "poison" | "shaman";
   requires?: RoleId[];
   conditionKey?: string;
 }
@@ -247,6 +249,23 @@ export interface GMRoomStrings {
 
 /** Static translatable UI strings. */
 export interface UIStrings {
+  // GM script phone controls, player night modes, and hunt approval dialog.
+  phoneActions: {
+    open: string;
+    close: string;
+    hunt: string;
+    allies: string;
+    poison: string;
+    shaman: string;
+    poisonConfirm: string;
+    save: string;
+    ignore: string;
+    confirm: string;
+    waiting: string;
+    reconnecting: string;
+    huntRequest: string;
+    soloHuntRequest: string;
+  };
   appTitle: string;
   appTagline: string;
   byline: string;

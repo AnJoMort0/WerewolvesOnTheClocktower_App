@@ -33,12 +33,18 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] 
+* [x] Adding phone interactions:
+  <!-- Codex 2026-09-08: Added GM-controlled, reconnectable phone sessions for group hunting, ally identification, Witch poisoning, and Shaman saving. Actor, Dog-Wolf, Drunkard, and Mime copies use their own player identity and power state; kills, poison owners, resurrection charges, and logs go through the existing GM action paths. Covered by rules, multi-device synchronization, script integration, and browser smoke tests. -->
+  * [x] In the Werewolves script line there's a "phone" icon button. When the GM clicks that button the Werewolves devices chante to group hunt mode (change aesthetics), if a werewolf selects a player in the circle, a small icon appears over that player in every werewolf device and when all werewolves have the same player selected the GM receives a pop-up to confirm ro deny the kill. In the map, all werewolves are red with the werewolf icon. (all of these interactions include the Pupetteer too, since he is pretending to be a werewolf) The GM can remove that screen from players at anytime by clicking the phone button again in the script line.
+  * [x] In the Werewolves wake up to see the alies script line, make it so there's the phone icon and when clicked the werewolve's devices change to a mode where they can see all the players, with all the evil beings appearing red and with the evil being icon, werewolves appear with the werewolf icon.
+  * [x] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device changes to poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script, it turns off the mode in the player's device.
+  * [x] The chaman also has the phone icon and when clicked he enters his magic mode, where he can see the red x players in his circle and click on one of them and then clicked "save", otherwise he can just click "ignore" and that closes his mode with no action. GM can also close as always.
   
 ## Future Plans
 
-* [ ] Adding phone interactions:
-  * [ ] In the Bruxa script line there is a "phone" icon button. When the GM clicks that button the Witch player device screen changes to the player circle and a poison button option appears, when the player clicks that button, he is in poison mode (change aesthetics --> green), so he can click on a player on the circle that he wants to poison and there's a confirm of do you want to poison "player" ? And if he confirms, that player is poisoned and the poison mode turns off and the player can't do any more actions, same thing if the GM clicks off in the phone button in the script.
+* [ ] Add the new 25th aniversary WoMH cards
+* [ ] Add evil being that requests anonymous votes
+* [ ] Adding phone interactions
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)
 * [ ] Add an English rulebook and English UI.
 * [ ] Add better role-selection presets for different player counts and play styles (also better balance).
