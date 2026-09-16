@@ -1008,7 +1008,7 @@ export const RULEBOOK_CHARACTERS = {
                 `<red>Si assassiné</red>, son Fantôme <red>peut continuer à voter</red> et son vote sera doublé.`,
             ],
             en: [
-                `<red>Twice during the entire game</red>, may reveal themself and cancel an execution during the Tribunal.`,
+                `<red>Twice during the entire game</red>, may reveal himself and cancel an execution during the Tribunal.`,
                 `This power may only be used once per day.`,
                 `<red>If assassinated</red>, the Ghost <red>may continue voting</red>, and their vote counts double.`
             ]
@@ -1052,7 +1052,7 @@ export const RULEBOOK_CHARACTERS = {
                 `Il ne peut utiliser ce pouvoir qu'une fois par jour.`,
             ],
             en: [
-                `<red>Twice during the entire game</red>, may reveal themself and force an execution during the Tribunal.`,
+                `<red>Twice during the entire game</red>, may reveal himself and force an execution during the Tribunal.`,
                 `This power may only be used once per day.`
             ]
         },
@@ -1185,7 +1185,7 @@ export const RULEBOOK_CHARACTERS = {
             ],
             en: [
                 `<red>Each night</red>, chooses a player who will be immune <red>during that night</red>.`,
-                `May also choose themself.`
+                `May also choose himself.`
             ]
         },
         details: [
@@ -1581,7 +1581,7 @@ export const RULEBOOK_CHARACTERS = {
             ],
             en: [
                 `<red>Twice</red> per game, chooses whether to disguise themself as Grandmother (👍/👎), gaining immunity for one day and one night.`,
-                `<red>Even while immune</red>, may be <red>executed</red> if Little Red Riding Hood brings them to the Tribunal. In that specific case, if the Hunter votes, the Big Bad Werewolf is executed automatically.`
+                `<red>Even while immune</red>, may be <red>executed</red> if Little Red Riding Hood brings him to the Tribunal. In that specific case, if the Hunter votes, the Big Bad Werewolf is executed automatically.`
             ]
         },
         details: [
@@ -2453,7 +2453,7 @@ export const RULEBOOK_CHARACTERS = {
                 `Elle se réveille <red>UNE FOIS</red> avec les Loups-garous la nuit suivante pour qu’ils sachent qu’elle les aidera.`,
             ],
             en: [
-                `The Sisters recognize each other.`,
+                `The Sisters know each other.`,
                 `If one Sister is <red>executed</red>, the other may <red>choose</red> revenge and become an Evil Being.`,
                 `She wakes up with the Werewolves <red>ONLY ONCE</red> on the following night so they know she will help them during the day.`
             ]
@@ -2495,7 +2495,7 @@ export const RULEBOOK_CHARACTERS = {
                 `Les Frères se connaissent.`, `Tant qu’au moins deux survivent la nuit, aucun d’eux ne meurt.`,
             ],
             en: [
-                `The Brothers recognize each other.`,
+                `The Brothers know each other.`,
                 `As long as at least two Brothers survive the night, none of them dies.`
             ]
         },
@@ -3004,7 +3004,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Cupido acorda e escolhe dois jogadores que serão Namorados. O Cupido adormece e os Namorados serão agora tocados e podem se conhecer. Se um Namorado morre, o outro se suicida. O objetivo dos Namorados e do Cupido é que os Namorados sejam os últimos sobreviventes. Enquanto os Namorados estiverem vivos, o jogo continua.`,
                 fr: `Cupidon se réveille et choisit deux joueurs qui seront Amoureux. Cupidon s’endort et les Amoureux seront maintenant touchés pour qu’ils se connaissent. Si un Amoureux meurt, l’autre se suicide. L’objectif des Amoureux et de Cupidon est que les Amoureux soient les derniers survivants. Tant que les Amoureux sont en vie, le jeu continue.`,
-                en: `Cupid wakes up and chooses two players who will become Lovers. Cupid goes back to sleep, and the Lovers are touched so they can wake up and recognize each other. If one Lover dies, the other commits suicide. The goal of the Lovers and Cupid is for the Lovers to be the last survivors. The game continues for as long as both Lovers are alive.`
+                en: `Cupid wakes up and chooses two players who will become Lovers. Cupid goes back to sleep, and the Lovers are touched so they can wake up and get to know each other. If one Lover dies, the other commits suicide. The goal of the Lovers and Cupid is for the Lovers to be the last survivors. The game continues for as long as both Lovers are alive.`
             }
         },
         {
@@ -3013,7 +3013,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Cupido Malvado acorda e escolhe dois jogadores que serão Inimigos. O Cupido Malvado adormece e os Inimigos serão tocados e podem se conhecer. Se um Inimigo consegue condenar o outro a execução, o primeiro recebe imunidade na próxima tentativa de assassinato.`,
                 fr: `Le Méchant Cupidon se réveille et choisit deux joueurs qui seront Ennemis. Le Méchant Cupidon s’endort et les Ennemis seront maintenant touchés pour qu’ils se connaissent. Si un Ennemi parvient à amener l’autre à exécution, le premier reçoit immunité contre le prochain assassinat.`,
-                en: `Evil Cupid wakes up and chooses two players who will become Enemies. Evil Cupid goes back to sleep, and the Enemies are touched so they can wake up and recognize each other. If one Enemy manages to have the other condemned to execution, the first gains immunity from the next assassination attempt.`
+                en: `Evil Cupid wakes up and chooses two players who will become Enemies. Evil Cupid goes back to sleep, and the Enemies are touched so they can wake up and get to know each other. If one Enemy manages to have the other condemned to execution, the first gains immunity from the next assassination attempt.`
             }
         },
         {
@@ -3022,7 +3022,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `As Irmãs acordam para se conhecerem.`,
                 fr: `Les Sœurs se réveillent pour se connaître.`,
-                en: `The Sisters wake up to recognize each other.`
+                en: `The Sisters wake up to see each other.`
             }
         },
         {
@@ -3031,7 +3031,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `Os Irmãos acordam para se conhecerem.`,
                 fr: `Les Frères se réveillent pour se connaître.`,
-                en: `The Brothers wake up to recognize each other.`
+                en: `The Brothers wake up to see each other.`
             }
         },
         {
@@ -3440,7 +3440,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `(A cada 3 noites) O Lobisomem Branco acorda e escolhe o Lobisomem que quer matar. / O Lobisomem Branco acorda e escolhe mais um jogador que quer matar.`,
                 fr: `(Toutes les 3 nuits) Le Loup-garou Blanc se réveille et choisit le Loup-garou qu’il veut tuer. / Le Loup-garou Blanc choisit un joueur supplémentaire qu’il veut tuer.`,
-                en: `Every 3 nights, the White Werewolf wakes up and chooses a Werewolf to kill. If the White Werewolf is the only Werewolf, they choose one additional player to kill.`
+                en: `Every 3 nights, the White Werewolf wakes up and chooses a Werewolf to kill. If the White Werewolf is the only Werewolf, he chooses one additional player to kill.`
             }
         },
         {
