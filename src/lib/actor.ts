@@ -8,6 +8,7 @@ const ACTOR_DRUNKARD_CHARACTER_PREFIX = `${ACTOR_CHARACTER_PREFIX}a01:`;
 export type ActorPowerState = {
   shamanCharges: number;
   foxDisabled: boolean;
+  monkeyDisabled: boolean;
   paranoidCharges: number;
   angelCharges: number;
   bigBadWolfCharges: number;
@@ -24,6 +25,7 @@ export type ActorPowerState = {
 export const EMPTY_ACTOR_POWER_STATE: ActorPowerState = {
   shamanCharges: 0,
   foxDisabled: false,
+  monkeyDisabled: false,
   paranoidCharges: 0,
   angelCharges: 0,
   bigBadWolfCharges: 0,

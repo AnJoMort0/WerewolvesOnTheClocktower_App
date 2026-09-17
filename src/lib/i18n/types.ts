@@ -250,6 +250,7 @@ export interface GMRoomStrings {
 
 /** Static translatable UI strings. */
 export interface UIStrings {
+  monkeyReveal: { choose: string; confirm: string; close: string; reopen: string; noCard: string };
   // GM script phone controls, player night modes, and hunt approval dialog.
   phoneActions: {
     huntVotes: string;

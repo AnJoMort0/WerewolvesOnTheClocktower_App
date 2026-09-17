@@ -12,6 +12,7 @@ export const en: Translation = {
     v03: "Raven Tamer",
     v04: "Fox Tamer",
     v05: "Bunny Tamer",
+    v26: "Monkey Tamer",
     v06: "Puppeteer",
     v07: "Rusted Knight",
     v08: "Hunter",
@@ -70,6 +71,7 @@ export const en: Translation = {
       { text: "The {Raven Tamer} wakes up and learns how many Evil Beings live in the Village.", requires: ["v03"] },
       { text: "The {Fox Tamer} wakes up and indicates three neighboring players. A thumbs-up or thumbs-down reveals whether at least one of those three players is an Evil Being.", requires: ["v04"] },
       { text: "The {Bear} growls / does not growl.", requires: ["v02"] },
+      { text: "The {Monkey Tamer} wakes up and chooses a player whose card will be revealed.", requires: ["v26"] },
       { text: "The {Village Elder} wakes up and chooses a player who will automatically have 2 votes against them at the next Tribunal.", requires: ["v11"] },
       { text: "At the end of the night, a howl is heard. The Village now knows that the Werewolves have revealed themselves and are hungry. The Village wakes up suspicious of everyone." },
     ],
@@ -113,6 +115,7 @@ export const en: Translation = {
       { text: "The {Vampire Werewolf} wakes up and uses a thumb signal to decide whether to turn the victim into a Werewolf. If so, the victim is touched and will wake up with the Werewolves from now on. The victim uses a thumb signal to choose whether to keep their powers.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
       { text: "(Every 3 nights) The {White Werewolf} wakes up and chooses a Werewolf to kill.", requires: ["s02"], conditionKey: "whitewolfNight" },
       { text: "The {Bunny Tamer} heard the frightened {Bunnies} tonight. / [nothing] (/ the {Bunnies} are confused)", requires: ["v05"] },
+      { text: "The {Monkey Tamer} wakes up and chooses a player whose card will be revealed. If the revealed character is an Evil Being, the {Monkey Tamer} loses their power.", requires: ["v26"] },
       { text: "The {Priest} wakes up. Any player who wishes to confess by revealing their card to the Priest may raise a hand. The {Priest} chooses one of those players, who is touched and wakes up. That player sees who the Priest is and shows their role.", requires: ["v25"] },
       { text: "The {Mime} wakes up and is shown a role that is in play. They silently perform that role's action or receive the information that role would receive.", requires: ["a03"] },
       { text: "The {Shaman} wakes up and is shown the victims. The {Shaman} then uses a thumb signal to choose whether to save on of them. Remember that the {Shaman} may save two people during the entire game.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
@@ -140,6 +143,13 @@ export const en: Translation = {
   },
 
   ui: {
+    monkeyReveal: {
+      choose: "Choose a player to see their card.",
+      confirm: "Reveal card",
+      close: "Close",
+      reopen: "Reopen card",
+      noCard: "No card is available. Ask the Game Master.",
+    },
     // GM phone controls and player night action screens.
     phoneActions: {
       huntVotes: "Live hunt votes",

@@ -55,6 +55,59 @@ beforeEach(() => { vi.useFakeTimers(); window.localStorage.clear(); bus.dropStat
 afterEach(() => { cleanup(); bus.receivers.clear(); vi.useRealTimers(); });
 
 describe("phone synchronization across GM and player devices", () => {
+  it("lets the GM or Monkey confirm once, synchronizes closes, and restores revealed cards", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };
+    const props = { roomId: "room", contextKey: "playing:night:2", enabled: true, world: monkeyWorld, onAction, onComplete };
+    const gm = renderHook((p) => useGMPhoneActions(p), { initialProps: props });
+    const monkey = renderHook(() => usePlayerPhoneActions("room", "monkey"));
+    const outsider = renderHook(() => usePlayerPhoneActions("room", "witch"));
+    act(() => gm.result.current.toggle("monkey", "monkey-line", "monkey", 31));
+    expect(monkey.result.current.session?.mode).toBe("monkey");
+    expect(outsider.result.current.session).toBeNull();
+    expect(onComplete).not.toHaveBeenCalled();
+    act(() => gm.result.current.confirmMonkey("wolf"));
+    expect(monkey.result.current.session?.monkeyReveal?.roleId).toBe("e01");
+    act(() => monkey.result.current.send("confirm", "victim"));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "monkey-line", progressOrder: 31 }));
+    gm.rerender({ ...props, world: { ...monkeyWorld, players: monkeyWorld.players.map((p) => p.id === "monkey" ? { ...p, powerless: true, monkeyDisabled: true } : p) } });
+    act(() => monkey.result.current.send("close"));
+    expect(gm.result.current.session?.visible).toBe(false);
+    act(() => gm.result.current.toggle("monkey", "monkey-line", "monkey", 31));
+    expect(monkey.result.current.session?.visible).toBe(true);
+    act(() => gm.result.current.close());
+    expect(monkey.result.current.session?.visible).toBe(false);
+    act(() => monkey.result.current.send("reopen"));
+    expect(gm.result.current.session?.monkeyReveal?.roleId).toBe("e01");
+    gm.unmount();
+    const restored = renderHook(() => useGMPhoneActions(props));
+    expect(restored.result.current.session?.monkeyReveal?.roleId).toBe("e01");
+    act(() => restored.result.current.toggle("allies", "allies-line", null));
+    act(() => restored.result.current.toggle("monkey", "monkey-line", "monkey", 31));
+    expect(restored.result.current.session?.monkeyReveal?.roleId).toBe("e01");
+    expect(onAction).toHaveBeenCalledTimes(1);
+    act(() => restored.result.current.reset());
+    act(() => restored.result.current.toggle("monkey", "monkey-line", "monkey", 31));
+    expect(restored.result.current.session?.monkeyReveal).toBeUndefined();
+  });
+
+  it("accepts a Monkey selection from the phone and recovers a lost reveal response", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };
+    const gm = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "playing:night:2", enabled: true, world: monkeyWorld, onAction, onComplete }));
+    const monkey = renderHook(() => usePlayerPhoneActions("room", "monkey"));
+    act(() => gm.result.current.toggle("monkey", "monkey-line", "monkey"));
+    bus.dropStates(true);
+    act(() => monkey.result.current.send("confirm", "wolf"));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    bus.dropStates(false);
+    act(() => vi.advanceTimersByTime(2500));
+    expect(monkey.result.current.session?.monkeyReveal?.roleId).toBe("e01");
+    expect(monkey.result.current.pending).toBe(false);
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
   const setup = () => {
     const onAction = vi.fn();
     const onComplete = vi.fn();

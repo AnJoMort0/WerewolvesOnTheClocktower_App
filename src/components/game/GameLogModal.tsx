@@ -11,13 +11,13 @@ import type { PlayerStatus, StatusEffect } from "@/components/game/PlayerStatusP
 import { STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { formatGameRuntime } from "@/lib/gameRuntime";
-import poisonedIcon from "@/assets/icons/poisoned.png";
-import illusionIcon from "@/assets/icons/illusion.png";
-import ghostIcon from "@/assets/icons/ghost.png";
-import ghostExecutedIcon from "@/assets/icons/ghost_executed.png";
-import ghostRessurectIcon from "@/assets/icons/ghost_ressurect.png";
-import villagerIcon from "@/assets/icons/villager.png";
-import cardSwitchIcon from "@/assets/icons/card_switch.png";
+import poisonedIcon from "@/assets/display/icons/poisoned.webp";
+import illusionIcon from "@/assets/display/icons/illusion.webp";
+import ghostIcon from "@/assets/display/icons/ghost.webp";
+import ghostExecutedIcon from "@/assets/display/icons/ghost_executed.webp";
+import ghostRessurectIcon from "@/assets/display/icons/ghost_ressurect.webp";
+import villagerIcon from "@/assets/display/icons/villager.webp";
+import cardSwitchIcon from "@/assets/display/icons/card_switch.webp";
 
 interface GameLogModalProps {
   runtimeMs?: number;

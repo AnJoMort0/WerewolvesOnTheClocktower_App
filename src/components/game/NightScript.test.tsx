@@ -1,7 +1,7 @@
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NightScript } from "@/components/game/NightScript";
-import { LanguageContext } from "@/lib/i18n";
+import { getRoleLabel, LanguageContext } from "@/lib/i18n";
 import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
 import { createDogWolfState } from "@/lib/dogWolf";
 
@@ -23,6 +23,58 @@ const baseProps = {
 };
 
 describe("NightScript phone controls", () => {
+  it("provides the Monkey exhaustion checkbox only after the first night", () => {
+    const onMonkeyDisabledToggle = vi.fn();
+    const props = { ...baseProps, activeRoles: new Set(["v26" as const]), roleAssignments: { monkey: "v26" as const },
+      players: [{ id: "monkey", name: "Monkey", seat_position: 0 }], monkeyDisabled: false, onMonkeyDisabledToggle };
+    const { getByRole, queryByRole, rerender } = render(<NightScript {...props} nightNumber={1} />);
+    expect(queryByRole("checkbox", { name: "Poder esgotado" })).toBeNull();
+    expect(getByRole("button", { name: getRoleLabel("v26", "pt") })).toBeInTheDocument();
+    rerender(<NightScript {...props} nightNumber={2} />);
+    const checkbox = getByRole("checkbox", { name: "Poder esgotado" });
+    expect(checkbox).not.toBeChecked();
+    expect(checkbox).toHaveClass("border-blue-400");
+    fireEvent.click(checkbox);
+    expect(onMonkeyDisabledToggle).toHaveBeenCalledOnce();
+  });
+
+  it("keeps copied Monkey exhaustion independent and restores manually enabled actions", () => {
+    const onMonkeyDisabledToggle = vi.fn(), onActorPowerStateChange = vi.fn();
+    const props = { ...baseProps, activeRoles: new Set(["v26" as const, "a04" as const]),
+      roleAssignments: { monkey: "v26" as const, actor: "v26" as const },
+      baseRoleAssignments: { monkey: "v26" as const, actor: "a04" as const },
+      actorPlayerId: "actor", actorCopiedRole: "v26" as const, actorCopyNoticeNight: 1,
+      players: [{ id: "monkey", name: "Monkey", seat_position: 0 }, { id: "actor", name: "Actor", seat_position: 1 }],
+      monkeyDisabled: true, onMonkeyDisabledToggle, onActorPowerStateChange };
+    const { getByRole, queryAllByRole, rerender } = render(<NightScript {...props}
+      powerlessPlayerIds={new Set(["monkey"])} actorPowerState={EMPTY_ACTOR_POWER_STATE} />);
+    expect(queryAllByRole("button", { name: getRoleLabel("v26", "pt") })).toHaveLength(1);
+    fireEvent.click(getByRole("checkbox", { name: "Poder esgotado" }));
+    expect(onActorPowerStateChange).toHaveBeenCalledWith(expect.objectContaining({ monkeyDisabled: true }));
+    expect(onMonkeyDisabledToggle).not.toHaveBeenCalled();
+    rerender(<NightScript {...props} powerlessPlayerIds={new Set(["monkey", "actor"])}
+      actorPowerState={{ ...EMPTY_ACTOR_POWER_STATE, monkeyDisabled: true }} />);
+    expect(queryAllByRole("button", { name: getRoleLabel("v26", "pt") })).toHaveLength(0);
+    rerender(<NightScript {...props} monkeyDisabled={false} powerlessPlayerIds={new Set()}
+      actorPowerState={EMPTY_ACTOR_POWER_STATE} />);
+    expect(queryAllByRole("button", { name: getRoleLabel("v26", "pt") })).toHaveLength(2);
+  });
+
+  it("opens the Monkey's private selection using an eye, including Actor copies", () => {
+    const onPhoneToggle = vi.fn();
+    const { container, getAllByRole } = render(<NightScript {...baseProps}
+      activeRoles={new Set(["v26", "a04"])}
+      roleAssignments={{ monkey: "v26", actor: "v26" }} baseRoleAssignments={{ monkey: "v26", actor: "a04" }}
+      abilityRoleAssignments={{ monkey: "v26", actor: "v26" }} actorPlayerId="actor" actorCopiedRole="v26" actorCopyNoticeNight={1}
+      players={[{ id: "monkey", name: "Monkey", seat_position: 0 }, { id: "actor", name: "Actor", seat_position: 1 }]}
+      onPhoneToggle={onPhoneToggle} />);
+    const eyes = getAllByRole("button", { name: getRoleLabel("v26", "pt") });
+    expect(eyes).toHaveLength(2);
+    eyes.forEach((eye) => { expect(eye.querySelector(".lucide-eye")).toBeInTheDocument(); fireEvent.click(eye); });
+    expect(onPhoneToggle).toHaveBeenCalledWith("monkey", expect.any(String), "monkey", expect.any(Number));
+    expect(onPhoneToggle).toHaveBeenCalledWith("monkey", expect.any(String), "actor", expect.any(Number));
+    expect(container.querySelector('[data-phone-mode="monkey"]')).not.toBeInTheDocument();
+  });
   it("opens Witch and allies modes without marking either line completed", () => {
     const onPhoneToggle = vi.fn();
     const onLineCompletedChange = vi.fn();

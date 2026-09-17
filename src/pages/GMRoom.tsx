@@ -14,6 +14,7 @@ import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/ga
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
+import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { assignRoles, EVIL_ROLES, INFO_ROLES, LIMITED_USE_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
+import { assignRoles, EVIL_ROLES, LIMITED_USE_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
 import { LanguageContext, coerceLanguage, getEffectLabel, getRoleLabel, getScripts, getTranslation, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getActiveSeasonalRoleIds, resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
@@ -48,7 +49,7 @@ import { hasAttackImmunity, resolveProtectedDeaths } from "@/lib/immunity";
 import { useGMPhoneActions } from "@/hooks/usePhoneActions";
 import { useGameRuntime } from "@/hooks/useGameRuntime";
 import { formatGameRuntime } from "@/lib/gameRuntime";
-import { getPhoneView, type PhoneAction, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
+import { getPhoneView, shouldExhaustMonkeyPower, type PhoneAction, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
 import {
   EMPTY_ACTOR_POWER_STATE,
   encodeActorCharacter,
@@ -87,10 +88,10 @@ import {
   type PlayerActionState,
 } from "@/lib/playerActions";
 import { ESSENTIAL_ROLES, getDuplicateUniqueRoles } from "@/lib/roleValidation";
-import poisonedIcon from "@/assets/icons/poisoned.png";
-import illusionIcon from "@/assets/icons/illusion.png";
-import imunityIcon from "@/assets/icons/imunity_full.png";
-import villagerIcon from "@/assets/icons/villager.png";
+import poisonedIcon from "@/assets/display/icons/poisoned.webp";
+import illusionIcon from "@/assets/display/icons/illusion.webp";
+import imunityIcon from "@/assets/display/icons/imunity_full.webp";
+import villagerIcon from "@/assets/display/icons/villager.webp";
 
 const JOIN_BASE_URL_STORAGE_KEY = "wotct_join_base_url";
 const GM_ADVANCED_STORAGE_PREFIX = "wotct_gm_advanced_";
@@ -198,6 +199,7 @@ type GMSnapshot = {
   shamanCharges: number;
   lastNightDeadPlayerIds: string[];
   foxDisabled: boolean;
+  monkeyDisabled?: boolean;
   nightTargetedPlayerIds: string[];
   rustedKnightLinkedDeath: string | null;
   tetanusSourcePlayerIds?: Record<string, string>;
@@ -545,6 +547,7 @@ const GMRoom = () => {
   const [spyRevealOpen, setSpyRevealOpen] = useState(false);
   const [spyRevealCards, setSpyRevealCards] = useState<RevealCard[]>([]);
   const [gmSnapshotLoaded, setGmSnapshotLoaded] = useState(false);
+  const [monkeyDisabled, setMonkeyDisabled] = useState(false);
   const gameRuntime = useGameRuntime(roomId, room?.status, gmSnapshotLoaded);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [winPickerOpen, setWinPickerOpen] = useState(false);
@@ -1319,6 +1322,7 @@ const GMRoom = () => {
       setShamanCharges(snapshot.shamanCharges ?? legacySnapshot.chamanCharges ?? 0);
       setLastNightDeadPlayerIds(snapshot.lastNightDeadPlayerIds ?? []);
       setFoxDisabled(!!snapshot.foxDisabled);
+      setMonkeyDisabled(!!snapshot.monkeyDisabled);
       setNightTargetedPlayerIds(new Set(snapshot.nightTargetedPlayerIds ?? []));
       setRustedKnightLinkedDeath(snapshot.rustedKnightLinkedDeath ?? legacySnapshot.cavalerioLinkedDeath ?? null);
       setTetanusSourcePlayerIds(snapshot.tetanusSourcePlayerIds ?? {});
@@ -1423,6 +1427,7 @@ const GMRoom = () => {
       hideScreenMode,
       syncedTimerState,
       completedScriptLineKeys: Array.from(completedScriptLineKeys),
+      monkeyDisabled,
       gameLogEvents,
       declinedAutomaticVictory,
       actorIdolUses,
@@ -1491,6 +1496,7 @@ const GMRoom = () => {
     hideScreenMode,
     syncedTimerState,
     completedScriptLineKeys,
+    monkeyDisabled,
     gameLogEvents,
     declinedAutomaticVictory,
     actorIdolUses,
@@ -1878,6 +1884,7 @@ const GMRoom = () => {
     setScriptAutoComplete({ role: null, sourcePlayerIds: [], version: 0 });
     setGameLogOpen(false);
     setGameLogEvents([]);
+    setMonkeyDisabled(false);
     suppressedPoisonLogAddsRef.current.clear();
     suppressedEffectLogAddsRef.current.clear();
     pendingGameActionLogSourcesRef.current.clear();
@@ -1917,7 +1924,7 @@ const GMRoom = () => {
     if (!roomId) return;
     const lang = (room?.language as Language) || "pt";
     if (!window.confirm(t("resetRoomConfirm", lang))) return;
-    phone.close();
+    phone.reset();
 
     const playerUpdates = players.map((player) =>
       supabase
@@ -2125,10 +2132,6 @@ const GMRoom = () => {
 
     const seatedPlayers = [...players].sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0));
     const roles = assignRoles(seatedPlayers.length, advancedEnabled, getActiveSeasonalRoleIds(skinPackId));
-    if (roles.includes("a01")) {
-      const candidates = getDrunkardReplacementCandidates(roles).filter((id) => INFO_ROLES.includes(id));
-      setDrunkardReplacementRole(candidates[Math.floor(Math.random() * candidates.length)] ?? "v02");
-    }
     const assignments: Record<string, RoleId> = {};
     seatedPlayers.forEach((p, i) => {
       assignments[p.id] = roles[i];
@@ -3957,8 +3960,11 @@ const GMRoom = () => {
   const powerlessPlayerIds = useMemo(() => {
     const s = new Set<string>();
     if (vampireVictimId && !vampireVictimKeepsPower) s.add(vampireVictimId);
+    for (const [id, role] of Object.entries(abilityRoleAssignments)) {
+      if (role === "v26" && (independentPowerStates[id]?.monkeyDisabled ?? monkeyDisabled)) s.add(id);
+    }
     return s;
-  }, [vampireVictimId, vampireVictimKeepsPower]);
+  }, [abilityRoleAssignments, independentPowerStates, monkeyDisabled, vampireVictimId, vampireVictimKeepsPower]);
 
   const resetUsesForRoleId = useCallback((role: RoleId | undefined) => {
     if (!role) return;
@@ -3970,6 +3976,7 @@ const GMRoom = () => {
     if (role === "m02") setWerewolfSeerUsed(false);
     if (role === "m03") setVampireWolfUsed(false);
     if (role === "v04") setFoxDisabled(false);
+    if (role === "v26") setMonkeyDisabled(false);
     if (role === "v23") setSpiderDayChangeUsed(false);
   }, []);
 
@@ -4609,6 +4616,9 @@ const GMRoom = () => {
         id: player.id, name: player.name, seat_position: player.seat_position,
         dead, redX: playerStatuses[player.id] === "dead-this-night",
         abilityRole: abilityRoleAssignments[player.id], objectiveRole: objectiveRoleAssignments[player.id],
+        displayRole: effectiveRoleAssignments[player.id], actingPoisoned: isPlayerActingPoisoned(player.id),
+        illusion: illusionPlayerIds.has(player.id),
+        monkeyDisabled: independentPowerStates[player.id]?.monkeyDisabled ?? monkeyDisabled,
         werewolfTurned: effects.has("werewolf_turned"), evil: effects.has("evil_being"),
         mime: player.id === mimePlayerId,
         canWake: (!dead || prophecyGhostPlayerIds.has(player.id)) && !effects.has("host") && !effects.has("burned")
@@ -4616,10 +4626,22 @@ const GMRoom = () => {
         powerless: powerlessPlayerIds.has(player.id),
       };
     }),
-  }), [abilityRoleAssignments, isPlayerActingPoisoned, mimePlayerId, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
-  const applyPhoneAction = useCallback(({ action, targetPlayerId, sourcePlayerId }: PhoneAction) => {
+  }), [abilityRoleAssignments, effectiveRoleAssignments, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
+  const applyPhoneAction = useCallback(({ action, targetPlayerId, sourcePlayerId, monkeyReveal }: PhoneAction) => {
+    if (action === "monkey") {
+      if (!sourcePlayerId || !monkeyReveal) return;
+      // Revealed Evil Beings exhaust this source's power without killing them.
+      // Preserve independent state when the Monkey power belongs to a copy.
+      if (shouldExhaustMonkeyPower(monkeyReveal, nightNumber)) {
+        const powerState = independentPowerStates[sourcePlayerId];
+        if (powerState) handleIndependentPowerStateChange(sourcePlayerId, { ...powerState, monkeyDisabled: true });
+        else setMonkeyDisabled(true);
+      }
+      handleDragAction("__catch__", targetPlayerId, sourcePlayerId);
+      return;
+    }
     handleDragAction(action, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
-  }, [handleDragAction]);
+  }, [handleDragAction, handleIndependentPowerStateChange, independentPowerStates, nightNumber]);
   const completePhoneLine = useCallback((session: PhoneSession) => {
     handleScriptLineCompleted(session.lineKey, true, session.progressOrder ?? null);
   }, [handleScriptLineCompleted]);
@@ -5630,12 +5652,20 @@ const GMRoom = () => {
   const unseatedPlayers = players.filter((p) => p.seat_position === null);
   const isPlaying = room.status === "playing";
   const pendingWinKind = manualWinKind ?? automaticWinKind;
+  const scriptPowerlessPlayerIds = new Set(powerlessPlayerIds);
+  // This night's resolved line can reopen the card, even after power loss.
+  phone.monkeySourceIds.forEach((id) => scriptPowerlessPlayerIds.delete(id));
   const huntView = phone.session?.mode === "hunt"
     ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
 
   return (
     <LanguageContext.Provider value={lang}>
     <div className="min-h-screen p-4">
+      {phone.session?.mode === "monkey" && !hideScreenMode && (
+        <MonkeyRevealModal key={phone.session.id}
+          session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
+          language={lang} onConfirm={phone.confirmMonkey} onClose={phone.close} />
+      )}
       {huntView && phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
         <Dialog open onOpenChange={(open) => { if (!open) phone.close(); }}>
           <DialogContent className="max-h-[90dvh] overflow-y-auto border-destructive/50 [&>button]:hidden"
@@ -5883,6 +5913,8 @@ const GMRoom = () => {
                   isWitchPoisoned={isWitchPoisoned}
                   foxDisabled={foxDisabled}
                   onFoxDisabledToggle={() => { setFoxDisabled((v) => !v); markScriptRoleAction("v04"); }}
+                  monkeyDisabled={monkeyDisabled}
+                  onMonkeyDisabledToggle={() => { setMonkeyDisabled((v) => !v); markScriptRoleAction("v26"); }}
                   showFoxCheckbox={nightNumber > 1}
                   playerEffects={displayedPlayerEffects}
                   gameCyclePhase={gameCyclePhase}
@@ -6039,11 +6071,13 @@ const GMRoom = () => {
                     playerStatuses={playerStatuses}
                     foxDisabled={foxDisabled}
                     onFoxDisabledToggle={() => setFoxDisabled((v) => !v)}
+                    monkeyDisabled={monkeyDisabled}
+                    onMonkeyDisabledToggle={() => setMonkeyDisabled((v) => !v)}
                     nightTargetedPlayerIds={nightTargetedPlayerIds}
                     conditionKeys={conditionKeys}
                     playerEffects={playerEffects}
                     prophecyGhostPlayerIds={prophecyGhostPlayerIds}
-                    powerlessPlayerIds={powerlessPlayerIds}
+                    powerlessPlayerIds={scriptPowerlessPlayerIds}
                     paranoidCharges={paranoidCharges}
                     onParanoidChargeToggle={(idx) => setParanoidCharges(prev => prev > idx ? idx : idx + 1)}
                     angelCharges={angelCharges}
@@ -6249,11 +6283,18 @@ const GMRoom = () => {
                               )}
                             </div>
                           )}
-                          {isFox && nightNumber > 1 && !isPermanentDead && (
+                          {(isFox || mechanicalRoleId === "v26") && nightNumber > 1 && !isPermanentDead && (
                             <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <Checkbox
-                                checked={independentPowerState?.foxDisabled ?? foxDisabled}
+                                checked={mechanicalRoleId === "v26" ? independentPowerState?.monkeyDisabled ?? monkeyDisabled : independentPowerState?.foxDisabled ?? foxDisabled}
+                                aria-label={tt("powerExhausted")}
                                 onCheckedChange={() => {
+                                  if (mechanicalRoleId === "v26") {
+                                    if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, monkeyDisabled: !independentPowerState.monkeyDisabled });
+                                    else setMonkeyDisabled((v) => !v);
+                                    markScriptRoleAction("v26", player.id);
+                                    return;
+                                  }
                                   if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, foxDisabled: !independentPowerState.foxDisabled });
                                   else setFoxDisabled((v) => !v);
                                   markScriptRoleAction("v04", player.id);

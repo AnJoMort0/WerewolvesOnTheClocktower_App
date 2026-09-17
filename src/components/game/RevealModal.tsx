@@ -4,8 +4,8 @@ import { ROLES, type RoleId } from "@/lib/roles";
 import { getRoleLabel, t, type Language } from "@/lib/i18n";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
-import ghostExecutedIcon from "@/assets/icons/ghost_executed.png";
-import villagerIcon from "@/assets/icons/villager.png";
+import ghostExecutedIcon from "@/assets/display/icons/ghost_executed.webp";
+import villagerIcon from "@/assets/display/icons/villager.webp";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 

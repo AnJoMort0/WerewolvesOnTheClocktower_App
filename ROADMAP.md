@@ -34,15 +34,15 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Balance Changes
 
-<!-- Codex 2026-09-17: Implemented documented randomizer eligibility and weighted selection in roles.ts. White Wolf requires exactly four wolves (16-19 players). Little Girl requires two alternate-death characters; Puppeteer needs 12 players; Lamplighter needs three limited-use powers; Spy needs two characters without unconditional recurring night lines. Drunkard keeps one sober INFO character plus an INFO replacement chosen during automatic GM setup. Enabled advanced roles have 2x weight; cards with active seasonal artwork in the selected seasonal pack have 1.25x weight. Simple cards/families participate at 0.6x base weight, and families always occupy complete groups. No advanced or seasonal card is guaranteed. -->
+<!-- Codex 2026-09-17: Implemented documented randomizer eligibility and weighted selection in roles.ts. White Wolf requires at least four wolves (16+ players). Little Girl requires two alternate-death characters; Puppeteer needs 12 players; Lamplighter needs three limited-use powers; Spy needs two characters without unconditional recurring night lines. Drunkard keeps its usual replacement pool, including non-INFO characters, and requires at least one separate sober INFO character. Enabled advanced roles have 2x weight; cards with active seasonal artwork in the selected seasonal pack have 1.25x weight. Simple cards/families participate at 0.6x base weight, and families always occupy complete groups. No advanced or seasonal card is guaranteed. -->
 
 * [x] Update the random character's assignement rules to better balance (also add notes to every rule in the roles.ts to easily reread the rules that are being applied for future balance changes and patches)
   * [x] v01 should only appear when there are at least 2 extra characters that introduce possible causes of death other than werewolves
   * [x] v06 only when there's at least 12 players
   * [x] v21 only when there's at least 3 characters with limited uses
-  * [x] s02 only when there's 4 werewolves total (including himself) (so 16 players if my calculations are correct)
+  * [x] s02 only when there's at least 4 werewolves total (including himself) (so 16 players if my calculations are correct)
   * [x] f02 only when there are at least 2 characters that don't have a unconditional (always visible when in game) script line
-  * [x] a01 only when there's at least 2 INFO_ROLES in total (including the one he is replacing)
+  * [x] a01 only when there's at least one INFO character he did not replace; keep his default replacement characters, including non-INFO roles
   * [x] when Advanced Characters mode is on, bias the rules so there's a bigger chance of at least one advance character to be included (don't fully force one in, but just higher chance)
   * [x] when Characters have their seasonal variant activated, bias the rules so there's a slight bigger change of being included in the lot (don't fully force one, just slightly increase the odds)
 
@@ -63,6 +63,10 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 ## Future Plans
 
 * [ ] Add the new 25th aniversary WoMH cards
+  * [x] Singe Savant
+  * [ ] Marionnettiste
+  * [ ] Colosse
+  * [ ] Puissante Mère des Loups
 * [ ] Add evil being that requests anonymous votes
 * [ ] Adding phone interactions
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)

@@ -12,6 +12,7 @@ export const pt: Translation = {
     v03: "Domador do Corvo",
     v04: "Domador da Raposa",
     v05: "Domador dos Coelhos",
+    v26: "Domador do Macaco",
     v06: "Marionetista",
     v07: "Cavaleiro Enferrujado",
     v08: "Caçador",
@@ -70,6 +71,7 @@ export const pt: Translation = {
       { text: "O {Domador do Corvo} acorda e é-lhe revelado o número de Criaturas Malvadas que vivem na Aldeia.", requires: ["v03"] },
       { text: "O {Domador da Raposa} acorda e indica três vizinhos. Será-lhe revelado, com o polegar, se um desses três jogadores é uma Criatura Malvada.", requires: ["v04"] },
       { text: "O {Urso} rosna/não rosna.", requires: ["v02"] },
+      { text: "O {Domador do Macaco} acorda e escolhe um jogador cuja carta lhe será revelada.", requires: ["v26"] },
       { text: "O {Chefe da Aldeia} acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.", requires: ["v11"] },
       { text: "No fim desta noite ouve-se um uivar. A Aldeia sabe então que os Lobisomens se revelaram e estão com fome. A Aldeia acorda desconfiada de toda a gente." },
     ],
@@ -113,6 +115,7 @@ export const pt: Translation = {
       { text: "O {Lobisomem Vampiro} acorda e diz com o polegar se quer transformar a vítima em Lobisomem. Se for o caso, a vítima será tocada, e passará a acordar sempre com os Lobisomens. A vítima diz com o polegar se quer guardar os seus poderes ou não.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
       { text: "(A cada 3 noites) O {Lobisomem Branco} acorda e escolhe o Lobisomem que quer matar.", requires: ["s02"], conditionKey: "whitewolfNight" },
       { text: "O {Domador dos Coelhos} ouviu os {Coelhos} assustados esta noite. / [nada] (/os {Coelhos} estão confusos)", requires: ["v05"] },
+      { text: "O {Domador do Macaco} acorda e escolhe um jogador cuja carta lhe será revelada. Se a personagem revelada for uma Criatura Malvada, o {Domador do Macaco} perde o seu poder.", requires: ["v26"] },
       { text: "O {Padre} acorda. Se algum jogador quiser se confessar, revelando a sua carta ao Padre, pode levantar a mão. O {Padre} escolhe um desses jogadores, que será tocado para acordar. Ele vê quem é o Padre e mostra o seu papel.", requires: ["v25"] },
       { text: "O {Mimo} acorda e é-lhe mostrado um papel em jogo. Ele age silenciosamente segundo esse papel ou recebe as informações que esse papel receberia.", requires: ["a03"] },
       { text: "O {Chaman} acorda e são-lhe apresentadas as vítimas. Ele escolhe então com o polegar se quer salvar uma delas ou não. Relembro que pode salvar duas pessoas durante o jogo todo.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
@@ -140,9 +143,16 @@ export const pt: Translation = {
   },
 
   ui: {
+    monkeyReveal: {
+      choose: "Escolhe um jogador para ver a sua carta.",
+      confirm: "Revelar carta",
+      close: "Fechar",
+      reopen: "Reabrir carta",
+      noCard: "Não há uma carta disponível. Contacta o Narrador.",
+    },
     // GM phone controls and player night action screens.
     phoneActions: {
-      huntVotes: "Votos da ca?a em direto",
+      huntVotes: "Votos da caça em direto",
       open: "Abrir nos telemóveis",
       close: "Fechar nos telemóveis",
       hunt: "Caça em grupo",

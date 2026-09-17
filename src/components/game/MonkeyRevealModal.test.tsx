@@ -1,0 +1,32 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { MonkeyRevealModal } from "./MonkeyRevealModal";
+import type { PhoneView } from "@/lib/phoneActions";
+
+const view: PhoneView = { id: "monkey", mode: "monkey", participantIds: ["monkey"], votes: {}, players: [
+  { id: "wolf", name: "Wolf", seat_position: 0, dead: false, redX: false, selectable: true, marker: null },
+] };
+describe("Monkey reveal modal", () => {
+  it("requires choosing and confirming a player, then preserves a revealed card when reopened", () => {
+    const onConfirm = vi.fn(), onClose = vi.fn(), onReopen = vi.fn();
+    const props = { language: "en" as const, onConfirm, onClose, onReopen };
+    const { rerender } = render(<MonkeyRevealModal {...props} session={view} />);
+    expect(screen.getByRole("button", { name: "Reveal card" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Wolf" }));
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Reveal card: Wolf" }));
+    expect(onConfirm).toHaveBeenCalledExactlyOnceWith("wolf");
+    const resolved = { ...view, monkeyReveal: { targetPlayerId: "wolf", roleId: "e01" as const, evil: true } };
+    rerender(<MonkeyRevealModal {...props} session={resolved} />);
+    expect(screen.getByRole("img", { name: "Werewolf" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Wolf" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Close", { selector: "button" }));
+    expect(onClose).toHaveBeenCalledOnce();
+    rerender(<MonkeyRevealModal {...props} session={{ ...resolved, visible: false }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Reopen card" }));
+    expect(onReopen).toHaveBeenCalledOnce();
+    rerender(<MonkeyRevealModal {...props} session={{ ...resolved, visible: true }} />);
+    expect(screen.getByRole("img", { name: "Werewolf" })).toBeInTheDocument();
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+});

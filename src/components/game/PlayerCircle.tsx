@@ -7,10 +7,10 @@ import { useRoleLabel, useT, useLanguage, getEffectLabel, getToast } from "@/lib
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS } from "./PlayerStatusPopover";
-import poisonedIcon from "@/assets/icons/poisoned.png";
-import illusionIcon from "@/assets/icons/illusion.png";
-import imunityIcon from "@/assets/icons/imunity_full.png";
-import immunityWerewolfIcon from "@/assets/icons/imunity_werewolf.png";
+import poisonedIcon from "@/assets/display/icons/poisoned.webp";
+import illusionIcon from "@/assets/display/icons/illusion.webp";
+import imunityIcon from "@/assets/display/icons/imunity_full.webp";
+import immunityWerewolfIcon from "@/assets/display/icons/imunity_werewolf.webp";
 import { toast } from "sonner";
 import type { ActorPowerState } from "@/lib/actor";
 import type { DogWolfStates } from "@/lib/dogWolf";
@@ -88,6 +88,8 @@ interface PlayerCircleProps {
   compact?: boolean;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
+  monkeyDisabled?: boolean;
+  onMonkeyDisabledToggle?: () => void;
   showFoxCheckbox?: boolean;
   judgeCharges?: number;
   onJudgeChargeToggle?: (idx: number) => void;
@@ -156,6 +158,8 @@ export const PlayerCircle = ({
   compact = false,
   foxDisabled = false,
   onFoxDisabledToggle,
+  monkeyDisabled = false,
+  onMonkeyDisabledToggle,
   showFoxCheckbox = true,
   judgeCharges = 0,
   onJudgeChargeToggle,
@@ -608,14 +612,20 @@ export const PlayerCircle = ({
                   ))}
                 </div>
               )}
-              {/* Fox checkbox */}
-              {isGM && isFox && showFoxCheckbox && !isPermanentlyDead && onFoxDisabledToggle && (
+              {/* Tamer power exhaustion checkbox */}
+              {isGM && !isPermanentlyDead && showFoxCheckbox && ((isFox && onFoxDisabledToggle) || (mechanicalRole === "v26" && onMonkeyDisabledToggle)) && (
                 <div className="flex items-center gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={independentPowerState?.foxDisabled ?? foxDisabled}
+                    checked={mechanicalRole === "v26" ? independentPowerState?.monkeyDisabled ?? monkeyDisabled : independentPowerState?.foxDisabled ?? foxDisabled}
+                    aria-label={t("powerExhausted")}
                     onCheckedChange={() => {
+                      if (mechanicalRole === "v26") {
+                        if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, monkeyDisabled: !independentPowerState.monkeyDisabled });
+                        else onMonkeyDisabledToggle?.();
+                        return;
+                      }
                       if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, foxDisabled: !independentPowerState.foxDisabled });
-                      else onFoxDisabledToggle();
+                      else onFoxDisabledToggle?.();
                     }}
                     className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                   />

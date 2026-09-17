@@ -69,8 +69,8 @@ describe("assignRoles werewolf balance", () => {
     const normalCount = wolves.filter((role) => role === "e01").length;
     const specialCount = wolves.filter((role) => SPECIAL_WEREWOLVES.includes(role)).length;
 
-    expect(wolves).not.toContain("s02");
-    expect(specialCount).toBe(SPECIAL_WEREWOLVES.length - 1);
+    expect(wolves).toContain("s02");
+    expect(specialCount).toBe(SPECIAL_WEREWOLVES.length);
     expect(normalCount).toBe(wolves.length - specialCount);
   });
 });
@@ -88,7 +88,7 @@ describe("random assignment eligibility", () => {
     expect(canRandomlyAssignRole("a01", ["e04"], 12)).toBe(false);
     expect(canRandomlyAssignRole("a01", ["v02"], 12)).toBe(true);
     for (const count of [8, 12, 15, 16, 19, 20, 24, 60]) {
-      expect(canRandomlyAssignRole("s02", [], count)).toBe(count >= 16 && count <= 19);
+      expect(canRandomlyAssignRole("s02", [], count)).toBe(count >= 16);
     }
   });
 
@@ -98,6 +98,7 @@ describe("random assignment eligibility", () => {
         const roles = assignRoles(count, draw % 2 === 0);
         expect(roles).toHaveLength(count);
         expect(roles.some((id) => INFO_ROLES.includes(id))).toBe(true);
+        if (roles.includes("a01")) expect(roles.filter((id) => id !== "a01").some((id) => INFO_ROLES.includes(id))).toBe(true);
         if (roles.includes("v01")) expect(roles.filter((id) => EXTRA_DEATH_ROLES.includes(id)).length).toBeGreaterThanOrEqual(2);
         if (roles.includes("v21")) expect(roles.filter((id) => LIMITED_USE_ROLES.includes(id)).length).toBeGreaterThanOrEqual(3);
         if (roles.includes("f02")) expect(roles.filter((id) => NO_UNCONDITIONAL_SCRIPT_ROLES.includes(id)).length).toBeGreaterThanOrEqual(2);

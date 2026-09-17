@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import villagerIcon from "@/assets/icons/villager.png";
+import villagerIcon from "@/assets/display/icons/villager.webp";
 import { t, getToast, type Language } from "@/lib/i18n";
 import { getPlayerSession, savePlayerSession } from "@/lib/playerSession";
 

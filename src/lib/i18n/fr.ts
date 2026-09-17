@@ -12,6 +12,7 @@ export const fr: Translation = {
     v03: "Maître du Corbeau",
     v04: "Maître du Renard",
     v05: "Maîtres des Lapins",
+    v26: "Maître du Singe",
     v06: "Marionettiste",
     v07: "Chevalier Rouillé",
     v08: "Chasseur",
@@ -70,6 +71,7 @@ export const fr: Translation = {
       { text: "Le {Maître du Corbeau} se réveille et apprend le nombre de Créatures Maléfiques qui vivent dans le Village.", requires: ["v03"] },
       { text: "Le {Maître du Renard} se réveille et indique trois voisins. Il lui sera révélé, par le pouce, si l'un de ces trois joueurs est une Créature Maléfique.", requires: ["v04"] },
       { text: "L'{Ours} grogne / ne grogne pas.", requires: ["v02"] },
+      { text: "Le {Maître du Singe} se réveille et choisit un joueur dont la carte lui sera révélée.", requires: ["v26"] },
       { text: "L'{Ancien du Village} se réveille et choisit un joueur qui aura automatiquement 2 votes contre lui au prochain Tribunal.", requires: ["v11"] },
       { text: "À la fin de cette nuit, un hurlement se fait entendre. Le Village sait alors que les Loups-garous se sont révélés et qu'ils ont faim. Le Village se réveille méfiant envers tout le monde." },
     ],
@@ -113,6 +115,7 @@ export const fr: Translation = {
       { text: "Le {Loup-garou Vampire} se réveille et indique avec le pouce s'il veut transformer la victime en Loup-garou. Si c'est le cas, la victime sera touchée et commencera à se réveiller toujours avec les Loups-garous. La victime indique avec le pouce si elle veut garder ses pouvoirs ou non.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
       { text: "(Toutes les 3 nuits) Le {Loup-garou Blanc} se réveille et choisit le Loup-garou qu'il veut tuer.", requires: ["s02"], conditionKey: "whitewolfNight" },
       { text: "Le {Maîtres des Lapins} a entendu les {Lapins} effrayés cette nuit. / [rien] (/ les {Lapins} sont confus)", requires: ["v05"] },
+      { text: "Le {Maître du Singe} se réveille et choisit un joueur dont la carte lui sera révélée. Si le personnage révélé est une Créature Maléfique, le {Maître du Singe} perd son pouvoir.", requires: ["v26"] },
       { text: "Le {Prêtre} se réveille. Si un joueur souhaite se confesser, révélant ainsi son rôle au Prêtre, il peut lever la main. Le {Prêtre} choisit l'un de ces joueurs, qui sera touché pour se réveiller. Il voit qui est le Prêtre et montre son rôle.", requires: ["v25"] },
       { text: "Le {Mîme} se réveille et on lui montre un rôle en jeu. Il agit silencieusement selon ce rôle ou reçoit les informations que ce rôle recevrait.", requires: ["a03"] },
       { text: "Le {Chaman} se réveille et les victimes lui sont présentées. Il choisit alors avec le pouce s'il veut en sauver une ou non. Je rappelle qu'il peut sauver deux personnes pendant toute la partie.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
@@ -140,6 +143,13 @@ export const fr: Translation = {
   },
 
   ui: {
+    monkeyReveal: {
+      choose: "Choisis un joueur pour voir sa carte.",
+      confirm: "Révèler la carte",
+      close: "Fermer",
+      reopen: "Revoir la carte",
+      noCard: "Aucune carte disponible. Contacte le Meneur.",
+    },
     // GM phone controls and player night action screens.
     phoneActions: {
       huntVotes: "Votes de chasse en direct",
@@ -464,7 +474,7 @@ export const fr: Translation = {
 
     // Journal de partie et libellés utilisés par les événements.
     gameLog: {
-      runtime: "Dur?e actuelle de la partie",
+      runtime: "Durée actuelle de la partie",
       title: "Journal de partie",
       finalCircle: "Cercle final",
       empty: "Aucun événement enregistré pour le moment.",

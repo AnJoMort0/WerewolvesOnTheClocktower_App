@@ -13,7 +13,7 @@ import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
-import poisonedIcon from "@/assets/icons/poisoned.png";
+import poisonedIcon from "@/assets/display/icons/poisoned.webp";
 import { toast } from "sonner";
 import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
 import { EMPTY_ACTOR_POWER_STATE, type ActorPowerState } from "@/lib/actor";
@@ -71,6 +71,8 @@ interface NightScriptProps {
   playerStatuses?: Record<string, PlayerStatus>;
   foxDisabled: boolean;
   onFoxDisabledToggle: () => void;
+  monkeyDisabled?: boolean;
+  onMonkeyDisabledToggle?: () => void;
   nightTargetedPlayerIds: Set<string>;
   conditionKeys?: Record<string, boolean>;
   playerEffects?: Record<string, Set<string>>;
@@ -233,9 +235,12 @@ function ScriptLineDisplay({
   onLamplighterReveal,
   onWerewolfSeerReveal,
   onMimeReveal,
+  onMonkeyReveal,
   dynamicText,
   foxDisabled,
   onFoxDisabledToggle,
+  monkeyDisabled,
+  onMonkeyDisabledToggle,
   showFoxCheckbox,
   forceStrikethrough,
   paranoidCharges,
@@ -287,9 +292,12 @@ function ScriptLineDisplay({
   onLamplighterReveal?: (sourcePlayerId?: string | null) => void;
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
   onMimeReveal?: (sourcePlayerId?: string | null) => void;
+  onMonkeyReveal?: (sourcePlayerId?: string | null) => void;
   dynamicText?: string;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
+  monkeyDisabled?: boolean;
+  onMonkeyDisabledToggle?: () => void;
   showFoxCheckbox: boolean;
   forceStrikethrough?: boolean;
   paranoidCharges?: number;
@@ -359,6 +367,7 @@ function ScriptLineDisplay({
   const isLamplighterLine = line.requires?.length === 1 && line.requires[0] === ("v21" as RoleId);
   const isWerewolfSeerLine = line.requires?.length === 1 && line.requires[0] === ("m02" as RoleId);
   const isMimeRevealLine = line.requires?.length === 1 && line.requires[0] === ("a03" as RoleId);
+  const isMonkeyLine = line.requires?.length === 1 && line.requires[0] === "v26";
   const isParanoidLine = line.requires?.length === 1 && line.requires[0] === ("v10" as RoleId);
   const isAngelLine = line.requires?.length === 1 && line.requires[0] === ("v18" as RoleId);
   const isBigBadWolfLine = line.requires?.length === 1 && line.requires[0] === ("m01" as RoleId);
@@ -377,6 +386,7 @@ function ScriptLineDisplay({
     || (isLamplighterLine && !!onLamplighterReveal)
     || (isWerewolfSeerLine && !!onWerewolfSeerReveal)
     || (isMimeRevealLine && !!onMimeReveal)
+    || (isMonkeyLine && !!onMonkeyReveal)
     || (isSpiderCaughtLine && !dynamicText && !!onSpiderReveal)
     || (isSpyLine && !!onSpyReveal)
   );
@@ -481,6 +491,12 @@ function ScriptLineDisplay({
             {isSpyLine && onSpyReveal && (
               <button type="button" onClick={(event) => { event.stopPropagation(); onSpyReveal(sourcePlayerId); }} className={revealButtonClass} aria-label={t("spyEyeReveal", lang)} title={t("spyEyeReveal", lang)}><Eye className="h-4 w-4" /></button>
             )}
+            {isMonkeyLine && onMonkeyReveal && (
+              <button type="button" onClick={(event) => { event.stopPropagation(); onMonkeyReveal(sourcePlayerId); }}
+                className={revealButtonClass} aria-label={getRoleLabel("v26", lang)} title={getRoleLabel("v26", lang)}>
+                <Eye className="h-4 w-4" />
+              </button>
+            )}
           </div>
         )}
         {drunkardLine && (
@@ -533,12 +549,13 @@ function ScriptLineDisplay({
           </div>
         )}
 
-        {/* Fox checkbox */}
-        {isFoxLine && showFoxCheckbox && onFoxDisabledToggle != null && (
+        {/* Tamer power exhaustion checkbox */}
+        {showFoxCheckbox && ((isFoxLine && onFoxDisabledToggle != null) || (isMonkeyLine && onMonkeyDisabledToggle != null)) && (
           <div className="flex items-center gap-2 mt-2">
             <Checkbox
-              checked={foxDisabled}
-              onCheckedChange={() => onFoxDisabledToggle?.()}
+              checked={isMonkeyLine ? monkeyDisabled : foxDisabled}
+              aria-label={t("powerExhausted", lang)}
+              onCheckedChange={() => isMonkeyLine ? onMonkeyDisabledToggle?.() : onFoxDisabledToggle?.()}
               className="h-5 w-5 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
             />
             <span className="text-xs text-muted-foreground">{t("powerExhausted", lang)}</span>
@@ -620,6 +637,8 @@ export const NightScript = ({
   playerStatuses = {},
   foxDisabled,
   onFoxDisabledToggle,
+  monkeyDisabled = false,
+  onMonkeyDisabledToggle,
   nightTargetedPlayerIds,
   conditionKeys = {},
   playerEffects: _playerEffects = {},
@@ -1109,7 +1128,8 @@ export const NightScript = ({
       }
       const isCopiedRoleLine = !!actorCopiedRole && !!actorPlayerId && line.requires?.includes(actorCopiedRole);
       const actorCanPerform = !!actorPlayerId
-        && (!_permanentlyDeadPlayerIds.has(actorPlayerId) || prophecyGhostPlayerIds.has(actorPlayerId));
+        && (!_permanentlyDeadPlayerIds.has(actorPlayerId) || prophecyGhostPlayerIds.has(actorPlayerId))
+        && !(line.requires?.includes("v26") && effectivelyDead.has(actorPlayerId));
       const isSharedCopiedRoleLine = isCopiedRoleLine && actorCanPerform && (line.requires?.length ?? 0) > 1;
       const originalRolePlayerId = actorCopiedRole ? Object.entries(baseRoleAssignments)
         .find(([playerId, role]) => playerId !== actorPlayerId
@@ -1137,7 +1157,8 @@ export const NightScript = ({
         && line.requires?.length === 1
         && line.requires[0] === ("a03" as RoleId);
       const mimeCanPerform = !!mimePlayerId
-        && (!_permanentlyDeadPlayerIds.has(mimePlayerId) || prophecyGhostPlayerIds.has(mimePlayerId));
+        && (!_permanentlyDeadPlayerIds.has(mimePlayerId) || prophecyGhostPlayerIds.has(mimePlayerId))
+        && !(mimeMechanicalRole === "v26" && effectivelyDead.has(mimePlayerId));
       if (source === "normal" && isActiveMimeRevealLine && mimeCanPerform) {
         const copiedLine = getMimeCopiedScriptLine();
         if (copiedLine) {
@@ -1214,6 +1235,7 @@ export const NightScript = ({
         if (_permanentlyDeadPlayerIds.has(ownerPlayerId) && !state.actorModeActive) return false;
         const abilityRole = abilityRoleAssignments[dogPlayerId];
         if (!abilityRole || !line.requires?.includes(abilityRole)) return false;
+        if (abilityRole === "v26" && effectivelyDead.has(dogPlayerId)) return false;
         if (line.conditionKey === "enemyDied" && abilityRole === "m05") {
           const enemyDied = (dogWolfStates[dogPlayerId]?.enemyPlayerIds ?? [])
             .some((playerId) => _permanentlyDeadPlayerIds.has(playerId));
@@ -1424,9 +1446,12 @@ export const NightScript = ({
                 onLamplighterReveal={onLamplighterReveal}
                 onWerewolfSeerReveal={onWerewolfSeerReveal}
                 onMimeReveal={onMimeReveal}
+                onMonkeyReveal={(source) => onPhoneToggle?.("monkey", item.key, source ?? null, item.progressOrder)}
                 dynamicText={getDynamicText(item.line, sourcePlayerId, !!item.dogWolfLine, !!item.mimeLine)}
                 foxDisabled={usesIndependentPowerState ? powerState.foxDisabled : foxDisabled}
                 onFoxDisabledToggle={usesIndependentPowerState ? () => toggleBoolean("foxDisabled") : onFoxDisabledToggle}
+                monkeyDisabled={usesIndependentPowerState ? powerState.monkeyDisabled : monkeyDisabled}
+                onMonkeyDisabledToggle={usesIndependentPowerState ? () => toggleBoolean("monkeyDisabled") : onMonkeyDisabledToggle}
                 showFoxCheckbox={nightNumber > 1}
                 forceStrikethrough={item.dogWolfLine && sourcePlayerId
                   ? !!(_playerEffects[sourcePlayerId]?.has("host") || _playerEffects[sourcePlayerId]?.has("burned"))

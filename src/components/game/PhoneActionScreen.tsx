@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Check, Crosshair, FlaskConical, RotateCcw, Users, X } from "lucide-react";
+import { Check, Crosshair, Eye, FlaskConical, RotateCcw, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, getTranslation, type Language } from "@/lib/i18n";
 import type { PhoneCommand, PhoneView } from "@/lib/phoneActions";
-import werewolfIcon from "@/assets/icons/werewolf.png";
-import evilBeingIcon from "@/assets/icons/evil_being.png";
+import werewolfIcon from "@/assets/display/icons/werewolf.webp";
+import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
 
 const MAP_MAX_WIDTH = 304;
 const MAP_MIN_HEIGHT = 264;
@@ -37,7 +37,7 @@ function getEllipseAngles(count: number, radiusX: number, radiusY: number): numb
   });
 }
 
-export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false }: {
+export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false, selectedPlayerId }: {
   session: PhoneView;
   playerId: string;
   language: Language;
@@ -45,17 +45,19 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   connected: boolean;
   onSend: (type: PhoneCommand["type"], targetPlayerId?: string) => void;
   readOnly?: boolean;
+  selectedPlayerId?: string | null;
 }) {
   const text = getTranslation(language).ui.phoneActions;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = session.mode === "hunt" ? session.votes[playerId] : selectedId;
+  const selected = selectedPlayerId !== undefined ? selectedPlayerId : session.mode === "hunt" ? session.votes[playerId] : selectedId;
   const target = session.players.find((p) => p.id === selected && p.selectable);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
   const mapHeight = Math.max(MAP_MIN_HEIGHT, players.length * PLAYER_ARC_SPACE);
   const verticalRadius = mapHeight / 2 - PLAYER_EDGE_SPACE;
   const angles = getEllipseAngles(players.length, MAP_MAX_WIDTH * MAP_HORIZONTAL_RADIUS, verticalRadius);
   const Icon = session.mode === "poison" ? FlaskConical : session.mode === "shaman" ? RotateCcw
-    : session.mode === "allies" ? Users : Crosshair;
+    : session.mode === "monkey" ? Eye : session.mode === "allies" ? Users : Crosshair;
+  const title = session.mode === "monkey" ? getTranslation(language).roleLabels.v26 : text[session.mode];
   const theme = session.mode === "poison"
     ? { border: "border-emerald-500/50 ring-emerald-500/10", accent: "text-emerald-300" }
     : session.mode === "shaman"
@@ -64,14 +66,14 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
 
   return (
     <section
-      aria-label={text[session.mode]}
+      aria-label={title}
       className={`space-y-4 overflow-hidden rounded-lg border bg-card/90 p-4 shadow-md ring-1 ring-inset paper-texture ${theme.border}`}
     >
       <header className="flex items-center justify-center gap-2 border-b border-border/60 pb-3">
         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background/40 ${theme.accent}`}>
           <Icon className="h-4 w-4" />
         </span>
-        <h2 className={`font-display text-xl font-bold ${theme.accent}`}>{text[session.mode]}</h2>
+        <h2 className={`font-display text-xl font-bold ${theme.accent}`}>{title}</h2>
       </header>
       <div className="min-w-0 overflow-hidden pb-1">
         <div
@@ -91,7 +93,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 aria-label={player.name}
                 aria-pressed={session.mode === "allies" ? undefined : selected === player.id}
                 disabled={readOnly || !player.selectable || !connected || (pending && session.mode !== "hunt")}
-                onClick={() => session.mode === "hunt" ? onSend("select", player.id) : setSelectedId(player.id)}
+                onClick={() => session.mode === "hunt" || session.mode === "monkey" ? onSend("select", player.id) : setSelectedId(player.id)}
                 className={`absolute flex w-[3.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
                 style={{
                   left: `${50 + MAP_HORIZONTAL_RADIUS * 100 * Math.cos(angle)}%`,

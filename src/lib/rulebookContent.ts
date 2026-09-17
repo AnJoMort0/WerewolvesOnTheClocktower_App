@@ -654,6 +654,40 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+    "v26": {
+        id: "v26",
+        group: "villager",
+        team: "villagers",
+        name: {
+            pt: `Domador do Macaco`,
+            fr: `Maître du Singe`,
+            en: `Monkey Tamer`
+        },
+        mainDescription: {
+            pt: [
+                `<red>A cada noite</red>, acorda e vê uma carta à sua escolha. <red>A partir da segunda noite</red>, se a <red>personagem revelada for uma Criatura Malvada</red>, perde o seu poder.`
+            ],
+            fr: [
+                `<red>Chaque nuit</red>, il se réveille et voit une carte de son choix. <red>Dès la deuxième nuit</red>, si le <red>personnage révélé est une Créature Maléfique</red>, il perd son pouvoir.`
+            ],
+            en: [
+                `<red>Every night</red>, wakes up and sees a card of their choice. <red>From the second night</red>, if the <red>revealed character is an Evil Being</red>, loses their power.`
+            ]
+        },
+        details: [{
+            title: { pt: `Se envenenado:`, fr: `Si empoisonné :`, en: `If poisoned:` },
+            description: {
+                pt: `Receberá a informação errada.`,
+                fr: `Recevra de fausses informations.`,
+                en: `Receives incorrect information.`
+            }
+        }],
+        objective: {
+            pt: `Matar todos os Lobisomens.`,
+            fr: `Tuer tous les Loups-garous.`,
+            en: `Kill all Werewolves.`
+        }
+    },
     "v06": {
         id: "v06",
         group: "villager",
@@ -2925,6 +2959,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "v03",
     "v04",
     "v05",
+    "v26",
     "v23",
     "v06",
     "v20",
@@ -3078,6 +3113,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `O Urso rosna/não rosna.`,
                 fr: `L’Ours grogne / ne grogne pas.`,
                 en: `The Bear growls / does not growl.`
+            }
+        },
+        {
+            id: "first-v26",
+            refs: ["v26"],
+            text: {
+                pt: `O Domador do Macaco acorda e escolhe um jogador cuja carta lhe será revelada.`,
+                fr: `Le Maître du Singe se réveille et choisit un joueur dont la carte lui sera révélée.`,
+                en: `The Monkey Tamer wakes up and chooses a player whose card will be revealed.`
             }
         },
         {
@@ -3451,6 +3495,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `O Domador dos Coelhos ouviu os Coelhos assustados esta noite / [nada] (/os Coelhos estão confusos).`,
                 fr: `Le Maître des Lapins a entendu les Lapins effrayés cette nuit / [rien] (/ les Lapins sont confus).`,
                 en: `The Bunny Tamer heard the frightened Bunnies tonight / [nothing] (/ the Bunnies are confused).`
+            }
+        },
+        {
+            id: "normal-v26",
+            refs: ["v26"],
+            text: {
+                pt: `O Domador do Macaco acorda e escolhe um jogador cuja carta lhe será revelada. Se a personagem revelada for uma Criatura Malvada, o Domador do Macaco perde o seu poder.`,
+                fr: `Le Maître du Singe se réveille et choisit un joueur dont la carte lui sera révélée. Si le personnage révélé est une Créature Maléfique, le Maître du Singe perd son pouvoir.`,
+                en: `The Monkey Tamer wakes up and chooses a player whose card will be revealed. If the revealed character is an Evil Being, the Monkey Tamer loses their power.`
             }
         },
         {

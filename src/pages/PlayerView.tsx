@@ -10,15 +10,16 @@ import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealM
 import { RevealModal, type RevealCard } from "@/components/game/RevealModal";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
+import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { LanguageContext, format, getRoleLabel, getTranslation, isLanguage, t, type Language, type WinKind } from "@/lib/i18n";
-import villagerIcon from "@/assets/icons/villager.png";
-import ghostImg from "@/assets/icons/ghost.png";
-import loverIcon from "@/assets/icons/lover.png";
-import evilBeingIcon from "@/assets/icons/evil_being.png";
-import werewolfIcon from "@/assets/icons/werewolf.png";
-import soloIcon from "@/assets/icons/solo.png";
+import villagerIcon from "@/assets/display/icons/villager.webp";
+import ghostImg from "@/assets/display/icons/ghost.webp";
+import loverIcon from "@/assets/display/icons/lover.webp";
+import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
+import werewolfIcon from "@/assets/display/icons/werewolf.webp";
+import soloIcon from "@/assets/display/icons/solo.webp";
 import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/playerSession";
 import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
 import { parsePlayerCharacter, shouldShowActorBadge } from "@/lib/actor";
@@ -1068,7 +1069,12 @@ const PlayerView = () => {
               </div>
             )}
             <AnimatePresence mode="wait">
-              {phone.session && roomStatus === "playing" && playerId ? (
+              {phone.session?.mode === "monkey" && roomStatus === "playing" ? (
+                <MonkeyRevealModal key={phone.session.id} session={phone.session} language={language}
+                  pending={phone.pending} connected={phone.connected}
+                  onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
+                  onReopen={() => phone.send("reopen")} />
+              ) : phone.session && roomStatus === "playing" && playerId ? (
                 <PhoneActionScreen key={phone.session.id} session={phone.session} playerId={playerId}
                   language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send} />
               ) : actionMode ? (

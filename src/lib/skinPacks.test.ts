@@ -38,6 +38,7 @@ describe("skin packs", () => {
   });
 
   it("resolves skinpack images with default fallback", () => {
+    expect(resolveRoleImage("v26", { skinPackId: "thiercelieux" }).src).not.toBe(ROLES.v26.image);
     expect(resolveRoleImage("e04", { skinPackId: "thiercelieux" }).src).not.toBe(ROLES.e04.image);
     expect(resolveRoleImage("e01", { skinPackId: "thiercelieux" }).src).toBe(ROLES.e01.image);
   });

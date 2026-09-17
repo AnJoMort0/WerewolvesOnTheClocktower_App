@@ -23,6 +23,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const channels = useRef(new Map<string, Channel>());
   const acknowledgments = useRef(new Map<string, string>());
   const revision = useRef(Date.now());
+  const monkeySessions = useRef<Record<string, PhoneSession>>({});
   const storageKey = roomId ? `wotct_phone_${roomId}` : null;
 
   const publish = useCallback((playerId?: string) => {
@@ -41,10 +42,11 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   // Commit before executing an action, so retried phone messages cannot execute it twice.
   const commit = useCallback((next: PhoneSession | null) => {
     current.current.session = next;
+    if (next?.mode === "monkey") monkeySessions.current[next.lineKey] = next;
     setSession(next);
     if (storageKey) {
       try {
-        window.localStorage.setItem(storageKey, JSON.stringify({ contextKey: current.current.contextKey, session: next }));
+        window.localStorage.setItem(storageKey, JSON.stringify({ contextKey: current.current.contextKey, session: next, monkeySessions: monkeySessions.current }));
       } catch { /* Gameplay still works when browser storage is unavailable. */ }
     }
     publish();
@@ -52,9 +54,19 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
 
   useEffect(() => {
     let restored: PhoneSession | null = null;
+    monkeySessions.current = {};
     if (storageKey && enabled) {
       try {
         const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? "null");
+        if (stored?.contextKey === contextKey && stored.monkeySessions && typeof stored.monkeySessions === "object") {
+          for (const [key, value] of Object.entries(stored.monkeySessions)) {
+            const entry = value as PhoneSession;
+            if (entry?.mode === "monkey" && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
+              const valid = reconcilePhoneSession(entry, current.current.world);
+              if (valid) monkeySessions.current[key] = valid;
+            }
+          }
+        }
         if (stored?.contextKey === contextKey && stored.session?.id
           && Array.isArray(stored.session.participantIds) && stored.session.votes && stored.session.sequences) {
           restored = reconcilePhoneSession(stored.session, current.current.world);
@@ -102,8 +114,12 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   }, [commit, playerIdsKey, publish, roomId]);
 
   const toggle = useCallback((mode: PhoneMode, lineKey: string, sourcePlayerId: string | null, progressOrder: number | null = null) => {
-    if (current.current.session?.lineKey === lineKey) { commit(null); return false; }
     if (!current.current.enabled) return false;
+    if (mode === "monkey") {
+      const cached = reconcilePhoneSession(monkeySessions.current[lineKey] ?? null, current.current.world);
+      if (cached) { commit({ ...cached, visible: true }); return true; }
+    }
+    if (current.current.session?.lineKey === lineKey) { commit(null); return false; }
     const participantIds = getPhoneParticipants(mode, sourcePlayerId, current.current.world);
     if (participantIds.length === 0) return false;
     const next = { id: createPlayerActionRequestId("gm", lineKey), lineKey, mode, sourcePlayerId, progressOrder, participantIds, votes: {}, sequences: {} };
@@ -125,7 +141,29 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   }, [commit]);
 
   const active = enabled ? reconcilePhoneSession(session, world) : null;
-  return { session: active, toggle, close: () => commit(null), consensus: getHuntConsensus(active), resolveHunt };
+  const confirmMonkey = useCallback((targetPlayerId: string) => {
+    const latest = current.current.session;
+    if (!current.current.enabled || latest?.mode !== "monkey" || !latest.sourcePlayerId) return;
+    const source = latest.sourcePlayerId;
+    const result = applyPhoneCommand(latest, source, {
+      id: createPlayerActionRequestId("gm", targetPlayerId), sessionId: latest.id,
+      sequence: Math.max(Date.now(), (latest.sequences[source] ?? 0) + 1), type: "confirm", targetPlayerId,
+    }, current.current.world);
+    // A GM selection is authoritative but is not a command from the phone.
+    // Preserve its sequence so the next phone close/reopen is never discarded.
+    if (result.session) result.session = { ...result.session, sequences: latest.sequences };
+    commit(result.session);
+    if (result.action) current.current.onAction(result.action);
+    if (result.completedSession) current.current.onComplete?.(result.completedSession);
+  }, [commit]);
+  const close = useCallback(() => {
+    const latest = current.current.session;
+    commit(latest?.mode === "monkey" ? { ...latest, visible: false } : null);
+  }, [commit]);
+  const reset = useCallback(() => { monkeySessions.current = {}; commit(null); }, [commit]);
+  const monkeySourceIds = Object.values(monkeySessions.current)
+    .filter((entry) => entry.monkeyReveal && entry.sourcePlayerId).map((entry) => entry.sourcePlayerId!);
+  return { session: active, toggle, close, reset, confirmMonkey, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
 }
 
 export function usePlayerPhoneActions(roomId?: string, playerId?: string) {

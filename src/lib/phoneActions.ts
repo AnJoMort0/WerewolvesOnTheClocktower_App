@@ -1,7 +1,11 @@
 import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { ScriptLine } from "@/lib/i18n/types";
 
-export type PhoneMode = "hunt" | "allies" | "poison" | "shaman";
+export type PhoneMode = "hunt" | "allies" | "poison" | "shaman" | "monkey";
+export type MonkeyReveal = { targetPlayerId: string; roleId: RoleId; evil: boolean };
+export function shouldExhaustMonkeyPower(reveal: MonkeyReveal, nightNumber: number): boolean {
+  return nightNumber > 1 && reveal.evil;
+}
 export type PhonePlayer = {
   id: string;
   name: string;
@@ -15,6 +19,10 @@ export type PhonePlayer = {
   mime: boolean;
   canWake: boolean;
   powerless: boolean;
+  displayRole?: RoleId;
+  actingPoisoned?: boolean;
+  illusion?: boolean;
+  monkeyDisabled?: boolean;
 };
 export type PhoneWorld = { players: PhonePlayer[]; packBlocked: boolean };
 export type PhoneSession = {
@@ -26,16 +34,22 @@ export type PhoneSession = {
   participantIds: string[];
   votes: Record<string, string>;
   sequences: Record<string, number>;
+  visible?: boolean;
+  monkeyReveal?: MonkeyReveal;
+  error?: "noSafeCard";
 };
 export type PhoneCommand = {
   id: string;
   sessionId: string;
   sequence: number;
-  type: "select" | "confirm" | "ignore";
+  type: "select" | "confirm" | "ignore" | "close" | "reopen";
   targetPlayerId?: string;
 };
-export type PhoneAction = { action: "kill" | "poison" | "shaman"; targetPlayerId: string; sourcePlayerId: string | null };
+export type PhoneAction = { action: "kill" | "poison" | "shaman" | "monkey"; targetPlayerId: string; sourcePlayerId: string | null; monkeyReveal?: MonkeyReveal };
 export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participantIds"> & {
+  visible?: boolean;
+  monkeyReveal?: MonkeyReveal;
+  error?: "noSafeCard";
   players: Array<Pick<PhonePlayer, "id" | "name" | "seat_position"> & {
     selectable: boolean;
     redX: boolean;
@@ -60,6 +74,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
     if (!player?.canWake || player.powerless) return [];
     const matches = mode === "poison" ? player.abilityRole === "e02"
       : mode === "shaman" ? player.abilityRole === "e03"
+      : mode === "monkey" ? player.abilityRole === "v26" && !player.monkeyDisabled
       : mode === "hunt" && !!player.abilityRole && WEREWOLF_ROLES.includes(player.abilityRole);
     return matches ? [sourcePlayerId] : [];
   }
@@ -71,6 +86,8 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
 }
 
 export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boolean {
+  // The Monkey can inspect any card, including their own or a Ghost's.
+  if (session.mode === "monkey") return !session.monkeyReveal && !!(player.displayRole ?? player.abilityRole);
   if (session.mode === "allies" || player.dead) return false;
   if (session.mode === "shaman") return player.redX;
   // The Witch can target herself, and pending victims may still be poisoned before dawn.
@@ -81,6 +98,10 @@ export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boole
 
 export function reconcilePhoneSession(session: PhoneSession | null, world: PhoneWorld): PhoneSession | null {
   if (!session) return null;
+  // Keep a resolved card available even after its source loses powers or dies.
+  if (session.mode === "monkey" && session.monkeyReveal) {
+    return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v26") ? session : null;
+  }
   const participantIds = getPhoneParticipants(session.mode, session.sourcePlayerId, world);
   if (participantIds.length === 0) return null;
   if (participantIds.join() !== session.participantIds.join()) {
@@ -107,9 +128,31 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if (!session || command.sessionId !== session.id || !session.participantIds.includes(actorId)
     || !Number.isFinite(command.sequence) || command.sequence <= (session.sequences[actorId] ?? 0)) return { session };
   const next = { ...session, sequences: { ...session.sequences, [actorId]: command.sequence } };
+  if (session.mode === "monkey" && (command.type === "close" || command.type === "reopen")) {
+    return { session: { ...next, visible: command.type === "reopen" } };
+  }
   if (command.type === "ignore" && session.mode === "shaman") return { session: null, completedSession: session };
   const target = world.players.find((p) => p.id === command.targetPlayerId);
   if (!target || !isPhoneTarget(session, target)) return { session: next };
+  if (session.mode === "monkey" && command.type === "confirm") {
+    const source = world.players.find((p) => p.id === actorId)!;
+    const targetRole = target.displayRole ?? target.abilityRole!;
+    let roleId: RoleId = target.illusion ? "a06" : targetRole;
+    if (source.actingPoisoned) {
+      // False information must be another in-game, non-evil card. Never fall
+      // back to the pointed player's card or invent an out-of-game character.
+      const candidates = world.players.filter((p) => p.id !== target.id && !p.evil
+        && !!(p.displayRole ?? p.abilityRole) && (p.displayRole ?? p.abilityRole) !== targetRole
+        && !EVIL_ROLES.includes((p.displayRole ?? p.abilityRole)!));
+      if (candidates.length === 0) return { session: { ...next, error: "noSafeCard" } };
+      const alternative = candidates[Math.floor(Math.random() * candidates.length)];
+      roleId = (alternative.displayRole ?? alternative.abilityRole)!;
+    }
+    const monkeyReveal = { targetPlayerId: target.id, roleId, evil: EVIL_ROLES.includes(roleId) };
+    const revealed = { ...next, visible: true, error: undefined, monkeyReveal };
+    return { session: revealed, completedSession: revealed,
+      action: { action: "monkey", targetPlayerId: target.id, sourcePlayerId: actorId, monkeyReveal } };
+  }
   if (session.mode === "hunt" && command.type === "select") {
     return { session: { ...next, votes: { ...session.votes, [actorId]: target.id } } };
   }
@@ -127,6 +170,7 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
     mode: session.mode,
     participantIds: session.participantIds,
     votes: session.votes,
+    ...(session.mode === "monkey" ? { visible: session.visible !== false, monkeyReveal: session.monkeyReveal, error: session.error } : {}),
     players: world.players.map((p) => ({
       id: p.id,
       name: p.name,
