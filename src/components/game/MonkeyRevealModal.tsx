@@ -29,7 +29,7 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
       </Button>
     )}
     <Dialog open={session.visible !== false} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto [&>button]:hidden">
+      <DialogContent showCloseButton={false} className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{getRoleLabel("v26", language)}</DialogTitle>
           <DialogDescription>{revealed ? target?.name : text.choose}</DialogDescription>

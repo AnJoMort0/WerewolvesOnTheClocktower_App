@@ -12,6 +12,8 @@ describe("Monkey reveal modal", () => {
     const props = { language: "en" as const, onConfirm, onClose, onReopen };
     const { rerender } = render(<MonkeyRevealModal {...props} session={view} />);
     expect(screen.getByRole("button", { name: "Reveal card" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Reveal card" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Close" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Wolf" }));
     expect(onConfirm).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Reveal card: Wolf" }));
@@ -20,7 +22,7 @@ describe("Monkey reveal modal", () => {
     rerender(<MonkeyRevealModal {...props} session={resolved} />);
     expect(screen.getByRole("img", { name: "Werewolf" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Wolf" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText("Close", { selector: "button" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledOnce();
     rerender(<MonkeyRevealModal {...props} session={{ ...resolved, visible: false }} />);
     fireEvent.click(screen.getByRole("button", { name: "Reopen card" }));
