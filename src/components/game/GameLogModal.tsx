@@ -10,6 +10,7 @@ import type { GameLogEvent, GameLogPlayerSnapshot, GameLogSnapshotPlayer } from 
 import type { PlayerStatus, StatusEffect } from "@/components/game/PlayerStatusPopover";
 import { STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
+import { formatGameRuntime } from "@/lib/gameRuntime";
 import poisonedIcon from "@/assets/icons/poisoned.png";
 import illusionIcon from "@/assets/icons/illusion.png";
 import ghostIcon from "@/assets/icons/ghost.png";
@@ -19,6 +20,7 @@ import villagerIcon from "@/assets/icons/villager.png";
 import cardSwitchIcon from "@/assets/icons/card_switch.png";
 
 interface GameLogModalProps {
+  runtimeMs?: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   language: Language;
@@ -196,6 +198,7 @@ function FinalCircle({
 }
 
 export function GameLogModal({
+  runtimeMs,
   open,
   onOpenChange,
   language,
@@ -270,6 +273,11 @@ export function GameLogModal({
               </Button>
             )}
           </div>
+          {runtimeMs !== undefined && (
+            <p className="text-left text-xs text-muted-foreground tabular-nums">
+              {copy.runtime}: {formatGameRuntime(runtimeMs)}
+            </p>
+          )}
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 sm:px-6">
           <section className="mx-auto max-w-[1700px] space-y-2 py-3">

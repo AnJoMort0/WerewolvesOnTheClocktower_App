@@ -13,6 +13,7 @@ import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealM
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
+import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { assignRoles, EVIL_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
+import { assignRoles, EVIL_ROLES, INFO_ROLES, LIMITED_USE_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
 import { LanguageContext, coerceLanguage, getEffectLabel, getRoleLabel, getScripts, getTranslation, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
-import { resolveRoleImage } from "@/lib/skinPacks";
+import { getActiveSeasonalRoleIds, resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
@@ -45,7 +46,9 @@ import { getRoomDisplayStorageKey, ROOM_DISPLAY_SNAPSHOT_VERSION, type RoomDispl
 import { normalizeStatusEffectSet } from "@/lib/effects";
 import { hasAttackImmunity, resolveProtectedDeaths } from "@/lib/immunity";
 import { useGMPhoneActions } from "@/hooks/usePhoneActions";
-import type { PhoneAction, PhoneWorld } from "@/lib/phoneActions";
+import { useGameRuntime } from "@/hooks/useGameRuntime";
+import { formatGameRuntime } from "@/lib/gameRuntime";
+import { getPhoneView, type PhoneAction, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
 import {
   EMPTY_ACTOR_POWER_STATE,
   encodeActorCharacter,
@@ -542,6 +545,7 @@ const GMRoom = () => {
   const [spyRevealOpen, setSpyRevealOpen] = useState(false);
   const [spyRevealCards, setSpyRevealCards] = useState<RevealCard[]>([]);
   const [gmSnapshotLoaded, setGmSnapshotLoaded] = useState(false);
+  const gameRuntime = useGameRuntime(roomId, room?.status, gmSnapshotLoaded);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [winPickerOpen, setWinPickerOpen] = useState(false);
   const [manualWinKind, setManualWinKind] = useState<WinKind | null>(null);
@@ -2012,7 +2016,9 @@ const GMRoom = () => {
       winKind: kind,
     };
     const finalizedEvents = [...gameLogEvents, gameOverEvent].slice(-MAX_GAME_LOG_EVENTS);
+    const runtimeMs = gameRuntime.transition("finished", gameOverEvent.createdAt);
     const gameLog: GameLogSnapshot = {
+      runtimeMs,
       events: finalizedEvents,
       players: players.map(({ id, name, seat_position, character, is_alive }) => ({
         id,
@@ -2118,7 +2124,11 @@ const GMRoom = () => {
     }
 
     const seatedPlayers = [...players].sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0));
-    const roles = assignRoles(seatedPlayers.length, advancedEnabled);
+    const roles = assignRoles(seatedPlayers.length, advancedEnabled, getActiveSeasonalRoleIds(skinPackId));
+    if (roles.includes("a01")) {
+      const candidates = getDrunkardReplacementCandidates(roles).filter((id) => INFO_ROLES.includes(id));
+      setDrunkardReplacementRole(candidates[Math.floor(Math.random() * candidates.length)] ?? "v02");
+    }
     const assignments: Record<string, RoleId> = {};
     seatedPlayers.forEach((p, i) => {
       assignments[p.id] = roles[i];
@@ -2360,6 +2370,7 @@ const GMRoom = () => {
     );
     await Promise.all(updates);
     await supabase.from("rooms").update({ status: "playing", game_over_state: null }).eq("id", roomId);
+    gameRuntime.transition("playing");
     setRoom((prev) => (prev ? { ...prev, status: "playing" } : prev));
     // f02 Espião auto-spawn: knows himself, so seed spied_on on himself
     const spyId = Object.entries(roleAssignments).find(([, r]) => r === "f02")?.[0];
@@ -4106,7 +4117,7 @@ const GMRoom = () => {
     const nextDogEnemyCount = livingDogEnemyIds.includes(targetPlayerId)
       ? livingDogEnemyIds.length - 1
       : livingDogEnemyIds.length + 1;
-    if (actionRole && actionRole !== "v12" && (!dogEvilCupidState || nextDogEnemyCount >= 2)) {
+    if (!meta.fromPhone && actionRole && actionRole !== "v12" && (!dogEvilCupidState || nextDogEnemyCount >= 2)) {
       markScriptRoleAction(actionRole, sourcePlayerId);
     }
     applyCaughtIfWebbed();
@@ -4609,10 +4620,13 @@ const GMRoom = () => {
   const applyPhoneAction = useCallback(({ action, targetPlayerId, sourcePlayerId }: PhoneAction) => {
     handleDragAction(action, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
   }, [handleDragAction]);
+  const completePhoneLine = useCallback((session: PhoneSession) => {
+    handleScriptLineCompleted(session.lineKey, true, session.progressOrder ?? null);
+  }, [handleScriptLineCompleted]);
   const phone = useGMPhoneActions({
     roomId, contextKey: `${room?.status}:${gameCyclePhase}:${nightNumber}`,
     enabled: gmSnapshotLoaded && room?.status === "playing" && gameCyclePhase === "night",
-    world: phoneWorld, onAction: applyPhoneAction,
+    world: phoneWorld, onAction: applyPhoneAction, onComplete: completePhoneLine,
   });
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
@@ -5065,8 +5079,7 @@ const GMRoom = () => {
 
   // Lamplighter reveal: random alive limited-use char
   const handleLamplighterReveal = useCallback((sourcePlayerId?: string | null) => {
-    const limitedUseRoles: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "m03", "v13", "v14", "v23"];
-    const candidates = players.filter((p) => !permanentlyDead.has(p.id) && limitedUseRoles.includes(abilityRoleAssignments[p.id]));
+    const candidates = players.filter((p) => !permanentlyDead.has(p.id) && LIMITED_USE_ROLES.includes(abilityRoleAssignments[p.id]));
     if (candidates.length === 0) {
       toast.warning(getToast("warnNoLimitedRoles", (room?.language as Language) || "pt"));
       return;
@@ -5617,27 +5630,41 @@ const GMRoom = () => {
   const unseatedPlayers = players.filter((p) => p.seat_position === null);
   const isPlaying = room.status === "playing";
   const pendingWinKind = manualWinKind ?? automaticWinKind;
+  const huntView = phone.session?.mode === "hunt"
+    ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
 
   return (
     <LanguageContext.Provider value={lang}>
     <div className="min-h-screen p-4">
-      {phone.session && phone.consensus && !hideScreenMode && !pendingPlayerActionRequest && (
-        <Dialog open onOpenChange={() => {}}>
-          <DialogContent className="border-destructive/50 [&>button]:hidden"
+      {huntView && phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
+        <Dialog open onOpenChange={(open) => { if (!open) phone.close(); }}>
+          <DialogContent className="max-h-[90dvh] overflow-y-auto border-destructive/50 [&>button]:hidden"
             onEscapeKeyDown={(event) => event.preventDefault()} onPointerDownOutside={(event) => event.preventDefault()}>
             <DialogHeader>
               <DialogTitle>{getTranslation(lang).ui.phoneActions.hunt}</DialogTitle>
-              <DialogDescription>{format(
+              <DialogDescription>{phone.consensus ? format(
                 getTranslation(lang).ui.phoneActions[phone.session.sourcePlayerId ? "soloHuntRequest" : "huntRequest"],
                 { target: players.find((p) => p.id === phone.consensus)?.name ?? tt("unknown"),
                   actor: players.find((p) => p.id === phone.session?.sourcePlayerId)?.name ?? tt("unknown") },
-              )}</DialogDescription>
+              ) : getTranslation(lang).ui.phoneActions.huntVotes}</DialogDescription>
             </DialogHeader>
+            <PhoneActionScreen session={huntView} playerId="gm" language={lang}
+              pending={false} connected readOnly onSend={() => {}} />
+            <ul className="space-y-1 text-sm">
+              {phone.session.participantIds.map((id) => (
+                <li key={id} className="flex justify-between gap-4">
+                  <span>{players.find((p) => p.id === id)?.name}</span>
+                  <span className="text-muted-foreground">{players.find((p) => p.id === phone.session?.votes[id])?.name ?? "—"}</span>
+                </li>
+              ))}
+            </ul>
             <DialogFooter className="gap-2">
               <Button size="icon" variant="secondary" aria-label={getTranslation(lang).ui.phoneActions.close}
                 title={getTranslation(lang).ui.phoneActions.close} onClick={phone.close}><Smartphone className="h-4 w-4" /></Button>
-              <Button variant="secondary" onClick={() => phone.resolveHunt(phone.session!.id, phone.consensus!, false)}>{tt("gmDenyAction")}</Button>
-              <Button variant="destructive" onClick={() => phone.resolveHunt(phone.session!.id, phone.consensus!, true)}>{tt("gmAcceptAction")}</Button>
+              {phone.consensus && <>
+                <Button variant="secondary" onClick={() => phone.resolveHunt(phone.session!.id, phone.consensus!, false)}>{tt("gmDenyAction")}</Button>
+                <Button variant="destructive" onClick={() => phone.resolveHunt(phone.session!.id, phone.consensus!, true)}>{tt("gmAcceptAction")}</Button>
+              </>}
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -5698,6 +5725,11 @@ const GMRoom = () => {
               <Users className="inline h-4 w-4 mr-1" />
               {players.length} {tt("playersInRoom")}
             </p>
+            {room.status !== "lobby" && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {getTranslation(lang).ui.gameLog.runtime}: <span className="tabular-nums">{formatGameRuntime(gameRuntime.elapsedMs)}</span>
+              </p>
+            )}
           </div>
 
           <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
@@ -6728,6 +6760,7 @@ const GMRoom = () => {
       />
 
       <GameLogModal
+        runtimeMs={gameRuntime.elapsedMs}
         open={gameLogOpen}
         onOpenChange={setGameLogOpen}
         language={lang}

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PhoneActionScreen } from "./PhoneActionScreen";
 import { getTranslation } from "@/lib/i18n";
@@ -16,6 +16,18 @@ const baseView: PhoneView = {
 };
 
 describe("PhoneActionScreen", () => {
+  it("mirrors votes for the GM without allowing a GM vote", () => {
+    const onSend = vi.fn();
+    const { rerender } = render(<PhoneActionScreen session={{ ...baseView, votes: { wolf: "target" } }}
+      playerId="gm" language="en" pending={false} connected readOnly onSend={onSend} />);
+    expect(screen.getByRole("button", { name: "Target" }).querySelector('span[title="Wolf"]')).toHaveTextContent("1");
+    expect(screen.getByRole("button", { name: "Target" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Target" }));
+    expect(onSend).not.toHaveBeenCalled();
+    rerender(<PhoneActionScreen session={baseView} playerId="gm" language="en"
+      pending={false} connected readOnly onSend={onSend} />);
+    expect(screen.getByRole("button", { name: "Target" }).querySelector('span[title="Wolf"]')).not.toBeInTheDocument();
+  });
   it("does not show the GM waiting message while a hunt selection is synchronizing", () => {
     render(
       <PhoneActionScreen

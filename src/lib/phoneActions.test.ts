@@ -88,7 +88,7 @@ describe("GM-controlled phone rules", () => {
     const session: PhoneSession = { ...hunt(), mode: "poison", sourcePlayerId: "mime", participantIds: ["mime"] };
     const command = { id: "poison", sessionId: session.id, sequence: 1, type: "confirm" as const, targetPlayerId: "mime" };
     const result = applyPhoneCommand(session, "mime", command, changed);
-    expect(result).toEqual({ session: null, action: { action: "poison", sourcePlayerId: "mime", targetPlayerId: "mime" } });
+    expect(result).toMatchObject({ session: null, completedSession: session, action: { action: "poison", sourcePlayerId: "mime", targetPlayerId: "mime" } });
     expect(applyPhoneCommand(result.session, "mime", command, changed).action).toBeUndefined();
   });
 
@@ -105,6 +105,6 @@ describe("GM-controlled phone rules", () => {
     const command = { id: "save", sessionId: session.id, sequence: 1, type: "confirm" as const, targetPlayerId: "victim" };
     expect(applyPhoneCommand(session, "shaman", command, changed).action?.targetPlayerId).toBe("victim");
     expect(applyPhoneCommand(session, "shaman", { ...command, targetPlayerId: "ghost" }, changed).action).toBeUndefined();
-    expect(applyPhoneCommand(session, "shaman", { ...command, type: "ignore" }, changed)).toEqual({ session: null });
+    expect(applyPhoneCommand(session, "shaman", { ...command, type: "ignore" }, changed)).toEqual({ session: null, completedSession: session });
   });
 });

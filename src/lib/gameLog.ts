@@ -54,6 +54,7 @@ export type GameLogSnapshotPlayer = {
 };
 
 export type GameLogSnapshot = {
+  runtimeMs?: number;
   events: GameLogEvent[];
   players: GameLogSnapshotPlayer[];
   roleAssignments: Record<string, RoleId>;
@@ -146,6 +147,8 @@ export function normalizeGameLogSnapshot(value: unknown): GameLogSnapshot | null
     roleAssignments,
     playerStatuses,
     permanentlyDead: stringArray(value.permanentlyDead),
+    ...(typeof value.runtimeMs === "number" && Number.isFinite(value.runtimeMs) && value.runtimeMs >= 0
+      ? { runtimeMs: value.runtimeMs } : {}),
     playerEffects,
     poisonedPlayerId: typeof value.poisonedPlayerId === "string" ? value.poisonedPlayerId : null,
     poisonedPlayerIds: stringArray(value.poisonedPlayerIds),

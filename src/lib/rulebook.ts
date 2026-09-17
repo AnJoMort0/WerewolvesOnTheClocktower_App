@@ -6,15 +6,15 @@ import {
   type RulebookSkinPreviewValue,
   type SkinPackId,
 } from "@/lib/skinPacks";
-import x01Card from "@/assets/extras/x01_card.png";
-import x02Card from "@/assets/extras/x02_card.png";
-import x021Card from "@/assets/extras/x021_card.png";
-import x03Card from "@/assets/extras/x03_card.png";
-import xv09Card from "@/assets/extras/xv09_card.png";
-import xs01Card from "@/assets/extras/xs01_card.png";
-import xAs01b1Card from "@/assets/extras/x.as01b.1_card.png";
-import xAs01b2Card from "@/assets/extras/x.as01b.2_card.png";
-import xm05Card from "@/assets/extras/xm05_card.png";
+import x01Card from "@/assets/display/extras/x01_card.webp";
+import x02Card from "@/assets/display/extras/x02_card.webp";
+import x021Card from "@/assets/display/extras/x021_card.webp";
+import x03Card from "@/assets/display/extras/x03_card.webp";
+import xv09Card from "@/assets/display/extras/xv09_card.webp";
+import xs01Card from "@/assets/display/extras/xs01_card.webp";
+import xAs01b1Card from "@/assets/display/extras/x.as01b.1_card.webp";
+import xAs01b2Card from "@/assets/display/extras/x.as01b.2_card.webp";
+import xm05Card from "@/assets/display/extras/xm05_card.webp";
 import {
   RULEBOOK_CHARACTERS,
   RULEBOOK_CHARACTER_ORDER,

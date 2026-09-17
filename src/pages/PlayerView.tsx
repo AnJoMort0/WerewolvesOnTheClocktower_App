@@ -1465,6 +1465,7 @@ const PlayerView = () => {
           onOpenChange={setGameLogOpen}
           language={language}
           events={gameLogSnapshot.events}
+          runtimeMs={gameLogSnapshot.runtimeMs}
           players={gameLogSnapshot.players}
           roleAssignments={gameLogSnapshot.roleAssignments}
           playerStatuses={gameLogSnapshot.playerStatuses}

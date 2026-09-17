@@ -12,7 +12,7 @@ import { RulebookModal } from "@/components/game/RulebookModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { assignRoles, type RoleId } from "@/lib/roles";
 import { LanguageContext, format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
-import { resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
+import { getActiveSeasonalRoleIds, resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 
 const MIN_PLAYERS = 8;
@@ -132,7 +132,7 @@ function CharacterGeneratorModal({ open, onOpenChange, language }: {
       return;
     }
 
-    setRoleIds(assignRoles(count, advancedEnabled));
+    setRoleIds(assignRoles(count, advancedEnabled, getActiveSeasonalRoleIds(skinPackId)));
     setStatus("");
   };
 

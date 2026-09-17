@@ -7,7 +7,8 @@ import type { Language } from "@/lib/i18n";
   1. Choose a unique id. Existing prefixes are e (essential), v (villager),
      m (evil), s (solo), f (flexible), a (advanced), and l (lame/simple).
   2. Add the card image as src/assets/roles/<id>.png.
-  3. In src/lib/roles.ts, import that image and add one ROLE_DEFINITIONS entry.
+  3. Run npm run assets:optimize to generate the display WebP copy. In
+     src/lib/roles.ts, import src/assets/display/roles/<id>.webp and add one ROLE_DEFINITIONS entry.
      RoleId is derived automatically. Add the id to EVIL_ROLES, WEREWOLF_ROLES,
      WEB_IMMUNE_ROLES, or INFO_ROLES only when its rules require that behavior.
      New roles are manually selectable as soon as they are registered. Add them
@@ -3474,9 +3475,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-e03",
             refs: ["e03"],
             text: {
-                pt: `O Chaman acorda/não acorda se não houver vítimas e são-lhe apresentadas as vítimas. Ele escolhe então com o polegar se as quer salvar ou não. Relembro que pode salvar duas pessoas durante o jogo todo.`,
-                fr: `Le Chaman se réveille / ne se réveille pas s’il n’y a pas de victimes. Les victimes lui sont présentées, puis il choisit avec le pouce s’il veut les sauver ou non. Je rappelle qu’il peut sauver deux personnes pendant toute la partie.`,
-                en: `The Shaman wakes up / does not wake up if there are no victims. The victims are shown, and the Shaman uses a thumb signal to choose whether to save them. Remember that the Shaman may save two people during the entire game.`
+                pt: `O Chaman acorda/não acorda se não houver vítimas e são-lhe apresentadas as vítimas. Ele escolhe então com o polegar se as quer salvar uma delas ou não. Relembro que pode salvar duas pessoas durante o jogo todo.`,
+                fr: `Le Chaman se réveille / ne se réveille pas s’il n’y a pas de victimes. Les victimes lui sont présentées, puis il choisit avec le pouce s’il veut en sauver une ou non. Je rappelle qu’il peut sauver deux personnes pendant toute la partie.`,
+                en: `The Shaman wakes up / does not wake up if there are no victims. The victims are shown, and the Shaman uses a thumb signal to choose whether to save one of them. Remember that the Shaman may save two people during the entire game.`
             }
         },
         {

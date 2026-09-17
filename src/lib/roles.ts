@@ -1,56 +1,56 @@
-import e01Img from "@/assets/roles/e01.png";
-import e02Img from "@/assets/roles/e02.png";
-import e03Img from "@/assets/roles/e03.png";
-import e04Img from "@/assets/roles/e04.png";
-import v01Img from "@/assets/roles/v01.png";
-import v02Img from "@/assets/roles/v02.png";
-import v03Img from "@/assets/roles/v03.png";
-import v04Img from "@/assets/roles/v04.png";
-import v05Img from "@/assets/roles/v05.png";
-import v06Img from "@/assets/roles/v06.png";
-import v07Img from "@/assets/roles/v07.png";
-import v08Img from "@/assets/roles/v08.png";
-import v08bImg from "@/assets/roles/v08b.png";
-import v09Img from "@/assets/roles/v09.png";
-import v10Img from "@/assets/roles/v10.png";
-import v11Img from "@/assets/roles/v11.png";
-import v12Img from "@/assets/roles/v12.png";
-import v13Img from "@/assets/roles/v13.png";
-import v14Img from "@/assets/roles/v14.png";
-import v15Img from "@/assets/roles/v15.png";
-import v16Img from "@/assets/roles/v16.png";
-import v17Img from "@/assets/roles/v17.png";
-import v18Img from "@/assets/roles/v18.png";
-import v19Img from "@/assets/roles/v19.png";
-import v20Img from "@/assets/roles/v20.png";
-import v21Img from "@/assets/roles/v21.png";
-import v22Img from "@/assets/roles/v22.png";
-import v23Img from "@/assets/roles/v23.png";
-import v24Img from "@/assets/roles/v24.png";
-import v25Img from "@/assets/roles/v25.png";
-import l01Img from "@/assets/roles/l01.png";
-import l02Img from "@/assets/roles/l02.png";
-import l03Img from "@/assets/roles/l03.png";
-import l04Img from "@/assets/roles/l04.png";
-import l05Img from "@/assets/roles/l05.png";
-import l06Img from "@/assets/roles/l06.png";
-import m01Img from "@/assets/roles/m01.png";
-import m02Img from "@/assets/roles/m02.png";
-import m03Img from "@/assets/roles/m03.png";
-import m04Img from "@/assets/roles/m04.png";
-import m05Img from "@/assets/roles/m05.png";
-import m06Img from "@/assets/roles/m06.png";
-import s01Img from "@/assets/roles/s01.png";
-import s02Img from "@/assets/roles/s02.png";
-import f01Img from "@/assets/roles/f01.png";
-import f02Img from "@/assets/roles/f02.png";
-import a01Img from "@/assets/roles/a01.png";
-import a02Img from "@/assets/roles/a02.png";
-import a03Img from "@/assets/roles/a03.png";
-import a04Img from "@/assets/roles/a04.png";
-import a05Img from "@/assets/roles/a05.png";
-import a06Img from "@/assets/roles/a06.png";
-import as01bImg from "@/assets/roles/as01b.png";
+import e01Img from "@/assets/display/roles/e01.webp";
+import e02Img from "@/assets/display/roles/e02.webp";
+import e03Img from "@/assets/display/roles/e03.webp";
+import e04Img from "@/assets/display/roles/e04.webp";
+import v01Img from "@/assets/display/roles/v01.webp";
+import v02Img from "@/assets/display/roles/v02.webp";
+import v03Img from "@/assets/display/roles/v03.webp";
+import v04Img from "@/assets/display/roles/v04.webp";
+import v05Img from "@/assets/display/roles/v05.webp";
+import v06Img from "@/assets/display/roles/v06.webp";
+import v07Img from "@/assets/display/roles/v07.webp";
+import v08Img from "@/assets/display/roles/v08.webp";
+import v08bImg from "@/assets/display/roles/v08b.webp";
+import v09Img from "@/assets/display/roles/v09.webp";
+import v10Img from "@/assets/display/roles/v10.webp";
+import v11Img from "@/assets/display/roles/v11.webp";
+import v12Img from "@/assets/display/roles/v12.webp";
+import v13Img from "@/assets/display/roles/v13.webp";
+import v14Img from "@/assets/display/roles/v14.webp";
+import v15Img from "@/assets/display/roles/v15.webp";
+import v16Img from "@/assets/display/roles/v16.webp";
+import v17Img from "@/assets/display/roles/v17.webp";
+import v18Img from "@/assets/display/roles/v18.webp";
+import v19Img from "@/assets/display/roles/v19.webp";
+import v20Img from "@/assets/display/roles/v20.webp";
+import v21Img from "@/assets/display/roles/v21.webp";
+import v22Img from "@/assets/display/roles/v22.webp";
+import v23Img from "@/assets/display/roles/v23.webp";
+import v24Img from "@/assets/display/roles/v24.webp";
+import v25Img from "@/assets/display/roles/v25.webp";
+import l01Img from "@/assets/display/roles/l01.webp";
+import l02Img from "@/assets/display/roles/l02.webp";
+import l03Img from "@/assets/display/roles/l03.webp";
+import l04Img from "@/assets/display/roles/l04.webp";
+import l05Img from "@/assets/display/roles/l05.webp";
+import l06Img from "@/assets/display/roles/l06.webp";
+import m01Img from "@/assets/display/roles/m01.webp";
+import m02Img from "@/assets/display/roles/m02.webp";
+import m03Img from "@/assets/display/roles/m03.webp";
+import m04Img from "@/assets/display/roles/m04.webp";
+import m05Img from "@/assets/display/roles/m05.webp";
+import m06Img from "@/assets/display/roles/m06.webp";
+import s01Img from "@/assets/display/roles/s01.webp";
+import s02Img from "@/assets/display/roles/s02.webp";
+import f01Img from "@/assets/display/roles/f01.webp";
+import f02Img from "@/assets/display/roles/f02.webp";
+import a01Img from "@/assets/display/roles/a01.webp";
+import a02Img from "@/assets/display/roles/a02.webp";
+import a03Img from "@/assets/display/roles/a03.webp";
+import a04Img from "@/assets/display/roles/a04.webp";
+import a05Img from "@/assets/display/roles/a05.webp";
+import a06Img from "@/assets/display/roles/a06.webp";
+import as01bImg from "@/assets/display/roles/as01b.webp";
 
 export type RoleCategory = "e" | "v" | "m" | "s" | "f" | "a" | "l";
 
@@ -175,21 +175,60 @@ const ADVANCED_ROLES: RoleId[] = ["a01", "a02", "a03", "a04", "a05", "a06", "as0
 const OTHER_UNIQUE: RoleId[] = ["m04", "m05", "s01", "f01", "f02"];
 const LAME_SINGLES: RoleId[] = ["l02", "l05", "l06"];
 
+/** Alternate deaths: tetanus, Hunter/Soldier revenge, Paranoid assassination,
+ * Lovers' suicide, White Wolf's solo kill, and the Servant's sacrifice.
+ * Poison and burning suppress powers; they do not directly kill. */
+export const EXTRA_DEATH_ROLES: RoleId[] = ["v07", "v08", "v09", "v10", "s01", "s02", "l06"];
+
+/** Keep this shared with the Lamplighter reveal: these powers have finite uses. */
+export const LIMITED_USE_ROLES: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "m03", "v13", "v14", "v23"];
+
+/** Roles with no unconditional recurring night line. First-night introductions
+ * do not expose them throughout the game; conditional wakeups remain hidden. */
+export const NO_UNCONDITIONAL_SCRIPT_ROLES: RoleId[] = [
+  "e03", "v01", "v07", "v08", "v08b", "v10", "v12", "v13", "v14", "v15", "v18", "v19", "v20", "v23",
+  "m04", "m05", "s01", "l01", "l02", "l03", "l04", "l05", "l06", "a01", "a02", "a05",
+];
+
+/** Eligibility depends on the lot already selected, so dependent roles are
+ * reconsidered after each draw rather than silently skipped forever. */
+export function canRandomlyAssignRole(id: RoleId, roles: readonly RoleId[], playerCount: number): boolean {
+  const prerequisite = ROLES[id].requires;
+  // Linked cards must have their parent: Red Hood/Hunter and Secret Lover/Cupid.
+  if (prerequisite && !roles.includes(prerequisite)) return false;
+  // Little Girl needs two distinct extra characters that can explain a death.
+  if (id === "v01") return roles.filter((role) => EXTRA_DEATH_ROLES.includes(role)).length >= 2;
+  // Puppeteer's false pack identity needs a village of at least twelve.
+  if (id === "v06") return playerCount >= 12;
+  // Lamplighter needs at least three finite-use powers to inspect.
+  if (id === "v21") return roles.filter((role) => LIMITED_USE_ROLES.includes(role)).length >= 3;
+  // White Wolf is balanced for exactly four wolves, including himself.
+  if (id === "s02") return getExpectedWerewolfCount(playerCount) === 4;
+  // Spy needs at least two characters whose recurring script does not expose them.
+  if (id === "f02") return roles.filter((role) => NO_UNCONDITIONAL_SCRIPT_ROLES.includes(role)).length >= 2;
+  // Drunkard's hidden information role counts as one; retain one sober INFO role.
+  // Automatic GM setup chooses an INFO replacement (see confirmRoom).
+  if (id === "a01") return roles.some((role) => INFO_ROLES.includes(role));
+  return true;
+}
+
 export function getExpectedWerewolfCount(playerCount: number): number {
   // 1 werewolf per 4 players; under 12 players, always exactly 2 wolves.
   if (playerCount < 12) return 2;
   return Math.floor(playerCount / 4);
 }
 
-function getWerewolfRoles(playerCount: number): RoleId[] {
+function getWerewolfRoles(playerCount: number, preferredRoles: ReadonlySet<RoleId>): RoleId[] {
   const wwCount = getExpectedWerewolfCount(playerCount);
   if (playerCount < 12) {
     return Array.from({ length: wwCount }, () => "e01" as RoleId);
   }
 
-  const normalCount = Math.max(1, wwCount - SPECIAL_WEREWOLVES.length);
+  // Keep at least one ordinary wolf; special wolves are unique and eligible only.
+  const eligibleSpecials = SPECIAL_WEREWOLVES.filter((id) => canRandomlyAssignRole(id, [], playerCount));
+  const normalCount = Math.max(1, wwCount - eligibleSpecials.length);
   const specialCount = wwCount - normalCount;
-  const specialRoles = shuffle(SPECIAL_WEREWOLVES).slice(0, specialCount);
+  const specialRoles = weightedShuffle(eligibleSpecials, (id) => preferredRoles.has(id) ? 1.25 : 1).slice(0, specialCount);
   const normalRoles = Array.from({ length: normalCount }, () => "e01" as RoleId);
   return [...specialRoles, ...normalRoles];
 }
@@ -203,18 +242,28 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function assignRoles(playerCount: number, advancedEnabled: boolean = false): RoleId[] {
+function weightedShuffle<T>(items: T[], weight: (item: T) => number): T[] {
+  // Exponential draws implement weighted sampling without replacement. Positive
+  // weights increase odds without reserving a slot or guaranteeing inclusion.
+  return items.map((item) => ({ item, priority: -Math.log(1 - Math.random()) / weight(item) }))
+    .sort((a, b) => a.priority - b.priority).map(({ item }) => item);
+}
+
+export function assignRoles(playerCount: number, advancedEnabled: boolean = false, preferredRoleIds: readonly RoleId[] = []): RoleId[] {
+  if (!Number.isInteger(playerCount) || playerCount < 8) throw new RangeError("Random assignment requires at least 8 players.");
+  const preferredRoles = new Set(preferredRoleIds);
   const roles: RoleId[] = [];
+  // Witch, Shaman, and Fortune Teller anchor every automatically generated game.
   roles.push(...ESSENTIAL_SINGLES);
 
-  roles.push(...getWerewolfRoles(playerCount));
+  roles.push(...getWerewolfRoles(playerCount, preferredRoles));
 
   const assigned = new Set<RoleId>(roles);
 
   // Balance: ensure at least one INFO character is in the villager pool.
   // Force-include one random INFO role first (if there's room).
   if (roles.length < playerCount) {
-    const shuffledInfo = shuffle(INFO_ROLES);
+    const shuffledInfo = weightedShuffle(INFO_ROLES.filter((id) => canRandomlyAssignRole(id, roles, playerCount)), (id) => preferredRoles.has(id) ? 1.25 : 1);
     for (const id of shuffledInfo) {
       if (!assigned.has(id)) {
         roles.push(id);
@@ -224,36 +273,25 @@ export function assignRoles(playerCount: number, advancedEnabled: boolean = fals
     }
   }
 
-  const shuffledVillagers = shuffle(VILLAGER_UNIQUE);
-  for (const id of shuffledVillagers) {
-    if (roles.length >= playerCount) break;
-    const def = ROLES[id];
-    if (def.requires && !assigned.has(def.requires)) continue;
-    if (assigned.has(id)) continue;
-    roles.push(id);
+  // Mix villagers, flexible/solo/evil support, and enabled advanced characters
+  // in one draw. Previously villagers consumed every slot before advanced mode.
+  // Simple roles and complete families have a smaller base weight, but remain
+  // available in ordinary games (including the seasonal Christmas Brothers).
+  const pool: RoleId[] = [...VILLAGER_UNIQUE, ...OTHER_UNIQUE, ...LAME_SINGLES, "l03", "l04", ...(advancedEnabled ? ADVANCED_ROLES : [])];
+  const weight = (id: RoleId) => (ADVANCED_ROLES.includes(id) ? 2 : ROLES[id].category === "l" ? 0.6 : 1)
+    * (preferredRoles.has(id) ? 1.25 : 1);
+  while (roles.length < playerCount) {
+    const eligible = pool.filter((id) => !assigned.has(id)
+      && roles.length + (ROLES[id].groupSize ?? 1) <= playerCount
+      && canRandomlyAssignRole(id, roles, playerCount));
+    if (eligible.length === 0) break;
+    const id = weightedShuffle(eligible, weight)[0];
+    // A group is drawn as one character option, then occupies all of its seats.
+    roles.push(...Array.from({ length: ROLES[id].groupSize ?? 1 }, () => id));
     assigned.add(id);
   }
 
-  if (advancedEnabled) {
-    const shuffledAdvanced = shuffle(ADVANCED_ROLES);
-    for (const id of shuffledAdvanced) {
-      if (roles.length >= playerCount) break;
-      const def = ROLES[id];
-      if (def.requires && !assigned.has(def.requires)) continue;
-      if (assigned.has(id)) continue;
-      roles.push(id);
-      assigned.add(id);
-    }
-  }
-
-  const shuffledOther = shuffle(OTHER_UNIQUE);
-  for (const id of shuffledOther) {
-    if (roles.length >= playerCount) break;
-    if (assigned.has(id)) continue;
-    roles.push(id);
-    assigned.add(id);
-  }
-
+  // Use simple singletons once the eligible main pool is exhausted.
   for (const lameId of LAME_SINGLES) {
     if (roles.length >= playerCount) break;
     if (!assigned.has(lameId)) {
@@ -263,16 +301,19 @@ export function assignRoles(playerCount: number, advancedEnabled: boolean = fals
   }
 
   if (roles.length + 2 <= playerCount && !assigned.has("l03")) {
+    // Sisters occupy exactly two seats; never generate a partial family.
     roles.push("l03", "l03");
     assigned.add("l03");
   }
 
   if (roles.length + 3 <= playerCount && !assigned.has("l04")) {
+    // Brothers occupy exactly three seats.
     roles.push("l04", "l04", "l04");
     assigned.add("l04");
   }
 
   while (roles.length < playerCount) {
+    // Ordinary Townsfolk may repeat to fill any remaining seats.
     roles.push("l01");
   }
 

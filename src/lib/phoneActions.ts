@@ -22,6 +22,7 @@ export type PhoneSession = {
   lineKey: string;
   mode: PhoneMode;
   sourcePlayerId: string | null;
+  progressOrder?: number | null;
   participantIds: string[];
   votes: Record<string, string>;
   sequences: Record<string, number>;
@@ -100,19 +101,20 @@ export function getHuntConsensus(session: PhoneSession | null): string | null {
 export function applyPhoneCommand(session: PhoneSession | null, actorId: string, command: PhoneCommand, world: PhoneWorld): {
   session: PhoneSession | null;
   action?: PhoneAction;
+  completedSession?: PhoneSession;
 } {
   session = reconcilePhoneSession(session, world);
   if (!session || command.sessionId !== session.id || !session.participantIds.includes(actorId)
     || !Number.isFinite(command.sequence) || command.sequence <= (session.sequences[actorId] ?? 0)) return { session };
   const next = { ...session, sequences: { ...session.sequences, [actorId]: command.sequence } };
-  if (command.type === "ignore" && session.mode === "shaman") return { session: null };
+  if (command.type === "ignore" && session.mode === "shaman") return { session: null, completedSession: session };
   const target = world.players.find((p) => p.id === command.targetPlayerId);
   if (!target || !isPhoneTarget(session, target)) return { session: next };
   if (session.mode === "hunt" && command.type === "select") {
     return { session: { ...next, votes: { ...session.votes, [actorId]: target.id } } };
   }
   if ((session.mode === "poison" || session.mode === "shaman") && command.type === "confirm") {
-    return { session: null, action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };
+    return { session: null, completedSession: session, action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };
   }
   return { session: next };
 }

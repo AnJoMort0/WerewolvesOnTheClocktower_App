@@ -82,7 +82,7 @@ interface NightScriptProps {
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
   onMimeReveal?: (sourcePlayerId?: string | null) => void;
   // Inline checkbox state for roles with limited uses
-  onPhoneToggle?: (mode: PhoneMode, lineKey: string, sourcePlayerId: string | null) => void;
+  onPhoneToggle?: (mode: PhoneMode, lineKey: string, sourcePlayerId: string | null, progressOrder: number | null) => void;
   activePhoneLineKey?: string | null;
   paranoidCharges?: number;
   onParanoidChargeToggle?: (idx: number) => void;
@@ -1407,7 +1407,7 @@ export const NightScript = ({
                     aria-label={phoneLabel}
                     aria-pressed={phoneActive}
                     title={phoneLabel}
-                    onClick={(event) => { event.stopPropagation(); onPhoneToggle(phoneMode, item.key, sourcePlayerId); }}
+                    onClick={(event) => { event.stopPropagation(); onPhoneToggle(phoneMode, item.key, sourcePlayerId, item.progressOrder); }}
                     className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-primary/20 ${phoneActive ? "bg-primary/20 ring-1 ring-inset ring-primary/30" : ""} ${phoneIconClass}`}
                   ><PhoneActionIcon className="h-4 w-4" /></button>
                 ) : null}

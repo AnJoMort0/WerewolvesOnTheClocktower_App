@@ -115,7 +115,7 @@ export const fr: Translation = {
       { text: "Le {Maîtres des Lapins} a entendu les {Lapins} effrayés cette nuit. / [rien] (/ les {Lapins} sont confus)", requires: ["v05"] },
       { text: "Le {Prêtre} se réveille. Si un joueur souhaite se confesser, révélant ainsi son rôle au Prêtre, il peut lever la main. Le {Prêtre} choisit l'un de ces joueurs, qui sera touché pour se réveiller. Il voit qui est le Prêtre et montre son rôle.", requires: ["v25"] },
       { text: "Le {Mîme} se réveille et on lui montre un rôle en jeu. Il agit silencieusement selon ce rôle ou reçoit les informations que ce rôle recevrait.", requires: ["a03"] },
-      { text: "Le {Chaman} se réveille et les victimes lui sont présentées. Il choisit alors avec le pouce s'il veut les sauver ou non. Je rappelle qu'il peut sauver deux personnes pendant toute la partie.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
+      { text: "Le {Chaman} se réveille et les victimes lui sont présentées. Il choisit alors avec le pouce s'il veut en sauver une ou non. Je rappelle qu'il peut sauver deux personnes pendant toute la partie.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
       { text: "La {Servante Dévouée} se réveille et les victimes de cette nuit lui sont révélées. Elle choisit si elle souhaite sauver une des victimes. En sauvant une victime, la {Servante Dévouée} se suicide.", requires: ["l06"], conditionKey: "hasRedXPlayers" },
       { text: "La {Petite Fille} se réveille et voit comment les victimes de cette nuit sont mortes.", requires: ["v01"], conditionKey: "hasRedXPlayers" },
       { text: "Le {Prophète} se réveille et indique, en pointant, un joueur qu'il pense être mort cette nuit. S'il a raison, le joueur sera touché pour savoir qu'il peut garder son pouvoir, même en tant que Fantôme, pendant le jour suivant et la nuit suivante.", requires: ["v19"], conditionKey: "hasRedXPlayers" },
@@ -142,6 +142,7 @@ export const fr: Translation = {
   ui: {
     // GM phone controls and player night action screens.
     phoneActions: {
+      huntVotes: "Votes de chasse en direct",
       open: "Ouvrir sur les téléphones",
       close: "Fermer sur les téléphones",
       hunt: "Chasse en groupe",
@@ -463,6 +464,7 @@ export const fr: Translation = {
 
     // Journal de partie et libellés utilisés par les événements.
     gameLog: {
+      runtime: "Dur?e actuelle de la partie",
       title: "Journal de partie",
       finalCircle: "Cercle final",
       empty: "Aucun événement enregistré pour le moment.",

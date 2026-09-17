@@ -9,16 +9,17 @@ import {
 type Channel = ReturnType<typeof supabase.channel>;
 const topic = (roomId: string, playerId: string) => `phone-${roomId}-${playerId}`;
 
-export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction }: {
+export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction, onComplete }: {
   roomId?: string;
   contextKey: string;
   enabled: boolean;
   world: PhoneWorld;
   onAction: (action: PhoneAction) => void;
+  onComplete?: (session: PhoneSession) => void;
 }) {
   const [session, setSession] = useState<PhoneSession | null>(null);
-  const current = useRef({ session, world, onAction, enabled, contextKey });
-  current.current = { ...current.current, world, onAction, enabled, contextKey };
+  const current = useRef({ session, world, onAction, onComplete, enabled, contextKey });
+  current.current = { ...current.current, world, onAction, onComplete, enabled, contextKey };
   const channels = useRef(new Map<string, Channel>());
   const acknowledgments = useRef(new Map<string, string>());
   const revision = useRef(Date.now());
@@ -90,6 +91,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
         acknowledgments.current.set(playerId, payload.id);
         commit(result.session);
         if (result.action) current.current.onAction(result.action);
+        if (result.completedSession) current.current.onComplete?.(result.completedSession);
       }).subscribe((status) => { if (status === "SUBSCRIBED") publish(playerId); });
     }
     const activeChannels = channels.current;
@@ -99,12 +101,15 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     };
   }, [commit, playerIdsKey, publish, roomId]);
 
-  const toggle = useCallback((mode: PhoneMode, lineKey: string, sourcePlayerId: string | null) => {
-    if (current.current.session?.lineKey === lineKey) { commit(null); return; }
-    if (!current.current.enabled) return;
+  const toggle = useCallback((mode: PhoneMode, lineKey: string, sourcePlayerId: string | null, progressOrder: number | null = null) => {
+    if (current.current.session?.lineKey === lineKey) { commit(null); return false; }
+    if (!current.current.enabled) return false;
     const participantIds = getPhoneParticipants(mode, sourcePlayerId, current.current.world);
-    if (participantIds.length === 0) return;
-    commit({ id: createPlayerActionRequestId("gm", lineKey), lineKey, mode, sourcePlayerId, participantIds, votes: {}, sequences: {} });
+    if (participantIds.length === 0) return false;
+    const next = { id: createPlayerActionRequestId("gm", lineKey), lineKey, mode, sourcePlayerId, progressOrder, participantIds, votes: {}, sequences: {} };
+    commit(next);
+    if (mode === "allies") current.current.onComplete?.(next);
+    return true;
   }, [commit]);
 
   const resolveHunt = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
@@ -113,8 +118,10 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     if (!accepted) { commit({ ...latest, votes: {} }); return; }
     commit(null);
     // A pending victim remains selectable so the phones do not reveal other night kills.
-    if (current.current.world.players.find((p) => p.id === targetPlayerId)?.redX) return;
-    current.current.onAction({ action: "kill", targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
+    if (!current.current.world.players.find((p) => p.id === targetPlayerId)?.redX) {
+      current.current.onAction({ action: "kill", targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
+    }
+    current.current.onComplete?.(latest);
   }, [commit]);
 
   const active = enabled ? reconcilePhoneSession(session, world) : null;

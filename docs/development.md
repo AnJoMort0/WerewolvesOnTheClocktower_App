@@ -59,6 +59,7 @@ The application can run from a local development server, but it still requires i
 - `src/lib`: roles, localisation, night script, rulebook content, and join URL helpers
 - `src/integrations/supabase`: Supabase client and generated types
 - `src/assets/roles`: character artwork used by the application and README
+- `src/assets/display`: generated 512px WebP cards and skins used by the application
 - `src/assets/extras`: extra rulebook card artwork used by the in-app reference
 - `supabase/migrations`: reproducible database migrations
 - `public/_redirects`: Cloudflare Pages single-page-app fallback
@@ -103,6 +104,13 @@ npm install
 npm test
 npm run build
 ```
+
+After adding or changing original artwork in `src/assets/roles` or
+`src/assets/extras`, run `npm run assets:optimize` and commit the generated
+`src/assets/display` copies. The app imports these smaller WebP files; the
+original PNGs remain available for editing and the README. The script preserves
+aspect ratios and transparency, avoids enlarging small images, and caps each
+edge at 512 pixels. No image processing runs in a player's browser.
 
 ### Computer-only development
 

@@ -179,6 +179,7 @@ export type GameLogActionKey =
 
 export interface GameLogStrings {
   title: string;
+  runtime: string;
   finalCircle: string;
   empty: string;
   clearHighlight: string;
@@ -251,6 +252,7 @@ export interface GMRoomStrings {
 export interface UIStrings {
   // GM script phone controls, player night modes, and hunt approval dialog.
   phoneActions: {
+    huntVotes: string;
     open: string;
     close: string;
     hunt: string;

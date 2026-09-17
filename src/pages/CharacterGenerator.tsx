@@ -11,7 +11,7 @@ import { LanguageContext, coerceLanguage, format, getRoleLabel, getTranslation, 
 import { RULEBOOK_NIGHT_SCRIPT, type RulebookNightPhase } from "@/lib/rulebookContent";
 import { assignRoles, type RoleId } from "@/lib/roles";
 import { autoFixRoleSelection, validateRoleSelection } from "@/lib/roleValidation";
-import { resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
+import { getActiveSeasonalRoleIds, resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 
 const MIN_PLAYERS = 8;
@@ -130,7 +130,7 @@ export default function CharacterGeneratorPage() {
       return;
     }
 
-    setRoleIds(assignRoles(count, advancedEnabled));
+    setRoleIds(assignRoles(count, advancedEnabled, getActiveSeasonalRoleIds(skinPackId)));
     setStatus("");
     setCompletedLines(new Set());
     setLockedLines(new Set());

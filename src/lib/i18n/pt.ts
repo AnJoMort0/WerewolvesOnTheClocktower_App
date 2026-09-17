@@ -115,7 +115,7 @@ export const pt: Translation = {
       { text: "O {Domador dos Coelhos} ouviu os {Coelhos} assustados esta noite. / [nada] (/os {Coelhos} estão confusos)", requires: ["v05"] },
       { text: "O {Padre} acorda. Se algum jogador quiser se confessar, revelando a sua carta ao Padre, pode levantar a mão. O {Padre} escolhe um desses jogadores, que será tocado para acordar. Ele vê quem é o Padre e mostra o seu papel.", requires: ["v25"] },
       { text: "O {Mimo} acorda e é-lhe mostrado um papel em jogo. Ele age silenciosamente segundo esse papel ou recebe as informações que esse papel receberia.", requires: ["a03"] },
-      { text: "O {Chaman} acorda e são-lhe apresentadas as vítimas. Ele escolhe então com o polegar se as quer salvar ou não. Relembro que pode salvar duas pessoas durante o jogo todo.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
+      { text: "O {Chaman} acorda e são-lhe apresentadas as vítimas. Ele escolhe então com o polegar se quer salvar uma delas ou não. Relembro que pode salvar duas pessoas durante o jogo todo.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
       { text: "A {Serva Devota} acorda e são-lhe apresentadas as vítimas. Ela escolhe então se quer salvar uma das vítimas. Ao salvar uma vítima, a {Serva Devota} suicida-se.", requires: ["l06"], conditionKey: "hasRedXPlayers" },
       { text: "A {Menina} acorda e vê como as vítimas desta noite morreram.", requires: ["v01"], conditionKey: "hasRedXPlayers" },
       { text: "O {Profeta} acorda e indica, ao apontar um jogador que acha que morreu esta noite. Se estiver correto, o jogador será tocado, para saber que pode guardar o seu poder, mesmo como Fantasma, durante o próximo dia e a noite.", requires: ["v19"], conditionKey: "hasRedXPlayers" },
@@ -142,6 +142,7 @@ export const pt: Translation = {
   ui: {
     // GM phone controls and player night action screens.
     phoneActions: {
+      huntVotes: "Votos da ca?a em direto",
       open: "Abrir nos telemóveis",
       close: "Fechar nos telemóveis",
       hunt: "Caça em grupo",
@@ -463,6 +464,7 @@ export const pt: Translation = {
 
     // Registo do jogo e etiquetas usadas nos eventos.
     gameLog: {
+      runtime: "Tempo de jogo atual",
       title: "Registo do jogo",
       finalCircle: "Círculo final",
       empty: "Ainda não há acontecimentos registados.",

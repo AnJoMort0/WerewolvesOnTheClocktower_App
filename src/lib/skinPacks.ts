@@ -46,7 +46,7 @@ export const SEASONAL_EVENT_ORDER: SeasonalEventId[] = [
 ];
 
 const SKIN_PACK_IMAGE_MODULES = import.meta.glob<string>(
-  "/src/assets/roles/skin_packs/**/*.png",
+  "/src/assets/display/roles/skin_packs/**/*.webp",
   { eager: true, import: "default" },
 );
 
@@ -63,7 +63,7 @@ const flexibleImages: FlexibleRoleImageMap = {};
 for (const [path, src] of Object.entries(SKIN_PACK_IMAGE_MODULES)) {
   const parts = path.split("/");
   const folder = parts.at(-2);
-  const filename = parts.at(-1)?.replace(/\.png$/, "") ?? "";
+  const filename = parts.at(-1)?.replace(/\.webp$/, "") ?? "";
   const separatorIndex = filename.indexOf("_");
   if (!folder || separatorIndex < 0) continue;
 
@@ -123,6 +123,13 @@ export function getActiveSeasonalEvents(date: Date = new Date()): SeasonalEventI
 
 export function hasActiveSeasonalSkins(date: Date = new Date()): boolean {
   return getActiveSeasonalEvents(date).some((eventId) => Object.keys(seasonalImages[eventId]).length > 0);
+}
+
+/** Prefer only cards whose seasonal artwork is actually active on this device. */
+export function getActiveSeasonalRoleIds(skinPackId: SkinPackId, date: Date = new Date()): RoleId[] {
+  if (skinPackId !== "seasonal") return [];
+  return Array.from(new Set(getActiveSeasonalEvents(date)
+    .flatMap((eventId) => Object.keys(seasonalImages[eventId]) as RoleId[])));
 }
 
 export function resolveRoleImage(roleId: RoleId, options: ResolveRoleImageOptions = {}): ResolvedRoleImage {

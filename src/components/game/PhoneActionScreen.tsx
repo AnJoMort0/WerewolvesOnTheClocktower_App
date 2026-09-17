@@ -37,13 +37,14 @@ function getEllipseAngles(count: number, radiusX: number, radiusY: number): numb
   });
 }
 
-export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend }: {
+export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false }: {
   session: PhoneView;
   playerId: string;
   language: Language;
   pending: boolean;
   connected: boolean;
   onSend: (type: PhoneCommand["type"], targetPlayerId?: string) => void;
+  readOnly?: boolean;
 }) {
   const text = getTranslation(language).ui.phoneActions;
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -89,7 +90,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 type="button"
                 aria-label={player.name}
                 aria-pressed={session.mode === "allies" ? undefined : selected === player.id}
-                disabled={!player.selectable || !connected || (pending && session.mode !== "hunt")}
+                disabled={readOnly || !player.selectable || !connected || (pending && session.mode !== "hunt")}
                 onClick={() => session.mode === "hunt" ? onSend("select", player.id) : setSelectedId(player.id)}
                 className={`absolute flex w-[3.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
                 style={{
@@ -120,7 +121,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
       {!connected && <p role="status" className="text-sm">{text.reconnecting}</p>}
       {pending && session.mode !== "hunt" && <p role="status" className="text-sm text-muted-foreground">{text.waiting}</p>}
       {session.mode === "poison" && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
-      {(session.mode === "poison" || session.mode === "shaman") && (
+      {!readOnly && (session.mode === "poison" || session.mode === "shaman") && (
         <div className="flex justify-center gap-2">
           {session.mode === "shaman" && (
             <Button variant="secondary" disabled={pending || !connected} onClick={() => onSend("ignore")}>

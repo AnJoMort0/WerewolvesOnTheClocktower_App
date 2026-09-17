@@ -4,6 +4,7 @@ import { normalizeGameLogSnapshot } from "@/lib/gameLog";
 describe("normalizeGameLogSnapshot", () => {
   it("restores a durable post-game snapshot and normalizes legacy effects", () => {
     const snapshot = normalizeGameLogSnapshot({
+      runtimeMs: 120_000,
       events: [{
         id: "event-1",
         createdAt: 123,
@@ -30,6 +31,7 @@ describe("normalizeGameLogSnapshot", () => {
     });
 
     expect(snapshot).toMatchObject({
+      runtimeMs: 120_000,
       roleAssignments: { "player-1": "v01" },
       playerStatuses: { "player-1": "dead" },
       playerEffects: { "player-1": ["lover", "immunity_full"] },

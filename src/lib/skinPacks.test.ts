@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ROLES } from "@/lib/roles";
 import {
   getActiveSeasonalEvents,
+  getActiveSeasonalRoleIds,
   getDefaultSkinPackForPath,
   getRulebookSkinOptions,
   getSkinPackLabel,
@@ -9,6 +10,13 @@ import {
 } from "@/lib/skinPacks";
 
 describe("skin packs", () => {
+  it("prefers only currently active seasonal cards when the seasonal pack is selected", () => {
+    const christmas = new Date(2026, 11, 25);
+    expect(getActiveSeasonalRoleIds("seasonal", christmas).sort()).toEqual(["l04", "v24"]);
+    expect(getActiveSeasonalRoleIds("default", christmas)).toEqual([]);
+    expect(getActiveSeasonalRoleIds("thiercelieux", christmas)).toEqual([]);
+    expect(getActiveSeasonalRoleIds("seasonal", new Date(2026, 6, 17))).toEqual([]);
+  });
   it("uses route defaults for fresh devices", () => {
     expect(getDefaultSkinPackForPath("/gm/abc")).toBe("default");
     expect(getDefaultSkinPackForPath("/host/abc")).toBe("default");

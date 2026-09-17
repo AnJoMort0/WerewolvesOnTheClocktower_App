@@ -115,7 +115,7 @@ export const en: Translation = {
       { text: "The {Bunny Tamer} heard the frightened {Bunnies} tonight. / [nothing] (/ the {Bunnies} are confused)", requires: ["v05"] },
       { text: "The {Priest} wakes up. Any player who wishes to confess by revealing their card to the Priest may raise a hand. The {Priest} chooses one of those players, who is touched and wakes up. That player sees who the Priest is and shows their role.", requires: ["v25"] },
       { text: "The {Mime} wakes up and is shown a role that is in play. They silently perform that role's action or receive the information that role would receive.", requires: ["a03"] },
-      { text: "The {Shaman} wakes up and is shown the victims. The {Shaman} then uses a thumb signal to choose whether to save them. Remember that the {Shaman} may save two people during the entire game.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
+      { text: "The {Shaman} wakes up and is shown the victims. The {Shaman} then uses a thumb signal to choose whether to save on of them. Remember that the {Shaman} may save two people during the entire game.", requires: ["e03"], conditionKey: "hasRedXPlayers", phoneMode: "shaman" },
       { text: "The {Devout Servant} wakes up and is shown the victims. They choose whether to save one of them. When the {Devout Servant} saves a victim, they commit suicide.", requires: ["l06"], conditionKey: "hasRedXPlayers" },
       { text: "The {Little Girl} wakes up and sees how each of tonight's victims died.", requires: ["v01"], conditionKey: "hasRedXPlayers" },
       { text: "The {Prophet} wakes up and points at a player they believe died tonight. If correct, that player is touched to learn that they may keep their power as a Ghost during the following day and night.", requires: ["v19"], conditionKey: "hasRedXPlayers" },
@@ -142,6 +142,7 @@ export const en: Translation = {
   ui: {
     // GM phone controls and player night action screens.
     phoneActions: {
+      huntVotes: "Live hunt votes",
       open: "Open on phones",
       close: "Close on phones",
       hunt: "Group hunt",
@@ -463,6 +464,7 @@ export const en: Translation = {
 
     // Game log and event labels.
     gameLog: {
+      runtime: "Current game run time",
       title: "Game log",
       finalCircle: "Final circle",
       empty: "No events recorded yet.",

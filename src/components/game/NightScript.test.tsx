@@ -35,8 +35,8 @@ describe("NightScript phone controls", () => {
     });
     expect(container.querySelector('[data-phone-mode="allies"] .lucide-users')).toBeInTheDocument();
     expect(container.querySelector('[data-phone-mode="poison"] .lucide-flask-conical')).toBeInTheDocument();
-    expect(onPhoneToggle).toHaveBeenCalledWith("allies", expect.any(String), null);
-    expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), "witch");
+    expect(onPhoneToggle).toHaveBeenCalledWith("allies", expect.any(String), null, null);
+    expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), "witch", expect.anything());
     expect(onLineCompletedChange).not.toHaveBeenCalled();
   });
 
@@ -55,7 +55,7 @@ describe("NightScript phone controls", () => {
     />);
     container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
     for (const id of ["witch", "actor", "drunkard", "dog", "mime"]) {
-      expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), id);
+      expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), id, expect.anything());
     }
   });
 
@@ -69,8 +69,8 @@ describe("NightScript phone controls", () => {
     />);
     container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
     expect(container.querySelector('[data-phone-mode="shaman"] .lucide-rotate-ccw')).toBeInTheDocument();
-    expect(onPhoneToggle).toHaveBeenCalledWith("shaman", expect.any(String), "mime");
-    expect(onPhoneToggle).not.toHaveBeenCalledWith("shaman", expect.any(String), "shaman");
+    expect(onPhoneToggle).toHaveBeenCalledWith("shaman", expect.any(String), "mime", expect.anything());
+    expect(onPhoneToggle).not.toHaveBeenCalledWith("shaman", expect.any(String), "shaman", expect.anything());
   });
 
   it("uses a crosshair for the pack hunt action", () => {
