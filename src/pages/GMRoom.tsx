@@ -5664,7 +5664,8 @@ const GMRoom = () => {
       {phone.session?.mode === "monkey" && !hideScreenMode && (
         <MonkeyRevealModal key={phone.session.id}
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
-          language={lang} onConfirm={phone.confirmMonkey} onClose={phone.close} />
+          language={lang} onConfirm={phone.confirmMonkey} onClose={phone.close}
+          onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       {huntView && phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
         <Dialog open onOpenChange={(open) => { if (!open) phone.close(); }}>

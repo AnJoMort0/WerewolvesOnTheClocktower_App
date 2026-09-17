@@ -1073,7 +1073,7 @@ const PlayerView = () => {
                 <MonkeyRevealModal key={phone.session.id} session={phone.session} language={language}
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
-                  onReopen={() => phone.send("reopen")} />
+                  onReopen={() => phone.send("reopen")} onRoleClick={(roleId) => openRulebook(roleId)} />
               ) : phone.session && roomStatus === "playing" && playerId ? (
                 <PhoneActionScreen key={phone.session.id} session={phone.session} playerId={playerId}
                   language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send} />

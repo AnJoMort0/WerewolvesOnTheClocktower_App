@@ -8,8 +8,8 @@ const view: PhoneView = { id: "monkey", mode: "monkey", participantIds: ["monkey
 ] };
 describe("Monkey reveal modal", () => {
   it("requires choosing and confirming a player, then preserves a revealed card when reopened", () => {
-    const onConfirm = vi.fn(), onClose = vi.fn(), onReopen = vi.fn();
-    const props = { language: "en" as const, onConfirm, onClose, onReopen };
+    const onConfirm = vi.fn(), onClose = vi.fn(), onReopen = vi.fn(), onRoleClick = vi.fn();
+    const props = { language: "en" as const, onConfirm, onClose, onReopen, onRoleClick };
     const { rerender } = render(<MonkeyRevealModal {...props} session={view} />);
     expect(screen.getByRole("button", { name: "Reveal card" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Reveal card" })).toBeVisible();
@@ -21,6 +21,10 @@ describe("Monkey reveal modal", () => {
     const resolved = { ...view, monkeyReveal: { targetPlayerId: "wolf", roleId: "e01" as const, evil: true } };
     rerender(<MonkeyRevealModal {...props} session={resolved} />);
     expect(screen.getByRole("img", { name: "Werewolf" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Werewolf" }));
+    expect(onRoleClick).toHaveBeenCalledExactlyOnceWith("e01");
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("button", { name: "Wolf" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledOnce();

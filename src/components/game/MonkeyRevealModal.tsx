@@ -7,8 +7,9 @@ import { getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import type { PhoneView } from "@/lib/phoneActions";
+import type { RoleId } from "@/lib/roles";
 
-export function MonkeyRevealModal({ session, language, pending = false, connected = true, onConfirm, onClose, onReopen }: {
+export function MonkeyRevealModal({ session, language, pending = false, connected = true, onConfirm, onClose, onReopen, onRoleClick }: {
   session: PhoneView;
   language: Language;
   pending?: boolean;
@@ -16,6 +17,7 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
   onConfirm: (playerId: string) => void;
   onClose: () => void;
   onReopen?: () => void;
+  onRoleClick?: (roleId: RoleId) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const { skinPackId } = useSkinPack();
@@ -36,8 +38,10 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
         </DialogHeader>
         {revealed ? (
           <div className="flex flex-col items-center gap-3" data-testid="monkey-revealed-card">
-            <img className="h-56 w-56 rounded-lg object-contain" src={resolveRoleImage(revealed.roleId, { skinPackId }).src}
-              alt={getRoleLabel(revealed.roleId, language)} />
+            <button type="button" onClick={() => onRoleClick?.(revealed.roleId)} className="block rounded-lg">
+              <img className="h-56 w-56 rounded-lg object-contain" src={resolveRoleImage(revealed.roleId, { skinPackId }).src}
+                alt={getRoleLabel(revealed.roleId, language)} />
+            </button>
             <p className="font-display">{getRoleLabel(revealed.roleId, language)}</p>
           </div>
         ) : <>
