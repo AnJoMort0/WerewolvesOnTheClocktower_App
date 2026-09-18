@@ -1,7 +1,8 @@
 import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { ScriptLine } from "@/lib/i18n/types";
+import { isColossusTarget } from "@/lib/colossus";
 
-export type PhoneMode = "hunt" | "allies" | "poison" | "shaman" | "monkey";
+export type PhoneMode = "hunt" | "allies" | "poison" | "shaman" | "monkey" | "colossus";
 export type MonkeyReveal = { targetPlayerId: string; roleId: RoleId; evil: boolean };
 export function shouldExhaustMonkeyPower(reveal: MonkeyReveal, nightNumber: number): boolean {
   return nightNumber > 1 && reveal.evil;
@@ -23,6 +24,9 @@ export type PhonePlayer = {
   actingPoisoned?: boolean;
   illusion?: boolean;
   monkeyDisabled?: boolean;
+  colossusReady?: boolean;
+  actedTonight?: boolean;
+  host?: boolean;
 };
 export type PhoneWorld = { players: PhonePlayer[]; packBlocked: boolean };
 export type PhoneSession = {
@@ -37,6 +41,7 @@ export type PhoneSession = {
   visible?: boolean;
   monkeyReveal?: MonkeyReveal;
   error?: "noSafeCard";
+  pendingTargetPlayerId?: string;
 };
 export type PhoneCommand = {
   id: string;
@@ -45,11 +50,12 @@ export type PhoneCommand = {
   type: "select" | "confirm" | "ignore" | "close" | "reopen";
   targetPlayerId?: string;
 };
-export type PhoneAction = { action: "kill" | "poison" | "shaman" | "monkey"; targetPlayerId: string; sourcePlayerId: string | null; monkeyReveal?: MonkeyReveal };
+export type PhoneAction = { action: "kill" | "poison" | "shaman" | "monkey" | "colossus"; targetPlayerId: string; sourcePlayerId: string | null; monkeyReveal?: MonkeyReveal };
 export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participantIds"> & {
   visible?: boolean;
   monkeyReveal?: MonkeyReveal;
   error?: "noSafeCard";
+  pendingTargetPlayerId?: string;
   players: Array<Pick<PhonePlayer, "id" | "name" | "seat_position"> & {
     selectable: boolean;
     redX: boolean;
@@ -75,6 +81,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
     const matches = mode === "poison" ? player.abilityRole === "e02"
       : mode === "shaman" ? player.abilityRole === "e03"
       : mode === "monkey" ? player.abilityRole === "v26" && !player.monkeyDisabled
+      : mode === "colossus" ? player.abilityRole === "v27" && !!player.colossusReady
       : mode === "hunt" && !!player.abilityRole && WEREWOLF_ROLES.includes(player.abilityRole);
     return matches ? [sourcePlayerId] : [];
   }
@@ -88,6 +95,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
 export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boolean {
   // The Monkey can inspect any card, including their own or a Ghost's.
   if (session.mode === "monkey") return !session.monkeyReveal && !!(player.displayRole ?? player.abilityRole);
+  if (session.mode === "colossus") return isColossusTarget(player);
   if (session.mode === "allies" || player.dead) return false;
   if (session.mode === "shaman") return player.redX;
   // The Witch can target herself, and pending victims may still be poisoned before dawn.
@@ -104,6 +112,9 @@ export function reconcilePhoneSession(session: PhoneSession | null, world: Phone
   }
   const participantIds = getPhoneParticipants(session.mode, session.sourcePlayerId, world);
   if (participantIds.length === 0) return null;
+  if (session.pendingTargetPlayerId && !world.players.some((p) => p.id === session.pendingTargetPlayerId && isPhoneTarget(session, p))) {
+    return { ...session, pendingTargetPlayerId: undefined };
+  }
   if (participantIds.join() !== session.participantIds.join()) {
     return { ...session, participantIds, votes: {} };
   }
@@ -134,6 +145,10 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if (command.type === "ignore" && session.mode === "shaman") return { session: null, completedSession: session };
   const target = world.players.find((p) => p.id === command.targetPlayerId);
   if (!target || !isPhoneTarget(session, target)) return { session: next };
+  if (session.mode === "colossus" && command.type === "confirm" && !session.pendingTargetPlayerId) {
+    // Player confirmation only proposes a victim. The GM is the kill authority.
+    return { session: { ...next, pendingTargetPlayerId: target.id } };
+  }
   if (session.mode === "monkey" && command.type === "confirm") {
     const source = world.players.find((p) => p.id === actorId)!;
     const targetRole = target.displayRole ?? target.abilityRole!;
@@ -170,6 +185,7 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
     mode: session.mode,
     participantIds: session.participantIds,
     votes: session.votes,
+    pendingTargetPlayerId: session.pendingTargetPlayerId,
     ...(session.mode === "monkey" ? { visible: session.visible !== false, monkeyReveal: session.monkeyReveal, error: session.error } : {}),
     players: world.players.map((p) => ({
       id: p.id,

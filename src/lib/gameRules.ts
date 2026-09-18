@@ -30,6 +30,7 @@ export type LittleGirlAnswerKind =
   | "soldier"
   | "suicide"
   | "hunter"
+  | "colossus"
   | "paranoid"
   | "pyromaniac"
   | "rustedKnight"
@@ -42,6 +43,7 @@ export const LITTLE_GIRL_POISONED_ANSWERS: Array<{ kind: LittleGirlAnswerKind; r
   { kind: "soldier", roleId: "v09" },
   { kind: "suicide", roleId: "s01" },
   { kind: "hunter", roleId: "v08" },
+  { kind: "colossus", roleId: "v27" },
   { kind: "paranoid", roleId: "v10" },
   { kind: "pyromaniac", roleId: "v15" },
   { kind: "rustedKnight", roleId: "v07" },
@@ -55,6 +57,7 @@ export function getLittleGirlAnswerKind(source: string | undefined): LittleGirlA
   if (source === "soldier" || source === "soldado") return "soldier";
   if (source === "s01-suicide") return "suicide";
   if (source === "v08") return "hunter";
+  if (source === "v27") return "colossus";
   if (source === "v10") return "paranoid";
   if (source === "v15") return "pyromaniac";
   if (source === "v07" || source === "v07-poisoned") return "rustedKnight";

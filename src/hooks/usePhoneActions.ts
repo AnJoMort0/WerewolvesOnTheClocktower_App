@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { createPlayerActionRequestId } from "@/lib/playerActions";
 import {
-  applyPhoneCommand, getHuntConsensus, getPhoneParticipants, getPhoneView, reconcilePhoneSession,
+  applyPhoneCommand, getHuntConsensus, getPhoneParticipants, getPhoneView, isPhoneTarget, reconcilePhoneSession,
   type PhoneAction, type PhoneCommand, type PhoneMode, type PhoneSession, type PhoneView, type PhoneWorld,
 } from "@/lib/phoneActions";
 
@@ -42,7 +42,13 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   // Commit before executing an action, so retried phone messages cannot execute it twice.
   const commit = useCallback((next: PhoneSession | null) => {
     current.current.session = next;
-    if (next?.mode === "monkey") monkeySessions.current[next.lineKey] = next;
+    if (next?.mode === "monkey") {
+      // Dragging and the script button address the same nightly reveal.
+      for (const [key, entry] of Object.entries(monkeySessions.current)) {
+        if (entry.sourcePlayerId === next.sourcePlayerId) delete monkeySessions.current[key];
+      }
+      monkeySessions.current[next.lineKey] = next;
+    }
     setSession(next);
     if (storageKey) {
       try {
@@ -116,8 +122,10 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const toggle = useCallback((mode: PhoneMode, lineKey: string, sourcePlayerId: string | null, progressOrder: number | null = null) => {
     if (!current.current.enabled) return false;
     if (mode === "monkey") {
-      const cached = reconcilePhoneSession(monkeySessions.current[lineKey] ?? null, current.current.world);
-      if (cached) { commit({ ...cached, visible: true }); return true; }
+      const saved = monkeySessions.current[lineKey] ?? Object.values(monkeySessions.current)
+        .find((entry) => entry.sourcePlayerId === sourcePlayerId);
+      const cached = reconcilePhoneSession(saved ?? null, current.current.world);
+      if (cached) { commit({ ...cached, lineKey, progressOrder, visible: true }); return true; }
     }
     if (current.current.session?.lineKey === lineKey) { commit(null); return false; }
     const participantIds = getPhoneParticipants(mode, sourcePlayerId, current.current.world);
@@ -141,13 +149,22 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   }, [commit]);
 
   const active = enabled ? reconcilePhoneSession(session, world) : null;
-  const confirmMonkey = useCallback((targetPlayerId: string) => {
-    const latest = current.current.session;
-    if (!current.current.enabled || latest?.mode !== "monkey" || !latest.sourcePlayerId) return;
-    const source = latest.sourcePlayerId;
+  const sendGM = useCallback((type: PhoneCommand["type"], targetPlayerId?: string) => {
+    const latest = reconcilePhoneSession(current.current.session, current.current.world);
+    if (!current.current.enabled || !latest) return;
+    if (latest.mode === "hunt" && type === "confirm") {
+      const target = current.current.world.players.find((p) => p.id === targetPlayerId && isPhoneTarget(latest, p));
+      if (!target) return;
+      commit(null);
+      if (!target.redX) current.current.onAction({ action: "kill", targetPlayerId: target.id, sourcePlayerId: latest.sourcePlayerId });
+      current.current.onComplete?.(latest);
+      return;
+    }
+    const source = latest.sourcePlayerId ?? latest.participantIds[0];
+    if (!source) return;
     const result = applyPhoneCommand(latest, source, {
-      id: createPlayerActionRequestId("gm", targetPlayerId), sessionId: latest.id,
-      sequence: Math.max(Date.now(), (latest.sequences[source] ?? 0) + 1), type: "confirm", targetPlayerId,
+      id: createPlayerActionRequestId("gm", targetPlayerId ?? type), sessionId: latest.id,
+      sequence: Math.max(Date.now(), (latest.sequences[source] ?? 0) + 1), type, targetPlayerId,
     }, current.current.world);
     // A GM selection is authoritative but is not a command from the phone.
     // Preserve its sequence so the next phone close/reopen is never discarded.
@@ -156,6 +173,17 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     if (result.action) current.current.onAction(result.action);
     if (result.completedSession) current.current.onComplete?.(result.completedSession);
   }, [commit]);
+  const confirmMonkey = useCallback((targetPlayerId: string) => {
+    if (current.current.session?.mode === "monkey") sendGM("confirm", targetPlayerId);
+  }, [sendGM]);
+  const resolveColossus = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
+    const latest = reconcilePhoneSession(current.current.session, current.current.world);
+    if (!latest || latest.mode !== "colossus" || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) { commit(latest); return; }
+    if (!accepted) { commit({ ...latest, pendingTargetPlayerId: undefined }); return; }
+    commit(null);
+    current.current.onAction({ action: "colossus", targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
+    current.current.onComplete?.(latest);
+  }, [commit]);
   const close = useCallback(() => {
     const latest = current.current.session;
     commit(latest?.mode === "monkey" ? { ...latest, visible: false } : null);
@@ -163,7 +191,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const reset = useCallback(() => { monkeySessions.current = {}; commit(null); }, [commit]);
   const monkeySourceIds = Object.values(monkeySessions.current)
     .filter((entry) => entry.monkeyReveal && entry.sourcePlayerId).map((entry) => entry.sourcePlayerId!);
-  return { session: active, toggle, close, reset, confirmMonkey, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
+  return { session: active, toggle, close, reset, confirmMonkey, sendGM, resolveColossus, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
 }
 
 export function usePlayerPhoneActions(roomId?: string, playerId?: string) {

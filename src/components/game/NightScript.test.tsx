@@ -23,6 +23,73 @@ const baseProps = {
 };
 
 describe("NightScript phone controls", () => {
+  it("only renders Colossus retaliation sources attacked by Werewolves", () => {
+    const onPhoneToggle = vi.fn(), onLineCompletedChange = vi.fn();
+    const props = { ...baseProps, nightNumber: 3, colossusNightSeed: 0.29,
+      activeRoles: new Set(["e01" as const, "v27" as const, "a04" as const, "a03" as const, "a02" as const]),
+      roleAssignments: { wolf: "e01" as const, colossus: "v27" as const, actor: "v27" as const, mime: "a03" as const, dog: "v27" as const },
+      baseRoleAssignments: { wolf: "e01" as const, colossus: "v27" as const, actor: "a04" as const, mime: "a03" as const, dog: "a02" as const },
+      abilityRoleAssignments: { wolf: "e01" as const, colossus: "v27" as const, actor: "v27" as const, mime: "v27" as const, dog: "v27" as const },
+      actorPlayerId: "actor", actorCopiedRole: "v27" as const, mimePlayerId: "mime", mimeMechanicalRole: "v27" as const,
+      dogWolfPlayerIds: ["dog"], dogWolfStates: { dog: createDogWolfState("colossus") },
+      players: ["wolf", "colossus", "actor", "mime", "dog"].map((id, seat_position) => ({ id, name: id, seat_position })),
+      onPhoneToggle, onLineCompletedChange };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    expect(container.querySelectorAll('[data-phone-mode="colossus"]')).toHaveLength(0);
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props}
+      conditionKeys={{ colossusAttacked: true }} deathTriggeredSourcePlayerIds={{ colossusAttacked: ["actor", "mime", "dog"] }} /></LanguageContext.Provider>);
+    const controls = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-phone-mode="colossus"]'));
+    expect(controls).toHaveLength(3);
+    controls.forEach((control) => fireEvent.click(control));
+    expect(onPhoneToggle.mock.calls.map(([, , id]) => id)).toEqual(expect.arrayContaining(["actor", "mime", "dog"]));
+    expect(onLineCompletedChange).not.toHaveBeenCalled();
+    const hunt = container.querySelector('[data-phone-mode="hunt"]')!;
+    controls.forEach((control) => {
+      expect(hunt.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+      fireEvent.dragStart(control.closest('[draggable="true"]')!, { dataTransfer });
+      expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-v27");
+      expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", expect.stringMatching(/actor|mime|dog/));
+    });
+    expect(container.textContent).not.toContain("Killed by the Actor");
+  });
+
+  it("captures the actors on completed lines and includes the Puppeteer in a pack turn", () => {
+    const onLineCompletedChange = vi.fn(), onScriptLinesChange = vi.fn();
+    const { container } = render(<LanguageContext.Provider value="en"><NightScript {...baseProps} nightNumber={3}
+      activeRoles={new Set(["e01", "v06", "e02"])} roleAssignments={{ wolf: "e01", puppet: "v06", witch: "e02" }}
+      players={[{ id: "wolf", name: "Wolf", seat_position: 0 }, { id: "puppet", name: "Puppet", seat_position: 1 }, { id: "witch", name: "Witch", seat_position: 2 }]}
+      onPhoneToggle={vi.fn()} onLineCompletedChange={onLineCompletedChange} onScriptLinesChange={onScriptLinesChange} /></LanguageContext.Provider>);
+    const hunt = container.querySelector('[data-phone-mode="hunt"]')!.closest('[draggable="true"]')!;
+    fireEvent.click(hunt.querySelector('[data-line-checkbox]')!);
+    expect(onLineCompletedChange).toHaveBeenCalledWith(expect.stringContaining("3:normal:"), true, expect.any(Number), ["wolf", "puppet"]);
+    expect(onScriptLinesChange).toHaveBeenLastCalledWith(expect.arrayContaining([
+      expect.objectContaining({ requires: ["e02"], participantIds: ["witch"] }),
+    ]));
+  });
+
+  it("allows dragging the Monkey script line with its real source", () => {
+    const { container } = render(<NightScript {...baseProps} activeRoles={new Set(["v26"])}
+      roleAssignments={{ monkey: "v26" }} players={[{ id: "monkey", name: "Monkey", seat_position: 0 }]} />);
+    const line = container.querySelector('[draggable="true"]')!;
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    fireEvent.dragStart(line, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-v26");
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "monkey");
+  });
+
+  it("records only the Actor for a separate copied action line", () => {
+    const onScriptLinesChange = vi.fn();
+    render(<NightScript {...baseProps} activeRoles={new Set(["v26", "a04"])}
+      roleAssignments={{ monkey: "v26", actor: "v26" }} baseRoleAssignments={{ monkey: "v26", actor: "a04" }}
+      actorPlayerId="actor" actorCopiedRole="v26" actorCopyNoticeNight={1}
+      players={[{ id: "monkey", name: "Monkey", seat_position: 0 }, { id: "actor", name: "Actor", seat_position: 1 }]}
+      onScriptLinesChange={onScriptLinesChange} />);
+    expect(onScriptLinesChange).toHaveBeenLastCalledWith(expect.arrayContaining([
+      expect.objectContaining({ key: expect.stringContaining(":actor"), participantIds: ["actor"] }),
+      expect.objectContaining({ sourcePlayerId: "monkey", participantIds: ["monkey"] }),
+    ]));
+  });
   it("provides the Monkey exhaustion checkbox only after the first night", () => {
     const onMonkeyDisabledToggle = vi.fn();
     const props = { ...baseProps, activeRoles: new Set(["v26" as const]), roleAssignments: { monkey: "v26" as const },

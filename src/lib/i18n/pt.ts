@@ -18,6 +18,7 @@ export const pt: Translation = {
     v08: "Caçador",
     v08b: "Capuchinho Vermelho",
     v09: "Capitão",
+    v27: "Colosso",
     v10: "Paranoico",
     v11: "Chefe da Aldeia",
     v12: "Cigana",
@@ -114,6 +115,7 @@ export const pt: Translation = {
       { text: "O {Lobisomem Vidente} acorda e decide com o polegar se quer salvar a vítima para ver o seu papel ou deixá-la morrer.", requires: ["m02"], conditionKey: "werewolfSeerHasCharges" },
       { text: "O {Lobisomem Vampiro} acorda e diz com o polegar se quer transformar a vítima em Lobisomem. Se for o caso, a vítima será tocada, e passará a acordar sempre com os Lobisomens. A vítima diz com o polegar se quer guardar os seus poderes ou não.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
       { text: "(A cada 3 noites) O {Lobisomem Branco} acorda e escolhe o Lobisomem que quer matar.", requires: ["s02"], conditionKey: "whitewolfNight" },
+      { text: "(Assassinado pelos Lobisomens esta noite) O {Colosso} acorda e escolhe um jogador que agiu esta noite para assassinar.", requires: ["v27"], conditionKey: "colossusAttacked", phoneMode: "colossus" },
       { text: "O {Domador dos Coelhos} ouviu os {Coelhos} assustados esta noite. / [nada] (/os {Coelhos} estão confusos)", requires: ["v05"] },
       { text: "O {Domador do Macaco} acorda e escolhe um jogador cuja carta lhe será revelada. Se a personagem revelada for uma Criatura Malvada, o {Domador do Macaco} perde o seu poder.", requires: ["v26"] },
       { text: "O {Padre} acorda. Se algum jogador quiser se confessar, revelando a sua carta ao Padre, pode levantar a mão. O {Padre} escolhe um desses jogadores, que será tocado para acordar. Ele vê quem é o Padre e mostra o seu papel.", requires: ["v25"] },
@@ -152,6 +154,7 @@ export const pt: Translation = {
     },
     // GM phone controls and player night action screens.
     phoneActions: {
+      colossusInstructions: "Assassinar",
       huntVotes: "Votos da caça em direto",
       open: "Abrir nos telemóveis",
       close: "Fechar nos telemóveis",

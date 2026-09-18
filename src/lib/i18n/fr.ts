@@ -18,6 +18,7 @@ export const fr: Translation = {
     v08: "Chasseur",
     v08b: "Petit Chaperon Rouge",
     v09: "Capitaine",
+    v27: "Colosse",
     v10: "Paranoïaque",
     v11: "Ancien du Village",
     v12: "Gitane",
@@ -114,6 +115,7 @@ export const fr: Translation = {
       { text: "Le {Loup-garou Voyant} se réveille et décide avec le pouce s'il veut sauver la victime pour voir son rôle ou la laisser mourir.", requires: ["m02"], conditionKey: "werewolfSeerHasCharges" },
       { text: "Le {Loup-garou Vampire} se réveille et indique avec le pouce s'il veut transformer la victime en Loup-garou. Si c'est le cas, la victime sera touchée et commencera à se réveiller toujours avec les Loups-garous. La victime indique avec le pouce si elle veut garder ses pouvoirs ou non.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
       { text: "(Toutes les 3 nuits) Le {Loup-garou Blanc} se réveille et choisit le Loup-garou qu'il veut tuer.", requires: ["s02"], conditionKey: "whitewolfNight" },
+      { text: "(Tué par les Loups-garous cette nuit) Le {Colosse} se réveille et choisit un joueur qui a agi cette nuit pour l’assassiner.", requires: ["v27"], conditionKey: "colossusAttacked", phoneMode: "colossus" },
       { text: "Le {Maîtres des Lapins} a entendu les {Lapins} effrayés cette nuit. / [rien] (/ les {Lapins} sont confus)", requires: ["v05"] },
       { text: "Le {Maître du Singe} se réveille et choisit un joueur dont la carte lui sera révélée. Si le personnage révélé est une Créature Maléfique, le {Maître du Singe} perd son pouvoir.", requires: ["v26"] },
       { text: "Le {Prêtre} se réveille. Si un joueur souhaite se confesser, révélant ainsi son rôle au Prêtre, il peut lever la main. Le {Prêtre} choisit l'un de ces joueurs, qui sera touché pour se réveiller. Il voit qui est le Prêtre et montre son rôle.", requires: ["v25"] },
@@ -152,6 +154,7 @@ export const fr: Translation = {
     },
     // GM phone controls and player night action screens.
     phoneActions: {
+      colossusInstructions: "Assassiner",
       huntVotes: "Votes de chasse en direct",
       open: "Ouvrir sur les téléphones",
       close: "Fermer sur les téléphones",

@@ -4,6 +4,28 @@ import { PlayerCircle } from "./PlayerCircle";
 import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
 
 describe("Monkey power controls in the GM circle", () => {
+  it("drags Monkey and ready Colossus copies with their own source IDs", () => {
+    const { container, rerender } = render(<PlayerCircle isGM isPlaying totalSlots={4} onDropPlayer={vi.fn()}
+      players={["colossus", "actor", "monkey", "waiting"].map((id, seat_position) => ({ id, name: id, seat_position, character: "v27", is_alive: true }))}
+      roleAssignments={{ colossus: "v27", actor: "v27", monkey: "v26", waiting: "v27" }}
+      baseRoleAssignments={{ colossus: "v27", actor: "a04", monkey: "v26", waiting: "v27" }}
+      abilityRoleAssignments={{ colossus: "v27", actor: "v27", monkey: "v26", waiting: "v27" }}
+      playerStatuses={{ colossus: "dead-this-night", actor: "dead-this-night" }}
+      colossusReadyPlayerIds={new Set(["colossus", "actor"])} />);
+    const sources = Array.from(container.querySelectorAll('[draggable="true"]'));
+    expect(sources).toHaveLength(3);
+    sources.forEach((node, index) => {
+      const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+      fireEvent.dragStart(node, { dataTransfer });
+      expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", ["colossus", "actor", "monkey"][index]);
+      expect(dataTransfer.setData).toHaveBeenCalledWith("action", index === 2 ? "role-v26" : "role-v27");
+    });
+    rerender(<PlayerCircle isGM isPlaying totalSlots={1} onDropPlayer={vi.fn()}
+      players={[{ id: "colossus", name: "Colossus", seat_position: 0, character: "v27", is_alive: false }]}
+      roleAssignments={{ colossus: "v27" }} playerStatuses={{ colossus: "dead" }} permanentlyDead={new Set(["colossus"])}
+      colossusReadyPlayerIds={new Set()} />);
+    expect(container.querySelector('[draggable="true"]')).toBeNull();
+  });
   it("hides the exhaustion checkbox during the first night", () => {
     const props = { isGM: true, isPlaying: true, totalSlots: 1, onDropPlayer: vi.fn(),
       players: [{ id: "monkey", name: "Monkey", seat_position: 0, character: "v26", is_alive: true }],

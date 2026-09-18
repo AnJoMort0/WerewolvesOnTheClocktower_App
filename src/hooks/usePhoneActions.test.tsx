@@ -2,6 +2,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useGMPhoneActions, usePlayerPhoneActions } from "./usePhoneActions";
 import type { PhonePlayer, PhoneWorld } from "@/lib/phoneActions";
+import { useGMPlayerActionMirrors, usePlayerActionMirror } from "./usePlayerActionMirrors";
 
 const bus = vi.hoisted(() => {
   type Message = { event: string; payload: Record<string, unknown> };
@@ -20,9 +21,9 @@ const bus = vi.hoisted(() => {
           listeners.set(filter.event, handler);
           return channel;
         },
-        subscribe: (callback: (status: string) => void) => {
+        subscribe: (callback?: (status: string) => void) => {
           receivers.add(channel);
-          callback("SUBSCRIBED");
+          callback?.("SUBSCRIBED");
           return channel;
         },
         send: (message: Message) => {
@@ -55,6 +56,125 @@ beforeEach(() => { vi.useFakeTimers(); window.localStorage.clear(); bus.dropStat
 afterEach(() => { cleanup(); bus.receivers.clear(); vi.useRealTimers(); });
 
 describe("phone synchronization across GM and player devices", () => {
+  it("mirrors open player action screens, recovers a GM reload, and closes both devices", () => {
+    const onClose = vi.fn();
+    const gm = renderHook(() => useGMPlayerActionMirrors("room", true, () => true));
+    const device = renderHook(({ kind }) => usePlayerActionMirror("room", "paranoid", kind, onClose), {
+      initialProps: { kind: "v10-assassinate" as "v10-assassinate" | null },
+    });
+    expect(gm.result.current.mode).toMatchObject({ actorPlayerId: "paranoid", kind: "v10-assassinate" });
+    const mode = gm.result.current.mode!;
+    expect(device.result.current("v10-assassinate")).toBe(mode.id);
+    gm.unmount();
+    const restored = renderHook(() => useGMPlayerActionMirrors("room", true, () => true));
+    act(() => vi.advanceTimersByTime(2500));
+    expect(restored.result.current.mode?.id).toBe(mode.id);
+    act(() => restored.result.current.close(mode));
+    expect(onClose).toHaveBeenCalledOnce();
+    device.rerender({ kind: null });
+    act(() => vi.advanceTimersByTime(5000));
+    expect(restored.result.current.mode).toBeNull();
+  });
+
+  it("queues simultaneous action screens and rejects unavailable copied powers", () => {
+    const gm = renderHook(() => useGMPlayerActionMirrors("room", true, (mode) => mode.actorPlayerId !== "unavailable"));
+    renderHook(() => usePlayerActionMirror("room", "paranoid", "v10-assassinate", vi.fn()));
+    renderHook(() => usePlayerActionMirror("room", "angel", "v18-resurrect", vi.fn()));
+    renderHook(() => usePlayerActionMirror("room", "unavailable", "v23-web", vi.fn()));
+    expect(gm.result.current.mode?.actorPlayerId).toBe("paranoid");
+    act(() => gm.result.current.close(gm.result.current.mode!));
+    expect(gm.result.current.mode?.actorPlayerId).toBe("angel");
+    act(() => gm.result.current.close(gm.result.current.mode!));
+    expect(gm.result.current.mode).toBeNull();
+  });
+  it("shares a Monkey drag reveal with its script button without revealing twice", () => {
+    const onAction = vi.fn();
+    const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };
+    const gm = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "playing:night:1", enabled: true, world: monkeyWorld, onAction }));
+    const monkey = renderHook(() => usePlayerPhoneActions("room", "monkey"));
+    act(() => {
+      gm.result.current.toggle("monkey", "1:drag:monkey:monkey", "monkey");
+      gm.result.current.confirmMonkey("wolf");
+    });
+    expect(monkey.result.current.session?.monkeyReveal).toMatchObject({ targetPlayerId: "wolf", roleId: "e01", evil: true });
+    act(() => gm.result.current.close());
+    act(() => gm.result.current.toggle("monkey", "1:first:monkey", "monkey", null));
+    expect(gm.result.current.session?.monkeyReveal?.targetPlayerId).toBe("wolf");
+    act(() => gm.result.current.confirmMonkey("victim"));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    act(() => monkey.result.current.send("close"));
+    expect(gm.result.current.session?.visible).toBe(false);
+  });
+
+  it("allows GM Witch, Shaman and hunt actions when their phones cannot act", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const gmWorld: PhoneWorld = { ...world, players: [...world.players, player("shaman", "e03")].map((p) => p.id === "victim" ? { ...p, redX: true } : p) };
+    const gm = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "playing:night:2", enabled: true, world: gmWorld, onAction, onComplete }));
+    act(() => gm.result.current.toggle("poison", "witch-line", "witch"));
+    act(() => gm.result.current.sendGM("confirm", "wolf"));
+    expect(onAction).toHaveBeenLastCalledWith({ action: "poison", targetPlayerId: "wolf", sourcePlayerId: "witch" });
+    act(() => gm.result.current.toggle("shaman", "shaman-line", "shaman"));
+    act(() => gm.result.current.sendGM("confirm", "victim"));
+    expect(onAction).toHaveBeenLastCalledWith({ action: "shaman", targetPlayerId: "victim", sourcePlayerId: "shaman" });
+    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    expect(gm.result.current.consensus).toBeNull();
+    act(() => {
+      gm.result.current.sendGM("confirm", "witch");
+      gm.result.current.sendGM("confirm", "witch");
+    });
+    expect(onAction).toHaveBeenCalledTimes(3);
+    expect(onAction).toHaveBeenLastCalledWith({ action: "kill", targetPlayerId: "witch", sourcePlayerId: null });
+    expect(onComplete).toHaveBeenCalledTimes(3);
+  });
+
+  it("waits for Colossus approval, handles denial, and accepts once despite retries", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const colossusWorld: PhoneWorld = { ...world, players: [...world.players.map((p) => ({ ...p, actedTonight: true })),
+      { ...player("colossus", "v27"), redX: true, colossusReady: true }] };
+    const props = { roomId: "room", contextKey: "playing:night:2", enabled: true, world: colossusWorld, onAction, onComplete };
+    const gm = renderHook(() => useGMPhoneActions(props));
+    const colossus = renderHook(() => usePlayerPhoneActions("room", "colossus"));
+    act(() => gm.result.current.toggle("colossus", "2:normal:retaliation", "colossus", 29));
+    act(() => colossus.result.current.send("confirm", "victim"));
+    const sessionId = gm.result.current.session!.id;
+    expect(colossus.result.current.session?.pendingTargetPlayerId).toBe("victim");
+    expect(onAction).not.toHaveBeenCalled();
+    expect(onComplete).not.toHaveBeenCalled();
+    act(() => gm.result.current.resolveColossus(sessionId, "witch", true));
+    expect(onAction).not.toHaveBeenCalled();
+    act(() => gm.result.current.resolveColossus(sessionId, "victim", false));
+    expect(colossus.result.current.session?.pendingTargetPlayerId).toBeUndefined();
+    act(() => gm.result.current.sendGM("confirm", "witch"));
+    expect(colossus.result.current.session?.pendingTargetPlayerId).toBe("witch");
+    bus.dropStates(true);
+    act(() => {
+      gm.result.current.resolveColossus(sessionId, "witch", true);
+      gm.result.current.resolveColossus(sessionId, "witch", true);
+      colossus.result.current.send("confirm", "witch");
+    });
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "colossus", sourcePlayerId: "colossus", targetPlayerId: "witch" });
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "2:normal:retaliation", progressOrder: 29, participantIds: ["colossus"] }));
+    bus.dropStates(false);
+    act(() => vi.advanceTimersByTime(2500));
+    expect(colossus.result.current.session).toBeNull();
+    expect(colossus.result.current.pending).toBe(false);
+  });
+
+  it("withdraws a Colossus request when its target becomes ineligible before approval", () => {
+    const onAction = vi.fn();
+    const colossusWorld: PhoneWorld = { ...world, players: [...world.players.map((p) => ({ ...p, actedTonight: true })),
+      { ...player("colossus", "v27"), redX: true, colossusReady: true }] };
+    const props = { roomId: "room", contextKey: "playing:night:2", enabled: true, world: colossusWorld, onAction };
+    const gm = renderHook((p) => useGMPhoneActions(p), { initialProps: props });
+    act(() => gm.result.current.toggle("colossus", "retaliation", "colossus"));
+    act(() => gm.result.current.sendGM("confirm", "victim"));
+    const sessionId = gm.result.current.session!.id;
+    gm.rerender({ ...props, world: { ...colossusWorld, players: colossusWorld.players.map((p) => p.id === "victim" ? { ...p, host: true } : p) } });
+    act(() => gm.result.current.resolveColossus(sessionId, "victim", true));
+    expect(onAction).not.toHaveBeenCalled();
+    expect(gm.result.current.session?.pendingTargetPlayerId).toBeUndefined();
+  });
+
   it("lets the GM or Monkey confirm once, synchronizes closes, and restores revealed cards", () => {
     const onAction = vi.fn(), onComplete = vi.fn();
     const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };

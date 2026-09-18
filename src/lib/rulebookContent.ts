@@ -1462,6 +1462,48 @@ export const RULEBOOK_CHARACTERS = {
         }
     },
 
+    // v27 | Colossus
+    "v27": {
+        id: "v27",
+        group: "villager",
+        team: "villagers",
+        name: {
+            pt: `Colosso`,
+            fr: `Colosse`,
+            en: `Colossus`
+        },
+        mainDescription: {
+            pt: [
+                `<red>Se for assassinado pelos Lobisomens</red>, acorda e assassina <red>um</red> jogador que agiu essa noite.`,
+            ],
+            fr: [
+                `<red>S’il est assassiné par les Loups-garous</red>, se réveilleet assassine <red>un</red> joueur qui a agi cette nuit.`,
+            ],
+            en: [
+                `<red>If assassinated by the Werewolves</red>, wakes up and assassinates <red>one</red> player who has acted that night.`
+            ]
+        },
+        details: [
+            {
+                title: {
+                    pt: `Se envenenado:`,
+                    fr: `Si empoisonné :`,
+                    en: `If poisoned:`
+                },
+                description: {
+                    pt: `Assassina o jogador errado.`,
+                    fr: `Assassine le mauvais joueur.`,
+                    en: `Assassinates the wrong player.`
+                }
+            },
+        ],
+        objective: {
+            pt: `Matar todos os Lobisomens.`,
+            fr: `Tuer tous les Loups-garous.`,
+            en: `Kill all Werewolves.`
+        }
+    },
+
     // v10 | Paranoid
     "v10": {
         id: "v10",
@@ -3799,6 +3841,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "v08",
     "v08b",
     "v09",
+    "v27",
     "v10",
     "v11",
     "v12",
@@ -4322,6 +4365,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `(A cada 3 noites) O Lobisomem Branco acorda e escolhe o Lobisomem que quer matar. / O Lobisomem Branco acorda e escolhe mais um jogador que quer matar.`,
                 fr: `(Toutes les 3 nuits) Le Loup-garou Blanc se réveille et choisit le Loup-garou qu’il veut tuer. / Le Loup-garou Blanc choisit un joueur supplémentaire qu’il veut tuer.`,
                 en: `Every 3 nights, the White Werewolf wakes up and chooses a Werewolf to kill. If the White Werewolf is the only Werewolf, he chooses one additional player to kill.`
+            }
+        },
+        {
+            id: "normal-v27",
+            refs: ["v27"],
+            text: {
+                pt: `(Morto pelos Lobisomens esta noite) O Colosso acorda e escolhe um jogador que agiu esta noite para assassinar.`,
+                fr: `(Tué par les Loups-garous cette nuit) Le Colosse se réveille et choisit un joueur qui a agi cette nuit pour l’assassiner.`,
+                en: `(Killed by the Werewolves tonight) The Colossus wakes up and chooses a player who has acted tonight to assassinate.`
             }
         },
         {

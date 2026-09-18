@@ -18,6 +18,7 @@ export const en: Translation = {
     v08: "Hunter",
     v08b: "Little Red Riding Hood",
     v09: "Captain",
+    v27: "Colossus",
     v10: "Paranoid",
     v11: "Village Elder",
     v12: "Gypsy",
@@ -114,6 +115,7 @@ export const en: Translation = {
       { text: "The {Werewolf Seer} wakes up and uses a thumb signal to decide whether to save the victim and see their role, or let them die.", requires: ["m02"], conditionKey: "werewolfSeerHasCharges" },
       { text: "The {Vampire Werewolf} wakes up and uses a thumb signal to decide whether to turn the victim into a Werewolf. If so, the victim is touched and will wake up with the Werewolves from now on. The victim uses a thumb signal to choose whether to keep their powers.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
       { text: "(Every 3 nights) The {White Werewolf} wakes up and chooses a Werewolf to kill.", requires: ["s02"], conditionKey: "whitewolfNight" },
+      { text: "(Killed by the Werewolves tonight) The {Colossus} wakes up and chooses a player who has acted tonight to assassinate.", requires: ["v27"], conditionKey: "colossusAttacked", phoneMode: "colossus" },
       { text: "The {Bunny Tamer} heard the frightened {Bunnies} tonight. / [nothing] (/ the {Bunnies} are confused)", requires: ["v05"] },
       { text: "The {Monkey Tamer} wakes up and chooses a player whose card will be revealed. If the revealed character is an Evil Being, the {Monkey Tamer} loses their power.", requires: ["v26"] },
       { text: "The {Priest} wakes up. Any player who wishes to confess by revealing their card to the Priest may raise a hand. The {Priest} chooses one of those players, who is touched and wakes up. That player sees who the Priest is and shows their role.", requires: ["v25"] },
@@ -152,6 +154,7 @@ export const en: Translation = {
     },
     // GM phone controls and player night action screens.
     phoneActions: {
+      colossusInstructions: "Assassinate",
       huntVotes: "Live hunt votes",
       open: "Open on phones",
       close: "Close on phones",

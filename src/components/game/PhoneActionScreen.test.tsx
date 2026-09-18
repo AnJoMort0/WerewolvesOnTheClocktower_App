@@ -16,6 +16,29 @@ const baseView: PhoneView = {
 };
 
 describe("PhoneActionScreen", () => {
+  it("lets the GM select and confirm a hunt without casting a player vote", () => {
+    const onSend = vi.fn();
+    render(<PhoneActionScreen session={baseView} playerId="gm" language="en" pending={false} connected gmControlled onSend={onSend} />);
+    fireEvent.click(screen.getByRole("button", { name: "Target" }));
+    expect(onSend).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    expect(onSend).toHaveBeenCalledWith("confirm", "target");
+  });
+
+  it("greys out ineligible Colossus targets and locks confirmed requests for approval", () => {
+    const onSend = vi.fn();
+    const session: PhoneView = { ...baseView, mode: "colossus", players: baseView.players.map((p) => p.id === "wolf" ? { ...p, selectable: false } : p) };
+    const { rerender } = render(<PhoneActionScreen session={session} playerId="wolf" language="en" pending={false} connected onSend={onSend} />);
+    expect(screen.getByRole("button", { name: "Wolf" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Wolf" }).querySelector("span")).toHaveClass("opacity-40");
+    fireEvent.click(screen.getByRole("button", { name: "Target" }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    expect(onSend).toHaveBeenCalledWith("confirm", "target");
+    rerender(<PhoneActionScreen session={{ ...session, pendingTargetPlayerId: "target" }} playerId="wolf" language="en" pending={false} connected onSend={onSend} />);
+    expect(screen.getByRole("button", { name: "Target" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.phoneActions.waiting);
+  });
   it("mirrors votes for the GM without allowing a GM vote", () => {
     const onSend = vi.fn();
     const { rerender } = render(<PhoneActionScreen session={{ ...baseView, votes: { wolf: "target" } }}

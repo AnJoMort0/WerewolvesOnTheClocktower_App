@@ -40,6 +40,8 @@ const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
   v24: "role-v24",
   m06: "kill",
   v09: "role-v09",
+  v26: "role-v26",
+  v27: "role-v27",
   v11: "role-v11",
   v12: "role-v12",
   f01: "role-f01",
@@ -66,6 +68,7 @@ interface PlayerCircleProps {
   isGM?: boolean;
   roleAssignments?: Record<string, RoleId>;
   abilityRoleAssignments?: Record<string, RoleId>;
+  colossusReadyPlayerIds?: Set<string>;
   baseRoleAssignments?: Record<string, RoleId>;
   objectiveRoleAssignments?: Record<string, RoleId>;
   playerStatuses?: Record<string, PlayerStatus>;
@@ -136,6 +139,7 @@ export const PlayerCircle = ({
   isGM,
   roleAssignments,
   abilityRoleAssignments,
+  colossusReadyPlayerIds = new Set(),
   baseRoleAssignments,
   objectiveRoleAssignments,
   playerStatuses = {},
@@ -331,6 +335,7 @@ export const PlayerCircle = ({
     if (hideSensitiveInfo) return {};
     if (!isPlaying || !roleAssignments) return {};
     const role = abilityRoleAssignments?.[playerId] ?? roleAssignments[playerId];
+    if (role === "v27" && !colossusReadyPlayerIds.has(playerId)) return {};
     const isActor = baseRoleAssignments?.[playerId] === "a04";
     const isMime = baseRoleAssignments?.[playerId] === "a03";
     const dogState = dogWolfStates[playerId];

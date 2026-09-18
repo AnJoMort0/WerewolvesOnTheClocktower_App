@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } fro
 import { motion, AnimatePresence } from "framer-motion";
 import { Crosshair, Eye, FlaskConical, Moon, RotateCcw, Sun, Users } from "lucide-react";
 import { getScriptPhoneMode, type PhoneMode } from "@/lib/phoneActions";
+import { placeColossusLines } from "@/lib/colossus";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -22,6 +23,14 @@ import type { DogWolfStates } from "@/lib/dogWolf";
 
 const EMPTY_COMPLETED_LINE_KEYS = new Set<string>();
 
+export type ScriptActionLine = {
+  key: string;
+  requires: RoleId[];
+  sourcePlayerId?: string | null;
+  participantIds: string[];
+  progressOrder: number | null;
+};
+
 const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
   e02: "poison",
   e01: "kill",
@@ -34,6 +43,8 @@ const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
   v17: "role-v17",
   v24: "role-v24",
   v09: "role-v09",
+  v26: "role-v26",
+  v27: "role-v27",
   v11: "role-v11",
   v12: "role-v12",
   f01: "role-f01",
@@ -104,7 +115,9 @@ interface NightScriptProps {
   onSpyReveal?: (sourcePlayerId?: string | null) => void;
   onScriptRolesVisible?: (roles: RoleId[]) => void;
   completedLineKeys?: Set<string>;
-  onLineCompletedChange?: (key: string, completed: boolean, progressOrder: number | null) => void;
+  onLineCompletedChange?: (key: string, completed: boolean, progressOrder: number | null, participantIds?: string[]) => void;
+  colossusNightSeed?: number;
+  onScriptLinesChange?: (lines: ScriptActionLine[]) => void;
   autoCompleteRole?: RoleId | null;
   autoCompleteSourcePlayerIds?: string[];
   autoCompleteVersion?: number;
@@ -153,7 +166,7 @@ function isLineRelevant(
   prophecyGhostPlayerIds: Set<string> = new Set(),
 ): boolean {
   if (!line.requires) return true;
-  if (line.conditionKey === "hunterDied" || line.conditionKey === "soldierDied" || line.conditionKey === "redHoodExecuted") {
+  if (line.conditionKey === "hunterDied" || line.conditionKey === "soldierDied" || line.conditionKey === "redHoodExecuted" || line.conditionKey === "colossusAttacked") {
     return true;
   }
   return line.requires.some((r) => {
@@ -669,6 +682,8 @@ export const NightScript = ({
   completedLineKeys = EMPTY_COMPLETED_LINE_KEYS,
   onLineCompletedChange,
   autoCompleteRole = null,
+  colossusNightSeed = 0.5,
+  onScriptLinesChange,
   autoCompleteSourcePlayerIds = [],
   autoCompleteVersion = 0,
   actorPlayerId = null,
@@ -1071,6 +1086,8 @@ export const NightScript = ({
     const lines: { section: string; items: ScriptRenderItem[] }[] = [];
     const getMimeCopiedScriptLine = (): ScriptLine | null => {
       if (!mimeMechanicalRole) return null;
+      // Death-triggered Colossus copies wake at their own retaliation line.
+      if (mimeMechanicalRole === "v27") return null;
       const isSharedWerewolfLine = (line: ScriptLine) => (line.requires?.length ?? 0) > 1
         && line.requires?.includes("e01" as RoleId)
         && line.requires?.includes("m01" as RoleId);
@@ -1112,6 +1129,18 @@ export const NightScript = ({
       }
       const deathSourcePlayerIds = line.conditionKey ? deathTriggeredSourcePlayerIds[line.conditionKey] ?? [] : [];
       const isDeathOwnedLine = line.conditionKey === "hunterDied" || line.conditionKey === "soldierDied";
+      if (line.conditionKey === "colossusAttacked") {
+        if (!predicate(line)) return [];
+        return deathSourcePlayerIds.map((sourcePlayerId) => ({
+          line, key: `${nightNumber}:${source}:${index}:death:${sourcePlayerId}`, progressOrder, sourcePlayerId,
+          actorLine: sourcePlayerId === actorPlayerId,
+          replaceAllRoleTokens: sourcePlayerId === actorPlayerId,
+          mimeLine: sourcePlayerId === mimePlayerId,
+          drunkardLine: drunkardMechanicPlayerIds.has(sourcePlayerId),
+          dogWolfLine: dogWolfPlayerIds.includes(sourcePlayerId),
+          actingPoisoned: isPlayerActingPoisoned(sourcePlayerId),
+        }));
+      }
       if (isDeathOwnedLine && predicate(line) && deathSourcePlayerIds.length > 0) {
         return deathSourcePlayerIds.map((sourcePlayerId) => ({
           line,
@@ -1322,8 +1351,42 @@ export const NightScript = ({
       if (filteredNormal.length > 0) lines.push({ section: `${sectionLabels.night} ${nightNumber}`, items: filteredNormal });
     }
 
-    return lines;
-  }, [nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+    return lines.map((section) => {
+      const items = placeColossusLines(section.items,
+        (item) => item.line.conditionKey === "colossusAttacked", (item) => item.line.phoneMode === "hunt" && !item.mimeLine,
+        colossusNightSeed, (item) => item.sourcePlayerId ?? item.key,
+        { getOrder: (item) => item.progressOrder, lastOrder: localizedScripts.normalNight.length - 1 });
+      let previousOrder: number | null = null;
+      return { ...section, items: items.map((item) => {
+        if (item.line.conditionKey === "colossusAttacked") return { ...item, progressOrder: previousOrder };
+        if (item.progressOrder !== null) previousOrder = item.progressOrder;
+        return item;
+      }) };
+    });
+  }, [colossusNightSeed, nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+
+  const getItemParticipants = useCallback((item: ScriptRenderItem): string[] => {
+    const sourcePlayerId = item.sourcePlayerId ?? (item.actorLine || item.actorNotice ? actorPlayerId : item.mimeLine ? mimePlayerId : null);
+    if (sourcePlayerId && !(item.line.requires?.some((role) => role === "l03" || role === "l04")
+      && !item.actorLine && !item.mimeLine && !item.dogWolfLine && !item.drunkardLine)) {
+      return item.actorJoins && actorPlayerId ? Array.from(new Set([sourcePlayerId, actorPlayerId])) : [sourcePlayerId];
+    }
+    const packLine = (item.line.requires?.length ?? 0) > 1 && item.line.requires?.includes("e01");
+    return players.filter((player) => {
+      const effects = _playerEffects[player.id];
+      if ((_permanentlyDeadPlayerIds.has(player.id) && !prophecyGhostPlayerIds.has(player.id)) || effects?.has("host") || effects?.has("burned")) return false;
+      const role = abilityRoleAssignments[player.id];
+      return packLine ? player.id !== mimePlayerId && (effects?.has("werewolf_turned") || WEREWOLF_ROLES.includes(role) || WEREWOLF_ROLES.includes(objectiveRoleAssignments[player.id]) || (role === "v06" && !isPlayerActingPoisoned(player.id)))
+        : !!role && !!item.line.requires?.includes(role);
+    }).map((player) => player.id);
+  }, [actorPlayerId, players, _playerEffects, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, abilityRoleAssignments, objectiveRoleAssignments, mimePlayerId, isPlayerActingPoisoned]);
+
+  useEffect(() => {
+    onScriptLinesChange?.(scriptLines.flatMap((section) => section.items.map((item) => ({
+      key: item.key, requires: item.line.requires ?? [], sourcePlayerId: item.sourcePlayerId,
+      participantIds: getItemParticipants(item), progressOrder: item.progressOrder,
+    }))));
+  }, [onScriptLinesChange, scriptLines, getItemParticipants]);
 
   useEffect(() => {
     if (!onScriptRolesVisible) return;
@@ -1348,8 +1411,8 @@ export const NightScript = ({
         || (!candidate.sourcePlayerId && !candidate.dogWolfLine)
       ))
       : candidates.slice(0, 1);
-    matchingItems.forEach((item) => onLineCompletedChange(item.key, true, item.progressOrder));
-  }, [autoCompleteRole, autoCompleteSourcePlayerIds, autoCompleteVersion, completedLineKeys, onLineCompletedChange, scriptLines]);
+    matchingItems.forEach((item) => onLineCompletedChange(item.key, true, item.progressOrder, getItemParticipants(item)));
+  }, [autoCompleteRole, autoCompleteSourcePlayerIds, autoCompleteVersion, completedLineKeys, onLineCompletedChange, scriptLines, getItemParticipants]);
 
   const setActorNumericCharge = useCallback((key: keyof ActorPowerState, index: number) => {
     if (!onActorPowerStateChange) return;
@@ -1391,7 +1454,7 @@ export const NightScript = ({
               const phoneMode = item.actorNotice ? null : getScriptPhoneMode(item.line);
               const phoneActive = activePhoneLineKey === item.key;
               const phoneLabel = getTranslation(lang).ui.phoneActions[phoneActive ? "close" : "open"];
-              const PhoneActionIcon = phoneMode === "hunt" ? Crosshair
+              const PhoneActionIcon = phoneMode === "hunt" || phoneMode === "colossus" ? Crosshair
                 : phoneMode === "allies" ? Users
                 : phoneMode === "poison" ? FlaskConical
                 : RotateCcw;
@@ -1475,7 +1538,7 @@ export const NightScript = ({
                 onSpyReveal={onSpyReveal}
                 werewolvesAsleepText={dyn.werewolvesAsleep}
                 lineCompleted={completedLineKeys.has(item.key)}
-                onLineCompletedChange={(completed) => onLineCompletedChange?.(item.key, completed, item.progressOrder)}
+                onLineCompletedChange={(completed) => onLineCompletedChange?.(item.key, completed, item.progressOrder, getItemParticipants(item))}
                 actorLine={item.actorLine}
                 replaceAllRoleTokens={item.replaceAllRoleTokens}
                 actorCopiedRole={actorCopiedRole}

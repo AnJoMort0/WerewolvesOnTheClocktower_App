@@ -18,11 +18,12 @@ describe("poisoned information rules", () => {
     expect(getLittleGirlAnswerKind("e01")).toBe("werewolves");
     expect(getLittleGirlAnswerKind("m06")).toBeNull();
     expect(getLittleGirlAnswerKind("s02")).toBe("whiteWerewolf");
+    expect(getLittleGirlAnswerKind("v27")).toBe("colossus");
   });
 
-  it("keeps the poisoned LittleGirl answer pool limited to the ten approved answers", () => {
-    expect(LITTLE_GIRL_POISONED_ANSWERS).toHaveLength(10);
-    expect(new Set(LITTLE_GIRL_POISONED_ANSWERS.map(({ kind }) => kind)).size).toBe(10);
+  it("keeps a distinct poisoned answer for every supported death category", () => {
+    expect(LITTLE_GIRL_POISONED_ANSWERS).toHaveLength(11);
+    expect(new Set(LITTLE_GIRL_POISONED_ANSWERS.map(({ kind }) => kind)).size).toBe(11);
   });
 
   it("always returns a different evil-being count", () => {

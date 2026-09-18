@@ -13,6 +13,7 @@ import { assignRoles, type RoleId } from "@/lib/roles";
 import { autoFixRoleSelection, validateRoleSelection } from "@/lib/roleValidation";
 import { getActiveSeasonalRoleIds, resolveRoleImage, type SkinPackId } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
+import { placeColossusLines } from "@/lib/colossus";
 
 const MIN_PLAYERS = 8;
 
@@ -103,16 +104,19 @@ export default function CharacterGeneratorPage() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [phase, setPhase] = useState<RulebookNightPhase>("firstNight");
   const [completedLines, setCompletedLines] = useState<Set<string>>(new Set());
+  const [colossusNightSeed, setColossusNightSeed] = useState(Math.random);
   const [lockedLines, setLockedLines] = useState<Set<string>>(new Set());
 
   const payloads = useMemo(() => roleIds.map((roleId) => richPayload(roleId, language, skinPackId)), [roleIds, language, skinPackId]);
   const warnings = useMemo(() => roleIds.length > 0 ? validateRoleSelection(roleIds, language) : [], [roleIds, language]);
   const activeRoles = useMemo(() => new Set(roleIds), [roleIds]);
   const scriptLines = useMemo(() => {
-    return RULEBOOK_NIGHT_SCRIPT[phase].filter((line) => {
+    const lines = RULEBOOK_NIGHT_SCRIPT[phase].filter((line) => {
       return line.refs.some((ref) => ref === "general" || activeRoles.has(ref));
     });
-  }, [activeRoles, phase]);
+    return placeColossusLines(lines, (line) => line.id === "normal-v27", (line) => line.id === "normal-e01", colossusNightSeed, (line) => line.id,
+      { getOrder: (line) => RULEBOOK_NIGHT_SCRIPT[phase].findIndex((entry) => entry.id === line.id), lastOrder: RULEBOOK_NIGHT_SCRIPT[phase].length - 1 });
+  }, [activeRoles, phase, colossusNightSeed]);
 
   const markCopied = (key: string, label: string) => {
     setCopiedKey(key);
@@ -131,6 +135,7 @@ export default function CharacterGeneratorPage() {
     }
 
     setRoleIds(assignRoles(count, advancedEnabled, getActiveSeasonalRoleIds(skinPackId)));
+    setColossusNightSeed(Math.random());
     setStatus("");
     setCompletedLines(new Set());
     setLockedLines(new Set());
@@ -363,12 +368,12 @@ export default function CharacterGeneratorPage() {
                         type="button"
                         variant={phase === phaseId ? "default" : "secondary"}
                         size="sm"
-                        onClick={() => setPhase(phaseId)}
+                        onClick={() => { if (phaseId !== phase) setColossusNightSeed(Math.random()); setPhase(phaseId); }}
                       >
                         {text[phaseId]}
                       </Button>
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => setCompletedLines(new Set())}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => { setCompletedLines(new Set()); setColossusNightSeed(Math.random()); }}>
                       <RotateCcw className="mr-2 h-4 w-4" />
                       {text.clearScript}
                     </Button>

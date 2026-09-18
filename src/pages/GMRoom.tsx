@@ -13,7 +13,9 @@ import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealM
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
-import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
+import { GMPhoneActionModal } from "@/components/game/GMPhoneActionModal";
+import { GMPlayerActionModal } from "@/components/game/GMPlayerActionModal";
+import { useGMPlayerActionMirrors } from "@/hooks/usePlayerActionMirrors";
 import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp, Smartphone } from "lucide-react";
@@ -50,6 +52,7 @@ import { useGMPhoneActions } from "@/hooks/usePhoneActions";
 import { useGameRuntime } from "@/hooks/useGameRuntime";
 import { formatGameRuntime } from "@/lib/gameRuntime";
 import { getPhoneView, shouldExhaustMonkeyPower, type PhoneAction, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
+import { canColossusRetaliate, isColossusTarget, resolveColossusTarget } from "@/lib/colossus";
 import {
   EMPTY_ACTOR_POWER_STATE,
   encodeActorCharacter,
@@ -82,6 +85,7 @@ import {
 } from "@/lib/playerCharacter";
 import {
   normalizePlayerActionState,
+  createPlayerActionRequest,
   removePlayerActionRequest,
   upsertPowerUses,
   type PlayerActionRequest,
@@ -100,6 +104,8 @@ const GM_SNAPSHOT_VERSION = 1;
 const GM_SNAPSHOT_RETENTION_MS = 24 * 60 * 60 * 1000;
 const SOLO_OBJECTIVE_ROLES: RoleId[] = ["s01", "s02", "as01b"];
 const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
+  v26: "role-v26",
+  v27: "role-v27",
   v19: "role-v19",
   v22: "role-v22",
   v16: "role-v16",
@@ -230,6 +236,10 @@ type GMSnapshot = {
   hideScreenMode: boolean;
   syncedTimerState: TimerSyncState | null;
   completedScriptLineKeys: string[];
+  completedScriptLineActors?: Record<string, string[]>;
+  colossusUsedPlayerIds?: string[];
+  colossusNightSeed?: number;
+  werewolfDeathFlags?: Record<string, boolean>;
   gameLogEvents: GameLogEvent[];
   declinedAutomaticVictory?: { kind: AutomaticWinKind; signature: string } | null;
   actorIdolUses?: number;
@@ -556,6 +566,18 @@ const GMRoom = () => {
   const [automaticWinKind, setAutomaticWinKind] = useState<AutomaticWinKind | null>(null);
   const [declinedAutomaticVictory, setDeclinedAutomaticVictory] = useState<{ kind: AutomaticWinKind; signature: string } | null>(null);
   const [completedScriptLineKeys, setCompletedScriptLineKeys] = useState<Set<string>>(new Set());
+  const [completedScriptLineActors, setCompletedScriptLineActors] = useState<Record<string, string[]>>({});
+  const [colossusUsedPlayerIds, setColossusUsedPlayerIds] = useState<Set<string>>(new Set());
+  const colossusUsedRef = useRef(colossusUsedPlayerIds);
+  colossusUsedRef.current = colossusUsedPlayerIds;
+  const [colossusNightSeed, setColossusNightSeed] = useState(Math.random);
+  const [werewolfDeathFlags, setWerewolfDeathFlags] = useState<Record<string, boolean>>({});
+  const monkeyDragRef = useRef<(sourcePlayerId: string, targetPlayerId: string) => void>(() => {});
+  const scriptLinesRef = useRef<import("@/components/game/NightScript").ScriptActionLine[]>([]);
+  const completeScriptLineRef = useRef<(key: string, completed: boolean, progressOrder: number | null, ids: string[]) => void>(() => {});
+  const handleScriptLinesChange = useCallback((lines: import("@/components/game/NightScript").ScriptActionLine[]) => {
+    scriptLinesRef.current = lines;
+  }, []);
   const [scriptAutoComplete, setScriptAutoComplete] = useState<{
     role: RoleId | null;
     sourcePlayerIds: string[];
@@ -1353,6 +1375,10 @@ const GMRoom = () => {
       setHideScreenMode(!!snapshot.hideScreenMode);
       setSyncedTimerState(snapshot.syncedTimerState ?? null);
       setCompletedScriptLineKeys(new Set(snapshot.completedScriptLineKeys ?? []));
+      setCompletedScriptLineActors(snapshot.completedScriptLineActors ?? {});
+      setColossusUsedPlayerIds(new Set(snapshot.colossusUsedPlayerIds ?? []));
+      setColossusNightSeed(snapshot.colossusNightSeed ?? Math.random());
+      setWerewolfDeathFlags(snapshot.werewolfDeathFlags ?? {});
       setGameLogEvents(normalizeGameLogEvents(snapshot.gameLogEvents));
       setDeclinedAutomaticVictory(snapshot.declinedAutomaticVictory ?? null);
       setActorIdolUses(snapshot.actorIdolUses ?? 0);
@@ -1427,6 +1453,10 @@ const GMRoom = () => {
       hideScreenMode,
       syncedTimerState,
       completedScriptLineKeys: Array.from(completedScriptLineKeys),
+      completedScriptLineActors,
+      colossusUsedPlayerIds: Array.from(colossusUsedPlayerIds),
+      colossusNightSeed,
+      werewolfDeathFlags,
       monkeyDisabled,
       gameLogEvents,
       declinedAutomaticVictory,
@@ -1496,6 +1526,10 @@ const GMRoom = () => {
     hideScreenMode,
     syncedTimerState,
     completedScriptLineKeys,
+    completedScriptLineActors,
+    colossusUsedPlayerIds,
+    colossusNightSeed,
+    werewolfDeathFlags,
     monkeyDisabled,
     gameLogEvents,
     declinedAutomaticVictory,
@@ -1881,6 +1915,10 @@ const GMRoom = () => {
     setSpyRevealOpen(false);
     setSpyRevealCards([]);
     setCompletedScriptLineKeys(new Set());
+    setCompletedScriptLineActors({});
+    setColossusUsedPlayerIds(new Set());
+    setColossusNightSeed(Math.random());
+    setWerewolfDeathFlags({});
     setScriptAutoComplete({ role: null, sourcePlayerIds: [], version: 0 });
     setGameLogOpen(false);
     setGameLogEvents([]);
@@ -2510,6 +2548,8 @@ const GMRoom = () => {
 
       setPlayerStatuses((prev) => ({ ...prev, [playerId]: "dead-this-night" }));
       setKillSources((prev) => ({ ...prev, [playerId]: source }));
+      // Preserve the attack kind even if a Werewolf copy later changes powers.
+      setWerewolfDeathFlags((prev) => ({ ...prev, [playerId]: isWerewolfTargeting }));
       setKillSourcePlayerIds((prev) => {
         const next = { ...prev };
         if (sourcePlayerId) next[playerId] = sourcePlayerId;
@@ -2588,6 +2628,7 @@ const GMRoom = () => {
         broadcastPlayerSync([playerId]);
       });
     } else if (newStatus === "alive") {
+      setWerewolfDeathFlags((prev) => ({ ...prev, [playerId]: false }));
       if (sourcePlayerId) pendingGameActionLogSourcesRef.current.set(`resurrect:${playerId}`, sourcePlayerId);
       setPlayerStatuses((prev) => ({ ...prev, [playerId]: "alive" }));
       setKillSourcePlayerIds((prev) => {
@@ -3152,6 +3193,10 @@ const GMRoom = () => {
 
     toast.success(format(getToast("okNightEnded", (room?.language as Language) || "pt"), { n: nightNumber }));
     setCompletedScriptLineKeys(new Set());
+    setCompletedScriptLineActors({});
+    setColossusUsedPlayerIds(new Set());
+    setColossusNightSeed(Math.random());
+    setWerewolfDeathFlags({});
     setScriptAutoComplete({ role: null, sourcePlayerIds: [], version: 0 });
     setGameCyclePhase("day");
     setDayPhase("day");
@@ -3369,6 +3414,10 @@ const GMRoom = () => {
     setPlayerEffects(newEffects);
 
     setCompletedScriptLineKeys(new Set());
+    setCompletedScriptLineActors({});
+    setColossusUsedPlayerIds(new Set());
+    setColossusNightSeed(Math.random());
+    setWerewolfDeathFlags({});
     setScriptAutoComplete({ role: null, sourcePlayerIds: [], version: 0 });
     setGameCyclePhase("night");
     setNightNumber((n) => n + 1);
@@ -3466,8 +3515,16 @@ const GMRoom = () => {
     explicitPlayerIds?: string[],
   ) => {
     const sourcePlayerIds = explicitPlayerIds ?? getCoupledActionPlayerIds(role, sourcePlayerId);
+    // Capture completed participants before a use is spent or a copied role changes
+    // and removes its line from the next render.
+    if (gameCyclePhase === "night") {
+      scriptLinesRef.current.filter((line) => line.requires.includes(role)
+        && (sourcePlayerIds.length === 0 || (line.sourcePlayerId ? sourcePlayerIds.includes(line.sourcePlayerId)
+          : line.participantIds.some((id) => sourcePlayerIds.includes(id)))))
+        .forEach((line) => completeScriptLineRef.current(line.key, true, line.progressOrder, line.participantIds));
+    }
     setScriptAutoComplete((current) => ({ role, sourcePlayerIds, version: current.version + 1 }));
-  }, [getCoupledActionPlayerIds]);
+  }, [gameCyclePhase, getCoupledActionPlayerIds]);
 
   useEffect(() => {
     const copiedRole = pendingActorCopyLogRef.current;
@@ -3877,11 +3934,17 @@ const GMRoom = () => {
     });
   }, [abilityRoleAssignments, dogWolfStates, effectiveRoleAssignments, mimePlayerId, mimeWitchPoison, nightNumber, permanentlyDead, sourcedEffectTargets]);
 
-  const handleScriptLineCompleted = useCallback((key: string, completed: boolean, progressOrder: number | null = null) => {
+  const handleScriptLineCompleted = useCallback((key: string, completed: boolean, progressOrder: number | null = null, participantIds: string[] = []) => {
     setCompletedScriptLineKeys((prev) => {
       const next = new Set(prev);
       if (completed) next.add(key);
       else next.delete(key);
+      return next;
+    });
+    setCompletedScriptLineActors((prev) => {
+      const next = { ...prev };
+      if (completed) next[key] = participantIds;
+      else delete next[key];
       return next;
     });
     if (completed && progressOrder !== null) {
@@ -3889,6 +3952,7 @@ const GMRoom = () => {
       clearEffectsFromDeadSources(progressOrder);
     }
   }, [clearDueMimeWitchPoison, clearEffectsFromDeadSources]);
+  completeScriptLineRef.current = handleScriptLineCompleted;
 
   const handleBigBadWolfChargeToggle = useCallback((idx: number) => {
     const newCharges = bigBadWolfCharges > idx ? idx : idx + 1;
@@ -4030,12 +4094,33 @@ const GMRoom = () => {
   }, [sourcedEffectTargets, toggleEffect]);
 
   // Handle drag-drop actions (both list and circle)
+  const actedTonightPlayerIds = useMemo(() => new Set(Object.entries(completedScriptLineActors)
+    .filter(([key]) => key.startsWith(`${nightNumber}:`) && completedScriptLineKeys.has(key))
+    .flatMap(([, ids]) => ids)), [completedScriptLineActors, completedScriptLineKeys, nightNumber]);
+  const colossusAttackedPlayerIds = useMemo(() => players.filter((player) => (
+    abilityRoleAssignments[player.id] === "v27" && playerStatuses[player.id] === "dead-this-night"
+    && !!killSources[player.id] && (werewolfDeathFlags[player.id] ?? isWerewolfAttackSource(killSources[player.id], killSourcePlayerIds[player.id]))
+    && !permanentlyDead.has(player.id)
+  )).map((player) => player.id), [players, abilityRoleAssignments, playerStatuses, killSources, werewolfDeathFlags, isWerewolfAttackSource, killSourcePlayerIds, permanentlyDead]);
+  const colossusReadyPlayerIds = useMemo(() => new Set(players.filter((player) => (
+    room?.status === "playing" && gameCyclePhase === "night" && canColossusRetaliate({
+      abilityRole: abilityRoleAssignments[player.id], redX: playerStatuses[player.id] === "dead-this-night",
+      dead: permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead",
+      powerless: powerlessPlayerIds.has(player.id), attackedByWerewolves: colossusAttackedPlayerIds.includes(player.id),
+      used: colossusUsedPlayerIds.has(player.id), host: !!playerEffects[player.id]?.has("host"), burned: !!playerEffects[player.id]?.has("burned"),
+    })
+  )).map((player) => player.id)), [players, room?.status, gameCyclePhase, abilityRoleAssignments, playerStatuses, permanentlyDead, powerlessPlayerIds, colossusAttackedPlayerIds, colossusUsedPlayerIds, playerEffects]);
+
   const handleDragAction = useCallback((
     action: string,
     targetPlayerId: string,
     sourcePlayerId?: string | null,
     meta: { fromScriptLine?: boolean; scriptConditionKey?: string | null; preserveSpiderFreeWebChange?: boolean; fromPhone?: boolean } = {},
   ) => {
+    if (action === "role-v26") {
+      if (sourcePlayerId) monkeyDragRef.current(sourcePlayerId, targetPlayerId);
+      return;
+    }
     // Universal "caught" tagging — any drag onto a webbed player tags the source
     const applyCaughtIfWebbed = () => {
       if (!sourcePlayerId || sourcePlayerId === targetPlayerId) return;
@@ -4112,6 +4197,24 @@ const GMRoom = () => {
         ? "a03"
         : roleAssignments[sourcePlayerId] ?? actionRole
       : actionRole;
+    if (actionRole === "v27") {
+      const eligible = (id: string) => isColossusTarget({
+        dead: permanentlyDead.has(id) || playerStatuses[id] === "dead", redX: playerStatuses[id] === "dead-this-night",
+        actedTonight: actedTonightPlayerIds.has(id), host: !!playerEffects[id]?.has("host"),
+      });
+      if (!sourcePlayerId || !colossusReadyPlayerIds.has(sourcePlayerId) || colossusUsedRef.current.has(sourcePlayerId) || !eligible(targetPlayerId)) return;
+      // Spend the retaliation before resolving the kill, including a failed poisoned shot.
+      colossusUsedRef.current = new Set(colossusUsedRef.current).add(sourcePlayerId);
+      setColossusUsedPlayerIds(colossusUsedRef.current);
+      const killId = resolveColossusTarget(players.map((player) => ({
+        id: player.id, dead: permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead",
+        redX: playerStatuses[player.id] === "dead-this-night", actedTonight: actedTonightPlayerIds.has(player.id), host: !!playerEffects[player.id]?.has("host"),
+      })), targetPlayerId, isPlayerActingPoisoned(sourcePlayerId));
+      applyCaughtIfWebbed();
+      if (killId) handlePlayerStatusChange(killId, "dead-this-night", publicSourceRole ?? "v27", sourcePlayerId);
+      if (!meta.fromPhone) markScriptRoleAction("v27", sourcePlayerId);
+      return;
+    }
     const toggleActionEffect = (playerId: string, effect: StatusEffect) => {
       if (SOURCE_SCOPED_EFFECTS.has(effect)) applySourcedEffect(sourcePlayerId, playerId, effect);
       else toggleEffect(playerId, effect, sourcePlayerId);
@@ -4605,7 +4708,7 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const phoneWorld = useMemo<PhoneWorld>(() => ({
     packBlocked: werewolfPackPoisoned,
@@ -4619,6 +4722,7 @@ const GMRoom = () => {
         displayRole: effectiveRoleAssignments[player.id], actingPoisoned: isPlayerActingPoisoned(player.id),
         illusion: illusionPlayerIds.has(player.id),
         monkeyDisabled: independentPowerStates[player.id]?.monkeyDisabled ?? monkeyDisabled,
+        colossusReady: colossusReadyPlayerIds.has(player.id), actedTonight: actedTonightPlayerIds.has(player.id), host: effects.has("host"),
         werewolfTurned: effects.has("werewolf_turned"), evil: effects.has("evil_being"),
         mime: player.id === mimePlayerId,
         canWake: (!dead || prophecyGhostPlayerIds.has(player.id)) && !effects.has("host") && !effects.has("burned")
@@ -4626,7 +4730,7 @@ const GMRoom = () => {
         powerless: powerlessPlayerIds.has(player.id),
       };
     }),
-  }), [abilityRoleAssignments, effectiveRoleAssignments, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
+  }), [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, effectiveRoleAssignments, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
   const applyPhoneAction = useCallback(({ action, targetPlayerId, sourcePlayerId, monkeyReveal }: PhoneAction) => {
     if (action === "monkey") {
       if (!sourcePlayerId || !monkeyReveal) return;
@@ -4638,18 +4742,27 @@ const GMRoom = () => {
         else setMonkeyDisabled(true);
       }
       handleDragAction("__catch__", targetPlayerId, sourcePlayerId);
+      markScriptRoleAction("v26", sourcePlayerId);
       return;
     }
-    handleDragAction(action, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
-  }, [handleDragAction, handleIndependentPowerStateChange, independentPowerStates, nightNumber]);
+    handleDragAction(action === "colossus" ? "role-v27" : action, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
+  }, [handleDragAction, handleIndependentPowerStateChange, independentPowerStates, markScriptRoleAction, nightNumber]);
   const completePhoneLine = useCallback((session: PhoneSession) => {
-    handleScriptLineCompleted(session.lineKey, true, session.progressOrder ?? null);
+    handleScriptLineCompleted(session.lineKey, true, session.progressOrder ?? null, session.participantIds);
   }, [handleScriptLineCompleted]);
   const phone = useGMPhoneActions({
     roomId, contextKey: `${room?.status}:${gameCyclePhase}:${nightNumber}`,
     enabled: gmSnapshotLoaded && room?.status === "playing" && gameCyclePhase === "night",
     world: phoneWorld, onAction: applyPhoneAction, onComplete: completePhoneLine,
   });
+  const actionMirrors = useGMPlayerActionMirrors(roomId, gmSnapshotLoaded && room?.status === "playing", (mode) => (
+    abilityRoleAssignments[mode.actorPlayerId] === getPlayerActionRole(mode.kind)
+    && !permanentlyDead.has(mode.actorPlayerId) && playerStatuses[mode.actorPlayerId] !== "dead-this-night"
+    && !powerlessPlayerIds.has(mode.actorPlayerId)
+  ));
+  monkeyDragRef.current = (sourcePlayerId, targetPlayerId) => {
+    if (phone.toggle("monkey", `${nightNumber}:drag:monkey:${sourcePlayerId}`, sourcePlayerId)) phone.confirmMonkey(targetPlayerId);
+  };
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
     e.preventDefault();
@@ -4734,6 +4847,7 @@ const GMRoom = () => {
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
     const role = abilityRoleAssignments[playerId];
+    if (role === "v27" && !colossusReadyPlayerIds.has(playerId)) return {};
     const isMime = roleAssignments[playerId] === "a03";
     const dogState = dogWolfStates[playerId];
     const roleAction = ROLE_DRAG_ACTIONS[role];
@@ -5430,13 +5544,14 @@ const GMRoom = () => {
   }, [lastNightDeadPlayerIds, players]);
 
   const deathTriggeredSourcePlayerIds = useMemo(() => ({
+    colossusAttacked: colossusAttackedPlayerIds,
     hunterDied: lastNightDeadPlayerIds.filter((playerId) => (
       roleAssignments[playerId] === "v08"
       || abilityRoleAssignments[playerId] === "v08"
       || (playerId === actorPlayerId && effectiveActorCopiedRole === "v08")
     )),
     soldierDied: lastNightDeadPlayerIds.filter((playerId) => playerEffects[playerId]?.has("soldier")),
-  }), [abilityRoleAssignments, actorPlayerId, effectiveActorCopiedRole, lastNightDeadPlayerIds, playerEffects, roleAssignments]);
+  }), [colossusAttackedPlayerIds, abilityRoleAssignments, actorPlayerId, effectiveActorCopiedRole, lastNightDeadPlayerIds, playerEffects, roleAssignments]);
 
   // Condition keys for conditional script lines
   const conditionKeys = useMemo(() => {
@@ -5449,6 +5564,7 @@ const GMRoom = () => {
 
     const hunterId = getRolePlayerId("v08");
     keys["hunterDied"] = deathTriggeredSourcePlayerIds.hunterDied.length > 0;
+    keys["colossusAttacked"] = deathTriggeredSourcePlayerIds.colossusAttacked.length > 0;
 
     const redHoodId = Object.entries(abilityRoleAssignments).find(([, r]) => r === "v08b")?.[0];
     const hunterAlive = hunterId && !permanentlyDead.has(hunterId);
@@ -5655,7 +5771,7 @@ const GMRoom = () => {
   const scriptPowerlessPlayerIds = new Set(powerlessPlayerIds);
   // This night's resolved line can reopen the card, even after power loss.
   phone.monkeySourceIds.forEach((id) => scriptPowerlessPlayerIds.delete(id));
-  const huntView = phone.session?.mode === "hunt"
+  const phoneView = phone.session && phone.session.mode !== "monkey"
     ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
 
   return (
@@ -5667,38 +5783,20 @@ const GMRoom = () => {
           language={lang} onConfirm={phone.confirmMonkey} onClose={phone.close}
           onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {huntView && phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
-        <Dialog open onOpenChange={(open) => { if (!open) phone.close(); }}>
-          <DialogContent className="max-h-[90dvh] overflow-y-auto border-destructive/50 [&>button]:hidden"
-            onEscapeKeyDown={(event) => event.preventDefault()} onPointerDownOutside={(event) => event.preventDefault()}>
-            <DialogHeader>
-              <DialogTitle>{getTranslation(lang).ui.phoneActions.hunt}</DialogTitle>
-              <DialogDescription>{phone.consensus ? format(
-                getTranslation(lang).ui.phoneActions[phone.session.sourcePlayerId ? "soloHuntRequest" : "huntRequest"],
-                { target: players.find((p) => p.id === phone.consensus)?.name ?? tt("unknown"),
-                  actor: players.find((p) => p.id === phone.session?.sourcePlayerId)?.name ?? tt("unknown") },
-              ) : getTranslation(lang).ui.phoneActions.huntVotes}</DialogDescription>
-            </DialogHeader>
-            <PhoneActionScreen session={huntView} playerId="gm" language={lang}
-              pending={false} connected readOnly onSend={() => {}} />
-            <ul className="space-y-1 text-sm">
-              {phone.session.participantIds.map((id) => (
-                <li key={id} className="flex justify-between gap-4">
-                  <span>{players.find((p) => p.id === id)?.name}</span>
-                  <span className="text-muted-foreground">{players.find((p) => p.id === phone.session?.votes[id])?.name ?? "—"}</span>
-                </li>
-              ))}
-            </ul>
-            <DialogFooter className="gap-2">
-              <Button size="icon" variant="secondary" aria-label={getTranslation(lang).ui.phoneActions.close}
-                title={getTranslation(lang).ui.phoneActions.close} onClick={phone.close}><Smartphone className="h-4 w-4" /></Button>
-              {phone.consensus && <>
-                <Button variant="secondary" onClick={() => phone.resolveHunt(phone.session!.id, phone.consensus!, false)}>{tt("gmDenyAction")}</Button>
-                <Button variant="destructive" onClick={() => phone.resolveHunt(phone.session!.id, phone.consensus!, true)}>{tt("gmAcceptAction")}</Button>
-              </>}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {phoneView && phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
+        <GMPhoneActionModal session={phone.session} view={phoneView} language={lang}
+          onClose={phone.close} onSend={phone.sendGM}
+          onResolveHunt={phone.resolveHunt} onResolveColossus={phone.resolveColossus} />
+      )}
+      {actionMirrors.mode && !phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
+        <GMPlayerActionModal mode={actionMirrors.mode} language={lang}
+          players={players.map((player) => ({ ...player, dead: permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead-this-night" || playerStatuses[player.id] === "dead" }))}
+          onClose={() => actionMirrors.close(actionMirrors.mode!)}
+          onConfirm={(targetPlayerId) => {
+            const mode = actionMirrors.mode!;
+            actionMirrors.close(mode);
+            void resolvePlayerActionRequest({ ...createPlayerActionRequest(mode.kind, mode.actorPlayerId, targetPlayerId), id: mode.id }, true);
+          }} />
       )}
       {pendingPlayerActionRequest && (
         <Dialog
@@ -5893,6 +5991,7 @@ const GMRoom = () => {
                   isGM
                   roleAssignments={rolesAssigned ? displayRoleAssignments : undefined}
                   abilityRoleAssignments={rolesAssigned ? abilityRoleAssignments : undefined}
+                  colossusReadyPlayerIds={colossusReadyPlayerIds}
                   baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                   objectiveRoleAssignments={rolesAssigned ? objectiveRoleAssignments : undefined}
                   playerStatuses={playerStatuses}
@@ -6097,6 +6196,8 @@ const GMRoom = () => {
                     onSpyReveal={handleSpyReveal}
                     onScriptRolesVisible={handleScriptRolesVisible}
                     completedLineKeys={completedScriptLineKeys}
+                    colossusNightSeed={colossusNightSeed}
+                    onScriptLinesChange={handleScriptLinesChange}
                     onLineCompletedChange={handleScriptLineCompleted}
                     autoCompleteRole={scriptAutoComplete.role}
                     autoCompleteSourcePlayerIds={scriptAutoComplete.sourcePlayerIds}

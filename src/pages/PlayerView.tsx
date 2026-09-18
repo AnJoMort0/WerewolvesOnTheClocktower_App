@@ -29,6 +29,7 @@ import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { usePlayerPhoneActions } from "@/hooks/usePhoneActions";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
+import { usePlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 import { normalizeGameLogSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
 
 type RoomPlayer = {
@@ -91,6 +92,9 @@ const PlayerView = () => {
   const [resurrectionTargetId, setResurrectionTargetId] = useState<string | null>(null);
   const [resurrectionSubmitting, setResurrectionSubmitting] = useState(false);
   const [webMode, setWebMode] = useState(false);
+  const getMirroredRequestId = usePlayerActionMirror(player?.room_id, playerId,
+    roomStatus === "playing" ? assassinationMode ? "v10-assassinate" : resurrectionMode ? "v18-resurrect" : webMode ? "v23-web" : null : null,
+    () => { setAssassinationMode(false); setResurrectionMode(false); setWebMode(false); });
   const [webTargetId, setWebTargetId] = useState<string | null>(null);
   const [webSubmitting, setWebSubmitting] = useState(false);
   const [fakePlayerActionKind, setFakePlayerActionKind] = useState<PlayerActionKind | null>(null);
@@ -745,6 +749,7 @@ const PlayerView = () => {
     closeMode: () => void;
   }) => {
     if (!playerId || !currentRoomId || !targetPlayerId) return;
+    const mirroredRequestId = getMirroredRequestId(kind);
     setAssassinationMessage(null);
 
     const { data, error } = await supabase
@@ -783,7 +788,7 @@ const PlayerView = () => {
       ...latestState,
       requests: [
         ...latestState.requests,
-        createPlayerActionRequest(kind, playerId, targetPlayerId),
+        { ...createPlayerActionRequest(kind, playerId, targetPlayerId), ...(mirroredRequestId ? { id: mirroredRequestId } : {}) },
       ],
     };
     const { error: updateError } = await supabase
@@ -799,7 +804,7 @@ const PlayerView = () => {
     setPlayerActionState(nextState);
     closeMode();
     setAssassinationMessage(null);
-  }, [currentRoomId, language, playerId, showFakePlayerActionPending]);
+  }, [currentRoomId, getMirroredRequestId, language, playerId, showFakePlayerActionPending]);
 
   const sendAssassinationRequest = useCallback(async () => {
     if (!assassinationTargetId || !isParanoidPower || assassinationTargetId === playerId) return;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Crosshair, Eye, FlaskConical, RotateCcw, Users, X } from "lucide-react";
+import { Check, Crosshair, Eye, FlaskConical, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, getTranslation, type Language } from "@/lib/i18n";
 import type { PhoneCommand, PhoneView } from "@/lib/phoneActions";
@@ -37,7 +37,7 @@ function getEllipseAngles(count: number, radiusX: number, radiusY: number): numb
   });
 }
 
-export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false, selectedPlayerId, showHeader = true }: {
+export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false, selectedPlayerId, showHeader = true, gmControlled = false, confirmLabel, showPoisonConfirmation = true, appearance }: {
   session: PhoneView;
   playerId: string;
   language: Language;
@@ -47,23 +47,28 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   readOnly?: boolean;
   selectedPlayerId?: string | null;
   showHeader?: boolean;
+  gmControlled?: boolean;
+  confirmLabel?: string;
+  showPoisonConfirmation?: boolean;
+  appearance?: { title: string; icon: LucideIcon; border: string; accent: string };
 }) {
   const text = getTranslation(language).ui.phoneActions;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = selectedPlayerId !== undefined ? selectedPlayerId : session.mode === "hunt" ? session.votes[playerId] : selectedId;
+  const selected = session.pendingTargetPlayerId ?? (selectedPlayerId !== undefined ? selectedPlayerId : session.mode === "hunt" && !gmControlled ? session.votes[playerId] : selectedId);
   const target = session.players.find((p) => p.id === selected && p.selectable);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
   const mapHeight = Math.max(MAP_MIN_HEIGHT, players.length * PLAYER_ARC_SPACE);
   const verticalRadius = mapHeight / 2 - PLAYER_EDGE_SPACE;
   const angles = getEllipseAngles(players.length, MAP_MAX_WIDTH * MAP_HORIZONTAL_RADIUS, verticalRadius);
-  const Icon = session.mode === "poison" ? FlaskConical : session.mode === "shaman" ? RotateCcw
-    : session.mode === "monkey" ? Eye : session.mode === "allies" ? Users : Crosshair;
-  const title = session.mode === "monkey" ? getTranslation(language).roleLabels.v26 : text[session.mode];
-  const theme = session.mode === "poison"
+  const Icon = appearance?.icon ?? (session.mode === "poison" ? FlaskConical : session.mode === "shaman" ? RotateCcw
+    : session.mode === "monkey" ? Eye : session.mode === "allies" ? Users : Crosshair);
+  const title = appearance?.title ?? (session.mode === "monkey" ? getTranslation(language).roleLabels.v26
+    : session.mode === "colossus" ? getTranslation(language).roleLabels.v27 : text[session.mode]);
+  const theme = appearance ?? (session.mode === "poison"
     ? { border: "border-emerald-500/50 ring-emerald-500/10", accent: "text-emerald-300" }
     : session.mode === "shaman"
     ? { border: "border-moon/50 ring-moon/10", accent: "text-moon" }
-    : { border: "border-primary/60 ring-primary/10", accent: "text-primary" };
+    : { border: "border-primary/60 ring-primary/10", accent: "text-primary" });
 
   return (
     <section
@@ -76,6 +81,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
         </span>
         <h2 className={`font-display text-xl font-bold ${theme.accent}`}>{title}</h2>
       </header>}
+      {session.mode === "colossus" && <p className="text-center text-sm text-muted-foreground">{text.colossusInstructions}</p>}
       <div className="min-w-0 overflow-hidden pb-1">
         <div
           data-testid="phone-action-map"
@@ -93,8 +99,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 type="button"
                 aria-label={player.name}
                 aria-pressed={session.mode === "allies" ? undefined : selected === player.id}
-                disabled={readOnly || !player.selectable || !connected || (pending && session.mode !== "hunt")}
-                onClick={() => session.mode === "hunt" || session.mode === "monkey" ? onSend("select", player.id) : setSelectedId(player.id)}
+                disabled={readOnly || !!session.pendingTargetPlayerId || !player.selectable || !connected || (pending && session.mode !== "hunt")}
+                onClick={() => (session.mode === "hunt" && !gmControlled) || session.mode === "monkey" ? onSend("select", player.id) : setSelectedId(player.id)}
                 className={`absolute flex w-[3.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
                 style={{
                   left: `${50 + MAP_HORIZONTAL_RADIUS * 100 * Math.cos(angle)}%`,
@@ -104,7 +110,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
               >
                 <span className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 ${
                   selected === player.id ? "border-gold ring-2 ring-gold/30" : player.marker ? "border-primary" : "border-border"
-                } ${player.marker ? "bg-primary/25" : "bg-background/70"} ${player.dead ? "opacity-40" : ""}`}>
+                } ${player.marker ? "bg-primary/25" : session.mode === "colossus" && player.selectable ? "bg-emerald-500/25 text-emerald-200" : "bg-background/70"} ${player.dead || (session.mode === "colossus" && !player.selectable) ? "opacity-40" : ""}`}>
                   {player.marker
                     ? <img src={player.marker === "werewolf" ? werewolfIcon : evilBeingIcon} alt="" draggable={false} className="h-8 w-8 object-contain" />
                     : <span className="font-bold">{player.name.charAt(0).toUpperCase()}</span>}
@@ -123,16 +129,17 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
       </div>
       {!connected && <p role="status" className="text-sm">{text.reconnecting}</p>}
       {pending && session.mode !== "hunt" && <p role="status" className="text-sm text-muted-foreground">{text.waiting}</p>}
-      {session.mode === "poison" && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
-      {!readOnly && (session.mode === "poison" || session.mode === "shaman") && (
+      {session.pendingTargetPlayerId && <p role="status" className="text-center text-sm text-muted-foreground">{text.waiting}</p>}
+      {showPoisonConfirmation && session.mode === "poison" && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
+      {!readOnly && (session.mode === "poison" || session.mode === "shaman" || session.mode === "colossus" || (gmControlled && session.mode === "hunt")) && (
         <div className="flex justify-center gap-2">
           {session.mode === "shaman" && (
             <Button variant="secondary" disabled={pending || !connected} onClick={() => onSend("ignore")}>
               <X className="mr-2 h-4 w-4" />{text.ignore}
             </Button>
           )}
-          <Button disabled={!target || pending || !connected} onClick={() => target && onSend("confirm", target.id)}>
-            <Check className="mr-2 h-4 w-4" />{session.mode === "shaman" ? text.save : text.confirm}
+          <Button disabled={!target || pending || !connected || !!session.pendingTargetPlayerId} onClick={() => target && onSend("confirm", target.id)}>
+            <Check className="mr-2 h-4 w-4" />{confirmLabel ?? (session.mode === "shaman" ? text.save : text.confirm)}
           </Button>
         </div>
       )}

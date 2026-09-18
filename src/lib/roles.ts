@@ -13,6 +13,7 @@ import v07Img from "@/assets/display/roles/v07.webp";
 import v08Img from "@/assets/display/roles/v08.webp";
 import v08bImg from "@/assets/display/roles/v08b.webp";
 import v09Img from "@/assets/display/roles/v09.webp";
+import v27Img from "@/assets/display/roles/v27.webp";
 import v10Img from "@/assets/display/roles/v10.webp";
 import v11Img from "@/assets/display/roles/v11.webp";
 import v12Img from "@/assets/display/roles/v12.webp";
@@ -80,6 +81,7 @@ const ROLE_DEFINITIONS = {
   v08: { id: "v08", label: "Hunter", image: v08Img, category: "v" },
   v08b: { id: "v08b", label: "Little Red Riding Hood", image: v08bImg, category: "v", requires: "v08" },
   v09: { id: "v09", label: "Captain", image: v09Img, category: "v" },
+  v27: { id: "v27", label: "Colossus", image: v27Img, category: "v" },
   v10: { id: "v10", label: "Paranoid", image: v10Img, category: "v" },
   v11: { id: "v11", label: "Village Elder", image: v11Img, category: "v" },
   v12: { id: "v12", label: "Gypsy", image: v12Img, category: "v" },
@@ -162,7 +164,7 @@ export function isDetectableWerewolfRole(roleId: RoleId): boolean {
 export const WEB_IMMUNE_ROLES: RoleId[] = ["v10", "v18", "v22"];
 
 export const MIME_COPY_ROLES: RoleId[] = [
-  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03",  "v04",  "v05", "v26",  "v08",  "v09",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06",  "l06"
+  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03",  "v04",  "v05", "v26",  "v08",  "v09", "v27",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06",  "l06"
 ];
 
 /** Information characters — randomizer tries to include at least one of these. */
@@ -171,16 +173,16 @@ export const INFO_ROLES: RoleId[] = ["v02", "v03", "v04", "v05", "v26", "v06", "
 const ESSENTIAL_SINGLES: RoleId[] = ["e02", "e03", "e04"];
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "s02"];
 const VILLAGER_UNIQUE: RoleId[] = [
-  "v01", "v02", "v03", "v04", "v05", "v26", "v06", "v07", "v08", "v08b", "v09", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25"
+  "v01", "v02", "v03", "v04", "v05", "v26", "v06", "v07", "v08", "v08b", "v09", "v27", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25"
 ];
 const ADVANCED_ROLES: RoleId[] = ["a01", "a02", "a03", "a04", "a05", "a06", "as01b"];
 const OTHER_UNIQUE: RoleId[] = ["m04", "m05", "s01", "f01", "f02"];
 const LAME_SINGLES: RoleId[] = ["l02", "l05", "l06"];
 
-/** Alternate deaths: tetanus, Hunter/Soldier revenge, Paranoid assassination,
+/** Alternate deaths: tetanus, Hunter/Soldier/Colossus revenge, Paranoid assassination,
  * Lovers' suicide, White Wolf's solo kill, and the Servant's sacrifice.
  * Poison and burning suppress powers; they do not directly kill. */
-export const EXTRA_DEATH_ROLES: RoleId[] = ["v07", "v08", "v09", "v10", "s01", "s02", "l06"];
+export const EXTRA_DEATH_ROLES: RoleId[] = ["v07", "v08", "v09", "v27", "v10", "s01", "s02", "l06"];
 
 /** Keep this shared with the Lamplighter reveal: these powers have finite uses. */
 export const LIMITED_USE_ROLES: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "m03", "v13", "v14", "v23"];
@@ -188,7 +190,7 @@ export const LIMITED_USE_ROLES: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "
 /** Roles with no unconditional recurring night line. First-night introductions
  * do not expose them throughout the game; conditional wakeups remain hidden. */
 export const NO_UNCONDITIONAL_SCRIPT_ROLES: RoleId[] = [
-  "e03", "v01", "v07", "v08", "v08b", "v10", "v12", "v13", "v14", "v15", "v18", "v19", "v20", "v23",
+  "e03", "v01", "v27", "v07", "v08", "v08b", "v10", "v12", "v13", "v14", "v15", "v18", "v19", "v20", "v23",
   "m04", "m05", "s01", "l01", "l02", "l03", "l04", "l05", "l06", "a01", "a02", "a05",
 ];
 
