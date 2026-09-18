@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { StatusEffect } from "@/lib/effects";
 import { WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
-import { hasAttackImmunity, resolveProtectedDeaths } from "./immunity";
+import { hasAttackImmunity, resolveProtectedDeaths } from "@/lib/immunity";
 
 function pendingDeath(overrides: Partial<Parameters<typeof resolveProtectedDeaths>[0]> = {}) {
   return {

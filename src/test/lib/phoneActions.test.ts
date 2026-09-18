@@ -4,7 +4,7 @@ import type { RoleId } from "@/lib/roles";
 import {
   applyPhoneCommand, getHuntConsensus, getPhoneParticipants, getPhoneView, getScriptPhoneMode, reconcilePhoneSession,
   type PhonePlayer, type PhoneSession, type PhoneWorld,
-} from "./phoneActions";
+} from "@/lib/phoneActions";
 
 export const phonePlayer = (id: string, role: RoleId, overrides: Partial<PhonePlayer> = {}): PhonePlayer => ({
   id, name: id, seat_position: 0, dead: false, redX: false, abilityRole: role, objectiveRole: role,

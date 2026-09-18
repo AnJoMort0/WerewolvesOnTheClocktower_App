@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { assignRoles, canRandomlyAssignRole, EXTRA_DEATH_ROLES, INFO_ROLES, LIMITED_USE_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "./roles";
+import { assignRoles, canRandomlyAssignRole, EXTRA_DEATH_ROLES, INFO_ROLES, LIMITED_USE_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "s02"];
 const IMPLEMENTED_NEW_ROLES: RoleId[] = ["v24", "v25", "m06", "l05", "l06"];

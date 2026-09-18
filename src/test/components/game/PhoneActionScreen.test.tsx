@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { PhoneActionScreen } from "./PhoneActionScreen";
+import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { getTranslation } from "@/lib/i18n";
 import type { PhoneView } from "@/lib/phoneActions";
 

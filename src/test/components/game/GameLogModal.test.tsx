@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { GameLogModal } from "./GameLogModal";
+import { GameLogModal } from "@/components/game/GameLogModal";
 import { LanguageContext } from "@/lib/i18n";
 import type { GameLogEvent, GameLogPlayerSnapshot } from "@/lib/gameLog";
 

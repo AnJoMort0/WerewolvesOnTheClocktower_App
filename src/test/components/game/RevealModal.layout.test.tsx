@@ -2,9 +2,9 @@ import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { RevealModal } from "./RevealModal";
-import { FortuneTellerRevealModal } from "./FortuneTellerRevealModal";
-import { RulebookModal } from "./RulebookModal";
+import { RevealModal } from "@/components/game/RevealModal";
+import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealModal";
+import { RulebookModal } from "@/components/game/RulebookModal";
 import { LanguageContext } from "@/lib/i18n";
 import { ROLES, type RoleId } from "@/lib/roles";
 

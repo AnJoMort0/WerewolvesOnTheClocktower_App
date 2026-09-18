@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_GAME_RUNTIME, formatGameRuntime, getGameRuntimeMs, normalizeGameRuntime, updateGameRuntime } from "./gameRuntime";
+import { EMPTY_GAME_RUNTIME, formatGameRuntime, getGameRuntimeMs, normalizeGameRuntime, updateGameRuntime } from "@/lib/gameRuntime";
 
 describe("game runtime", () => {
   it("excludes the lobby and game-over pause, then resumes accumulated play time", () => {

@@ -1,8 +1,8 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useGMPhoneActions, usePlayerPhoneActions } from "./usePhoneActions";
+import { useGMPhoneActions, usePlayerPhoneActions } from "@/hooks/usePhoneActions";
 import type { PhonePlayer, PhoneWorld } from "@/lib/phoneActions";
-import { useGMPlayerActionMirrors, usePlayerActionMirror } from "./usePlayerActionMirrors";
+import { useGMPlayerActionMirrors, usePlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 
 const bus = vi.hoisted(() => {
   type Message = { event: string; payload: Record<string, unknown> };

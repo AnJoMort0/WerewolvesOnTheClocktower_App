@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildJoinUrl, getDefaultJoinBaseUrl, isLoopbackOrigin, normalizeJoinBaseUrl } from "./joinUrl";
+import { buildJoinUrl, getDefaultJoinBaseUrl, isLoopbackOrigin, normalizeJoinBaseUrl } from "@/lib/joinUrl";
 
 describe("join URL helpers", () => {
   it("normalizes trailing slashes and strips query/hash from the base URL", () => {

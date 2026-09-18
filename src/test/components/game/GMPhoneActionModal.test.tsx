@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { GMPhoneActionModal } from "./GMPhoneActionModal";
-import { GMPlayerActionModal } from "./GMPlayerActionModal";
+import { GMPhoneActionModal } from "@/components/game/GMPhoneActionModal";
+import { GMPlayerActionModal } from "@/components/game/GMPlayerActionModal";
 import { getTranslation, t } from "@/lib/i18n";
 import type { PhoneSession, PhoneView } from "@/lib/phoneActions";
 

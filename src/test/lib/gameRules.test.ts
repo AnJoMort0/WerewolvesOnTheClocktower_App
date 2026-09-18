@@ -8,7 +8,7 @@ import {
   LITTLE_GIRL_POISONED_ANSWERS,
   shouldTransformEvilPoisonedSister,
   type WhiteWolfPlayerState,
-} from "./gameRules";
+} from "@/lib/gameRules";
 
 describe("poisoned information rules", () => {
   it("maps every supported LittleGirl source to its answer category", () => {

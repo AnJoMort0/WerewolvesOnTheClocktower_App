@@ -1,6 +1,6 @@
 import { fireEvent, render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { PlayerCircle } from "./PlayerCircle";
+import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
 
 describe("Monkey power controls in the GM circle", () => {

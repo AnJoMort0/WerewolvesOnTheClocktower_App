@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SkinPackProvider } from "@/components/game/SkinPackProvider";
-import RulebookPage from "./RulebookPage";
+import RulebookPage from "@/pages/RulebookPage";
 
 describe("standalone rulebook lore explanations", () => {
   beforeEach(() => {

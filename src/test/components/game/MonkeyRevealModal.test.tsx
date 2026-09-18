@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MonkeyRevealModal } from "./MonkeyRevealModal";
+import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import type { PhoneView } from "@/lib/phoneActions";
 
 const view: PhoneView = { id: "monkey", mode: "monkey", participantIds: ["monkey"], votes: {}, players: [

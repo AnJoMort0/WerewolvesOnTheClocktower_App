@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useGameRuntime } from "./useGameRuntime";
+import { useGameRuntime } from "@/hooks/useGameRuntime";
 
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(10_000); window.localStorage.clear(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); });

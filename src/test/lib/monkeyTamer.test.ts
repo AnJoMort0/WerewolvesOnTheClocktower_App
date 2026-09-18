@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { EVIL_ROLES, EXTRA_DEATH_ROLES } from "./roles";
-import { getScripts } from "./i18n";
-import { RULEBOOK_CHARACTER_ORDER, RULEBOOK_NIGHT_SCRIPT } from "./rulebookContent";
-import { applyPhoneCommand, getPhoneView, reconcilePhoneSession, shouldExhaustMonkeyPower, type PhonePlayer, type PhoneSession, type PhoneWorld } from "./phoneActions";
+import { EVIL_ROLES, EXTRA_DEATH_ROLES } from "@/lib/roles";
+import { getScripts } from "@/lib/i18n";
+import { RULEBOOK_CHARACTER_ORDER, RULEBOOK_NIGHT_SCRIPT } from "@/lib/rulebookContent";
+import { applyPhoneCommand, getPhoneView, reconcilePhoneSession, shouldExhaustMonkeyPower, type PhonePlayer, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
 
 const player = (id: string, role: PhonePlayer["abilityRole"], extra: Partial<PhonePlayer> = {}): PhonePlayer => ({
   id, name: id, seat_position: 0, abilityRole: role, displayRole: role,

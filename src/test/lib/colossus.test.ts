@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { canColossusRetaliate, isColossusTarget, placeColossusLines, resolveColossusTarget } from "./colossus";
-import { applyPhoneCommand, getPhoneParticipants, getPhoneView, reconcilePhoneSession, type PhonePlayer, type PhoneSession, type PhoneWorld } from "./phoneActions";
-import { EXTRA_DEATH_ROLES, MIME_COPY_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES } from "./roles";
-import { getScripts } from "./i18n";
-import { RULEBOOK_CHARACTER_ORDER, RULEBOOK_NIGHT_SCRIPT } from "./rulebookContent";
-import { getLittleGirlAnswerKind, LITTLE_GIRL_POISONED_ANSWERS } from "./gameRules";
+import { canColossusRetaliate, isColossusTarget, placeColossusLines, resolveColossusTarget } from "@/lib/colossus";
+import { applyPhoneCommand, getPhoneParticipants, getPhoneView, reconcilePhoneSession, type PhonePlayer, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
+import { EXTRA_DEATH_ROLES, MIME_COPY_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES } from "@/lib/roles";
+import { getScripts } from "@/lib/i18n";
+import { RULEBOOK_CHARACTER_ORDER, RULEBOOK_NIGHT_SCRIPT } from "@/lib/rulebookContent";
+import { getLittleGirlAnswerKind, LITTLE_GIRL_POISONED_ANSWERS } from "@/lib/gameRules";
 import { resolveKillerCard } from "@/components/game/RevealModal";
-import { getActiveSeasonalRoleIds, resolveRoleImage } from "./skinPacks";
+import { getActiveSeasonalRoleIds, resolveRoleImage } from "@/lib/skinPacks";
 
 const player = (id: string, overrides: Partial<PhonePlayer> = {}): PhonePlayer => ({
   id, name: id, seat_position: 0, dead: false, redX: false, canWake: true, powerless: false,

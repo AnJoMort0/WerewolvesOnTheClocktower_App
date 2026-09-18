@@ -59,13 +59,15 @@ The application can run from a local development server, but it still requires i
 - `src/components/game/GameModal.tsx`: shared reveal dialog shell, heading, scrolling body, and fixed footer
 - `src/components/game/RevealCardGallery.tsx`: shared single-card and multiple-card layout, artwork, role links, copied-card badges, and charge markers
 - `src/lib`: roles, localisation, night script, rulebook content, and join URL helpers
+- `src/test`: automated tests grouped to mirror the application folders, plus shared test setup
+- `scripts`: maintenance scripts, including artwork optimisation
+- `docs`: development and maintenance documentation
 - `src/integrations/supabase`: Supabase client and generated types
 - `src/assets/roles`: character artwork used by the application and README
 - `src/assets/display`: generated 512px WebP cards/skins and 128px icons used by the application
 - `src/assets/extras`: extra rulebook card artwork used by the in-app reference
 - `supabase/migrations`: reproducible database migrations
 - `public/_redirects`: Cloudflare Pages single-page-app fallback
-- `CODEX_NEEDS_NEXT.md`: temporary deployment handoff notes and information checklist
 - `ROADMAP.md`: owner-maintained roadmap and playtest notes
 
 ## Requirements
@@ -113,6 +115,26 @@ After adding or changing original artwork in `src/assets/roles`,
 original PNGs remain available for editing and the README. The script preserves
 aspect ratios and transparency, avoids enlarging small images, and caps each
 edge at 512 pixels for cards and 128 pixels for icons. No image processing runs in a player's browser.
+
+### Automated tests
+
+Tests are for everyone maintaining the app. They check game rules and interface behaviour and help catch regressions after changes. They are run by Vitest with `npm test`; they are not part of the player-facing application.
+
+All test files live under `src/test`, mirroring the source folders:
+
+```text
+src/test/
+  components/game/  # Game interface tests
+  hooks/            # Hook and realtime coordination tests
+  lib/              # Game rules and utility tests
+    i18n/           # Localisation tests
+  pages/            # Page tests
+  setup.ts          # Shared browser test setup
+```
+
+For example, `src/lib/colossus.ts` is tested by `src/test/lib/colossus.test.ts`. Add new `.test.ts` or `.test.tsx` files in the corresponding test folder. Use `@/` imports to refer to application code so imports stay clear and independent of the test directory depth.
+
+Run a single file with `npm test -- src/test/lib/colossus.test.ts`, or use `npm run test:watch` while making changes.
 
 ### Computer-only development
 
@@ -271,7 +293,7 @@ Run this checklist before a release or an important play session:
 - Some advanced recovery, automation, and rules-interaction features remain on the roadmap.
 - Players should normally keep the same browser available throughout a session so the stored player identity can be reused after a refresh.
 
-Track active priorities and playtest findings in [ROADMAP.md](ROADMAP.md).
+Track active priorities and playtest findings in [ROADMAP.md](../ROADMAP.md).
 
 ## Cleanup and security
 
