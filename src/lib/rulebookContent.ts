@@ -13,13 +13,12 @@ import type { Language } from "@/lib/i18n";
      WEB_IMMUNE_ROLES, or INFO_ROLES only when its rules require that behavior.
      New roles are manually selectable as soon as they are registered. Add them
      to an assignment pool only when they are ready for automatic random games.
-  4. Add the Portuguese and French display names to roleLabels in
-     src/lib/i18n/pt.ts and src/lib/i18n/fr.ts.
+  4. Add display names to roleLabels in src/lib/i18n/{pt,fr,en}.ts.
   5. Add the full card to RULEBOOK_CHARACTERS below. Its key and id must match
      the playable id, then add that id to RULEBOOK_CHARACTER_ORDER.
   6. If the character wakes at night, add its printed/analog instructions to
      RULEBOOK_NIGHT_SCRIPT. Add the same playable behavior to the in-app scripts
-     in both i18n files only when its game functionality is being implemented.
+     in all three i18n files only when its game functionality is being implemented.
   7. Add role-specific state or interactions in the relevant game modules and
      cover them with focused tests. Run: npm test, npx tsc --noEmit, npm run lint,
      and npm run build.
@@ -31,13 +30,36 @@ import type { Language } from "@/lib/i18n";
 
   Content field notes:
   - Edit RULEBOOK_TEXT.sections for general rulebook text.
+    Headings have a stable id for navigation; paragraphs use type: "p";
+    story-only paragraphs use type: "lore"; lists have items; notes have lines.
   - Use <red>...</red> inside text when a word should render red.
-  - The team field controls the in-app rulebook background color.
+    **bold** is also supported. [lore]story[/lore] marks a story within rules;
+    a leading [lore] without a closing tag styles the entire paragraph as lore.
+  - The team field controls a character box's faction accent and tint.
   - Blank lines inside a section text template string create paragraphs.
   - RULEBOOK_NIGHT_SCRIPT feeds the analog character generator's filtered script.
   - Night-script ids use phase + role id; repeated role lines use .1, .2, etc.
   - Keep night-script wording in RULEBOOK_NIGHT_SCRIPT, not RULEBOOK_TEXT.sections.
+
+  To add character lore (inside that character's entry):
+    lore: [
+        { text: { en: `A story without an explanation.` } },
+        {
+            text: { en: `A sentence with an inside joke.` },
+            explanation: { en: `What this sentence refers to.` }
+        }
+    ],
+  - Add pt and fr alongside en when translations are available. Missing lore
+    translations fall back to English. Keep rules in mainDescription/details.
+  - Split passages into separate entries to attach a note to just one sentence.
+    Only passages with explanation get a bubble on hover or tap.
+  - Omit lore when unavailable: no empty disclosure will be shown.
+  - Character entries have id/name landmarks below; display order is separate.
 */
+// ============================================================================
+// CONTENT TYPES
+// ============================================================================
+
 export type RulebookCharacterId = RoleId | "x01" | "x02" | "x02.1" | "x03" | "x.v09" | "x.s01" | "x.as01b.1" | "x.as01b.2" | "x.m05";
 export type RulebookGroupId = "essential" | "villager" | "evil" | "solo" | "flexible" | "complex" | "lame" | "extra";
 export type RulebookTeam = "villagers" | "evilBeing" | "solo" | "flexible" | "villagersFlex" | "extra";
@@ -47,7 +69,7 @@ export type RulebookSectionBlock = {
     id: string;
     text: string;
 } | {
-    type: "p";
+    type: "p" | "lore";
     text: string;
 } | {
     type: "note";
@@ -69,6 +91,12 @@ export type RulebookCharacter = {
     group: RulebookGroupId;
     team: RulebookTeam;
     name: LocalizedText;
+    /** Story passages, separate from mechanics. Missing translations fall back to English. */
+    lore?: Array<{
+        text: Partial<LocalizedText>;
+        /** Optional inside-joke explanation for this passage: hover on PC, tap on mobile. */
+        explanation?: Partial<LocalizedText>;
+    }>;
     mainDescription: Record<Language, string[]>;
     details: Array<{
         title: LocalizedText;
@@ -76,10 +104,19 @@ export type RulebookCharacter = {
     }>;
     objective?: LocalizedText;
 };
+// ============================================================================
+// GENERAL RULES AND NAVIGATION TEXT — edit the language sections below
+// ============================================================================
+
 export const RULEBOOK_TEXT = {
+    loreLabel: { pt: `História`, fr: `Histoire`, en: `Lore` },
+    loreExplanationLabel: { pt: `Por trás da história`, fr: `Derrière l'histoire`, en: `Behind the story` },
+    navigationLabel: { pt: `Navegação do livro de regras`, fr: `Navigation du livret de règles`, en: `Rulebook navigation` },
+    basicsLabel: { pt: `Como jogar`, fr: `Comment jouer`, en: `How to play` },
+    charactersLabel: { pt: `Personagens`, fr: `Personnages`, en: `Characters` },
     title: { pt: `Lobisomens da Torre Sangrenta`, fr: `Loups-garous de la Tour Sanglante`, en: `Werewolves of the Clocktower` },
     quickListTitle: { pt: `Lista rápida de personagens`, fr: `Liste rapide de personnages`, en: `Quick character list` },
-    quickListIntro: { pt: `Usa esta lista como mapa de navegação para saltar diretamente para uma ficha na tabela.`, fr: `Utilises cette liste comme carte de navigation pour sauter directement à une fiche dans le tableau.`, en: `Use this list as a navigation map to jump directly to a character card in the table.` },
+    quickListIntro: { pt: `Escolhe uma personagem para ir diretamente à sua ficha abaixo.`, fr: `Choisis un personnage pour accéder directement à sa fiche ci-dessous.`, en: `Choose a character to jump directly to its entry below.` },
     nightScriptJump: { pt: `Ir para os guiões da noite`, fr: `Aller aux scripts de nuit`, en: `Go to the night scripts` },
     singleCardAllCharacters: { pt: `Ver todas as personagens`, fr: `Voir tous les personnages`, en: `View all characters` },
     backToIndex: { pt: `Voltar à lista`, fr: `Retour à la liste`, en: `Back to the list` },
@@ -102,133 +139,465 @@ export const RULEBOOK_TEXT = {
         extra: { pt: `Extra`, fr: `Extra`, en: `Extra` }
     },
     sections: {
+        // PORTUGUESE — general rules
         pt: [
-            { type: "h2", id: "base", text: `Base` },
-            { type: "h3", id: "contexto", text: `Contexto` },
-            { type: "p", text: `A aldeia tem um problema com Criaturas Malvadas: os Lobisomens e os seus Aliados! Os Lobisomens matando todas as noites, os Aldeões têm que executar essas Criaturas Malvadas. Mas como é que os Aldeões vão escolher quem executar?` },
-            { type: "h3", id: "decorrer-do-dia", text: `Decorrer do dia` },
-            { type: "p", text: `Durante o dia (5 minutos), os jogadores andam livremente pelos diferentes lugares na aldeia (a sala ou o edifício), mas como estão todos a suspeitar uns dos outros, podem dizer qualquer coisa (incluindo revelar ou mentir sobre o seu papel e o que sabe sobre os outros), o objetivo é convencer os outros, criar alianças, planejar assassinatos, etc. No fim do dia (3 minutos) toda a aldeia se encontra no tribunal (centro da sala) para decidir quem irão executar. É importante que todos os jogadores guardem sempre os mesmos lugares!` },
-            { type: "h3", id: "tribunal", text: `Tribunal` },
-            { type: "p", text: `No tribunal, nenhuma informação específica pode ser divulgada por um jogador que não esteja num processo (podem simplesmente dizer se estão a suspeitar de alguém, não o porquê). Um jogador pode nomear um outro para um interrogatório.` },
-            { type: "list", ordered: true, items: [
-                    `O jogador que nomeia se posiciona no lugar de Prosecutor, o nomeado se posiciona no lugar do Acusado.`,
-                    `O Prosecutor pode então explicar a sua acusação.`,
-                    `Em seguida, o Acusado pode se defender.`,
-                    `Finalmente, a aldeia pode questionar o Acusado.`,
-                    `Uma vez o questionário terminado, a aldeia vota se querem executar o acusado.`,
-                    `No mínimo metade da aldeia tem que votar SIM para o acusado ser executado.`,
-                ] },
-            { type: "note", lines: [
-                    `PODE HAVER VÁRIAS NOMEAÇÕES POR DIA.`,
-                ] },
-            { type: "h3", id: "noite", text: `Noite` },
-            { type: "p", text: `Após o tribunal, toda a aldeia vai dormir (fechar os olhos no tribunal). É importante que os jogadores guardem sempre os mesmos lugares! Durante a noite, o Narrador guia toda a aldeia a cumprir as suas funções de personagem.` },
-            { type: "h3", id: "fantasmas", text: `Fantasmas` },
-            {
-                type: "p",
-                text: `Há dois tipos de morte: EXECUÇÃO (condenados pela aldeia) ou ASSASSINATO (mortos pelo poder de um personagem).
-
-Quando um jogador é morto durante a noite, só morre mesmo de manhã, ao acordar, assim durante aquela noite podem continuar a usar os seus poderes.
-
-Os jogadores mortos transformam-se em fantasmas, que podem continuar a comunicar com a aldeia durante o dia, mas não podem falar ou votar no tribunal, e perdem qualquer poder que tinham (a não ser que esteja escrito o contrário na ficha de personagem.) Fantasmas guardam o mesmo objetivo que enquanto vivos. Os Fantasmas TAMBÉM DORMEM À NOITE.`,
-            },
-            { type: "h3", id: "objetivos-de-vitoria", text: `Objetivos de vitória` },
-            { type: "list", ordered: false, items: [
-                    `**Aldeões:** Matar todos os Lobisomens`,
-                    `**Criaturas Malvadas:** Matar todos os Aldeões`,
-                    `**Namorados e Cupido:** Os Namorados serem os únicos sobreviventes`,
-                    `**Amante Secreto:** Ser o único sobrevivente com um dos Namorados`,
-                    `**Lobisomem branco:** Ser o único sobrevivente`,
-                ] },
-        ],
-        fr: [
-            { type: "h2", id: "base", text: `Base` },
-            { type: "h3", id: "contexte", text: `Contexte` },
-            { type: "p", text: `Le village a un problème avec les Créatures Maléfiques : les Loups-garous et leurs Alliés ! Les Loups-garous tuent toutes les nuits, les Villageois doivent donc exécuter ces Créatures Maléfiques. Mais comment les Villageois vont-ils choisir qui exécuter ?` },
-            { type: "h3", id: "deroulement-de-la-journee", text: `Déroulement de la journée` },
-            { type: "p", text: `Pendant la journée (5 minutes), les joueurs se déplacent librement dans les différents endroits du village (la salle ou le bâtiment), mais comme ils se soupçonnent tous les uns les autres, ils peuvent dire n'importe quoi (y compris révéler ou mentir sur leur rôle et ce qu'ils savent des autres), l'objectif étant de convaincre les autres, de créer des alliances, de planifier des assassinats, etc. À la fin de la journée (3 minutes), tout le village se réunit au tribunal (au centre de la pièce) pour décider qui sera exécuté. Il est important que tous les joueurs gardent toujours les mêmes places !` },
-            { type: "h3", id: "tribunal", text: `Tribunal` },
-            { type: "p", text: `Au tribunal, aucune information spécifique ne peut être divulguée par un joueur qui n'est pas impliqué dans une procédure (ils peuvent simplement dire s'ils soupçonnent quelqu'un, mais pas pourquoi). Un joueur peut désigner un autre joueur pour être interrogé.` },
-            { type: "list", ordered: true, items: [
-                    `Le joueur qui désigne prend la place du Procureur, tandis que le joueur désigné prend la place de l'Accusé.`,
-                    `Le Procureur peut alors expliquer son accusation.`,
-                    `Ensuite, l'Accusé peut se défendre.`,
-                    `Enfin, le village peut interroger l'accusé.`,
-                    `Une fois l'interrogatoire terminé, le village vote pour décider s'il souhaite exécuter l’accusé.`,
-                    `Au moins la moitié du village doit voter OUI pour que l'accusé soit exécuté.`,
-                ] },
-            { type: "note", lines: [
-                    `IL PEUT Y AVOIR PLUSIEURS NOMINATIONS PAR JOUR.`,
-                ] },
-            { type: "h3", id: "nuit", text: `Nuit` },
-            { type: "p", text: `Après le tribunal, tout le village va dormir (fermer les yeux au tribunal). Il est important que les joueurs gardent toujours les mêmes places ! Pendant la nuit, le Meneur guide tout le village pour qu'il remplisse ses fonctions de personnage.` },
-            { type: "h3", id: "fantomes", text: `Fantômes` },
-            {
-                type: "p",
-                text: `Il existe deux types de mort : EXÉCUTION (condamnés par le village) ou ASSASSINAT (tués par le pouvoir d'un personnage).
-
-Lorsqu'un joueur est tué pendant la nuit, il ne meurt réellement que le matin, au réveil, et peut donc continuer à utiliser ses pouvoirs pendant la nuit.
-
-Les joueurs morts se transforment en fantômes, qui peuvent continuer à communiquer avec le village pendant la journée, mais ne peuvent ni parler ni voter au tribunal, et perdent tous les pouvoirs qu'ils avaient (sauf indication contraire dans la fiche de personnage). Les fantômes gardent le même objectif que lorsqu'ils étaient vivants. Les fantômes DORMENT ÉGALEMENT LA NUIT.`,
-            },
-            { type: "h3", id: "objectifs-de-victoire", text: `Objectifs de victoire` },
-            { type: "list", ordered: false, items: [
-                    `**Villageois :** tuer tous les Loups-garous.`,
-                    `**Créatures Maléfiques :** tuer tous les Villageois.`,
-                    `**Amoureux et Cupidon :** les amoureux doivent être les seuls survivants.`,
-                    `**Amant secret :** être le seul survivant avec l'un des amoureux.`,
-                    `**Loup-garou blanc :** être le seul survivant.`,
-                ] },
-        ],
-        en: [
             {
                 type: `h2`,
                 id: `base`,
-                text: `Basics`
+                text: `Como jogar`
+            },
+            {
+                type: `h3`,
+                id: `about`,
+                text: `O que é Lobisomens da Torre Sangrenta?`
+            },
+            {
+                type: `p`,
+                text: `Lobisomens da Torre Sangrenta é uma versão personalizada do jogo de dedução social Os Lobisomens da Aldeia Velha, criado por Philippe des Pallières e Hervé Marly e adaptado aqui por AnJoMorto e L_PT_1463.
+
+Cada jogador recebe uma personagem secreta com um poder ou objetivo que influencia a forma como ajuda a sua equipa a ganhar. Os dias, tribunais e noites alternam enquanto a aldeia tenta identificar e eliminar os Lobisomens antes que estes eliminem os Aldeões.
+
+Esta versão amplia vários poderes conhecidos e introduz personagens originais. A morte não te retira do jogo: continuas a jogar como Fantasma.`
             },
             {
                 type: `h3`,
                 id: `context`,
-                text: `Context`
+                text: `Bem-vindo a Freeborough`
             },
             {
-                type: `p`,
-                text: `The village has a problem with Evil Beings: the Werewolves and their Allies! The Werewolves kill every night, so the Villagers must execute these Evil Beings. But how will the Villagers decide whom to execute?`
-            },
-            {
-                type: `h3`,
-                id: `course-of-the-day`,
-                text: `Course of the day`
-            },
-            {
-                type: `p`,
-                text: `During the day (5 minutes), players move freely through the different places in the village (the room or building). Because everyone suspects everyone else, players may say anything, including revealing or lying about their role and what they know about others. The goal is to persuade others, create alliances, plan assassinations, and so on. At the end of the day (3 minutes), the whole village gathers at the Tribunal (the center of the room) to decide whom to execute. It is important that every player always keeps the same seat!`
+                type: `lore`,
+                text: `Freeborough tem um grande problema: pessoas muito reservadas e, mais urgentemente, Criaturas Malvadas. Os Lobisomens e os seus Aliados infiltraram-se na população, trazendo caos, morte e destruição. Com os Lobisomens a matar todas as noites, os Aldeões têm de os encontrar e executar. Mas em quem podem confiar?
+
+Detalhe aleatório: a hidratação é muito valorizada em Freeborough. Todos deixam uma bebida junto à cama ou ao local de trabalho, pronta para a próxima vez que acordarem a meio da noite.`
             },
             {
                 type: `h3`,
-                id: `tribunal`,
-                text: `Tribunal`
-            },
-            {
-                type: `p`,
-                text: `At the Tribunal, a player who is not involved in a proceeding may not reveal specific information. They may only say whether they suspect someone, not why. A player may nominate another player for questioning.`
+                id: `setup`,
+                text: `Preparação`
             },
             {
                 type: `list`,
                 ordered: true,
                 items: [
-                    `The nominating player takes the Prosecutor’s place, while the nominated player takes the Accused’s place.`,
-                    `The Prosecutor may then explain the accusation.`,
-                    `Next, the Accused may defend themself.`,
-                    `Finally, the village may question the Accused.`,
-                    `Once the questioning is over, the village votes on whether to execute the Accused.`,
-                    `At least half of the village must vote YES for the Accused to be executed.`
+                    `Escolhe um Narrador e pelo menos oito jogadores. O Narrador orienta as ações noturnas e modera o Tribunal.`,
+                    `Senta os jogadores em círculo. Todos devem memorizar o seu lugar e regressar a ele em todas as noites e tribunais.`,
+                    `O Narrador atribui a cada jogador uma carta de personagem aleatória e secreta.`,
+                    `Coloca duas cadeiras adicionais na parte de baixo do círculo: uma para o Procurador e outra para o Acusado.`,
                 ]
+            },
+            {
+                type: `h3`,
+                id: `phases`,
+                text: `O ciclo do jogo`
+            },
+            {
+                type: `p`,
+                text: `O jogo começa com uma primeira noite para obter informações e preparar os poderes. Ninguém pode morrer nesta primeira noite. Seguem-se o primeiro dia e Tribunal, segundo as regras habituais.
+
+Depois, o ciclo repete-se: **Noite → Dia → Tribunal → Noite**.`
+            },
+            {
+                type: `h3`,
+                id: `course-of-the-day`,
+                text: `Dia · cinco minutos`
+            },
+            {
+                type: `p`,
+                text: `Circula pela aldeia (a sala ou o edifício onde estão a jogar) e conversa em privado com outros jogadores. Ficar no teu lugar dificulta a criação de alianças, a troca de informações e a persuasão.
+
+Podes escutar conversas alheias, mas, se um grupo te descobrir e pedir que te afastes, respeita o pedido. Não voltes a escutar esse grupo durante o resto do dia.
+
+Podes **dizer** qualquer coisa: revelar a tua personagem, mentir sobre ela, partilhar informações ou fazer bluff. No fim do dia, regressa ao teu lugar habitual para o Tribunal.`
             },
             {
                 type: `note`,
                 lines: [
-                    `THERE MAY BE SEVERAL NOMINATIONS PER DAY.`
+                    `**Diz; não mostres.** Mantém a tua carta de personagem secreta. É proibido mostrá-la!`,
+                    `Regressa sempre ao mesmo lugar!.`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `tribunal`,
+                text: `Tribunal · três minutos`
+            },
+            {
+                type: `p`,
+                text: `Os jogadores vivos podem acusar, falar nas etapas permitidas e votar. Os Fantasmas podem observar, mas não podem falar, acusar ou votar. Não há discussão geral: pede uma acusação antes de falar e mantém o silêncio fora da tua vez.
+
+Qualquer jogador vivo pode acusar outro jogador vivo para o interrogar enquanto houver tempo.`
+            },
+            {
+                type: `h4`,
+                id: `tribunal-process`,
+                text: `Uma acusação, passo a passo`
+            },
+            {
+                type: `list`,
+                ordered: true,
+                items: [
+                    `O jogador que acusa senta-se na cadeira do Procurador; o jogador acusado senta-se na cadeira do Acusado.`,
+                    `O Procurador apresenta a acusação sem interrupções.`,
+                    `O Acusado apresenta a sua defesa sem interrupções.`,
+                    `Os jogadores vivos da aldeia podem fazer perguntas ao Acusado. O Acusado pode responder, mas esta etapa não é uma discussão livre.`,
+                    `Quando terminam as perguntas, os jogadores votam levantando a mão para executar o Acusado.`,
+                    `Para haver uma execução, pelo menos metade dos jogadores vivos, arredondada para cima, tem de votar SIM.`,
+                ]
+            },
+            {
+                type: `h4`,
+                id: `tribunal-time-limit`,
+                text: `Quando o tempo termina`
+            },
+            {
+                type: `p`,
+                text: `Termina a ação já em curso (por exemplo, deixa o Acusado concluir a defesa). Se alguém estiver na cadeira do Acusado, passa diretamente à votação em vez de iniciar outra etapa. Se não houver Acusado, o Tribunal termina, e o dia também.`
+            },
+            {
+                type: `note`,
+                lines: [
+                    `Um dia pode ter várias acusações, ou nenhuma.`,
+                    `Pode haver várias execuções num só dia.`,
+                    `A mesma pessoa pode ser acusada mais de uma vez e também pode fazer mais de uma acusação.`,
+                    `Ninguém pode falar fora das etapas permitidas.`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `night`,
+                text: `Noite`
+            },
+            {
+                type: `p`,
+                text: `Depois do Tribunal, todos fecham os olhos no seu lugar habitual, incluindo os Fantasmas. O Narrador orienta cada personagem nas ações descritas na sua carta.
+
+São permitidos pequenos ruídos para confundir outros jogadores, desde que não perturbem o Narrador nem quem está a realizar uma ação. Se o Narrador pedir que pares, para.`
+            },
+            {
+                type: `h3`,
+                id: `ghosts`,
+                text: `Morte e Fantasmas`
+            },
+            {
+                type: `p`,
+                text: `Há dois tipos de morte: **execução**, uma sentença decidida pela aldeia no Tribunal, e **assassinato**, uma morte causada pelo poder de uma personagem. Um poder pode indicar um tipo específico, como "assassinato por um Lobisomem". O suicídio conta como assassinato. Lê com atenção estas distinções nas cartas de personagem.
+
+Um jogador morto durante a noite só morre de manhã. Até lá, ainda pode usar os seus poderes, e os poderes de informação continuam a considerá-lo vivo (por exemplo, ao verificar os vizinhos).
+
+Os jogadores mortos tornam-se Fantasmas e mantêm o seu objetivo original. Podem continuar a circular e conversar durante o dia, mas não podem falar, acusar ou votar no Tribunal. Perdem os poderes, salvo indicação em contrário na sua carta.`
+            },
+            {
+                type: `note`,
+                lines: [
+                    `**Os Fantasmas também fecham os olhos e dormem à noite!**`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `victory-objectives`,
+                text: `Objetivos de vitória`
+            },
+            {
+                type: `list`,
+                items: [
+                    `**Aldeões:** Matar todos os Lobisomens.`,
+                    `**Criaturas Malvadas:** Matar todos os Aldeões.`,
+                    `**Amantes e Cupido:** Os Amantes têm de ser os únicos sobreviventes.`,
+                    `**Amante Secreto:** Ser o único sobrevivente juntamente com um dos Amantes.`,
+                    `**Lobisomem Branco:** Ser o único sobrevivente.`,
+                ]
+            }
+        ],
+        // FRENCH — general rules
+        fr: [
+            {
+                type: `h2`,
+                id: `base`,
+                text: `Comment jouer`
+            },
+            {
+                type: `h3`,
+                id: `about`,
+                text: `Qu'est-ce que Loups-garous de la Tour Sanglante ?`
+            },
+            {
+                type: `p`,
+                text: `Loups-garous de la Tour Sanglante est une version personnalisée du jeu de déduction sociale Les Loups-garous de Thiercelieux, créé par Philippe des Pallières et Hervé Marly et adapté ici par AnJoMorto et L_PT_1463.
+
+Chaque joueur reçoit un personnage secret dont le pouvoir ou l'objectif détermine sa façon d'aider son équipe à gagner. Les journées, les tribunaux et les nuits se succèdent tandis que le village tente d'identifier et d'éliminer les Loups-garous avant qu'ils n'éliminent les Villageois.
+
+Cette version enrichit de nombreux pouvoirs connus et introduit des personnages originaux. La mort ne te retire pas du jeu : tu continues à jouer en tant que Fantôme.`
+            },
+            {
+                type: `h3`,
+                id: `context`,
+                text: `Bienvenue à Freeborough`
+            },
+            {
+                type: `lore`,
+                text: `Freeborough a un sérieux problème : des habitants très secrets et, plus urgent encore, des Créatures Maléfiques. Les Loups-garous et leurs Alliés se sont infiltrés parmi la population, semant le chaos, la mort et la destruction. Puisque les Loups-garous tuent chaque nuit, les Villageois doivent les trouver et les exécuter. Mais à qui peuvent-ils faire confiance ?
+
+Détail aléatoire: l'hydratation est très appréciée à Freeborough. Chacun garde une boisson près de son lit ou de son poste de travail, prête pour son prochain réveil au milieu de la nuit.`
+            },
+            {
+                type: `h3`,
+                id: `setup`,
+                text: `Préparation`
+            },
+            {
+                type: `list`,
+                ordered: true,
+                items: [
+                    `Choisis un Narrateur et au moins huit joueurs. Le Narrateur guide les actions nocturnes et modère le Tribunal.`,
+                    `Installe les joueurs en cercle. Chacun doit mémoriser sa place et y revenir à chaque nuit et à chaque Tribunal.`,
+                    `Le Narrateur attribue à chaque joueur une carte de personnage aléatoire et secrète.`,
+                    `Place deux chaises supplémentaires au bas du cercle : une pour le Procureur et une pour l'Accusé.`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `phases`,
+                text: `Le cycle du jeu`
+            },
+            {
+                type: `p`,
+                text: `La partie commence par une première nuit consacrée aux informations et à la préparation des pouvoirs. Personne ne peut mourir durant cette première nuit. La première journée et le premier Tribunal suivent ensuite les règles habituelles.
+
+Puis le cycle se répète : **Nuit → Journée → Tribunal → Nuit**.`
+            },
+            {
+                type: `h3`,
+                id: `course-of-the-day`,
+                text: `Journée · cinq minutes`
+            },
+            {
+                type: `p`,
+                text: `Déplace-toi dans le village (la pièce ou le bâtiment où vous jouez) et discute en privé avec les autres joueurs. Rester à ta place rend plus difficile la création d'alliances, l'échange d'informations et la persuasion.
+
+Tu peux écouter les conversations des autres, mais si un groupe te choppe et te demande de partir, respecte sa demande. N'écoute plus ce groupe pendant le reste de la journée.
+
+Tu peux **dire** ce que tu veux : révéler ton rôle, mentir à son sujet, partager des informations ou bluffer. À la fin de la journée, retourne à ta place habituelle pour le Tribunal.`
+            },
+            {
+                type: `note`,
+                lines: [
+                    `**Dis-le ; ne le montre pas.** Garde ta carte de personnage secrète. Il est interdit de la montrer!`,
+                    `Retourne toujours à la même place!.`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `tribunal`,
+                text: `Tribunal · trois minutes`
+            },
+            {
+                type: `p`,
+                text: `Les joueurs vivants peuvent accuser, prendre la parole aux étapes autorisées et voter. Les Fantômes peuvent observer, mais ne peuvent ni parler, ni accuser, ni voter. Il n'y a pas de discussion générale : demande une accusation avant de parler et garde le silence en dehors de ton tour.
+
+Tout joueur vivant peut accuser un autre joueur vivant pour l'interroger tant qu'il reste du temps.`
+            },
+            {
+                type: `h4`,
+                id: `tribunal-process`,
+                text: `Une accusation, étape par étape`
+            },
+            {
+                type: `list`,
+                ordered: true,
+                items: [
+                    `Le joueur qui accuse s'assied sur la chaise du Procureur ; le joueur accusé s'assied sur la chaise de l'Accusé.`,
+                    `Le Procureur expose l'accusation sans être interrompu.`,
+                    `L'Accusé présente sa défense sans être interrompu.`,
+                    `Les joueurs vivants du village peuvent poser des questions à l'Accusé. Celui-ci peut y répondre, mais cette étape n'est pas une discussion libre.`,
+                    `À la fin des questions, les joueurs votent à main levée pour exécuter l'Accusé.`,
+                    `Pour une exécution, au moins la moitié des joueurs vivants, arrondie au nombre supérieur, doit voter OUI.`,
+                ]
+            },
+            {
+                type: `h4`,
+                id: `tribunal-time-limit`,
+                text: `Quand le temps est écoulé`
+            },
+            {
+                type: `p`,
+                text: `Termine l'action déjà en cours (par exemple, laisse l'Accusé finir sa défense). Si quelqu'un occupe la chaise de l'Accusé, passe directement au vote au lieu de commencer une autre étape. S'il n'y a pas d'Accusé, le Tribunal se termine, ainsi que la journée.`
+            },
+            {
+                type: `note`,
+                lines: [
+                    `Une journée peut comporter plusieurs accusations, ou aucune.`,
+                    `Plusieurs exécutions peuvent avoir lieu dans la même journée.`,
+                    `Une même personne peut être accusée plusieurs fois et peut aussi porter plusieurs accusations.`,
+                    `Personne ne peut parler en dehors des étapes autorisées.`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `night`,
+                text: `Nuit`
+            },
+            {
+                type: `p`,
+                text: `Après le Tribunal, tout le monde ferme les yeux à sa place habituelle, y compris les Fantômes. Le Narrateur guide chaque personnage dans les actions décrites sur sa carte.
+
+Les petits bruits destinés à tromper les autres joueurs sont autorisés, à condition de ne gêner ni le Narrateur ni les personnes qui accomplissent une action. Si le Narrateur te demande d'arrêter, arrête.`
+            },
+            {
+                type: `h3`,
+                id: `ghosts`,
+                text: `Mort et Fantômes`
+            },
+            {
+                type: `p`,
+                text: `Il existe deux types de mort : **l'exécution**, une sentence décidée par le village au Tribunal, et **l'assassinat**, une mort causée par le pouvoir d'un personnage. Un pouvoir peut préciser un type particulier, comme un "assassinat par un Loup-garou". Le suicide compte comme un assassinat. Lis attentivement ces distinctions sur les cartes de personnage.
+
+Un joueur tué pendant la nuit ne meurt qu'au matin. Jusque-là, il peut encore utiliser ses pouvoirs, et les pouvoirs d'information le considèrent toujours comme vivant (par exemple, lorsqu'ils vérifient les voisins).
+
+Les joueurs morts deviennent des Fantômes et conservent leur objectif d'origine. Ils peuvent continuer à se déplacer et à parler pendant la journée, mais ne peuvent ni parler, ni accuser, ni voter au Tribunal. Ils perdent leurs pouvoirs, sauf indication contraire sur leur carte.`
+            },
+            {
+                type: `note`,
+                lines: [
+                    `**Les Fantômes aussi ferment les yeux et dorment la nuit.**`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `victory-objectives`,
+                text: `Objectifs de victoire`
+            },
+            {
+                type: `list`,
+                items: [
+                    `**Villageois :** Tuer tous les Loups-garous.`,
+                    `**Créatures Maléfiques :** Tuer tous les Villageois.`,
+                    `**Amoureux et Cupidon :** Les Amoureux doivent être les seuls survivants.`,
+                    `**Amant Secret :** Être le seul survivant avec un des Amoureux.`,
+                    `**Loup-garou Blanc :** Être le seul survivant.`,
+                ]
+            }
+        ],
+        // ENGLISH — general rules
+        en: [
+            {
+                type: `h2`,
+                id: `base`,
+                text: `How to play`
+            },
+            {
+                type: `h3`,
+                id: `about`,
+                text: `What is Werewolves of the Clocktower?`
+            },
+            {
+                type: `p`,
+                text: `Werewolves of the Clocktower is a custom version of the social deduction game The Werewolves of Miller's Hollow, created by Philippe des Pallières and Hervé Marly and adapted here by AnJoMorto and L_PT_1463.
+
+Each player receives a secret character with an ability or objective that shapes how they help their team win. Days, Tribunals, and nights alternate as the village tries to identify and eliminate the Werewolves before they eliminate the Villagers.
+
+This version expands many familiar abilities and introduces original characters. Death does not remove you from the game: you continue playing as a Ghost.`
+            },
+            {
+                type: `h3`,
+                id: `context`,
+                text: `Welcome to Freeborough`
+            },
+            {
+                type: `lore`,
+                text: `Freeborough has a rather large problem: very private people and, more pressingly, Evil Beings. Werewolves and their Allies have slipped into the population, bringing chaos, death, and destruction. With the Werewolves killing every night, the Villagers must find and execute them. But whom can they trust?
+
+Random fact: Hydration is highly valued in Freeborough. Everyone keeps a drink by their bed or workstation, ready for the next time they wake in the middle of the night.`
+            },
+            {
+                type: `h3`,
+                id: `setup`,
+                text: `Setting up`
+            },
+            {
+                type: `list`,
+                ordered: true,
+                items: [
+                    `Choose one Narrator and at least eight players. The Narrator guides night actions and moderates the Tribunal.`,
+                    `Seat the players in a circle. Everyone must remember their own seat and return to it for every night and Tribunal.`,
+                    `The Narrator assigns each player a random, secret character card.`,
+                    `Place two additional chairs at the bottom of the circle: one for the Prosecutor and one for the Accused.`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `phases`,
+                text: `The game cycle`
+            },
+            {
+                type: `p`,
+                text: `The game begins with a first night for information and power setup. No one can die during this first night. The first day and Tribunal then follow the usual rules.
+
+After that, the cycle repeats: **Night → Day → Tribunal → Night**.`
+            },
+            {
+                type: `h3`,
+                id: `course-of-the-day`,
+                text: `Day · five minutes`
+            },
+            {
+                type: `p`,
+                text: `Move around the village (the room or building where you are playing) and talk privately with other players. Staying in your seat makes it harder to build alliances, exchange information, and persuade people.
+
+You may eavesdrop, but if a group catches you and asks you to leave, respect their request. Do not eavesdrop on that group again for the rest of the day.
+
+You may **say** anything: reveal your role, lie about it, share information, or bluff. At the end of the day, return to your original seat for the Tribunal.`
+            },
+            {
+                type: `note`,
+                lines: [
+                    `**Say it; do not show it.** Keep your role card secret. Showing it is forbidden!`,
+                    `Always return to the same seat!`,
+                ]
+            },
+            {
+                type: `h3`,
+                id: `tribunal`,
+                text: `Tribunal · three minutes`
+            },
+            {
+                type: `p`,
+                text: `Living players may nominate, speak at the permitted stages, and vote. Ghosts may watch, but cannot speak, nominate, or vote. There is no general discussion: call for a nomination before speaking, and remain silent outside your turn.
+
+Any living player may nominate another living player for questioning while time remains.`
+            },
+            {
+                type: `h4`,
+                id: `tribunal-process`,
+                text: `A nomination, step by step`
+            },
+            {
+                type: `list`,
+                ordered: true,
+                items: [
+                    `The nominating player takes the Prosecutor's chair; the nominated player takes the Accused's chair.`,
+                    `The Prosecutor explains the accusation without interruption.`,
+                    `The Accused gives a defence without interruption.`,
+                    `The living village may ask the Accused questions. The Accused may answer those questions, but this is not a free discussion.`,
+                    `When questioning ends, players vote by raising a hand to execute the Accused.`,
+                    `At least half of the living village, rounded up, must vote YES for an execution.`,
+                ]
+            },
+            {
+                type: `h4`,
+                id: `tribunal-time-limit`,
+                text: `When time runs out`
+            },
+            {
+                type: `p`,
+                text: `Finish the action already in progress (for example, let the Accused finish their defence). If someone is in the Accused's chair, proceed directly to the vote instead of beginning another stage. If there is no Accused, the Tribunal ends, and so does the day.`
+            },
+            {
+                type: `note`,
+                lines: [
+                    `A day may have several nominations, or none.`,
+                    `Multiple executions may happen in one day.`,
+                    `The same person may be nominated more than once, and may also make more than one nomination.`,
+                    `No one may speak outside the permitted stages.`,
                 ]
             },
             {
@@ -238,20 +607,28 @@ Les joueurs morts se transforment en fantômes, qui peuvent continuer à communi
             },
             {
                 type: `p`,
-                text: `After the Tribunal, the whole village goes to sleep by closing their eyes in the Tribunal. It is important that players always keep the same seats! During the night, the Narrator guides the whole village through each character’s duties.`
+                text: `After the Tribunal, everyone closes their eyes in their original seat, including Ghosts. The Narrator guides each character through the actions described on their card.
+
+Small noises to confuse other players are allowed, provided they do not disturb the Narrator or anyone performing an action. If the Narrator asks you to stop, stop.`
             },
             {
                 type: `h3`,
                 id: `ghosts`,
-                text: `Ghosts`
+                text: `Death and Ghosts`
             },
             {
                 type: `p`,
-                text: `There are two kinds of death: EXECUTION (condemned by the village) and ASSASSINATION (killed by a character’s power).
+                text: `There are two types of death: **execution**, a sentence passed by the village at the Tribunal, and **assassination**, a death caused by a character's power. A power may specify a particular kind, such as "assassination by a Werewolf". Suicide counts as assassination. Read these distinctions carefully on character cards.
 
-When a player is killed during the night, they do not truly die until morning, when the village wakes up. They may therefore continue using their powers during that night.
+A player killed at night does not die until morning. Until then, they may still use their powers, and information powers still treat them as alive (for example, when checking neighbours).
 
-Dead players become Ghosts. They may continue communicating with the village during the day, but they may not speak or vote at the Tribunal and they lose every power they had, unless their character card says otherwise. Ghosts keep the same objective they had while alive. GHOSTS ALSO SLEEP AT NIGHT.`
+Dead players become Ghosts and keep their original objective. They may still move around and talk during the day, but cannot speak, nominate, or vote at the Tribunal. They lose their powers unless their card says otherwise.`
+            },
+            {
+                type: `note`,
+                lines: [
+                    `**Ghosts also close their eyes and sleep at night.**`,
+                ]
             },
             {
                 type: `h3`,
@@ -260,19 +637,26 @@ Dead players become Ghosts. They may continue communicating with the village dur
             },
             {
                 type: `list`,
-                ordered: false,
                 items: [
-                    `**Villagers:** Kill all Werewolves`,
-                    `**Evil Beings:** Kill all Villagers`,
-                    `**Lovers and Cupid:** The Lovers must be the only survivors`,
-                    `**Secret Lover:** Be the only survivor together with one of the Lovers`,
-                    `**White Werewolf:** Be the only survivor`
+                    `**Villagers:** Kill all Werewolves.`,
+                    `**Evil Beings:** Kill all Villagers.`,
+                    `**Lovers and Cupid:** The Lovers must be the only survivors.`,
+                    `**Secret Lover:** Be the only survivor together with one of the Lovers.`,
+                    `**White Werewolf:** Be the only survivor.`,
                 ]
             }
         ]
     }
 } as const;
+// ============================================================================
+// CHARACTER ENTRIES — story, mechanics, exceptions, and victory objective
+// ============================================================================
+
 export const RULEBOOK_CHARACTERS = {
+
+    // ---- ESSENTIAL CHARACTERS -----------------------------------------
+
+    // e01 | Werewolf
     "e01": {
         id: "e01",
         group: "essential",
@@ -282,6 +666,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Loup-garou`,
             en: `Werewolf`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Os Lobisomens são um problema recorrente em Freeborough, mas os Aldeões ficam sempre surpreendidos quando aparecem. Seja como for, parece que voltaram.`,
+                    fr: `Les Loups-garous sont un problème récurrent à Freeborough, mais les Villageois sont toujours surpris de les voir apparaître. Quoi qu'il en soit, les voilà de retour.`,
+                    en: `Werewolves are a recurring problem in Freeborough, yet the villagers are always surprised when they appear. In any case, it seems they are back again.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, escolhe com os outros Lobisomens quem vão assassinar.`,
@@ -313,6 +706,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // e02 | Evil Witch
     "e02": {
         id: "e02",
         group: "essential",
@@ -322,6 +717,27 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Méchante Sorcière`,
             en: `Evil Witch`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Com o seu próprio kit de poções, a Bruxa Malvada envenena alguém todas as noites. Ninguém sabe bem porquê, mas, como nunca mata ninguém, nunca se deram ao trabalho de a impedir.`,
+                    fr: `Avec son nécessaire à potions, la Méchante Sorcière empoisonne quelqu'un chaque nuit. Personne ne sait vraiment pourquoi, mais puisqu'elle ne tue personne, nul n'a pris la peine de l'arrêter.`,
+                    en: `With her personal brewing kit, the Evil Witch poisons someone every night. Nobody really knows why she does it, but since she never kills anyone, they have never bothered to stop her.`
+                },
+            },
+            {
+                text: {
+                    pt: `Ainda assim, correm rumores inquietantes de que, em tempos, matou uma menina.`,
+                    fr: `Pourtant, des rumeurs inquiétantes prétendent qu'elle aurait autrefois tué une petite fille.`,
+                    en: `Still, there are worrying rumours that she once killed a little girl.`
+                },
+                explanation: {
+                    pt: `Na primeira versão deste jogo, envenenar a Menina fazia-a morrer imediatamente.`,
+                    fr: `Dans la première version de ce jeu, empoisonner la Petite Fille la faisait mourir immédiatement.`,
+                    en: `In the first version of this game, poisoning the Little Girl made her die immediately.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
@@ -359,6 +775,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // e03 | Shaman
     "e03": {
         id: "e03",
         group: "essential",
@@ -368,6 +786,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Chaman`,
             en: `Shaman`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Ainda bem que o Chaman encontrou carretéis mágicos cujo fio pode curar pessoas, mesmo nos piores estados. Estranhamente, não se lembra de onde os encontrou.`,
+                    fr: `Heureusement, le Chaman a trouvé des bobines magiques dont le fil peut soigner les gens, même dans les pires états. Étrangement, il ne se souvient pas de l'endroit où il les a trouvées.`,
+                    en: `It is a good thing the Shaman found magical spools whose thread can heal people, even in the worst of states. Strangely, he cannot remember where he found them.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red> é avisado sobre os jogadores <red>assassinados</red> e pode escolher salvá-los.`,
@@ -402,6 +829,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // e04 | Fortune Teller
     "e04": {
         id: "e04",
         group: "essential",
@@ -411,6 +840,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Voyante`,
             en: `Fortune Teller`
         },
+        lore: [
+            {
+                text: {
+                    pt: `O negócio correu mal quando o futuro de toda a gente passou a resumir-se à morte. A Vidente especializou-se entretanto como médium espiritual.`,
+                    fr: `Les affaires ont mal tourné lorsque l'avenir de tout le monde s'est résumé à la mort. La Voyante s'est depuis reconvertie en médium.`,
+                    en: `Business took a turn for the worse when everyone's fortune became nothing but death. The Fortune Teller has since retrained as a spiritual medium.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada vez que um jogador é morto</red>, a Vidente descobre qual era o seu poder <red>(será informada na próxima noite)</red>.`,
@@ -442,6 +880,10 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // ---- VILLAGER CHARACTERS -----------------------------------------
+
+    // v01 | Little Girl
     "v01": {
         id: "v01",
         group: "villager",
@@ -451,6 +893,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Petite Fille`,
             en: `Little Girl`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Tem o sono leve e ouve frequentemente gritos durante a noite, embora já não sejam os mesmos que antes a acordavam.`,
+                    fr: `Elle a le sommeil léger et entend souvent des cris la nuit, même si ce ne sont plus ceux qui la réveillaient autrefois.`,
+                    en: `A light sleeper, she often hears screams at night, though they are no longer the ones that used to wake her.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red> é avisada sobre os jogadores <red>assassinados</red> e vê como eles morreram.`,
@@ -491,6 +942,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v02 | Bear Tamer
     "v02": {
         id: "v02",
         group: "villager",
@@ -500,6 +953,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Maître de l’Ours`,
             en: `Bear Tamer`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Ninguém sabe onde arranjou o urso, como o arranjou ou porquê. A aldeia sabe apenas que foi o seu primeiro domador. A sua identidade continua a ser um mistério, porque o urso anda à solta durante o dia.`,
+                    fr: `Personne ne sait où il a trouvé l'ours, comment il l'a obtenu, ni pourquoi. Le village sait seulement qu'il a été son premier maître d'animaux. Son identité reste un mystère, car l'ours se promène librement pendant la journée.`,
+                    en: `No one knows where he got the bear, how he got the bear, or why he got the bear. The village knows only that he was its first tamer. His identity remains a mystery, because the bear roams freely during the day.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>A cada noite</red>, se um dos seus vizinhos for uma Criatura Malvada, o Urso rosna.`,
@@ -531,6 +993,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v03 | Raven Tamer
     "v03": {
         id: "v03",
         group: "villager",
@@ -540,6 +1004,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Maître du Corbeau`,
             en: `Raven Tamer`
         },
+        lore: [
+            {
+                text: {
+                    pt: `A aldeia odiava o Domador do Corvo por andar com tal símbolo de escuridão. Ainda hoje o odeia, convencida de que o seu mau presságio vivo trouxe os Lobisomens.`,
+                    fr: `Le village détestait le Maître du Corbeau parce qu'il portait un tel symbole des ténèbres. Il le déteste toujours, persuadé que son mauvais présage vivant a attiré les Loups-garous.`,
+                    en: `The village hated the Raven Tamer for carrying such a symbol of darkness. It still hates him today, convinced that his living bad omen brought the Werewolves.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>A cada noite</red>, é-lhe revelado silenciosamente quantas Criaturas Malvadas vivas estão em jogo.`,
@@ -571,6 +1044,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v04 | Fox Tamer
     "v04": {
         id: "v04",
         group: "villager",
@@ -580,6 +1055,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Maître du Renard`,
             en: `Fox Tamer`
         },
+        lore: [
+            {
+                text: {
+                    pt: `O Domador da Raposa ainda não percebeu que nunca chegou a domr a raposa. Ela só volta porque as Criaturas Malvadas a encurralam sempre que tenta fugir.`,
+                    fr: `Le Maître du Renard n'a pas compris qu'il n'a jamais vraiment apprivoisé le renard. Celui-ci ne revient que parce que les Créatures Maléfiques le coincent chaque fois qu'il essaie de s'enfuir.`,
+                    en: `The Fox Tamer has not realised that he never really tamed the fox. It only returns because Evil Beings keep cornering it whenever it tries to flee.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>A cada noite</red>, escolhe um jogador e o Narrador revela-lhe se entre ele e os 2 vizinhos há uma Criatura Malvada (👍) ou não (👎).`,
@@ -614,6 +1098,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v05 | Bunny Tamer
     "v05": {
         id: "v05",
         group: "villager",
@@ -623,6 +1109,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Maître des Lapins`,
             en: `Bunny Tamer`
         },
+        lore: [
+            {
+                text: {
+                    pt: `«CALEM-SE! DEIXEM-ME DORMIR!» é o que os vizinhos costumam ouvir todas as noites da casa do Domador dos Coelhos. Ainda assim, não há dúvida de que gosta muito deles.`,
+                    fr: `« TAISEZ-VOUS ! LAISSEZ-MOI DORMIR ! » Voilà ce que les voisins entendent chaque nuit chez le Maître des Lapins. Pourtant, personne ne doute de l'affection qu'il leur porte.`,
+                    en: `“SHUT UP! JUST LET ME SLEEP!” is what the neighbours usually hear from the Bunny Tamer's home every night. Still, there is no doubt that he loves them dearly.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>A cada noite</red>, se um dos vizinhos ou ele próprio foi atacado pelos Lobisomens ou envenenado pela Bruxa, os coelhos assustam-se.`,
@@ -654,6 +1149,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v26 | Monkey Tamer
     "v26": {
         id: "v26",
         group: "villager",
@@ -688,6 +1185,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v06 | Puppeteer
     "v06": {
         id: "v06",
         group: "villager",
@@ -697,6 +1196,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Marionnettiste`,
             en: `Puppeteer`
         },
+        lore: [
+            {
+                text: {
+                    pt: `O Marionetista tem sorte de os Lobisomens verem tão mal: não faz ideia de como conseguiu manter a farsa durante tanto tempo.`,
+                    fr: `Le Marionnettiste a de la chance que les Loups-garous aient une si mauvaise vue : il ignore vraiment comment il a réussi à tenir aussi longtemps.`,
+                    en: `The Puppeteer is lucky that Werewolves have terrible eyesight: he truly has no idea how he has managed to keep this up for so long.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `Faz de conta que é um Lobisomem.`, `<red>Acorda ao mesmo tempo que os Lobisomens</red> e vota com eles.`,
@@ -730,6 +1238,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v07 | Rusted Knight
     "v07": {
         id: "v07",
         group: "villager",
@@ -739,6 +1249,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Chevalier Rouillé`,
             en: `Rusted Knight`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Uma pequena ressalva: este jogo passa-se antes da invenção da vacina contra o tétano.`,
+                    fr: `Petite précision : ce jeu se déroule avant l'invention du vaccin contre le tétanos.`,
+                    en: `A small disclaimer: this game takes place before the invention of the tetanus vaccine.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Quando morre</red>, o Lobisomem mais próximo morrerá <red>durante o próximo dia</red>. A morte será anunciada no início do Tribunal.`,
@@ -770,6 +1289,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v08 | Hunter
     "v08": {
         id: "v08",
         group: "villager",
@@ -779,6 +1300,20 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Chasseur`,
             en: `Hunter`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Há quem suspeite que o Caçador é o responsável pelos lobos mortos que por vezes aparecem junto ao rio da aldeia, com a barriga cheia de pedras.`,
+                    fr: `On soupçonne le Chasseur d'être responsable des loups morts que l'on retrouve parfois près de la rivière du village, le ventre rempli de pierres.`,
+                    en: `People suspect that the Hunter is behind the dead wolves occasionally found by the village river, their bellies stuffed with rocks.`
+                },
+                explanation: {
+                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
+                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
+                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
+                }
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Uma vez morto</red>, será acordado na próxima noite para escolher <red>um</red> jogador que deverá assassinar.`,
@@ -813,6 +1348,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v08b | Little Red Riding Hood
     "v08b": {
         id: "v08b",
         group: "villager",
@@ -822,6 +1359,20 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Petit Chaperon Rouge`,
             en: `Little Red Riding Hood`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Como se lidar com uma avó loba não fosse suficiente, agora há avós lobisomens com que se preocupar. Pelo menos o Caçador continua por perto.`,
+                    fr: `Comme si une grand-mère louve ne suffisait pas, il faut maintenant se méfier des grands-mères loups-garous. Au moins, le Chasseur est toujours là.`,
+                    en: `As if dealing with a wolf grandmother were not bad enough, now there are Werewolf grandmothers to worry about. At least the Hunter is still around.`
+                },
+                explanation: {
+                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
+                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
+                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
+                }
+            },
+        ],
         mainDescription: {
             pt: [
                 `É imune aos <red>assassinatos dos Lobisomens</red> enquanto o <red>Caçador estiver vivo</red>.`,
@@ -856,6 +1407,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v09 | Captain
     "v09": {
         id: "v09",
         group: "villager",
@@ -865,6 +1418,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Capitaine`,
             en: `Captain`
         },
+        lore: [
+            {
+                text: {
+                    pt: `É evidente que o Chefe da Aldeia não estava à espera de Lobisomens quando reduziu o serviço militar obrigatório a um único dia.`,
+                    fr: `Visiblement, l'Ancien du Village ne s'attendait pas aux Loups-garous lorsqu'il a réduit le service militaire obligatoire à une seule journée.`,
+                    en: `Clearly, the Village Elder was not expecting Werewolves when he reduced compulsory military service to a single day.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, escolhe um jogador que será um Soldado durante essa noite e dia. O Soldado será tocado pelo Narrador.`,
@@ -899,6 +1461,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v10 | Paranoid
     "v10": {
         id: "v10",
         group: "villager",
@@ -908,6 +1472,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Paranoïaque`,
             en: `Paranoid`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Como o faz? Intervenção divina, talvez, ou um machado? A aldeia sabe apenas que, por vezes, pessoas que estavam vivas há poucos minutos aparecem como Fantasmas nos degraus do Tribunal.`,
+                    fr: `Comment s'y prend-il ? Une intervention divine, peut-être, ou une hache ? Le village sait seulement que des gens encore vivants quelques minutes auparavant apparaissent parfois comme Fantômes sur les marches du Tribunal.`,
+                    en: `How does he do it? Divine intervention, perhaps, or an axe? All the village knows is that people who were alive only minutes ago sometimes appear as Ghosts on the courthouse steps.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Duas vezes</red> no jogo, <red>durante o dia</red>, pode dizer <red>discretamente</red> ao Narrador para <red>assassinar</red> uma pessoa cuja morte será anunciada no início do Tribunal.`,
@@ -939,6 +1512,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v11 | Village Elder
     "v11": {
         id: "v11",
         group: "villager",
@@ -979,6 +1554,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v12 | Gypsy
     "v12": {
         id: "v12",
         group: "villager",
@@ -1022,6 +1599,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v13 | Judge
     "v13": {
         id: "v13",
         group: "villager",
@@ -1031,6 +1610,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Juge`,
             en: `Judge`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Esforça-se por manter a calma durante os julgamentos. Mas, às vezes, o processo torna-se tão absurdo que tem de intervir, nem que seja só para acabar com o barulho.`,
+                    fr: `Il s'efforce de rester calme pendant les procès. Mais les débats deviennent parfois si absurdes qu'il doit intervenir, ne serait-ce que pour faire cesser le bruit.`,
+                    en: `He tries hard to remain calm during trials. Sometimes, though, the proceedings become such nonsense that he simply has to intervene, if only to stop the noise.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Duas vezes durante todo o jogo</red>, pode-se revelar e anular uma execução durante o Tribunal.`,
@@ -1068,6 +1656,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v14 | Accuser
     "v14": {
         id: "v14",
         group: "villager",
@@ -1111,6 +1701,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v15 | Pyromaniac
     "v15": {
         id: "v15",
         group: "villager",
@@ -1120,9 +1712,23 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Pyromane`,
             en: `Pyromaniac`
         },
+        lore: [
+            {
+                text: {
+                    pt: `A terapia tem feito maravilhas pelas tendências assassinas do Piromaníaco. Hoje em dia, limita-se a incendiar casas.`,
+                    fr: `La thérapie a beaucoup aidé le Pyromane à maîtriser ses tendances meurtrières. Désormais, il se contente de mettre le feu.`,
+                    en: `Therapy has done wonders for the Pyromaniac's murderous tendencies. These days, he limits himself to arson.`
+                },
+                explanation: {
+                    pt: `No jogo original, o Piromaníaco podia escolher um momento para matar todos os jogadores que ele tinha selecionado.`,
+                    fr: `Dans le jeu original, le Pyromane pouvait choisir un moment pour tuer tous les joueurs qu'il avait choisis.`,
+                    en: `In the original game, the Pyromaniac could choose a moment to kill all players he had chosen.`
+                }
+            },
+        ],
         mainDescription: {
             pt: [
-                `Quando um jogador é chamado ao tribunal, mas <red>não é executado</red>, o Piromaníaco <red>pode escolher</red> na <red>noite seguinte</red> incendiar a casa desse jogador (👍/👎).`,
+                `Quando um jogador é chamado ao Tribunal, mas <red>não é executado</red>, o Piromaníaco <red>pode escolher</red> na <red>noite seguinte</red> incendiar a casa desse jogador (👍/👎).`,
                 `Esse jogador morre se for um Lobisomem, senão, perde os seus poderes permanentemente.`,
             ],
             fr: [
@@ -1154,6 +1760,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v16 | Sleepwalker
     "v16": {
         id: "v16",
         group: "villager",
@@ -1163,6 +1771,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Somnambule`,
             en: `Sleepwalker`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Quase todos têm a certeza de que está a dormir quando invade as suas casas. Ainda assim, desconfiam o suficiente para não fazerem nada enquanto ele lá está.`,
+                    fr: `La plupart des gens sont presque certains qu'il dort lorsqu'il fait irruption chez eux. Ils restent pourtant assez méfiants pour ne rien faire tant qu'il est là.`,
+                    en: `Most people are fairly sure that he is asleep when he barges into their homes. They are still suspicious enough to avoid doing anything while he is there.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada início de noite</red> escolhe um jogador para visitar.`,
@@ -1200,6 +1817,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v17 | Saviour
     "v17": {
         id: "v17",
         group: "villager",
@@ -1243,6 +1862,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v18 | Angel
     "v18": {
         id: "v18",
         group: "villager",
@@ -1289,6 +1910,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v19 | Prophet
     "v19": {
         id: "v19",
         group: "villager",
@@ -1298,6 +1921,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Prophète`,
             en: `Prophet`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Se inventares profecias suficientes, mais cedo ou mais tarde uma delas há de tornar-se verdade.`,
+                    fr: `À force d'inventer des prophéties, il y en aura bien une qui finira par se réaliser.`,
+                    en: `If you invent enough prophecies, sooner or later one of them is bound to come true.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada fim de noite</red>, o Profeta aponta para um jogador que acha que morreu durante essa noite.`,
@@ -1335,6 +1967,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v20 | Housemaid
     "v20": {
         id: "v20",
         group: "villager",
@@ -1344,6 +1978,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Domestique`,
             en: `Housemaid`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Ficar acordada até tarde a limpar permite-lhe vislumbrar a casa que a Bruxa Malvada visita. Infelizmente, apesar do seu excelente sentido de distância, não distingue a esquerda da direita.`,
+                    fr: `Comme elle veille tard pour faire le ménage, elle aperçoit la maison que visite la Méchante Sorcière. Malheureusement, malgré son excellent sens des distances, elle ne distingue pas sa gauche de sa droite.`,
+                    en: `Staying up late to clean gives her a glimpse of the house the Evil Witch visits. Unfortunately, despite her excellent sense of distance, she cannot tell left from right.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, é-lhe revelada a distância até a pessoa envenenada`,
@@ -1378,6 +2021,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v21 | Lamplighter
     "v21": {
         id: "v21",
         group: "villager",
@@ -1387,6 +2032,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Falotier`,
             en: `Lamplighter`
         },
+        lore: [
+            {
+                text: {
+                    pt: `O Faroleiro mantém-se reservado enquanto percorre Freeborough durante a noite. De vez em quando, espreita por uma janela, por puro acidente, e repara no que os outros trabalhadores andam a fazer.`,
+                    fr: `Le Falotier reste discret tandis qu'il arpente Freeborough toute la nuit. Il lui arrive de jeter un œil par une fenêtre, par pur accident, et de remarquer ce que font les autres travailleurs.`,
+                    en: `The Lamplighter keeps to himself as he walks around Freeborough all night. Occasionally, he peeks through a window, purely by accident, and notices what the other workers are up to.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, é-lhe mostrado um personagem em jogo com um poder com usos limitados e é informado de quantos usos esse personagem ainda tem.`,
@@ -1418,6 +2072,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v22 | Boy
     "v22": {
         id: "v22",
         group: "villager",
@@ -1427,6 +2083,20 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Enfant`,
             en: `Boy`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Se ao menos a aldeia tivesse acreditado nele da primeira vez que gritou "lobo".`,
+                    fr: `Si seulement le village l'avait cru la première fois qu'il a crié au loup.`,
+                    en: `If only the village had believed him the first time he cried wolf.`
+                },
+                explanation: {
+                    pt: `Referência ao conto de fadas "O Pedro e o Lobo", que inspirou este personagem original.`,
+                    fr: `Référence au conte de fées "Le Garçon qui criait au loup", qui a inspiré ce rôle original.`,
+                    en: `Reference to the fairy tale "The Boy Who Cried Wolf," which inspired this original character.`
+                }
+            },
+        ],
         mainDescription: {
             pt: [
                 `Cada vez que leva um jogador a Tribunal, é-lhe revelado na <red>noite seguinte</red> se esse jogador era um Lobisomem ou não.`,
@@ -1461,6 +2131,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v23 | Spider Tamer
     "v23": {
         id: "v23",
         group: "villager",
@@ -1510,6 +2182,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v24 | Vintner
     "v24": {
         id: "v24",
         group: "villager",
@@ -1553,6 +2227,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // v25 | Priest
     "v25": {
         id: "v25",
         group: "villager",
@@ -1596,6 +2272,10 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // ---- EVIL CHARACTERS -----------------------------------------
+
+    // m01 | Big Bad Werewolf
     "m01": {
         id: "m01",
         group: "evil",
@@ -1605,10 +2285,24 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Méchant Loup-garou`,
             en: `Big Bad Werewolf`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Ninguém suspeitaria de uma pobre avó velhinha. Bem, ninguém a não ser aquelas crianças traquinas.`,
+                    fr: `Personne ne soupçonnerait une pauvre vieille grand-mère. Enfin, personne sauf ces enfants turbulents.`,
+                    en: `No one would ever suspect a poor old grandmother. Well, no one except those rowdy children.`
+                },
+                explanation: {
+                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
+                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
+                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
+                }
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Duas vezes</red> por jogo, escolhe se quer se mascarar de Avózinha (👍/👎), dando-lhe imunidade durante um dia e uma noite.`,
-                `<red>Mesmo imune</red>, pode ser <red>executado</red> se quem o levar a tribunal for o Capuchinho Vermelho. E nesse caso, se o Caçador votar, o Lobisomem Mau é automaticamente executado.`,
+                `<red>Mesmo imune</red>, pode ser <red>executado</red> se quem o levar a Tribunal for o Capuchinho Vermelho. E nesse caso, se o Caçador votar, o Lobisomem Mau é automaticamente executado.`,
             ],
             fr: [
                 `<red>Deux fois</red> par jeu, il choisit s’il veut se déguiser en Grand-maman (👍/👎), ce qui lui donne immunité pendant un jour et une nuit.`,
@@ -1639,6 +2333,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // m02 | Werewolf Seer
     "m02": {
         id: "m02",
         group: "evil",
@@ -1648,6 +2344,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Loup-garou Voyante`,
             en: `Werewolf Seer`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Os Lobisomens costumavam escolher as vítimas ao acaso. Depois de o Lobisomem Vampiro transformar um Bêbado, perceberam que talvez fosse útil conhecer um pouco melhor as vítimas antes de as atacar.`,
+                    fr: `Les Loups-garous choisissaient autrefois leurs victimes au hasard. Après que le Loup-garou Vampire a transformé un Ivrogne, ils ont compris qu'il pouvait être utile de mieux connaître leurs victimes avant de les attaquer.`,
+                    en: `Werewolves used to choose their victims at random. After the Vampire Werewolf turned a Drunkard, they realised that learning a little about their victims first might be useful.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `Após os Lobisomens terem escolhido a sua vítima, o Lobisomem Vidente pode <red>escolher</red> NÃO DEIXAR MATAR esse jogador, mas em vez disso, ver o seu papel.`,
@@ -1679,6 +2384,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // m03 | Vampire Werewolf
     "m03": {
         id: "m03",
         group: "evil",
@@ -1725,6 +2432,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // m04 | Ankou
     "m04": {
         id: "m04",
         group: "evil",
@@ -1768,6 +2477,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // m05 | Evil Cupid
     "m05": {
         id: "m05",
         group: "evil",
@@ -1777,6 +2488,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Méchant Cupidon`,
             en: `Evil Cupid`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Uma criatura de puro caos, o Cupido Malvado é atraído pelo caos onde quer que o encontre. Tinha tanta inveja de não ser a sua principal causa que se mudou para a aldeia antecipadamente, assim que começaram os primeiros rumores de Lobisomens.`,
+                    fr: `Créature de pur chaos, le Méchant Cupidon est attiré par le chaos partout où il le trouve. Si jaloux de ne pas en être la principale cause, il s'est installé au village à l'avance, dès les premières rumeurs de Loups-garous.`,
+                    en: `A creature of pure chaos, Evil Cupid is drawn to chaos wherever he finds it. He was so jealous of not being its main cause that he moved to town ahead of time, as soon as the first rumours of Werewolves began.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
@@ -1825,6 +2545,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // m06 | (Were)wolf Tamer
     "m06": {
         id: "m06",
         group: "evil",
@@ -1865,6 +2587,10 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // ---- SOLO CHARACTERS -----------------------------------------
+
+    // s01 | Cupid
     "s01": {
         id: "s01",
         group: "solo",
@@ -1874,6 +2600,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Cupidon`,
             en: `Cupid`
         },
+        lore: [
+            {
+                text: {
+                    pt: `O Cupido é narcisista. Gosta mesmo de ter razão.`,
+                    fr: `Cupidon est narcissique. Il aime vraiment avoir raison.`,
+                    en: `Cupid is a narcissist. He really likes to be right.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>O objetivo dos Namorados é de serem os últimos sobreviventes</red>.`,
@@ -1922,6 +2657,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `The Lovers must be the only survivors.`
         }
     },
+
+    // s02 | White Werewolf
     "s02": {
         id: "s02",
         group: "solo",
@@ -1965,6 +2702,10 @@ export const RULEBOOK_CHARACTERS = {
             en: `Be the last survivor.`
         }
     },
+
+    // ---- FLEXIBLE CHARACTERS -----------------------------------------
+
+    // f01 | Thief
     "f01": {
         id: "f01",
         group: "flexible",
@@ -1974,9 +2715,23 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Voleur`,
             en: `Thief`
         },
+        lore: [
+            {
+                text: {
+                    pt: `De alguma forma, rouba votos à Landsgemeinde. Como é que isso funciona sequer?`,
+                    fr: `Il parvient à voler des voix à la Landsgemeinde. Comment est-ce seulement possible ?`,
+                    en: `Somehow, he steals votes from the Landsgemeinde. How does that even work?`
+                },
+                explanation: {
+                    pt: `Landsgemeinde é uma forma de democracia direta, onde todos os cidadãos votam em público à frente de toda a gente.`,
+                    fr: `La Landsgemeinde est un système de démocratie directe où tous les citoyens votent en public devant tout le monde.`,
+                    en: `The Landsgemeinde is a form of direct democracy where all citizens vote in public before everyone.`
+                }
+            },
+        ],
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, escolhe um jogador que não poderá votar no próximo tribunal.`,
+                `<red>Cada noite</red>, escolhe um jogador que não poderá votar no próximo Tribunal.`,
                 `<red>Na segunda noite</red> deverá <red>escolher</red> se quer jogar do lado dos Aldeões (👍) ou do lado dos Lobisomens (👎).`,
                 `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
             ],
@@ -2011,6 +2766,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Player’s choice.`
         }
     },
+
+    // f02 | Spy
     "f02": {
         id: "f02",
         group: "flexible",
@@ -2057,6 +2814,10 @@ export const RULEBOOK_CHARACTERS = {
             en: `Player’s choice.`
         }
     },
+
+    // ---- COMPLEX CHARACTERS -----------------------------------------
+
+    // a01 | Drunkard
     "a01": {
         id: "a01",
         group: "complex",
@@ -2103,6 +2864,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // a02 | Wolf-Dog
     "a02": {
         id: "a02",
         group: "complex",
@@ -2149,6 +2912,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Player’s choice, or the owner’s objective.`
         }
     },
+
+    // a03 | Mime
     "a03": {
         id: "a03",
         group: "complex",
@@ -2195,6 +2960,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // a04 | Actor
     "a04": {
         id: "a04",
         group: "complex",
@@ -2204,6 +2971,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Comédien`,
             en: `Actor`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Todos os papéis já estavam ocupados quando se mudou para a aldeia. Costuma ficar à espera até que a tragédia lhe seja favorável.`,
+                    fr: `Tous les rôles étaient déjà pris lorsqu'il s'est installé au village. Il attend généralement qu'une tragédie tourne à son avantage.`,
+                    en: `All the parts were already taken when he moved to town. He usually waits around until tragedy works in his favour.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `<red>Na primeira noite</red>, escolhe um jogador que será o seu Ídolo e que copiará se esse jogador morrer. O poder só lhe é revelado quando o Ídolo morrer.`,
@@ -2238,6 +3014,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves. (Flexible)`
         }
     },
+
+    // a05 | Grave Robber
     "a05": {
         id: "a05",
         group: "complex",
@@ -2290,6 +3068,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves. (Flexible)`
         }
     },
+
+    // a06 | Illusionist
     "a06": {
         id: "a06",
         group: "complex",
@@ -2348,6 +3128,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // as01b | Secret Lover
     "as01b": {
         id: "as01b",
         group: "complex",
@@ -2397,6 +3179,10 @@ export const RULEBOOK_CHARACTERS = {
             en: `The Secret Lover and the Traitor must be the only survivors.`
         }
     },
+
+    // ---- LAME CHARACTERS -----------------------------------------
+
+    // l01 | Ordinary Townsfolk
     "l01": {
         id: "l01",
         group: "lame",
@@ -2406,6 +3192,15 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Villageois Triste`,
             en: `Ordinary Townsfolk`
         },
+        lore: [
+            {
+                text: {
+                    pt: `Uma alma simples a viver uma vida sem graça. Ou a morrer, neste caso.`,
+                    fr: `Une âme ordinaire qui mène une vie bien terne. Ou qui en meurt, en l'occurrence.`,
+                    en: `Just a simple soul living a dreary life. Or dying one, as the case may be.`
+                },
+            },
+        ],
         mainDescription: {
             pt: [
                 `Sem poder especial.`,
@@ -2424,6 +3219,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // l02 | Wild Child
     "l02": {
         id: "l02",
         group: "lame",
@@ -2467,6 +3264,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves. (Flexible)`
         }
     },
+
+    // l03 | Sisters
     "l03": {
         id: "l03",
         group: "lame",
@@ -2513,6 +3312,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves. (Flexible)`
         }
     },
+
+    // l04 | Brothers
     "l04": {
         id: "l04",
         group: "lame",
@@ -2554,6 +3355,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // l05 | Astronomer
     "l05": {
         id: "l05",
         group: "lame",
@@ -2594,6 +3397,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // l06 | Devout Servant
     "l06": {
         id: "l06",
         group: "lame",
@@ -2637,6 +3442,10 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // ---- EXTRA CHARACTERS -----------------------------------------
+
+    // x01 | Villagers
     "x01": {
         id: "x01",
         group: "extra",
@@ -2664,6 +3473,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Werewolves.`
         }
     },
+
+    // x02 | Evil Beings
     "x02": {
         id: "x02",
         group: "extra",
@@ -2694,6 +3505,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // x02.1 | Werewolves
     "x02.1": {
         id: "x02.1",
         group: "extra",
@@ -2737,6 +3550,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Kill all Villagers.`
         }
     },
+
+    // x03 | Ghosts
     "x03": {
         id: "x03",
         group: "extra",
@@ -2750,13 +3565,13 @@ export const RULEBOOK_CHARACTERS = {
             pt: [
                 `Há dois tipos de morte: <red>EXECUÇÃO</red> (condenados pela aldeia) ou <red>ASSASSINATO</red> (mortos pelo poder de um personagem).`,
                 `Quando um jogador é morto durante a noite, só morre mesmo de manhã, ao acordar, assim durante aquela noite podem continuar a usar os seus poderes.`,
-                `Os jogadores mortos transformam-se em fantasmas, que podem continuar a comunicar com a aldeia durante o dia, mas não podem falar ou votar no tribunal, e <red>perdem qualquer poder que tinham</red> (a não ser que esteja escrito o contrário na ficha de personagem.)`,
+                `Os jogadores mortos transformam-se em fantasmas, que podem continuar a comunicar com a aldeia durante o dia, mas não podem falar ou votar no Tribunal, e <red>perdem qualquer poder que tinham</red> (a não ser que esteja escrito o contrário na ficha de personagem.)`,
                 `<red>Os Fantasmas TAMBÉM DORMEM À NOITE</red>.`,
             ],
             fr: [
                 `Il existe deux types de mort : <red>EXÉCUTION</red> (condamnés par le village) ou <red>ASSASSINAT</red> (tués par le pouvoir d'un personnage).`,
                 `Lorsqu'un joueur est tué pendant la nuit, il ne meurt réellement que le matin, au réveil, et peut donc continuer à utiliser ses pouvoirs pendant la nuit.`,
-                `Les joueurs morts se transforment en Fantômes, qui peuvent continuer à communiquer avec le village pendant la journée, mais ne peuvent ni parler ni voter au tribunal, et <red>perdent tous les pouvoirs qu'ils avaient</red> (sauf indication contraire dans la fiche de personnage).`,
+                `Les joueurs morts se transforment en Fantômes, qui peuvent continuer à communiquer avec le village pendant la journée, mais ne peuvent ni parler ni voter au Tribunal, et <red>perdent tous les pouvoirs qu'ils avaient</red> (sauf indication contraire dans la fiche de personnage).`,
                 `<red>Les fantômes DORMENT ÉGALEMENT LA NUIT</red>.`,
             ],
             en: [
@@ -2773,6 +3588,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Ghosts keep the same objective they had while alive.`
         }
     },
+
+    // x.v09 | Soldier
     "x.v09": {
         id: "x.v09",
         group: "extra",
@@ -2816,6 +3633,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Does not change.`
         }
     },
+
+    // x.s01 | Lover
     "x.s01": {
         id: "x.s01",
         group: "extra",
@@ -2852,6 +3671,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `The Lovers must be the only survivors.`
         }
     },
+
+    // x.as01b.1 | Traitor
     "x.as01b.1": {
         id: "x.as01b.1",
         group: "extra",
@@ -2888,6 +3709,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `The Secret Lover and the Traitor must be the only survivors.`
         }
     },
+
+    // x.as01b.2 | Betrayed
     "x.as01b.2": {
         id: "x.as01b.2",
         group: "extra",
@@ -2918,6 +3741,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `The original role’s objective.`
         }
     },
+
+    // x.m05 | Enemy
     "x.m05": {
         id: "x.m05",
         group: "extra",
@@ -2949,6 +3774,10 @@ export const RULEBOOK_CHARACTERS = {
         }
     }
 } as const satisfies Record<RulebookCharacterId, RulebookCharacter>;
+// ============================================================================
+// DISPLAY ORDER — this controls both the index and character sections
+// ============================================================================
+
 export const RULEBOOK_CHARACTER_ORDER = [
     "e01",
     "e02",
@@ -3014,7 +3843,12 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "x.as01b.2",
     "x.m05"
 ] as RulebookCharacterId[];
+// ============================================================================
+// PRINTED NIGHT SCRIPTS — these also feed the analog character generator
+// ============================================================================
+
 export const RULEBOOK_NIGHT_SCRIPT = {
+    // FIRST NIGHT — initial information and power setup; no deaths
     firstNight: [
         {
             id: "first-general.1",
@@ -3143,6 +3977,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             }
         }
     ],
+    // SECOND NIGHT — actions specific to the first normal night
     secondNight: [
         {
             id: "second-f01",
@@ -3190,6 +4025,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             }
         }
     ],
+    // NORMAL NIGHTS — recurring actions, in wake-up order
     normalNight: [
         {
             id: "normal-general",
@@ -3429,7 +4265,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-v15",
             refs: ["v15"],
             text: {
-                pt: `O Piromaníaco acorda/não acorda. São-lhe mostradas as pessoas inocentadas no último tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.`,
+                pt: `O Piromaníaco acorda/não acorda. São-lhe mostradas as pessoas inocentadas no último Tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.`,
                 fr: `Le Pyromane se réveille / ne se réveille pas. Les personnes innocentées au dernier Tribunal lui sont montrées. Il décide, en pointant ou par un pouce vers le bas, s’il veut brûler la maison d’un d’entre eux.`,
                 en: `The Pyromaniac wakes up / does not wake up. The players acquitted at the previous Tribunal are shown. By pointing at one of them or showing a thumbs-down, the Pyromaniac decides whether to set one of their homes on fire.`
             }

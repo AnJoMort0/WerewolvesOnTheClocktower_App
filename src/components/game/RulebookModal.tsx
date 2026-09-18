@@ -10,6 +10,7 @@ import { useSkinPack } from "@/lib/skinPackContext";
 import type { RulebookSkinPreviewValue } from "@/lib/skinPacks";
 import { handleRulebookSkinPreviewChange } from "@/lib/rulebookSkinPreview";
 import { RULEBOOK_CHARACTERS, RULEBOOK_TEXT, type RulebookCharacterId } from "@/lib/rulebookContent";
+import { RulebookLoreNotes } from "./RulebookLoreNotes";
 
 interface RulebookModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
   const [skinPreviewOverrides, setSkinPreviewOverrides] = useState<Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>>({});
   const [articleElement, setArticleElement] = useState<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const expandedLoreIds = useRef(new Set<string>());
   const { skinPackId } = useSkinPack();
   const html = useMemo(
     () => getRulebookHtml(language, viewRoleId, { skinPackId, skinPreviewOverrides }),
@@ -51,9 +53,25 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
   useEffect(() => {
     if (!open) return;
     setViewRoleId(roleId);
+    expandedLoreIds.current.clear();
     setSkinPreviewOverrides({});
     setPendingScroll("top");
   }, [open, roleId]);
+
+  useEffect(() => {
+    if (!open || !articleElement) return;
+    articleElement.querySelectorAll<HTMLDetailsElement>("details[data-character-lore]").forEach((details) => {
+      details.open = expandedLoreIds.current.has(details.dataset.characterLore!);
+    });
+    const rememberLore = (event: Event) => {
+      const details = event.target;
+      if (!(details instanceof HTMLDetailsElement) || !articleElement.contains(details) || !details.dataset.characterLore) return;
+      if (details.open) expandedLoreIds.current.add(details.dataset.characterLore);
+      else expandedLoreIds.current.delete(details.dataset.characterLore);
+    };
+    articleElement.addEventListener("toggle", rememberLore, true);
+    return () => articleElement.removeEventListener("toggle", rememberLore, true);
+  }, [articleElement, html, open]);
 
   useEffect(() => {
     if (!open || !pendingScroll) return;
@@ -106,7 +124,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[calc(100vh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden border-border bg-background p-0 sm:rounded-lg md:h-[calc(100vh-3rem)] md:w-[calc(100vw-3rem)]">
+      <DialogContent aria-describedby={undefined} className="flex h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden border-border bg-background p-0 sm:rounded-lg md:h-[calc(100dvh-3rem)] md:w-[calc(100vw-3rem)]">
         <DialogHeader className="border-b border-border px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2 pr-9">
             <DialogTitle className="min-w-0 flex-1 truncate font-display text-xl text-gradient-blood">
@@ -114,9 +132,9 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
             </DialogTitle>
             <SkinPackSelectButton language={language} className="h-9 w-10" />
             {viewRoleId && (
-              <Button type="button" size="sm" variant="secondary" onClick={handleShowAllCharacters} className="shrink-0">
-                <List className="mr-2 h-4 w-4" />
-                {RULEBOOK_TEXT.singleCardAllCharacters[language]}
+              <Button type="button" size="sm" variant="secondary" onClick={handleShowAllCharacters} className="shrink-0 px-2 sm:px-3" aria-label={RULEBOOK_TEXT.singleCardAllCharacters[language]} title={RULEBOOK_TEXT.singleCardAllCharacters[language]}>
+                <List className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{RULEBOOK_TEXT.singleCardAllCharacters[language]}</span>
               </Button>
             )}
           </div>
@@ -141,6 +159,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
           <ArrowUp className="h-5 w-5" />
         </Button>
       </DialogContent>
+      {open && articleElement && <RulebookLoreNotes container={articleElement} contentKey={html} language={language} />}
     </Dialog>
   );
 }

@@ -314,109 +314,104 @@
     margin-top: 2.5rem;
   }
 
-  .rulebook-content .character-table,
-  .rulebook-content .rulebook-simple-table {
-    width: 100%;
-    border-collapse: collapse;
+  .rulebook-content .rulebook-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .rulebook-content .rulebook-navigation a {
+    border: 1px solid hsl(var(--gold) / 0.25);
+    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .rulebook-content .rulebook-basics {
+    max-width: 78ch;
+    margin-bottom: 2.5rem;
+  }
+
+  .rulebook-content .rulebook-basics ul { list-style: disc; }
+  .rulebook-content .rulebook-basics ol { list-style: decimal; }
+  .rulebook-content .rulebook-basics li { margin: 0.45rem 0; }
+  .rulebook-content .rulebook-basics h4 { margin: 1.2rem 0 0.4rem; }
+
+  .rulebook-content .rule-lore,
+  .rulebook-content .rulebook-story {
+    color: #dbc18a;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .rulebook-content .rulebook-story {
+    border-left: 2px solid hsl(var(--gold) / 0.5);
+    padding: 0.25rem 1rem;
+    margin: 1rem 0 1.5rem;
+  }
+
+  .rulebook-content .character-table {
+    display: grid;
+    gap: 1rem;
     margin: 1rem 0 1.75rem;
-    table-layout: fixed;
+  }
+
+  .rulebook-content .role-row {
+    --role-accent: #aaa;
+    --role-tint: 160 160 160;
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
     overflow: hidden;
-    border-radius: 0.5rem;
+    border: 1px solid rgb(var(--role-tint) / 0.25);
+    border-left: 4px solid var(--role-accent);
+    border-radius: 0.7rem;
+    background: linear-gradient(120deg, rgb(var(--role-tint) / 0.09), transparent 70%), hsl(var(--card));
+    scroll-margin-top: 1rem;
   }
 
-  .rulebook-content .rulebook-simple-table {
-    table-layout: auto;
-  }
-
-  .rulebook-content .character-table th,
-  .rulebook-content .character-table td,
-  .rulebook-content .rulebook-simple-table th,
-  .rulebook-content .rulebook-simple-table td {
-    border: 1px solid hsl(var(--background) / 0.35);
-    vertical-align: top;
-  }
-
-  .rulebook-content .character-table th,
-  .rulebook-content .rulebook-simple-table th {
-    background: hsl(var(--secondary));
-    color: hsl(var(--foreground));
-    padding: 0.55rem 0.75rem;
-    text-align: left;
-    font-family: 'Cinzel', serif;
-    font-size: 0.82rem;
-  }
-
-  .rulebook-content .rulebook-simple-table td {
-    padding: 0.42rem 0.65rem;
-    background: hsl(var(--card));
-  }
+  .rulebook-content .role-row.faction-good { --role-accent: #94bc78; --role-tint: 148 188 120; }
+  .rulebook-content .role-row.faction-evil { --role-accent: #d78282; --role-tint: 215 130 130; }
+  .rulebook-content .role-row.faction-independent { --role-accent: #b99bdd; --role-tint: 185 155 221; }
+  .rulebook-content .role-row.faction-flex { --role-accent: #dec779; --role-tint: 222 199 121; }
+  .rulebook-content .role-row.faction-shifting { --role-accent: #b7c783; --role-tint: 183 199 131; }
+  .rulebook-content .role-row.faction-extra { --role-accent: #b7b7b7; --role-tint: 183 183 183; }
 
   .rulebook-content .role-image-cell {
-    width: 150px;
-    min-width: 150px;
-    max-width: 150px;
-    padding: 0.5rem;
+    padding: 1rem;
     text-align: center;
   }
 
   .rulebook-content .role-image-cell img {
-    width: 130px;
-    max-width: 130px;
+    width: 128px;
+    max-width: 100%;
     height: auto;
-    border-radius: 0.45rem;
+    border-radius: 0.5rem;
     border: 1px solid rgb(0 0 0 / 0.35);
-    background: rgb(0 0 0 / 0.22);
     user-select: none;
     -webkit-user-drag: none;
   }
 
   .rulebook-content .rulebook-skin-preview {
-    position: relative;
-    display: inline-grid;
-    width: 130px;
-    gap: 0.22rem;
-    margin-top: 0.5rem;
-    color: rgb(0 0 0 / 0.78);
-    font-family: 'Cinzel', serif;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0;
-    line-height: 1.15;
-    text-align: center;
-  }
-
-  .rulebook-content .rulebook-skin-preview::after {
-    content: "v";
-    position: absolute;
-    right: 0.48rem;
-    bottom: 0.38rem;
-    color: #5a3d10;
-    font-family: 'Cinzel', serif;
-    font-size: 0.62rem;
-    font-weight: 900;
-    line-height: 1;
-    pointer-events: none;
-  }
-
-  .rulebook-content .rulebook-skin-preview span {
-    color: rgb(0 0 0 / 0.72);
+    display: grid;
+    gap: 0.2rem;
+    margin-top: 0.65rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
   }
 
   .rulebook-content .rulebook-skin-preview select {
-    appearance: none;
-    width: 130px;
-    max-width: 100%;
-    min-height: 1.95rem;
-    padding: 0.22rem 1.35rem 0.22rem 0.5rem;
-    border: 1px solid rgb(71 47 12 / 0.55);
+    min-width: 0;
+    width: 100%;
+    min-height: 2rem;
+    padding: 0.2rem;
+    border: 1px solid hsl(var(--border));
     border-radius: 0.35rem;
-    background: linear-gradient(180deg, #fff4c9 0%, #eed37d 100%);
-    color: #171717;
-    font-family: 'Cinzel', serif;
-    font-size: 0.68rem;
-    font-weight: 800;
-    line-height: 1.15;
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55);
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-size: 0.75rem;
     cursor: pointer;
   }
 
@@ -426,148 +421,119 @@
   }
 
   .rulebook-content .role-text-cell {
-    width: auto;
     min-width: 0;
-    max-width: calc(100% - 150px);
-    padding: 0.7rem 0.85rem 0.75rem;
+    padding: 1rem 1.2rem 1rem 0.25rem;
     overflow-wrap: anywhere;
-    color: #1b1b1b;
   }
 
   .rulebook-content .role-title {
-    margin: 0 0 0.25rem;
-    color: #131313;
-    font-size: 1.05rem;
-    font-weight: 800;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.8rem;
+    color: hsl(var(--foreground));
+    font-size: 1.2rem;
   }
 
-  .rulebook-content .role-meta {
-    margin: 0 0 0.5rem;
-    color: rgb(0 0 0 / 0.68);
-    font-size: 0.86rem;
+  .rulebook-content .role-title code {
+    color: var(--role-accent);
+    font-size: 0.7rem;
   }
 
   .rulebook-content .role-badge {
-    display: inline-block;
-    margin-left: 0.35rem;
-    padding: 0.08rem 0.45rem;
-    border: 1px solid rgb(0 0 0 / 0.22);
+    border: 1px solid rgb(var(--role-tint) / 0.35);
     border-radius: 999px;
-    background: rgb(255 255 255 / 0.5);
+    padding: 0.1rem 0.5rem;
+    color: var(--role-accent);
+    font-family: 'Crimson Text', serif;
+    font-size: 0.8rem;
+    font-weight: 400;
+  }
+
+  .rulebook-content .role-description { max-width: 78ch; }
+  .rulebook-content .role-description p { margin: 0.5rem 0; }
+  .rulebook-content .role-description .rule-red { color: #f2a3a3; }
+  .rulebook-content .role-description .role-objective {
+    margin-top: 0.85rem;
+    border-top: 1px solid rgb(var(--role-tint) / 0.18);
+    padding-top: 0.6rem;
+  }
+
+  .rulebook-content .role-lore {
+    grid-column: 1 / -1;
+    padding: 0 1rem;
+    border-top: 1px solid hsl(var(--gold) / 0.12);
+    background: hsl(var(--background) / 0.35);
+  }
+
+  .rulebook-content .role-lore summary {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+    padding: 0.4rem 0;
+    color: #c9b07c;
     font-size: 0.78rem;
-    font-weight: 800;
+    list-style: none;
+    cursor: pointer;
   }
 
-  .rulebook-content .role-description {
-    max-width: 72ch;
+  .rulebook-content .role-lore summary::-webkit-details-marker { display: none; }
+  .rulebook-content .role-lore summary:focus-visible { outline: 2px solid hsl(var(--gold)); }
+  .rulebook-content .lore-chevron { transition: transform 150ms ease; }
+  .rulebook-content .role-lore[open] .lore-chevron { transform: rotate(180deg); }
+
+  .rulebook-content .role-lore-body {
+    max-width: 78ch;
+    padding-bottom: 0.4rem;
+    color: #dbc18a;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 0.95rem;
+    font-style: italic;
+    line-height: 1.7;
   }
 
-  .rulebook-content .role-description p {
-    margin: 0.38rem 0;
+  .rulebook-content .rulebook-lore-sentence {
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    text-decoration: underline dotted rgb(219 193 138 / 0.35);
+    text-underline-offset: 0.25em;
+    cursor: help;
   }
 
-  .rulebook-content .role-row.faction-good td {
-    background: #dcefd2;
-  }
-
-  .rulebook-content .role-row.faction-evil td {
-    background: #efb1b1;
-  }
-
-  .rulebook-content .role-row.faction-independent td {
-    background: #e3d0f6;
-  }
-
-  .rulebook-content .role-row.faction-flex td {
-    background: #f7e8a7;
-  }
-
-  .rulebook-content .role-row.faction-shifting td {
-    background: linear-gradient(135deg, #dcefd2 0%, #e7edbc 58%, #f7e8a7 100%);
-  }
-
-  .rulebook-content .role-row.faction-extra td {
-    background: #eeeeee;
-  }
-
-  .rulebook-content .role-row.faction-good .role-image-cell {
-    border-left: 6px solid #4f8f3a;
-  }
-
-  .rulebook-content .role-row.faction-evil .role-image-cell {
-    border-left: 6px solid #a73636;
-  }
-
-  .rulebook-content .role-row.faction-independent .role-image-cell {
-    border-left: 6px solid #7c4bb0;
-  }
-
-  .rulebook-content .role-row.faction-flex .role-image-cell {
-    border-left: 6px solid #b38b00;
-  }
-
-  .rulebook-content .role-row.faction-shifting .role-image-cell {
-    border-left: 6px solid #7f9f3e;
-  }
-
-  .rulebook-content .role-row.faction-extra .role-image-cell {
-    border-left: 6px solid #777777;
+  .rulebook-content .rulebook-lore-sentence:focus-visible {
+    outline: 1px solid hsl(var(--gold));
+    outline-offset: 3px;
+    border-radius: 2px;
   }
 
   @media (max-width: 720px) {
-    .rulebook-content {
-      font-size: 0.98rem;
-    }
-
-    .rulebook-content .character-table {
-      min-width: 320px;
-      table-layout: fixed;
-    }
-
-    .rulebook-content .role-image-cell {
-      width: 112px;
-      min-width: 112px;
-      max-width: 112px;
-      padding: 0.35rem;
-    }
-
-    .rulebook-content .role-image-cell img {
-      width: 96px;
-      max-width: 96px;
-    }
-
-    .rulebook-content .rulebook-skin-preview select {
-      width: 96px;
-      font-size: 0.6rem;
-    }
-
-    .rulebook-content .rulebook-skin-preview {
-      width: 96px;
-      font-size: 0.58rem;
-    }
-
-    .rulebook-content .role-text-cell {
-      max-width: calc(100vw - 135px);
-      padding: 0.45rem 0.55rem;
-      font-size: 0.9rem;
-    }
-
-    .rulebook-content .rulebook-character-index {
-      padding: 0.75rem;
-    }
-
-    .rulebook-content .rulebook-index-grid {
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    }
-
-    .rulebook-content .rulebook-index-link {
-      grid-template-columns: 34px minmax(0, 1fr);
-      min-height: 54px;
-    }
-
-    .rulebook-content .rulebook-index-link img {
-      width: 34px;
-      height: 34px;
-    }
+    .rulebook-content { font-size: 1rem; }
+    .rulebook-content .role-row { grid-template-columns: 116px minmax(0, 1fr); }
+    .rulebook-content .role-image-cell { padding: 0.75rem 0.5rem; }
+    .rulebook-content .role-text-cell { padding: 0.75rem 0.75rem 0.75rem 0.25rem; }
+    .rulebook-content .role-title { font-size: 1.05rem; }
+    .rulebook-content .rulebook-skin-preview select { font-size: 0.68rem; }
+    .rulebook-content .rulebook-character-index { padding: 0.75rem; }
+    .rulebook-content .rulebook-index-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    .rulebook-content .rulebook-index-link { grid-template-columns: 34px minmax(0, 1fr); min-height: 54px; }
+    .rulebook-content .rulebook-index-link img { width: 34px; height: 34px; }
   }
+
+  @media (max-width: 480px) {
+    .rulebook-content .role-row { grid-template-columns: 1fr; }
+    .rulebook-content .role-image-cell {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1rem 0;
+      text-align: left;
+    }
+    .rulebook-content .role-image-cell img { width: 96px; }
+    .rulebook-content .rulebook-skin-preview { max-width: 140px; margin-top: 0; }
+    .rulebook-content .role-text-cell { padding: 1rem; }
+  }
+
 }

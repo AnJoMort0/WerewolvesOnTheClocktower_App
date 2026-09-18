@@ -71,6 +71,7 @@ function escapeAttribute(value: string): string {
 
 function renderInline(value: string): string {
   return escapeHtml(value)
+    .replace(/\[lore\]([\s\S]*?)(?:\[\/lore\]|$)/g, '<span class="rule-lore">$1</span>')
     .replace(/&lt;red&gt;([\s\S]*?)&lt;\/red&gt;/g, '<span class="rule-red">$1</span>')
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([\s\S]*?)\*\*/g, "<strong>$1</strong>")
@@ -89,6 +90,9 @@ function renderParagraphs(lines: readonly string[]): string {
 }
 
 function renderTextBlock(value: string): string {
+  if (value.trim().startsWith("[lore]") && !value.includes("[/lore]")) {
+    return `<div class="rulebook-story">${renderTextBlock(value.replace("[lore]", ""))}</div>`;
+  }
   return value
     .split(/\n\s*\n/g)
     .map((paragraph) => paragraph.trim())
@@ -122,7 +126,8 @@ function renderSectionBlocks(blocks: readonly RulebookSectionBlock[]): string {
 }
 
 function renderSectionBlock(block: RulebookSectionBlock): string {
-  if (block.type === "p") {
+  if (block.type === "p" || block.type === "lore") {
+    if (block.type === "lore") return `<div class="rulebook-story">${renderTextBlock(block.text)}</div>`;
     return renderTextBlock(block.text);
   }
 
@@ -135,7 +140,10 @@ function renderSectionBlock(block: RulebookSectionBlock): string {
     return `<${tag}>${block.items.map((item) => `<li>${renderInline(item)}</li>`).join("")}</${tag}>`;
   }
 
-  return `<${block.type} id="${escapeAttribute(block.id)}">${renderInline(block.text)}</${block.type}>`;
+  if (block.type === "h2" || block.type === "h3" || block.type === "h4") {
+    return `<${block.type} id="${escapeAttribute(block.id)}">${renderInline(block.text)}</${block.type}>`;
+  }
+  return "";
 }
 
 function renderNightScript(lang: Language): string {
@@ -214,9 +222,7 @@ function renderCharacterTables(lang: Language, options: RulebookRenderOptions = 
       return `
         <section class="rulebook-character-group">
           <h2 class="rulebook-group-heading">${renderInline(group.label[lang])}</h2>
-          <table class="character-table">
-          <tbody>${characters.map((character) => renderCharacterRow(character, lang, options)).join("")}</tbody>
-          </table>
+          <div class="character-table">${characters.map((character) => renderCharacterRow(character, lang, options)).join("")}</div>
         </section>
       `;
     })
@@ -236,13 +242,13 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language, option
     })
     .join("");
   const objectiveHtml = character.objective
-    ? `<p><strong>${renderInline(getTranslation(lang).ui.rulebookUi.objectiveLabel)}</strong> ${renderInline(character.objective[lang])}</p>`
+    ? `<p class="role-objective"><strong>${renderInline(getTranslation(lang).ui.rulebookUi.objectiveLabel)}</strong> ${renderInline(character.objective[lang])}</p>`
     : "";
 
   return `
-    <tr class="role-row ${TEAM_FACTION_CLASS[character.team]}" id="${escapeAttribute(character.id)}">
-      <td class="role-image-cell">${imageHtml}</td>
-      <td class="role-text-cell">
+    <article class="role-row ${TEAM_FACTION_CLASS[character.team]}" id="${escapeAttribute(character.id)}">
+      <div class="role-image-cell">${imageHtml}</div>
+      <div class="role-text-cell">
         <h3 class="role-title">
           <code>${escapeHtml(character.id)}</code>
           ${renderInline(character.name[lang])}
@@ -253,9 +259,27 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language, option
           ${detailsHtml}
           ${objectiveHtml}
         </div>
-      </td>
-    </tr>
+      </div>
+      ${renderCharacterLore(character, lang)}
+    </article>
   `;
+}
+
+function renderCharacterLore(character: RulebookCharacter, lang: Language): string {
+  const passages = character.lore?.flatMap((passage) => {
+    const text = passage.text[lang] ?? passage.text.en;
+    if (!text?.trim()) return [];
+    const explanation = passage.explanation?.[lang] ?? passage.explanation?.en;
+    const sentence = explanation
+      ? `<button type="button" class="rulebook-lore-sentence" data-lore-explanation="${escapeAttribute(explanation)}" aria-haspopup="dialog" aria-expanded="false">${renderInline(text)}</button>`
+      : renderInline(text);
+    return [`<p>${sentence}</p>`];
+  }) ?? [];
+  if (passages.length === 0) return "";
+  return `<details class="role-lore" data-character-lore="${escapeAttribute(character.id)}">
+    <summary>${renderInline(RULEBOOK_TEXT.loreLabel[lang])}<span aria-hidden="true" class="lore-chevron">⌄</span></summary>
+    <div class="role-lore-body">${passages.join("")}</div>
+  </details>`;
 }
 
 function renderSkinPreviewSelect(characterId: RulebookCharacterId, lang: Language, options: RulebookRenderOptions): string {
@@ -282,8 +306,13 @@ function renderSkinPreviewSelect(characterId: RulebookCharacterId, lang: Languag
 function renderFullRulebook(lang: Language, options: RulebookRenderOptions = {}): string {
   return `
     <h1 id="${RULEBOOK_TOP_ID}">${renderInline(RULEBOOK_TEXT.title[lang])}</h1>
+    <nav class="rulebook-navigation" aria-label="${escapeAttribute(RULEBOOK_TEXT.navigationLabel[lang])}">
+      <a href="#base">${renderInline(RULEBOOK_TEXT.basicsLabel[lang])}</a>
+      <a href="#${RULEBOOK_SUMMARY_ID}">${renderInline(RULEBOOK_TEXT.charactersLabel[lang])}</a>
+      <a href="#rulebook-night-script">${renderInline(RULEBOOK_TEXT.nightScriptJump[lang])}</a>
+    </nav>
+    <section class="rulebook-basics">${renderSectionBlocks(RULEBOOK_TEXT.sections[lang])}</section>
     ${renderCharacterIndex(lang, options)}
-    ${renderSectionBlocks(RULEBOOK_TEXT.sections[lang])}
     ${renderCharacterTables(lang, options)}
     ${renderNightScript(lang)}
   `;
@@ -296,9 +325,7 @@ function renderCharacterRulebook(lang: Language, characterId: RulebookCharacterI
   }
 
   return `
-    <table class="character-table character-table-single">
-      <tbody>${renderCharacterRow(character, lang, options)}</tbody>
-    </table>
+    <div class="character-table character-table-single">${renderCharacterRow(character, lang, options)}</div>
   `;
 }
 
