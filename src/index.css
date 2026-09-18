@@ -317,7 +317,7 @@
   }
 
   .rulebook-content .rulebook-basics {
-    max-width: 78ch;
+    width: 100%;
     margin: 0 auto 2.5rem;
   }
 
