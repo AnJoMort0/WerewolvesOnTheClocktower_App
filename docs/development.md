@@ -56,6 +56,8 @@ The application can run from a local development server, but it still requires i
 - `src/pages/JoinRoom.tsx`: player name entry
 - `src/pages/PlayerView.tsx`: player phone interface
 - `src/components/game`: game-specific interface components
+- `src/components/game/GameModal.tsx`: shared reveal dialog shell, heading, scrolling body, and fixed footer
+- `src/components/game/RevealCardGallery.tsx`: shared single-card and multiple-card layout, artwork, role links, copied-card badges, and charge markers
 - `src/lib`: roles, localisation, night script, rulebook content, and join URL helpers
 - `src/integrations/supabase`: Supabase client and generated types
 - `src/assets/roles`: character artwork used by the application and README

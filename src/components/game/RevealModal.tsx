@@ -1,28 +1,12 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
 import { ROLES, type RoleId } from "@/lib/roles";
 import { getRoleLabel, t, type Language } from "@/lib/i18n";
-import { resolveRoleImage } from "@/lib/skinPacks";
-import { useSkinPack } from "@/lib/skinPackContext";
 import ghostExecutedIcon from "@/assets/display/icons/ghost_executed.webp";
 import villagerIcon from "@/assets/display/icons/villager.webp";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { GameModal } from "./GameModal";
+import { RevealCardGallery, type RevealCard } from "./RevealCardGallery";
 
-export type RevealCard = {
-  /** Optional player name (LittleGirl shows; Lamplighter hides) */
-  name?: string;
-  /** Image URL to display */
-  image: string;
-  /** Label under the image */
-  label: string;
-  /** Optional checkbox state for Lamplighter reveal */
-  checkboxes?: boolean[];
-  /** Optional roleId so the card image can link to the rulebook anchor */
-  roleId?: RoleId;
-  /** Optional small corner role for copied-card reveals. */
-  cornerRoleId?: RoleId;
-};
+export type { RevealCard } from "./RevealCardGallery";
 
 interface RevealModalProps {
   open: boolean;
@@ -36,90 +20,15 @@ interface RevealModalProps {
   onRoleClick?: (roleId: RoleId) => void;
 }
 
-export const RevealModal = ({ open, onClose, title, subtitle, cards, language = "pt", dismissible = true, actionLabel, onRoleClick }: RevealModalProps) => {
-  const { skinPackId } = useSkinPack();
-  return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
-          onClick={dismissible ? onClose : undefined}
-        >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="max-h-[80vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-xl paper-texture sm:p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-xl text-blue-400">{title}</h2>
-              {dismissible && (
-                <Button type="button" size="icon" variant="ghost" onClick={onClose} aria-label={t("close", language)} title={t("close", language)}>
-                  <X className="h-5 w-5" />
-                </Button>
-              )}
-            </div>
-
-            {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}
-
-            <div className="grid grid-cols-2 gap-4">
-              {cards.map((c, i) => {
-                const cornerRole = c.cornerRoleId ? ROLES[c.cornerRoleId] : null;
-                const cardImage = c.roleId ? resolveRoleImage(c.roleId, { skinPackId }).src : c.image;
-                const cornerImage = c.cornerRoleId ? resolveRoleImage(c.cornerRoleId, { skinPackId }).src : null;
-                const imageBlock = (
-                  <div className="relative h-24 w-24 overflow-hidden rounded-md border-2 border-primary/40 shadow-md">
-                    <img src={cardImage} alt={c.label} className="w-full h-full object-cover" />
-                    {cornerRole && (
-                      <img
-                        src={cornerImage ?? cornerRole.image}
-                        alt={getRoleLabel(c.cornerRoleId!, language)}
-                        className="absolute bottom-1 right-1 h-8 w-8 rounded border border-cyan-300 object-cover shadow"
-                      />
-                    )}
-                  </div>
-                );
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex flex-col items-center gap-2 rounded-lg border border-border bg-secondary p-4"
-                  >
-                    {c.roleId && onRoleClick ? (
-                      <button type="button" onClick={() => onRoleClick(c.roleId!)} className="block rounded-md">
-                        {imageBlock}
-                      </button>
-                    ) : imageBlock}
-                    {c.name && <span className="font-body text-sm text-foreground">{c.name}</span>}
-                    <span className="font-display text-xs text-blue-400 text-center">{c.label}</span>
-                    {!!c.checkboxes?.length && (
-                      <div className="flex gap-1 mt-1">
-                        {c.checkboxes.map((checked, idx) => (
-                          <Checkbox key={idx} checked={checked} disabled className="h-4 w-4 border-primary data-[state=checked]:bg-primary" />
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-            {actionLabel && (
-              <Button type="button" onClick={onClose} className="w-full font-display tracking-wider">
-                {actionLabel}
-              </Button>
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+export const RevealModal = ({ open, onClose, title, subtitle, cards, language = "pt", dismissible = true, actionLabel, onRoleClick }: RevealModalProps) => (
+  <GameModal open={open} onClose={onClose} title={title} subtitle={subtitle}
+    closeLabel={t("close", language)} dismissible={dismissible} wide={cards.length > 1}
+    footer={actionLabel ? <Button type="button" onClick={onClose} className="w-full font-display tracking-wider">
+      {actionLabel}
+    </Button> : undefined}>
+    <RevealCardGallery cards={cards} language={language} onRoleClick={onRoleClick} />
+  </GameModal>
+);
 
 /** Resolve killer card image + label from a kill source string */
 export function resolveKillerCard(

@@ -37,7 +37,7 @@ function getEllipseAngles(count: number, radiusX: number, radiusY: number): numb
   });
 }
 
-export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false, selectedPlayerId }: {
+export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false, selectedPlayerId, showHeader = true }: {
   session: PhoneView;
   playerId: string;
   language: Language;
@@ -46,6 +46,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   onSend: (type: PhoneCommand["type"], targetPlayerId?: string) => void;
   readOnly?: boolean;
   selectedPlayerId?: string | null;
+  showHeader?: boolean;
 }) {
   const text = getTranslation(language).ui.phoneActions;
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -69,12 +70,12 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
       aria-label={title}
       className={`space-y-4 overflow-hidden rounded-lg border bg-card/90 p-4 shadow-md ring-1 ring-inset paper-texture ${theme.border}`}
     >
-      <header className="flex items-center justify-center gap-2 border-b border-border/60 pb-3">
+      {showHeader && <header className="flex items-center justify-center gap-2 border-b border-border/60 pb-3">
         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background/40 ${theme.accent}`}>
           <Icon className="h-4 w-4" />
         </span>
         <h2 className={`font-display text-xl font-bold ${theme.accent}`}>{title}</h2>
-      </header>
+      </header>}
       <div className="min-w-0 overflow-hidden pb-1">
         <div
           data-testid="phone-action-map"
