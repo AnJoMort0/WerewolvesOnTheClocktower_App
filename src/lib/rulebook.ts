@@ -306,13 +306,13 @@ function renderSkinPreviewSelect(characterId: RulebookCharacterId, lang: Languag
 function renderFullRulebook(lang: Language, options: RulebookRenderOptions = {}): string {
   return `
     <h1 id="${RULEBOOK_TOP_ID}">${renderInline(RULEBOOK_TEXT.title[lang])}</h1>
+    ${renderCharacterIndex(lang, options)}
     <nav class="rulebook-navigation" aria-label="${escapeAttribute(RULEBOOK_TEXT.navigationLabel[lang])}">
       <a href="#base">${renderInline(RULEBOOK_TEXT.basicsLabel[lang])}</a>
       <a href="#${RULEBOOK_SUMMARY_ID}">${renderInline(RULEBOOK_TEXT.charactersLabel[lang])}</a>
       <a href="#rulebook-night-script">${renderInline(RULEBOOK_TEXT.nightScriptJump[lang])}</a>
     </nav>
     <section class="rulebook-basics">${renderSectionBlocks(RULEBOOK_TEXT.sections[lang])}</section>
-    ${renderCharacterIndex(lang, options)}
     ${renderCharacterTables(lang, options)}
     ${renderNightScript(lang)}
   `;

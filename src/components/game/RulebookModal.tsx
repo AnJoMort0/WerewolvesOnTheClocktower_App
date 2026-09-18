@@ -126,15 +126,15 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} className="flex h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden border-border bg-background p-0 sm:rounded-lg md:h-[calc(100dvh-3rem)] md:w-[calc(100vw-3rem)]">
         <DialogHeader className="border-b border-border px-4 py-3 sm:px-6">
-          <div className="flex min-w-0 items-center gap-2 pr-9">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 pr-9 sm:flex">
             <DialogTitle className="min-w-0 flex-1 truncate font-display text-xl text-gradient-blood">
               {title}
             </DialogTitle>
             <SkinPackSelectButton language={language} className="h-9 w-10" />
             {viewRoleId && (
-              <Button type="button" size="sm" variant="secondary" onClick={handleShowAllCharacters} className="shrink-0 px-2 sm:px-3" aria-label={RULEBOOK_TEXT.singleCardAllCharacters[language]} title={RULEBOOK_TEXT.singleCardAllCharacters[language]}>
-                <List className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">{RULEBOOK_TEXT.singleCardAllCharacters[language]}</span>
+              <Button type="button" size="sm" variant="secondary" onClick={handleShowAllCharacters} className="col-span-2 h-auto min-h-9 shrink-0 whitespace-normal px-3" aria-label={RULEBOOK_TEXT.singleCardAllCharacters[language]} title={RULEBOOK_TEXT.singleCardAllCharacters[language]}>
+                <List className="mr-2 h-4 w-4 shrink-0" />
+                <span>{RULEBOOK_TEXT.singleCardAllCharacters[language]}</span>
               </Button>
             )}
           </div>
