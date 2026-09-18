@@ -8,9 +8,11 @@ const bus = vi.hoisted(() => {
   type Message = { event: string; payload: Record<string, unknown> };
   type Receiver = { receive: (message: Message) => void; topic: string };
   const receivers = new Set<Receiver>();
+  const sent: Array<Message & { topic: string }> = [];
   let dropStates = false;
   return {
     receivers,
+    sent,
     dropStates: (drop: boolean) => { dropStates = drop; },
     channel: (topic: string) => {
       const listeners = new Map<string, (message: { payload: Record<string, unknown> }) => void>();
@@ -27,6 +29,7 @@ const bus = vi.hoisted(() => {
           return channel;
         },
         send: (message: Message) => {
+          sent.push({ ...message, topic });
           if (!dropStates || message.event !== "state") {
             for (const receiver of receivers) {
               if (receiver !== channel && receiver.topic === topic) receiver.receive(message);
@@ -52,10 +55,68 @@ const world: PhoneWorld = { packBlocked: false, players: [
   player("wolf", "e01"), player("puppet", "v06"), player("witch", "e02"), player("victim", "v01"),
 ] };
 
-beforeEach(() => { vi.useFakeTimers(); window.localStorage.clear(); bus.dropStates(false); });
-afterEach(() => { cleanup(); bus.receivers.clear(); vi.useRealTimers(); });
+beforeEach(() => { vi.useFakeTimers(); window.localStorage.clear(); bus.dropStates(false); bus.sent.length = 0; });
+afterEach(() => { cleanup(); bus.receivers.clear(); vi.restoreAllMocks(); vi.useRealTimers(); });
 
 describe("phone synchronization across GM and player devices", () => {
+  it("uses staggered slow idle recovery for fifty phones and cleans up every subscription", () => {
+    const largeWorld: PhoneWorld = { packBlocked: false, players: Array.from({ length: 50 }, (_, i) => player(`player-${i}`, "v01")) };
+    const gm = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "night:1", enabled: true, world: largeWorld, onAction: vi.fn() }));
+    const phones = largeWorld.players.map((p) => renderHook(() => usePlayerPhoneActions("room", p.id)));
+    bus.sent.length = 0;
+    act(() => vi.advanceTimersByTime(27500));
+    expect(bus.sent).toHaveLength(0);
+    act(() => vi.advanceTimersByTime(7500));
+    expect(bus.sent.filter((message) => message.event === "request")).toHaveLength(50);
+    expect(bus.sent.filter((message) => message.event === "state")).toHaveLength(50);
+    phones.forEach((phone) => phone.unmount());
+    gm.unmount();
+    expect(bus.receivers.size).toBe(0);
+    bus.sent.length = 0;
+    act(() => vi.advanceTimersByTime(60000));
+    expect(bus.sent).toHaveLength(0);
+  });
+
+  it("pushes changed views only to affected phones and ignores equivalent world rerenders", () => {
+    const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };
+    const props = { roomId: "room", contextKey: "night:1", enabled: true, world: monkeyWorld, onAction: vi.fn() };
+    const gm = renderHook((p) => useGMPhoneActions(p), { initialProps: props });
+    const monkey = renderHook(() => usePlayerPhoneActions("room", "monkey"));
+    renderHook(() => usePlayerPhoneActions("room", "witch"));
+    bus.sent.length = 0;
+    act(() => gm.result.current.toggle("monkey", "monkey-line", "monkey"));
+    expect(monkey.result.current.session?.mode).toBe("monkey");
+    expect(bus.sent.filter((message) => message.event === "state").map((message) => message.topic)).toEqual(["phone-room-monkey"]);
+    bus.sent.length = 0;
+    gm.rerender({ ...props, world: { ...monkeyWorld, players: monkeyWorld.players.map((p) => ({ ...p })) } });
+    expect(bus.sent).toHaveLength(0);
+  });
+
+  it("pauses offline polling and requests current state immediately when the network returns", () => {
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "night:1", enabled: true, world, onAction: vi.fn() }));
+    const device = renderHook(() => usePlayerPhoneActions("room", "wolf"));
+    bus.sent.length = 0;
+    act(() => vi.advanceTimersByTime(60000));
+    expect(bus.sent).toHaveLength(0);
+    online.mockReturnValue(true);
+    act(() => window.dispatchEvent(new Event("online")));
+    expect(bus.sent.filter((message) => message.event === "request")).toHaveLength(1);
+    expect(device.result.current.connected).toBe(true);
+  });
+
+  it("pauses hidden polling and requests current state when the phone wakes", () => {
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "night:1", enabled: true, world, onAction: vi.fn() }));
+    renderHook(() => usePlayerPhoneActions("room", "wolf"));
+    bus.sent.length = 0;
+    act(() => vi.advanceTimersByTime(60000));
+    expect(bus.sent).toHaveLength(0);
+    visibility.mockReturnValue("visible");
+    act(() => document.dispatchEvent(new Event("visibilitychange")));
+    expect(bus.sent.filter((message) => message.event === "request")).toHaveLength(1);
+  });
+
   it("mirrors open player action screens, recovers a GM reload, and closes both devices", () => {
     const onClose = vi.fn();
     const gm = renderHook(() => useGMPlayerActionMirrors("room", true, () => true));

@@ -6016,6 +6016,7 @@ const GMRoom = () => {
                   monkeyDisabled={monkeyDisabled}
                   onMonkeyDisabledToggle={() => { setMonkeyDisabled((v) => !v); markScriptRoleAction("v26"); }}
                   showFoxCheckbox={nightNumber > 1}
+                  nightNumber={nightNumber}
                   playerEffects={displayedPlayerEffects}
                   gameCyclePhase={gameCyclePhase}
                   availableEffects={getAvailableEffects}
@@ -6322,6 +6323,7 @@ const GMRoom = () => {
                                   flexible: {
                                     objectiveRoleId,
                                     effects,
+                                    nightNumber,
                                   },
                                 }).src}
                                 alt={roleLabel(roleDef.id)}

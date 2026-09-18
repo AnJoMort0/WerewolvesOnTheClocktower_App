@@ -197,12 +197,13 @@ const PlayerView = () => {
     const roomId = player.room_id;
 
     const refreshPlayerState = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("players")
         .select("name, character, is_alive, room_id")
         .eq("id", playerId)
-        .single();
+        .maybeSingle();
 
+      if (error) return;
       if (!data) {
         setRemoved(true);
         return;
@@ -238,63 +239,88 @@ const PlayerView = () => {
   useEffect(() => {
     if (!playerId) return;
 
+    let cancelled = false;
+    let refreshing = false;
     const fetchPlayer = async () => {
-      const { data } = await supabase
-        .from("players")
-        .select("name, character, is_alive, room_id")
-        .eq("id", playerId)
-        .single();
+      if (cancelled || refreshing || !navigator.onLine) return;
+      refreshing = true;
+      try {
+        const { data, error } = await supabase
+          .from("players")
+          .select("name, character, is_alive, room_id")
+          .eq("id", playerId)
+          .maybeSingle();
 
-      if (!data) {
-        setRemoved(true);
-        return;
-      }
-      setPlayer(data);
-
-      const { data: roomData } = await supabase
-        .from("rooms")
-        .select("status, language, player_action_state, phase_state, timer_state, game_over_state")
-        .eq("id", data.room_id)
-        .single();
-      if (roomData) {
-        setRoomStatus(roomData.status);
-        const lang = (roomData as { language?: string }).language;
-        if (isLanguage(lang)) setLanguage(lang);
-        const durable = roomData as unknown as {
-          phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
-          timer_state?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;
-          game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat">; gameLog?: unknown } | null;
-          player_action_state?: PlayerActionState | null;
-        };
-        applyRoomPlayerActionState(durable.player_action_state);
-        if (durable.phase_state) setPhaseInfo(durable.phase_state);
-        if (durable.timer_state) setTimerState(durable.timer_state);
-        if (durable.game_over_state?.kind) {
-          const outcome = durable.game_over_state.perPlayer?.[playerId] ?? "defeat";
-          gameOverEventRef.current = `${durable.game_over_state.kind}:${outcome}`;
-          setGameOver({
-            kind: durable.game_over_state.kind,
-            outcome,
-          });
-          setGameLogSnapshot(normalizeGameLogSnapshot(durable.game_over_state.gameLog));
-          setGameOverDismissed(false);
-        } else {
-          gameOverEventRef.current = null;
-          setGameOver(null);
-          setGameOverDismissed(false);
-          setGameLogOpen(false);
-          setGameLogSnapshot(null);
+        if (cancelled || error) return;
+        if (!data) {
+          setRemoved(true);
+          return;
         }
-      }
+        setPlayer((previous) => {
+          if (previous && previous.character !== data.character) setCharacterKey((key) => key + 1);
+          return data;
+        });
 
-      const { data: allPlayers } = await supabase
-        .from("players")
-        .select("id, name, seat_position, is_alive")
-        .eq("room_id", data.room_id)
-        .order("created_at");
-      if (allPlayers) setRoomPlayers(allPlayers);
+        const { data: roomData } = await supabase
+          .from("rooms")
+          .select("status, language, player_action_state, phase_state, timer_state, game_over_state")
+          .eq("id", data.room_id)
+          .single();
+        if (cancelled) return;
+        if (roomData) {
+          setRoomStatus(roomData.status);
+          const lang = (roomData as { language?: string }).language;
+          if (isLanguage(lang)) setLanguage(lang);
+          const durable = roomData as unknown as {
+            phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
+            timer_state?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;
+            game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat">; gameLog?: unknown } | null;
+            player_action_state?: PlayerActionState | null;
+          };
+          applyRoomPlayerActionState(durable.player_action_state);
+          if (durable.phase_state) setPhaseInfo(durable.phase_state);
+          if (durable.timer_state) setTimerState(durable.timer_state);
+          if (durable.game_over_state?.kind) {
+            const outcome = durable.game_over_state.perPlayer?.[playerId] ?? "defeat";
+            gameOverEventRef.current = `${durable.game_over_state.kind}:${outcome}`;
+            setGameOver({
+              kind: durable.game_over_state.kind,
+              outcome,
+            });
+            setGameLogSnapshot(normalizeGameLogSnapshot(durable.game_over_state.gameLog));
+            setGameOverDismissed(false);
+          } else {
+            gameOverEventRef.current = null;
+            setGameOver(null);
+            setGameOverDismissed(false);
+            setGameLogOpen(false);
+            setGameLogSnapshot(null);
+          }
+        }
+
+        const { data: allPlayers } = await supabase
+          .from("players")
+          .select("id, name, seat_position, is_alive")
+          .eq("room_id", data.room_id)
+          .order("created_at");
+        if (!cancelled && allPlayers) setRoomPlayers(allPlayers);
+      } finally {
+        refreshing = false;
+      }
     };
-    fetchPlayer();
+    const recover = () => {
+      if (document.visibilityState !== "hidden") void fetchPlayer();
+    };
+    window.addEventListener("focus", recover);
+    window.addEventListener("online", recover);
+    document.addEventListener("visibilitychange", recover);
+    const cleanupRecovery = () => {
+      cancelled = true;
+      window.removeEventListener("focus", recover);
+      window.removeEventListener("online", recover);
+      document.removeEventListener("visibilitychange", recover);
+    };
+    void fetchPlayer();
 
     const playerChannel = supabase
       .channel(`player-${playerId}`)
@@ -317,12 +343,13 @@ const PlayerView = () => {
       .on(
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "players", filter: `id=eq.${playerId}` },
-        () => {
+        (payload) => {
+          if (payload.old.id !== playerId) return;
           setRemoved(true);
           clearPlayerSession();
         }
       )
-      .subscribe();
+      .subscribe((status) => { if (status === "SUBSCRIBED") recover(); });
 
     const roomId = player?.room_id ?? getPlayerSession()?.roomId ?? null;
     let roomChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -540,6 +567,7 @@ const PlayerView = () => {
         }).subscribe();
 
       return () => {
+        cleanupRecovery();
         supabase.removeChannel(playerChannel);
         if (roomChannel) supabase.removeChannel(roomChannel);
         if (playersChannel) supabase.removeChannel(playersChannel);
@@ -558,6 +586,7 @@ const PlayerView = () => {
     }
 
     return () => {
+      cleanupRecovery();
       supabase.removeChannel(playerChannel);
       if (roomChannel) supabase.removeChannel(roomChannel);
       if (playersChannel) supabase.removeChannel(playersChannel);
@@ -602,6 +631,7 @@ const PlayerView = () => {
         ? {
           objectiveRoleId: characterMetadata.objectiveRole ?? characterMetadata.ownerRole,
           effects: characterMetadata.objectiveEffects,
+          nightNumber: phaseInfo?.number ?? 1,
         }
         : undefined,
     }).src

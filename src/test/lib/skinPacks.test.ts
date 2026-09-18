@@ -55,6 +55,29 @@ describe("skin packs", () => {
     }).variant).toBe("solo");
   });
 
+  it.each(["a02", "f01", "f02"] as const)("keeps %s neutral before its side is chosen", (roleId) => {
+    for (const objectiveRoleId of [null, roleId]) {
+      expect(resolveRoleImage(roleId, { flexible: { objectiveRoleId, nightNumber: 1 } })).toEqual({
+        src: ROLES[roleId].image, source: "default",
+      });
+    }
+    expect(resolveRoleImage(roleId, { flexible: { effects: ["evil_being"], nightNumber: 1 } }).variant).toBe("evil");
+    expect(resolveRoleImage(roleId, { flexible: { objectiveRoleId: "v01", nightNumber: 2 } }).variant).toBe("good");
+  });
+
+  it("keeps an ownerless Dog neutral on later nights and resolves an owner's known side", () => {
+    expect(resolveRoleImage("a02", { flexible: { objectiveRoleId: "a02", nightNumber: 3 } }).source).toBe("default");
+    expect(resolveRoleImage("a02", { flexible: { objectiveRoleId: "f02", nightNumber: 1 } }).source).toBe("default");
+    expect(resolveRoleImage("a02", { flexible: { objectiveRoleId: "f02", nightNumber: 2 } }).variant).toBe("good");
+    expect(resolveRoleImage("a02", { flexible: { objectiveRoleId: "e01" } }).variant).toBe("evil");
+    expect(resolveRoleImage("a02", { flexible: { objectiveRoleId: "s02" } }).variant).toBe("solo");
+  });
+
+  it.each(["f01", "f02"] as const)("shows %s's chosen side from the second night", (roleId) => {
+    expect(resolveRoleImage(roleId, { flexible: { nightNumber: 2 } }).variant).toBe("good");
+    expect(resolveRoleImage(roleId, { flexible: { nightNumber: 2, effects: ["evil_being"] } }).variant).toBe("evil");
+  });
+
   it("offers rulebook previews for static, seasonal, and flexible alternatives", () => {
     const options = getRulebookSkinOptions("a02", "pt", "seasonal").map((option) => option.value);
     expect(options).toContain("default");

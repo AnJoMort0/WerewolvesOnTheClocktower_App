@@ -130,6 +130,7 @@ interface PlayerCircleProps {
   dogWolfStates?: DogWolfStates;
   onDogActorIdolUseToggle?: (playerId: string, index: number) => void;
   allowFlexibleRoleSkins?: boolean;
+  nightNumber?: number;
 }
 
 export const PlayerCircle = ({
@@ -201,6 +202,7 @@ export const PlayerCircle = ({
   dogWolfStates = {},
   onDogActorIdolUseToggle,
   allowFlexibleRoleSkins = true,
+  nightNumber = 1,
 }: PlayerCircleProps) => {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const roleLabel = useRoleLabel();
@@ -327,6 +329,7 @@ export const PlayerCircle = ({
       ? {
         objectiveRoleId: objectiveRoleAssignments?.[playerId] ?? baseRoleAssignments?.[playerId] ?? roleAssignments?.[playerId] ?? null,
         effects: _playerEffects[playerId] ?? null,
+        nightNumber,
       }
       : undefined,
   }).src;

@@ -22,19 +22,26 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   current.current = { ...current.current, world, onAction, onComplete, enabled, contextKey };
   const channels = useRef(new Map<string, Channel>());
   const acknowledgments = useRef(new Map<string, string>());
+  const publishedViews = useRef(new Map<string, string>());
   const revision = useRef(Date.now());
   const monkeySessions = useRef<Record<string, PhoneSession>>({});
   const storageKey = roomId ? `wotct_phone_${roomId}` : null;
 
-  const publish = useCallback((playerId?: string) => {
+  const publish = useCallback((playerId?: string, force = false) => {
     const state = current.current;
     for (const [id, channel] of channels.current) {
       if (playerId && id !== playerId) continue;
+      const view = {
+        session: state.enabled ? getPhoneView(state.session, id, state.world) : null,
+        acknowledged: acknowledgments.current.get(id),
+      };
+      const signature = JSON.stringify(view);
+      if (!force && publishedViews.current.get(id) === signature) continue;
+      publishedViews.current.set(id, signature);
       revision.current = Math.max(Date.now(), revision.current + 1);
       void channel.send({ type: "broadcast", event: "state", payload: {
         revision: revision.current,
-        session: state.enabled ? getPhoneView(state.session, id, state.world) : null,
-        acknowledged: acknowledgments.current.get(id),
+        ...view,
       } });
     }
   }, []);
@@ -103,19 +110,25 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
       const channel = supabase.channel(topic(roomId, playerId));
       channels.current.set(playerId, channel);
       channel.on("broadcast", { event: "request" }, ({ payload }) => {
-        if (payload?.type === "sync") { publish(playerId); return; }
+        if (payload?.type === "sync") { publish(playerId, true); return; }
         if (!current.current.enabled || !payload || typeof payload.id !== "string") return;
+        const retry = acknowledgments.current.get(playerId) === payload.id;
         const result = applyPhoneCommand(current.current.session, playerId, payload as PhoneCommand, current.current.world);
         acknowledgments.current.set(playerId, payload.id);
         commit(result.session);
         if (result.action) current.current.onAction(result.action);
         if (result.completedSession) current.current.onComplete?.(result.completedSession);
-      }).subscribe((status) => { if (status === "SUBSCRIBED") publish(playerId); });
+        // A retried command must receive its acknowledgment even when its view
+        // has not changed (the previous response may have been lost).
+        if (retry) publish(playerId, true);
+      }).subscribe((status) => { if (status === "SUBSCRIBED") publish(playerId, true); });
     }
     const activeChannels = channels.current;
+    const activePublishedViews = publishedViews.current;
     return () => {
       for (const channel of activeChannels.values()) void supabase.removeChannel(channel);
       activeChannels.clear();
+      activePublishedViews.clear();
     };
   }, [commit, playerIdsKey, publish, roomId]);
 
@@ -203,6 +216,8 @@ export function usePlayerPhoneActions(roomId?: string, playerId?: string) {
   const sequence = useRef(0);
   const lastRevision = useRef(0);
   const lastResponse = useRef(0);
+  const activeSession = useRef<PhoneView | null>(null);
+  const nextSyncAt = useRef(0);
 
   useEffect(() => {
     setSession(null);
@@ -210,13 +225,22 @@ export function usePlayerPhoneActions(roomId?: string, playerId?: string) {
     pendingCommand.current = null;
     lastRevision.current = 0;
     lastResponse.current = 0;
+    activeSession.current = null;
+    nextSyncAt.current = 0;
     setConnected(false);
     if (!roomId || !playerId) return;
     const channel = supabase.channel(topic(roomId, playerId));
     channelRef.current = channel;
-    const sync = () => {
-      if (Date.now() - lastResponse.current > 8000) setConnected(false);
+    // Stagger background recovery checks across phones. Pushes still open and
+    // update actions immediately; open actions and pending commands recover quickly.
+    const stagger = Array.from(playerId).reduce((hash, character) => (hash * 31 + character.charCodeAt(0)) >>> 0, 0) % 2500;
+    const sync = (force = false) => {
+      if (!navigator.onLine || document.visibilityState === "hidden") return;
+      const now = Date.now();
+      if (!force && now < nextSyncAt.current) return;
+      if (now - lastResponse.current > (activeSession.current ? 8000 : 70000)) setConnected(false);
       void channel.send({ type: "broadcast", event: "request", payload: pendingCommand.current ?? { type: "sync" } });
+      nextSyncAt.current = now + (pendingCommand.current || activeSession.current ? 2500 : 30000 + stagger);
     };
     channel.on("broadcast", { event: "state" }, ({ payload }) => {
       if (typeof payload?.revision !== "number" || payload.revision <= lastRevision.current) return;
@@ -224,20 +248,31 @@ export function usePlayerPhoneActions(roomId?: string, playerId?: string) {
       lastResponse.current = Date.now();
       setConnected(true);
       setSession(payload.session ?? null);
+      activeSession.current = payload.session ?? null;
       if (!payload.session || pendingCommand.current?.sessionId !== payload.session.id
         || payload.acknowledged === pendingCommand.current?.id) {
         pendingCommand.current = null;
         setPending(false);
       }
+      nextSyncAt.current = Date.now() + (pendingCommand.current || activeSession.current ? 2500 : 30000 + stagger);
     }).subscribe((status) => {
       if (status !== "SUBSCRIBED") setConnected(false);
-      if (status === "SUBSCRIBED") sync();
+      if (status === "SUBSCRIBED") sync(true);
     });
-    const interval = window.setInterval(sync, 2500);
-    window.addEventListener("focus", sync);
+    const interval = window.setInterval(() => sync(), 2500);
+    const recover = () => sync(true);
+    const reconnect = () => { setConnected(false); recover(); };
+    const disconnected = () => setConnected(false);
+    window.addEventListener("focus", recover);
+    window.addEventListener("online", reconnect);
+    window.addEventListener("offline", disconnected);
+    document.addEventListener("visibilitychange", recover);
     return () => {
       window.clearInterval(interval);
-      window.removeEventListener("focus", sync);
+      window.removeEventListener("focus", recover);
+      window.removeEventListener("online", reconnect);
+      window.removeEventListener("offline", disconnected);
+      document.removeEventListener("visibilitychange", recover);
       void supabase.removeChannel(channel);
       channelRef.current = null;
     };
@@ -249,6 +284,7 @@ export function usePlayerPhoneActions(roomId?: string, playerId?: string) {
     const command: PhoneCommand = { id: createPlayerActionRequestId(playerId ?? "phone", targetPlayerId ?? type), sessionId: session.id, sequence: sequence.current, type, targetPlayerId };
     pendingCommand.current = command;
     setPending(true);
+    nextSyncAt.current = Date.now() + 2500;
     void channelRef.current.send({ type: "broadcast", event: "request", payload: command });
   }, [playerId, session]);
 

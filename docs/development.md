@@ -40,6 +40,8 @@ AI-assisted development has been used for implementation, first through Lovable 
 
 ## Technology
 
+For measured asset/database sizes, Realtime message estimates, free-tier capacity, and outstanding reliability work, see the [free-tier audit](free-tier-audit.md).
+
 - Frontend: React, TypeScript, Vite, Tailwind CSS, and shadcn/ui
 - Package manager: npm with `package-lock.json`
 - Backend and shared data: Supabase Cloud

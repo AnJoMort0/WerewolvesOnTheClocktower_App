@@ -28,6 +28,7 @@ export interface ResolveRoleImageOptions {
   flexible?: {
     objectiveRoleId?: RoleId | null;
     effects?: Iterable<string> | null;
+    nightNumber?: number;
   };
 }
 
@@ -228,17 +229,22 @@ function resolveFlexibleVariant(
   const objectiveRoleId = flexible?.objectiveRoleId ?? null;
   const isWerewolfObjective = !!objectiveRoleId && WEREWOLF_ROLES.includes(objectiveRoleId);
   const isEvilObjective = !!objectiveRoleId && EVIL_ROLES.includes(objectiveRoleId);
+  const isEvil = isWerewolfObjective || isEvilObjective || effects.has("werewolf_turned") || effects.has("evil_being");
+  // These characters choose their side on night two. Their own role ID (or
+  // missing phone metadata) does not mean they have already joined Villagers.
+  const isPendingObjective = objectiveRoleId === "a02"
+    || ((objectiveRoleId === "f01" || objectiveRoleId === "f02") && (flexible.nightNumber ?? 1) < 2);
+  const hasGoodObjective = !!objectiveRoleId && !isPendingObjective;
 
   if (roleId === "a02") {
     if (objectiveRoleId === "s02") return "solo";
-    if (isWerewolfObjective || isEvilObjective || effects.has("werewolf_turned") || effects.has("evil_being")) return "evil";
-    return "good";
+    if (isEvil) return "evil";
+    return hasGoodObjective ? "good" : null;
   }
 
   if (roleId === "f01" || roleId === "f02") {
-    return isWerewolfObjective || isEvilObjective || effects.has("werewolf_turned") || effects.has("evil_being")
-      ? "evil"
-      : "good";
+    if (isEvil) return "evil";
+    return hasGoodObjective || (flexible.nightNumber ?? 1) >= 2 ? "good" : null;
   }
 
   if (roleId === "l03") {
