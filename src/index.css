@@ -308,30 +308,24 @@
 
   .rulebook-content .rulebook-character-group {
     scroll-margin-top: 1rem;
+    max-width: calc(150px + 72ch + 1.7rem + 7px);
+    margin-inline: auto;
   }
 
   .rulebook-content .rulebook-group-heading {
     margin-top: 2.5rem;
   }
 
-  .rulebook-content .rulebook-navigation {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .rulebook-content .rulebook-navigation a {
-    border: 1px solid hsl(var(--gold) / 0.25);
-    border-radius: 999px;
-    padding: 0.3rem 0.8rem;
-    font-size: 0.9rem;
-    text-decoration: none;
-  }
-
   .rulebook-content .rulebook-basics {
     max-width: 78ch;
-    margin-bottom: 2.5rem;
+    margin: 0 auto 2.5rem;
+  }
+
+  .rulebook-content .rulebook-basics p,
+  .rulebook-content .role-description p,
+  .rulebook-content .role-lore-body p {
+    text-align: justify;
+    hyphens: auto;
   }
 
   .rulebook-content .rulebook-basics ul { list-style: disc; }
@@ -347,17 +341,24 @@
     font-weight: 400;
   }
 
+  .rulebook-content .rule-lore { font-size: 0.85em; }
+
   .rulebook-content .rulebook-story {
-    border-left: 2px solid hsl(var(--gold) / 0.5);
-    padding: 0.25rem 1rem;
-    margin: 1rem 0 1.5rem;
+    border-left: 1px solid hsl(var(--gold) / 0.35);
+    padding: 0.15rem 0.75rem;
+    margin: 0.75rem 0 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
   }
+
+  .rulebook-content .rulebook-story p { margin: 0.45rem 0; }
 
   .rulebook-content .character-table {
     display: grid;
     width: 100%;
+    max-width: calc(150px + 72ch + 1.7rem + 7px);
     gap: 0;
-    margin: 1rem 0 1.75rem;
+    margin: 1rem auto 1.75rem;
     overflow: hidden;
     border-radius: 0.5rem;
   }
@@ -459,7 +460,7 @@
     font-weight: 400;
   }
 
-  .rulebook-content .role-description { max-width: 72ch; }
+  .rulebook-content .role-description { width: 100%; }
   .rulebook-content .role-description p { margin: 0.38rem 0; }
   .rulebook-content .role-description .rule-red { color: #a61919; }
   .rulebook-content .role-description .role-objective {
@@ -493,11 +494,10 @@
   .rulebook-content .role-lore[open] .lore-chevron { transform: rotate(180deg); }
 
   .rulebook-content .role-lore-body {
-    max-width: 78ch;
     padding-bottom: 0.4rem;
     color: #664611;
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-style: italic;
     line-height: 1.7;
   }
@@ -519,6 +519,9 @@
 
   @media (max-width: 720px) {
     .rulebook-content { font-size: 1rem; }
+    .rulebook-content .rulebook-basics p,
+    .rulebook-content .role-description p,
+    .rulebook-content .role-lore-body p { text-align: left; }
     .rulebook-content .role-row { grid-template-columns: 112px minmax(0, 1fr); }
     .rulebook-content .role-image-cell { padding: 0.35rem; }
     .rulebook-content .role-image-cell img { width: 96px; }

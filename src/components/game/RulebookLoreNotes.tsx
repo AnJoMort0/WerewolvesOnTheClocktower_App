@@ -59,6 +59,7 @@ export function RulebookLoreNotes({ container, contentKey, language }: {
     container.addEventListener("mouseout", out);
     container.addEventListener("toggle", toggle, true);
     container.parentElement?.addEventListener("scroll", close);
+    window.addEventListener("scroll", close);
     return () => {
       cancelClose();
       container.removeEventListener("click", click);
@@ -66,6 +67,7 @@ export function RulebookLoreNotes({ container, contentKey, language }: {
       container.removeEventListener("mouseout", out);
       container.removeEventListener("toggle", toggle, true);
       container.parentElement?.removeEventListener("scroll", close);
+      window.removeEventListener("scroll", close);
     };
   }, [cancelClose, close, closeHover, container, contentKey]);
 

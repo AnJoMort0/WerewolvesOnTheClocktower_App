@@ -277,46 +277,28 @@ export function assignRoles(playerCount: number, advancedEnabled: boolean = fals
 
   // Mix villagers, flexible/solo/evil support, and enabled advanced characters
   // in one draw. Previously villagers consumed every slot before advanced mode.
-  // Simple roles and complete families have a smaller base weight, but remain
-  // available in ordinary games (including the seasonal Christmas Brothers).
-  const pool: RoleId[] = [...VILLAGER_UNIQUE, ...OTHER_UNIQUE, ...LAME_SINGLES, "l03", "l04", ...(advancedEnabled ? ADVANCED_ROLES : [])];
-  const weight = (id: RoleId) => (ADVANCED_ROLES.includes(id) ? 2 : ROLES[id].category === "l" ? 0.6 : 1)
+  // Lame Characters are strictly fallback options. Seasonal preference changes
+  // odds within an eligible pool; it never moves a filler into the main draw.
+  const pool: RoleId[] = [...VILLAGER_UNIQUE, ...OTHER_UNIQUE, ...(advancedEnabled ? ADVANCED_ROLES : [])];
+  const fallbackPool: RoleId[] = [...LAME_SINGLES, "l03", "l04"];
+  const weight = (id: RoleId) => (ADVANCED_ROLES.includes(id) ? 2 : 1)
     * (preferredRoles.has(id) ? 1.25 : 1);
+  const eligibleFrom = (candidates: RoleId[]) => candidates.filter((id) => !assigned.has(id)
+    && roles.length + (ROLES[id].groupSize ?? 1) <= playerCount
+    && canRandomlyAssignRole(id, roles, playerCount));
   while (roles.length < playerCount) {
-    const eligible = pool.filter((id) => !assigned.has(id)
-      && roles.length + (ROLES[id].groupSize ?? 1) <= playerCount
-      && canRandomlyAssignRole(id, roles, playerCount));
-    if (eligible.length === 0) break;
+    const mainOptions = eligibleFrom(pool);
+    const eligible = mainOptions.length > 0 ? mainOptions : eligibleFrom(fallbackPool);
+    if (eligible.length === 0) {
+      // Repeat Ordinary Townsfolk only after every eligible unique option is used.
+      roles.push("l01");
+      continue;
+    }
     const id = weightedShuffle(eligible, weight)[0];
-    // A group is drawn as one character option, then occupies all of its seats.
+    // Families occupy exactly two/three seats; never generate a partial family.
     roles.push(...Array.from({ length: ROLES[id].groupSize ?? 1 }, () => id));
     assigned.add(id);
-  }
-
-  // Use simple singletons once the eligible main pool is exhausted.
-  for (const lameId of LAME_SINGLES) {
-    if (roles.length >= playerCount) break;
-    if (!assigned.has(lameId)) {
-      roles.push(lameId);
-      assigned.add(lameId);
-    }
-  }
-
-  if (roles.length + 2 <= playerCount && !assigned.has("l03")) {
-    // Sisters occupy exactly two seats; never generate a partial family.
-    roles.push("l03", "l03");
-    assigned.add("l03");
-  }
-
-  if (roles.length + 3 <= playerCount && !assigned.has("l04")) {
-    // Brothers occupy exactly three seats.
-    roles.push("l04", "l04", "l04");
-    assigned.add("l04");
-  }
-
-  while (roles.length < playerCount) {
-    // Ordinary Townsfolk may repeat to fill any remaining seats.
-    roles.push("l01");
+    // Recheck the main pool after every filler too: it may unlock a dependent role.
   }
 
   return shuffle(roles);

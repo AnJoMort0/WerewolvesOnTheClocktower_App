@@ -76,6 +76,41 @@ describe("assignRoles werewolf balance", () => {
 });
 
 describe("random assignment eligibility", () => {
+  it("never draws Lame Characters in normal-sized games, even with seasonal preference", () => {
+    let seed = 916;
+    const random = vi.spyOn(Math, "random").mockImplementation(() => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    });
+    try {
+      for (const advanced of [false, true]) {
+        for (const count of [8, 10, 12, 16, 24]) {
+          for (let draw = 0; draw < 40; draw++) {
+            const roles = assignRoles(count, advanced, ["l02", "l03", "l04", "l05", "l06"]);
+            expect(roles.filter((id) => ROLES[id].category === "l")).toEqual([]);
+          }
+        }
+      }
+    } finally {
+      random.mockRestore();
+    }
+  });
+
+  it("uses Lame Characters once the main pool is exhausted and keeps complete families", () => {
+    for (const advanced of [false, true]) {
+      const roles = assignRoles(100, advanced, ["l04"]);
+      expect(roles).toHaveLength(100);
+      expect(roles.filter((id) => id === "l03")).toHaveLength(2);
+      expect(roles.filter((id) => id === "l04")).toHaveLength(3);
+      expect(roles).toContain("l01");
+      for (const id of ["l02", "l05", "l06"] as const) expect(roles).toContain(id);
+      for (const role of Object.values(ROLES)) {
+        if (role.category === "l" || WEREWOLF_ROLES.includes(role.id) || (!advanced && role.category === "a")) continue;
+        if (canRandomlyAssignRole(role.id, roles, 100)) expect(roles).toContain(role.id);
+      }
+    }
+  });
+
   it("enforces contextual and player-count thresholds", () => {
     expect(canRandomlyAssignRole("v01", ["v07"], 12)).toBe(false);
     expect(canRandomlyAssignRole("v01", ["v07", "v08"], 12)).toBe(true);
@@ -123,15 +158,13 @@ describe("random assignment eligibility", () => {
       });
       let advanced = 0;
       let seasonal = 0;
-      let brothers = 0;
       for (let draw = 0; draw < 1500; draw++) {
         const roles = assignRoles(12, true, preferred);
         if (roles.some((id) => ROLES[id].category === "a")) advanced++;
         if (roles.includes("v24")) seasonal++;
-        if (roles.includes("l04")) brothers++;
       }
       random.mockRestore();
-      return { advanced, seasonal, brothers };
+      return { advanced, seasonal };
     };
     const baseline = sample();
     const preferred = sample(["v24"]);
@@ -139,8 +172,5 @@ describe("random assignment eligibility", () => {
     expect(baseline.advanced).toBeLessThan(1500);
     expect(preferred.seasonal).toBeGreaterThan(baseline.seasonal);
     expect(preferred.seasonal).toBeLessThan(1500);
-    const christmas = sample(["l04"]);
-    expect(christmas.brothers).toBeGreaterThan(baseline.brothers);
-    expect(christmas.brothers).toBeLessThan(1500);
   });
 });

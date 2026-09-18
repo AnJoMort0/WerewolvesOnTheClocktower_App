@@ -127,7 +127,7 @@ export const RULEBOOK_TEXT = {
         { id: "solo", label: { pt: `Personagens independentes`, fr: `Personnages indépendants`, en: `Independent characters` } },
         { id: "flexible", label: { pt: `Personagens flexíveis`, fr: `Personnages flexibles`, en: `Flexible characters` } },
         { id: "complex", label: { pt: `Personagens complexos`, fr: `Personnages complexes`, en: `Complex characters` } },
-        { id: "lame", label: { pt: `Personagens forretas`, fr: `Personnages nuls`, en: `Simple characters` } },
+        { id: "lame", label: { pt: `Personagens forretas`, fr: `Personnages nuls`, en: `Lame characters` } },
         { id: "extra", label: { pt: `Extras`, fr: `Extras`, en: `Extras` } }
     ],
     teamLabels: {

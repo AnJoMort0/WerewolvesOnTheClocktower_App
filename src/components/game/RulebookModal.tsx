@@ -142,6 +142,7 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
         <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-6">
           <article
             ref={setArticleElement}
+            lang={language}
             className="rulebook-content mx-auto max-w-6xl py-4"
             onClick={handleArticleClick}
             dangerouslySetInnerHTML={{ __html: html }}

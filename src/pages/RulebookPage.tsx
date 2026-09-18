@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { useSkinPack } from "@/lib/skinPackContext";
 import type { RulebookSkinPreviewValue } from "@/lib/skinPacks";
 import { handleRulebookSkinPreviewChange } from "@/lib/rulebookSkinPreview";
 import type { RulebookCharacterId } from "@/lib/rulebookContent";
+import { RulebookLoreNotes } from "@/components/game/RulebookLoreNotes";
 
 function getInitialLanguage(searchLanguage: string | null): Language {
   if (searchLanguage) return coerceLanguage(searchLanguage);
@@ -23,14 +24,14 @@ export default function RulebookPage() {
   const language = getInitialLanguage(searchParams.get("lang"));
   const { skinPackId } = useSkinPack();
   const [skinPreviewOverrides, setSkinPreviewOverrides] = useState<Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>>({});
-  const articleRef = useRef<HTMLElement>(null);
+  const [articleElement, setArticleElement] = useState<HTMLElement | null>(null);
   const html = useMemo(
     () => getRulebookHtml(language, null, { skinPackId, skinPreviewOverrides }),
     [language, skinPackId, skinPreviewOverrides],
   );
 
   useEffect(() => {
-    const article = articleRef.current;
+    const article = articleElement;
     if (!article) return;
 
     const handleChange = (event: Event) => {
@@ -39,7 +40,7 @@ export default function RulebookPage() {
 
     article.addEventListener("change", handleChange);
     return () => article.removeEventListener("change", handleChange);
-  }, []);
+  }, [articleElement]);
 
   useEffect(() => {
     const targetId = roleId && isRulebookCharacterId(roleId) ? roleId : RULEBOOK_TOP_ID;
@@ -91,10 +92,12 @@ export default function RulebookPage() {
         </div>
       </div>
       <article
-        ref={articleRef}
+        ref={setArticleElement}
+        lang={language}
         className="rulebook-content mx-auto max-w-6xl pb-16"
         dangerouslySetInnerHTML={{ __html: html }}
       />
+      {articleElement && <RulebookLoreNotes container={articleElement} contentKey={html} language={language} />}
       <Button
         type="button"
         size="icon"
