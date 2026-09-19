@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage, getGameOver, getWinLabel, type WinKind } from "@/lib/i18n";
+import { useModalBackdrop } from "@/lib/modalBackdrop";
 
 interface GameOverModalProps {
   open: boolean;
@@ -12,14 +13,16 @@ interface GameOverModalProps {
 
 export const GameOverModal = ({ open, kind, outcome, onDismiss }: GameOverModalProps) => {
   const lang = useLanguage();
+  const backdrop = useModalBackdrop();
   return (
     <AnimatePresence>
       {open && kind && (
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={backdrop.opaque ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
+          exit={backdrop.opaque ? undefined : { opacity: 0 }}
+          data-modal-backdrop={backdrop.opaque ? "opaque" : "blurred"}
+          className={`fixed inset-0 z-[80] flex items-center justify-center p-4 ${backdrop.className}`}
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}

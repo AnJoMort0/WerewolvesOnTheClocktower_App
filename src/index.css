@@ -1,4 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+@import "@fontsource/cinzel/400.css";
+@import "@fontsource/cinzel/500.css";
+@import "@fontsource/cinzel/600.css";
+@import "@fontsource/cinzel/700.css";
+@import "@fontsource/crimson-text/400.css";
+@import "@fontsource/crimson-text/600.css";
+@import "@fontsource/crimson-text/700.css";
+@import "@fontsource/crimson-text/400-italic.css";
 
 @tailwind base;
 @tailwind components;

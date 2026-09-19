@@ -35,7 +35,7 @@ const JoinRoom = () => {
         return;
       }
       const roomLang = (data as { language?: string }).language;
-      if (roomLang === "fr" || roomLang === "pt") setLang(roomLang);
+      if (roomLang === "en" || roomLang === "fr" || roomLang === "pt") setLang(roomLang);
       // Try the bounded current-player session first, regardless of room status.
       const codeKey = code.toUpperCase();
       const storedSession = getPlayerSession({ roomId: data.id, roomCode: codeKey });

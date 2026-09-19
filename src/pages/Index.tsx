@@ -12,6 +12,7 @@ import { SUPPORTED_LANGUAGES, coerceLanguage, getToast, t, type Language } from 
 import { toast } from "sonner";
 import { cleanupObsoleteGameStorage } from "@/lib/playerSession";
 import { usePwaInstallPrompt } from "@/lib/pwaInstall";
+import { getLanConfig, lanText, unlockLanHost, prepareLanStorage } from "@/lib/lanMode";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,9 @@ const Index = () => {
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hostPin, setHostPin] = useState("");
+  const [lanHost, setLanHost] = useState(getLanConfig()?.host ?? false);
+  const lan = getLanConfig();
   const [language, setLanguage] = useState<Language>(() => {
     const stored = localStorage.getItem("preferred_language");
     return coerceLanguage(stored);
@@ -40,6 +44,7 @@ const Index = () => {
   const { isInstalled, install } = usePwaInstallPrompt();
 
   const createRoom = async () => {
+    if (loading) return;
     cleanupObsoleteGameStorage();
     setLoading(true);
     localStorage.setItem("preferred_language", language);
@@ -59,7 +64,7 @@ const Index = () => {
       }
 
       if (error?.code !== "23505") {
-        console.error("Failed to create room in Supabase.", {
+        console.error("Failed to create room.", {
           code: error?.code,
           message: error?.message,
           details: error?.details,
@@ -106,6 +111,7 @@ const Index = () => {
           <p className="text-muted-foreground text-lg">
             {t("appTagline", language)}
           </p>
+          {lan && <p className="text-xs text-amber-300/80">{lanText[language].mode}</p>}
         </div>
 
         <motion.div
@@ -132,13 +138,22 @@ const Index = () => {
             </Select>
           </div>
 
+          {lan && !lanHost && (
+            <div className="space-y-2">
+              <Input type="password" inputMode="numeric" value={hostPin} onChange={event => setHostPin(event.target.value)} placeholder={lanText[language].pin} aria-label={lanText[language].pin} />
+              <Button variant="secondary" className="w-full" onClick={async () => {
+                if (await unlockLanHost(hostPin)) { await prepareLanStorage(); setLanHost(true); }
+                else toast.error(lanText[language].error);
+              }}>{lanText[language].unlock}</Button>
+            </div>
+          )}
           <Button
             onClick={createRoom}
-            disabled={loading}
+            disabled={loading || (!!lan && !lanHost)}
             className="w-full h-14 text-lg font-display tracking-wider bg-primary hover:bg-blood-glow glow-blood transition-all duration-300"
           >
             <Crown className="mr-2 h-5 w-5" />
-            {t("createRoom", language)}
+            {lan ? lanText[language].start : t("createRoom", language)}
           </Button>
 
           <div className="-mt-3">
@@ -162,7 +177,7 @@ const Index = () => {
                 <BookOpen className="mr-2 h-3.5 w-3.5" />
                 {t("rulebook", language)}
               </Button>
-              {!isInstalled && (
+              {!isInstalled && !lan && (
                 <Button
                   type="button"
                   variant="ghost"

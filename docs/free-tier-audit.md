@@ -182,7 +182,7 @@ Measured original artwork totals: roles 124,881,569 bytes, icons 1,954,676 bytes
 
 The existing production output was **5,188,989 bytes across 149 files**. Its main JS was 1,387,963 bytes (463,384 bytes gzip); CSS was 60,099 bytes (11,705 gzip). Browser image downloads depend on what is displayed; eager image URL imports do not automatically fetch every PNG/WebP. A rulebook visit downloads more card images than an ordinary player view. Static delivery is Cloudflare traffic, not Supabase egress.
 
-The service worker caches same-origin responses but is network-first, so it can revalidate/refetch unchanged files. Hashed assets benefit from browser/CDN caching. Offline shell availability is not offline game support: database and live actions still need connectivity.
+The hosted service worker caches same-origin responses but is network-first, so it can revalidate/refetch unchanged files. Hashed assets benefit from browser/CDN caching. Offline shell availability is not offline hosted game support: database and live actions still need connectivity. A separate [offline LAN mode](offline-lan.md), added after this audit, serves the app and game data locally; the cloud usage estimates in this document do not apply to LAN games.
 
 ## 7. Historical data and abuse
 

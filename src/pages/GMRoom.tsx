@@ -32,6 +32,9 @@ import { getActiveSeasonalRoleIds, resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { getScriptOrderIndex } from "@/lib/nightScript";
 import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib/joinUrl";
+import { getLanConfig } from "@/lib/lanMode";
+import { copyText } from "@/lib/clipboard";
+import { OpaqueModalBackdropContext } from "@/lib/modalBackdrop";
 import {
   canWhiteWolfTarget,
   getCircularDistances,
@@ -607,9 +610,9 @@ const GMRoom = () => {
 
   const defaultJoinBaseUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
-    return getDefaultJoinBaseUrl(window.location.origin, import.meta.env.VITE_PUBLIC_APP_URL);
+    return getLanConfig()?.joinBaseUrl || getDefaultJoinBaseUrl(window.location.origin, import.meta.env.VITE_PUBLIC_APP_URL);
   }, []);
-  const joinBaseUrl = normalizeJoinBaseUrl(joinBaseOverride || defaultJoinBaseUrl);
+  const joinBaseUrl = normalizeJoinBaseUrl(getLanConfig()?.joinBaseUrl || joinBaseOverride || defaultJoinBaseUrl);
   const joinUrl = room ? buildJoinUrl(room.code, joinBaseUrl) : "";
   const actorPlayerId = useMemo(
     () => Object.entries(roleAssignments).find(([, role]) => role === "a04")?.[0] ?? null,
@@ -1738,39 +1741,46 @@ const GMRoom = () => {
 
   useEffect(() => {
     if (!roomId) return;
+    let active = true;
+    const applyRoomUpdate = (nextRoom: Partial<Room>) => {
+      if (!active) return;
+      if ("player_action_state" in nextRoom) {
+        const incomingState = normalizePlayerActionState(nextRoom.player_action_state);
+        const nextState = pruneResolvedPlayerActionState(incomingState);
+        setPlayerActionState(nextState);
+        if (JSON.stringify(nextState.requests) !== JSON.stringify(incomingState.requests)) {
+          void supabase.from("rooms").update({ player_action_state: nextState }).eq("id", roomId);
+        }
+      }
+      setRoom((current) => current ? {
+        ...current,
+        status: typeof nextRoom.status === "string" ? nextRoom.status : current.status,
+        language: nextRoom.language ?? current.language,
+        player_action_state: "player_action_state" in nextRoom ? nextRoom.player_action_state ?? null : current.player_action_state,
+      } : current);
+    };
     const channel = supabase
       .channel(`room-${roomId}-player-actions`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomId}` },
-        (payload) => {
-          const nextRoom = payload.new as Partial<Room>;
-          if ("player_action_state" in nextRoom) {
-            const incomingState = normalizePlayerActionState(nextRoom.player_action_state);
-            const nextState = pruneResolvedPlayerActionState(incomingState);
-            setPlayerActionState(nextState);
-            if (JSON.stringify(nextState.requests) !== JSON.stringify(incomingState.requests)) {
-              void supabase.from("rooms").update({ player_action_state: nextState }).eq("id", roomId);
-            }
-          }
-          setRoom((current) => current ? {
-            ...current,
-            status: typeof nextRoom.status === "string" ? nextRoom.status : current.status,
-            language: nextRoom.language ?? current.language,
-            player_action_state: "player_action_state" in nextRoom
-              ? nextRoom.player_action_state ?? null
-              : current.player_action_state,
-          } : current);
-        },
+        (payload) => applyRoomUpdate(payload.new as Partial<Room>),
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (getLanConfig() && status === "SUBSCRIBED") {
+          void supabase.from("rooms").select().eq("id", roomId).single().then(({ data }) => {
+            if (data) applyRoomUpdate(data as unknown as Partial<Room>);
+          });
+        }
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { active = false; supabase.removeChannel(channel); };
   }, [pruneResolvedPlayerActionState, roomId]);
 
   // Fetch & subscribe to players
   useEffect(() => {
     if (!roomId) return;
+    let active = true;
 
     const fetchPlayers = async () => {
       const { data } = await supabase
@@ -1778,7 +1788,7 @@ const GMRoom = () => {
         .select("id, name, seat_position, character, is_alive, is_ready, last_seen_at")
         .eq("room_id", roomId)
         .order("created_at");
-      if (data) {
+      if (data && active) {
         setPlayers(data);
         if (room?.status === "playing" || data.some((p) => p.character)) {
           const assignments: Record<string, RoleId> = {};
@@ -1832,22 +1842,22 @@ const GMRoom = () => {
         { event: "*", schema: "public", table: "players", filter: `room_id=eq.${roomId}` },
         () => fetchPlayers()
       )
-      .subscribe();
+      .subscribe((status) => { if (getLanConfig() && status === "SUBSCRIBED") void fetchPlayers(); });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { active = false; supabase.removeChannel(channel); };
   }, [roomId, room?.status]);
 
-  const copyCode = useCallback(() => {
+  const copyCode = useCallback(async () => {
     if (room) {
-      navigator.clipboard.writeText(room.code);
+      if (!await copyText(room.code)) return;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   }, [room]);
 
-  const copyJoinUrl = useCallback(() => {
+  const copyJoinUrl = useCallback(async () => {
     if (!joinUrl) return;
-    navigator.clipboard.writeText(joinUrl);
+    if (!await copyText(joinUrl)) return;
     setCopiedJoinLink(true);
     toast.success(getToast("okJoinLinkCopied", (room?.language as Language) || "pt"));
     setTimeout(() => setCopiedJoinLink(false), 2000);
@@ -5776,6 +5786,7 @@ const GMRoom = () => {
 
   return (
     <LanguageContext.Provider value={lang}>
+    <OpaqueModalBackdropContext.Provider value={true}>
     <div className="min-h-screen p-4">
       {phone.session?.mode === "monkey" && !hideScreenMode && (
         <MonkeyRevealModal key={phone.session.id}
@@ -6962,10 +6973,10 @@ const GMRoom = () => {
       <AnimatePresence>
         {qrPopupOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={false}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-background/90 p-4 backdrop-blur-sm"
+            data-modal-backdrop="opaque"
+            className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-background p-4"
             onClick={() => setQrPopupOpen(false)}
           >
             <motion.div
@@ -6989,7 +7000,8 @@ const GMRoom = () => {
                 <div className="flex gap-2">
                   <Input
                     aria-label="Join link base URL"
-                    value={joinBaseOverride || defaultJoinBaseUrl}
+                    value={getLanConfig() ? defaultJoinBaseUrl : joinBaseOverride || defaultJoinBaseUrl}
+                    disabled={!!getLanConfig()}
                     onChange={(event) => setJoinBaseOverride(event.target.value)}
                     className="h-10 bg-secondary border-border text-xs"
                     placeholder="http://YOUR-LAN-IP:8080"
@@ -7022,6 +7034,7 @@ const GMRoom = () => {
         )}
       </AnimatePresence>
     </div>
+    </OpaqueModalBackdropContext.Provider>
     </LanguageContext.Provider>
   );
 };

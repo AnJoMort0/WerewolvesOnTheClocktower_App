@@ -10,6 +10,8 @@ This document is for the project owner and maintainers. It collects the technica
 - [Requirements](#requirements)
 - [First-time setup](#first-time-setup)
 - [Commands and local development](#commands-and-local-development)
+- [Publishing the Windows LAN download](#publishing-the-windows-lan-download)
+- [Publishing the standalone rulebook](#publishing-the-standalone-rulebook)
 - [Application routes](#application-routes)
 - [Supabase](#supabase)
 - [Hosted deployment](#hosted-deployment)
@@ -49,7 +51,7 @@ For measured asset/database sizes, Realtime message estimates, free-tier capacit
 - Hosted deployment: Cloudflare Pages connected to GitHub
 - Local development: Vite dev server on the GM computer
 
-The application can run from a local development server, but it still requires internet access because room and player data and realtime updates use Supabase Cloud.
+The normal Vite development/preview servers use Supabase Cloud and require internet. For fully offline games, use `npm run lan` after preparing the app, or the portable Windows launcher. See the [offline LAN guide](offline-lan.md) for detailed instructions.
 
 ## Repository structure
 
@@ -63,14 +65,20 @@ The application can run from a local development server, but it still requires i
 - `src/lib`: roles, localisation, night script, rulebook content, and join URL helpers
 - `src/test`: automated tests grouped to mirror the application folders, plus shared test setup
 - `scripts`: maintenance scripts, including artwork optimisation
+- `server/lan`: offline room storage, event relay, and static app server
 - `docs`: development and maintenance documentation
 - `src/integrations/supabase`: Supabase client and generated types
-- `src/assets/roles`: character artwork used by the application and README
+- `src/assets/roles`: editable original character artwork
 - `src/assets/display`: generated 512px WebP cards/skins and 128px icons used by the application
 - `src/assets/extras`: extra rulebook card artwork used by the in-app reference
 - `supabase/migrations`: reproducible database migrations
 - `public/_redirects`: Cloudflare Pages single-page-app fallback
-- `ROADMAP.md`: owner-maintained roadmap and playtest notes
+- `docs/README.md`: player-facing description and launch instructions; GitHub displays it on the repository homepage
+- `docs/ROADMAP.md`: owner-maintained roadmap and playtest notes
+- `config`: Vite, Vitest, ESLint, Tailwind, PostCSS, and application/tool TypeScript configuration
+- `.build`: ignored generated application, standalone rulebook, portable LAN kit, release ZIP, and downloaded runtime
+
+The root retains npm's manifests, the editor's `tsconfig.json`, shadcn's `components.json`, application `index.html`, environment/version settings, and the double-click launcher. These files serve their tools' standard discovery or the player's launch flow. Original artwork is kept as editable source; optimised display assets are used by the game and rulebook. `node_modules` remains ignored in the location npm requires.
 
 ## Requirements
 
@@ -114,7 +122,7 @@ npm run build
 After adding or changing original artwork in `src/assets/roles`,
 `src/assets/extras`, or `src/assets/icons`, run `npm run assets:optimize` and commit the generated
 `src/assets/display` copies. The app imports these smaller WebP files; the
-original PNGs remain available for editing and the README. The script preserves
+original PNGs remain available for editing. The README uses the optimised copies. The script preserves
 aspect ratios and transparency, avoids enlarging small images, and caps each
 edge at 512 pixels for cards and 128 pixels for icons. No image processing runs in a player's browser.
 
@@ -152,6 +160,8 @@ http://localhost:8080
 
 ### Local Wi-Fi playtest with phones
 
+This development command still uses the hosted Supabase backend. For a game with no internet, use the [offline LAN setup](offline-lan.md).
+
 ```sh
 npm run dev:lan
 ```
@@ -171,6 +181,62 @@ When a phone cannot open the page, confirm that:
 npm run build
 npm run preview:lan
 ```
+
+## Publishing the Windows LAN download
+
+Generated outputs belong under the ignored `.build` directory: `app`, `rulebook`, `lan-kit`, `release`, and `runtime`. Saved games in `.lan` and legacy `.lan-runtime` caches are also ignored. None of these belongs in source control. GitHub releases distribute the ready-to-play binary separately from the source history, as recommended in [GitHub's large-file guidance](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github).
+
+### Build a ZIP locally
+
+On Windows with x64 Node 22 and its bundled `LICENSE` beside `node.exe`:
+
+```sh
+npm ci
+npm run lan:release
+```
+
+This builds `.build/lan-kit` and creates `.build/release/WerewolvesOnTheClocktower-LAN-Windows-x64.zip` plus its `.sha256` checksum. The ZIP contains a portable Node runtime, the app, server, double-click launcher, illustrated player guide, LAN instructions, and licences. It excludes saved games and runtime caches. The build clears the owner's hosted URL and Supabase configuration, and replaces the kit's generated `dist` so obsolete bundles cannot enter a new release. Packaging refuses to replace a kit containing `.lan`; move that used kit to a backup location first.
+
+On GitHub, open **Releases → Draft a new release**, choose a new tag such as `lan-v0.1.0`, add a short description, and attach the ZIP and checksum before publishing. The README links to the releases page and names this exact ZIP. GitHub's automatically supplied **Source code** downloads use the first-time setup launcher instead.
+
+### Let GitHub build and attach it
+
+After committing and pushing `.github/workflows/lan-release.yml` together with the application changes:
+
+1. Open **Releases → Draft a new release**, choose a new tag targeting that commit, describe the changes, and publish it.
+2. The **Windows LAN download** workflow installs the pinned Node version on a Windows runner, runs the automated tests and TypeScript check, and builds the ZIP.
+3. When the workflow succeeds, it attaches the ZIP and checksum to that release. Until then, the release has only GitHub's source archives; their first-time launcher setup is explained in the offline LAN guide.
+
+Alternatively, open **Actions → Windows LAN download → Run workflow** to build without publishing. Download the **Windows-LAN-download** artifact after success and extract that artifact to obtain the game ZIP. This manual run does not create or change a release. Only the release-upload job receives repository write permission; the build uses read permission. No account tokens need to be added to the project.
+
+Before recommending a release, extract its game ZIP into a new folder and double-click the launcher, then test a phone joining on the intended network. Never include a used kit's game data in a public download.
+
+## Publishing the standalone rulebook
+
+The rulebook has its own HTML and React entry in `src/rulebook`. It uses the shared rules, translations, artwork, skin previews, and lore explanations. Its build includes no game lobby, GM/player screens, database client, LAN server, service worker, or hosted game link. Readers can choose English, Portuguese, or French without downloading or joining a game.
+
+### Enable GitHub Pages once
+
+1. Commit and push the application and `.github/workflows/rulebook-pages.yml` to the repository's `main` branch.
+2. On GitHub, open **Settings → Pages**. Under **Build and deployment**, set **Source** to **GitHub Actions**. Do not select the `docs` folder as a branch publishing source; this rulebook requires its own build.
+3. Open **Actions → Publish rulebook → Run workflow**, select `main`, and run it. Later pushes to `main` rebuild and publish automatically. If the default branch has another name, update the workflow's `branches` setting.
+4. When the deployment succeeds, open the URL shown by the workflow's **github-pages** environment. For this repository it is **https://anjomort0.github.io/WerewolvesOnTheClocktower_App/**. The player README already links to this address with `?lang=en`.
+
+Use `?lang=pt` or `?lang=fr` for the other languages. Character links use ordinary page anchors, for example `?lang=en#v27`; they survive refreshes without SPA route redirects. Only the `.build/rulebook` artifact is published. No Supabase secrets, Node server, custom domain, or other website configuration is required. The workflow uses the Pages base path reported by GitHub, so assets work at the repository subpath. GitHub Pages must be available for the repository under the owner's plan and visibility settings.
+
+These steps follow [GitHub's Pages publishing-source guide](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site) and [custom workflow guide](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages). Moving the README into `docs` still allows GitHub to show it on the repository homepage, as described in [GitHub's README guide](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes).
+
+### Preview before publishing
+
+```sh
+npm ci
+npm run rulebook:build
+npm run rulebook:preview
+```
+
+Open the preview URL with `/WerewolvesOnTheClocktower_App/` appended and `?lang=en`. The output is `.build/rulebook`; normal app builds use `.build/app`. On another repository or domain, set `RULEBOOK_BASE_PATH` to its URL path, including leading and trailing slashes, when building and previewing. The Pages workflow handles this automatically. Changes to rulebook wording require editing only the shared content and rebuilding.
+
+After building, `npm run test:rulebook-browser` checks the real artifact under the Pages subpath in headless Edge: character anchors and refresh, three languages, lore, artwork, and fonts, with external app requests blocked. It requires Node 22 and an installed Chromium browser; set `LAN_BROWSER` to its executable if Edge is not at the default Windows location. It shares the browser helper with the LAN smoke test and leaves no test data behind.
 
 ## Application routes
 
@@ -218,7 +284,7 @@ The schema uses `rooms` and `players`, Supabase Realtime, row-level security pol
 
 ## Hosted deployment
 
-Production hosting uses Cloudflare Pages connected to GitHub. Cloudflare Pages builds the Vite application and publishes `dist` automatically. The deploy command must remain blank.
+Production hosting uses Cloudflare Pages connected to GitHub. Cloudflare Pages builds the Vite application and publishes `.build/app` automatically. The deploy command must remain blank.
 
 ### Cloudflare Pages settings
 
@@ -227,7 +293,7 @@ Framework preset: Vite
 Production branch: main
 Install command: npm ci
 Build command: npm run build
-Build output directory: dist
+Build output directory: .build/app
 Deploy command: leave blank
 Node version: 22
 ```
@@ -295,7 +361,7 @@ Run this checklist before a release or an important play session:
 - Some advanced recovery, automation, and rules-interaction features remain on the roadmap.
 - Players should normally keep the same browser available throughout a session so the stored player identity can be reused after a refresh.
 
-Track active priorities and playtest findings in [ROADMAP.md](../ROADMAP.md).
+Track active priorities and playtest findings in [ROADMAP.md](ROADMAP.md).
 
 ## Cleanup and security
 

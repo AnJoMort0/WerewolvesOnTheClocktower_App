@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage, getGameOver, getWinLabel, format, type WinKind } from "@/lib/i18n";
 import type { AutomaticWinKind } from "@/lib/victory";
+import { useModalBackdrop } from "@/lib/modalBackdrop";
 
 const TIE_WINNER_GROUPS: AutomaticWinKind[] = ["village", "werewolves", "lovers", "whiteWolf", "secretLover"];
 
@@ -25,14 +26,16 @@ export const WinConfirmModal = ({
   onTieWinnerGroupToggle,
 }: WinConfirmModalProps) => {
   const lang = useLanguage();
+  const backdrop = useModalBackdrop();
   return (
     <AnimatePresence>
       {open && kind && (
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={backdrop.opaque ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
+          exit={backdrop.opaque ? undefined : { opacity: 0 }}
+          data-modal-backdrop={backdrop.opaque ? "opaque" : "blurred"}
+          className={`fixed inset-0 z-[70] flex items-center justify-center p-4 ${backdrop.className}`}
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
@@ -84,14 +87,16 @@ const ALL_KINDS: WinKind[] = ["village", "werewolves", "lovers", "whiteWolf", "s
 
 export const WinPickerModal = ({ open, onPick, onClose }: WinPickerModalProps) => {
   const lang = useLanguage();
+  const backdrop = useModalBackdrop();
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={backdrop.opaque ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
+          exit={backdrop.opaque ? undefined : { opacity: 0 }}
+          data-modal-backdrop={backdrop.opaque ? "opaque" : "blurred"}
+          className={`fixed inset-0 z-[70] flex items-center justify-center p-4 ${backdrop.className}`}
           onClick={onClose}
         >
           <motion.div

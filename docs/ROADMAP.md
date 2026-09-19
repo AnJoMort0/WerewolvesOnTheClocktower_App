@@ -4,19 +4,12 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Human Tests to Do
 
-* [ ] Check English translations
 * [ ] Touch screen compatibility
-* [ ] Human-test local Wi-Fi mode with at least one phone.
-* [ ] Human-test hosted mode with at least one phone.
-* [ ] Confirm QR codes use the correct hosted or LAN URL.
 * [ ] Find out what "Clear previous rooms" button does.
-* [ ] Lovable version: Some players who initially joined through the iPhone Camera app could not reconnect after disconnecting. The Camera app sometimes did not open the link in the default browser I guess, so the reconnecting session did not have access to the original persistent `localStorage` data (I don't know if there's a possibility to fix this somehow, if there isn't just tell me)
-  * Codex note 2026-06-27: Separate iPhone browser contexts cannot share `localStorage`. The join screen now recovers an existing player by matching the same room and player name when the local session is unavailable.
 
-## Other Changes Outside of the Repo
+## Decisions
 
-* [ ] Remove Sleepwalker from Drunkard in DOCS
-* [ ] Decide: Should the Vampire Werewolf be webbed?
+* [ ] Should the Vampire Werewolf be webbed?
 
 ## Critical Fixes
 
@@ -24,7 +17,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
-* [x] If the dog-wolf has not picked an owner and therefore has no side, he should have his default skin, right now, he has the good skin for some reason
+* [ ] 
 
 ## Balance Changes
 
@@ -32,7 +25,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] Adding phone interactions:
+* [ ] Adding phone interactions for each character:
     * [ ] 
   
 ## Future Plans
@@ -42,15 +35,13 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
   * [ ] Marionnettiste
   * [x] Colosse
   * [ ] Puissante Mère des Loups
-* [ ] Add evil being that requests anonymous votes
-* [ ] Adding phone interactions
+* [ ] Add character that requests anonymous votes (maybe solo, flexible or evil)
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)
-* [ ] Add better role-selection presets for different player counts and play styles (also better balance).
 * [ ] Add screenshots to the README after the UI stabilizes.
 
 ## Tried to fix, never worked
 
-* [ ] Timers stop showing the player's devices when they reload the page.
+* [ ] Timers stop showing the player's devices when they reload the page, or sometimes randomly.
 
 ## Human Playtest Notes
 

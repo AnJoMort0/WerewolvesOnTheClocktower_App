@@ -30,6 +30,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith("/api/lan/")) return;
 
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => caches.match("/index.html")));
