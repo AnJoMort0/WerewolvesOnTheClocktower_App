@@ -37,6 +37,12 @@ describe("GM-controlled phone rules", () => {
     expect(scripts.normalNight.find((line) => line.conditionKey === "spiderWebbedDied")?.phoneMode).toBe("web");
   });
 
+  it.each(["pt", "fr", "en"] as const)("registers Priest and Sleepwalker controls in %s", (language) => {
+    const scripts = getScripts(language).normalNight;
+    expect(scripts.find((line) => line.requires?.includes("v25"))?.phoneMode).toBe("priest");
+    expect(scripts.find((line) => line.requires?.includes("v16"))?.phoneMode).toBe("sleepwalker");
+  });
+
   it("lets copied Spider powers choose a living web target and completes the script action", () => {
     const changed: PhoneWorld = { packBlocked: false, players: [
       phonePlayer("dog", "v23", { objectiveRole: "a02", seat_position: 0 }),
@@ -46,16 +52,51 @@ describe("GM-controlled phone rules", () => {
     expect(getPhoneParticipants("web", "dog", changed)).toEqual(["dog"]);
     const session: PhoneSession = { id: "web", mode: "web", lineKey: "web-line", sourcePlayerId: "dog", participantIds: ["dog"], votes: {}, sequences: {} };
     const confirmed = applyPhoneCommand(session, "dog", {
-      id: "confirm", sessionId: "web", sequence: 1, type: "confirm", targetPlayerId: "target",
+      id: "select", sessionId: "web", sequence: 1, type: "select", targetPlayerId: "target",
     }, changed);
     expect(confirmed).toMatchObject({
-      session: null,
-      completedSession: session,
+      session: { pendingTargetPlayerId: "target" },
+      completedSession: { pendingTargetPlayerId: "target" },
       action: { action: "web", sourcePlayerId: "dog", targetPlayerId: "target" },
     });
     expect(applyPhoneCommand(session, "dog", {
-      id: "dead", sessionId: "web", sequence: 1, type: "confirm", targetPlayerId: "ghost",
+      id: "dead", sessionId: "web", sequence: 1, type: "select", targetPlayerId: "ghost",
     }, changed).action).toBeUndefined();
+  });
+
+  it("lets a copied Sleepwalker apply a visit immediately and keeps the selection visible", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("actor", "v16", { objectiveRole: "a04", seat_position: 0 }),
+      phonePlayer("target", "v01", { seat_position: 1 }),
+    ] };
+    expect(getPhoneParticipants("sleepwalker", "actor", changed)).toEqual(["actor"]);
+    const session: PhoneSession = { id: "visit", mode: "sleepwalker", lineKey: "visit-line", sourcePlayerId: "actor", participantIds: ["actor"], votes: {}, sequences: {} };
+    const result = applyPhoneCommand(session, "actor", {
+      id: "visit", sessionId: "visit", sequence: 1, type: "select", targetPlayerId: "target",
+    }, changed);
+    expect(result).toMatchObject({
+      session: { pendingTargetPlayerId: "target" },
+      completedSession: { pendingTargetPlayerId: "target" },
+      action: { action: "sleepwalker", sourcePlayerId: "actor", targetPlayerId: "target" },
+    });
+  });
+
+  it("lets living players and Ghosts confess, excludes the Priest, and blocks a poisoned copied Priest", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("mime", "v25", { objectiveRole: "a03", mime: true, seat_position: 0 }),
+      phonePlayer("living", "v01", { seat_position: 1 }),
+      phonePlayer("ghost", "v03", { seat_position: 2, dead: true, canWake: false }),
+    ] };
+    expect(getPhoneParticipants("priest", "mime", changed)).toEqual(["mime"]);
+    const session: PhoneSession = { id: "confess", mode: "priest", lineKey: "priest-line", sourcePlayerId: "mime", participantIds: ["mime"], votes: {}, sequences: {} };
+    const view = getPhoneView(session, "mime", changed)!;
+    expect(view.players.filter((player) => player.selectable).map((player) => player.id)).toEqual(["living", "ghost"]);
+    const proposed = applyPhoneCommand(session, "mime", {
+      id: "ghost", sessionId: "confess", sequence: 1, type: "select", targetPlayerId: "ghost",
+    }, changed);
+    expect(proposed).toEqual({ session: expect.objectContaining({ pendingTargetPlayerId: "ghost" }) });
+    const poisoned = { ...changed, players: changed.players.map((player) => player.id === "mime" ? { ...player, actingPoisoned: true } : player) };
+    expect(getPhoneParticipants("priest", "mime", poisoned)).toEqual([]);
   });
 
   it("checks the selected player and nearest living neighbours around the circle", () => {

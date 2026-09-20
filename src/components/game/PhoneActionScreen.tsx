@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Check, Crosshair, Eye, FlaskConical, PawPrint, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
+import { Check, Church, Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, getTranslation, type Language } from "@/lib/i18n";
+import { RevealCardGallery } from "./RevealCardGallery";
+import { format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import { getFoxTargetPlayerIds, type PhoneCommand, type PhoneView } from "@/lib/phoneActions";
+import { ROLES, type RoleId } from "@/lib/roles";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
 
@@ -37,16 +39,18 @@ function getEllipseAngles(count: number, radiusX: number, radiusY: number): numb
   });
 }
 
-export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false, selectedPlayerId, showHeader = true, unframed = false, gmControlled = false, confirmLabel, showPoisonConfirmation = true, appearance }: {
+export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, onRoleClick, readOnly = false, selectedPlayerId, showHeader = true, showSelectionStatus = true, unframed = false, gmControlled = false, confirmLabel, showPoisonConfirmation = true, appearance }: {
   session: PhoneView;
   playerId: string;
   language: Language;
   pending: boolean;
   connected: boolean;
   onSend: (type: PhoneCommand["type"], targetPlayerId?: string) => void;
+  onRoleClick?: (roleId: RoleId) => void;
   readOnly?: boolean;
   selectedPlayerId?: string | null;
   showHeader?: boolean;
+  showSelectionStatus?: boolean;
   unframed?: boolean;
   gmControlled?: boolean;
   confirmLabel?: string;
@@ -55,10 +59,12 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
 }) {
   const text = getTranslation(language).ui.phoneActions;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = session.foxReveal?.targetPlayerId ?? session.pendingTargetPlayerId
+  const selected = session.foxReveal?.targetPlayerId ?? session.priestReveal?.targetPlayerId ?? session.pendingTargetPlayerId
     ?? (selectedPlayerId !== undefined ? selectedPlayerId : session.mode === "hunt" && !gmControlled ? session.votes[playerId] : selectedId);
   const target = session.players.find((p) => p.id === selected && p.selectable);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
+  const actor = players.find((player) => player.id === session.participantIds[0]);
+  const isDirectSelection = session.mode === "web" || session.mode === "priest" || session.mode === "sleepwalker";
   const foxTargetIds = new Set(session.mode === "fox" && selected
     ? session.foxReveal?.playerIds ?? getFoxTargetPlayerIds(players, selected)
     : []);
@@ -67,10 +73,14 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const angles = getEllipseAngles(players.length, MAP_MAX_WIDTH * MAP_HORIZONTAL_RADIUS, verticalRadius);
   const Icon = appearance?.icon ?? (session.mode === "poison" ? FlaskConical : session.mode === "shaman" ? RotateCcw
     : session.mode === "fox" ? PawPrint
+    : session.mode === "priest" ? Church
+    : session.mode === "sleepwalker" ? Moon
     : session.mode === "monkey" || session.mode === "web" ? Eye : session.mode === "allies" ? Users : Crosshair);
   const title = appearance?.title ?? (session.mode === "monkey" ? getTranslation(language).roleLabels.v26
     : session.mode === "fox" ? getTranslation(language).roleLabels.v04
     : session.mode === "web" ? getTranslation(language).roleLabels.v23
+    : session.mode === "priest" ? getTranslation(language).roleLabels.v25
+    : session.mode === "sleepwalker" ? getTranslation(language).roleLabels.v16
     : session.mode === "colossus" ? getTranslation(language).roleLabels.v27 : text[session.mode]);
   const theme = appearance ?? (session.mode === "poison"
     ? { border: "border-emerald-500/50 ring-emerald-500/10", accent: "text-emerald-300" }
@@ -80,6 +90,10 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     ? { border: "border-amber-500/50 ring-amber-500/10", accent: "text-amber-300" }
     : session.mode === "web"
     ? { border: "border-cyan-500/50 ring-cyan-500/10", accent: "text-cyan-300" }
+    : session.mode === "priest"
+    ? { border: "border-amber-300/50 ring-amber-300/10", accent: "text-amber-200" }
+    : session.mode === "sleepwalker"
+    ? { border: "border-blue-400/50 ring-blue-400/10", accent: "text-blue-300" }
     : { border: "border-primary/60 ring-primary/10", accent: "text-primary" });
 
   const content = <>
@@ -90,7 +104,14 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
         <h2 className={`font-display text-xl font-bold ${theme.accent}`}>{title}</h2>
       </header>}
       {session.mode === "colossus" && <p className="text-center text-sm text-muted-foreground">{text.colossusInstructions}</p>}
-      <div className="min-w-0 overflow-hidden pb-1">
+      {session.priestReveal ? <div data-testid="priest-revealed-card">
+        {target && <p className="mb-3 text-center font-display text-lg text-foreground">{target.name}</p>}
+        <RevealCardGallery language={language} onRoleClick={onRoleClick} cards={[{
+          roleId: session.priestReveal.roleId,
+          image: ROLES[session.priestReveal.roleId].image,
+          label: getRoleLabel(session.priestReveal.roleId, language),
+        }]} />
+      </div> : <div className="min-w-0 overflow-hidden pb-1">
         <div
           data-testid="phone-action-map"
           className="relative mx-auto w-full max-w-[19rem]"
@@ -108,7 +129,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 aria-label={player.name}
                 aria-pressed={session.mode === "allies" ? undefined : selected === player.id}
                 disabled={readOnly || !!session.pendingTargetPlayerId || !player.selectable || !connected || (pending && session.mode !== "hunt")}
-                onClick={() => (session.mode === "hunt" && !gmControlled) || session.mode === "monkey" || session.mode === "fox"
+                onClick={() => (session.mode === "hunt" && !gmControlled) || session.mode === "monkey" || session.mode === "fox" || isDirectSelection
                   ? onSend("select", player.id) : setSelectedId(player.id)}
                 className={`absolute flex w-[3.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
                 style={{
@@ -137,12 +158,14 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
             );
           })}
         </div>
-      </div>
+      </div>}
       {!connected && <p role="status" className="text-sm">{text.reconnecting}</p>}
       {pending && session.mode !== "hunt" && <p role="status" className="text-sm text-muted-foreground">{text.waiting}</p>}
-      {session.pendingTargetPlayerId && <p role="status" className="text-center text-sm text-muted-foreground">{text.waiting}</p>}
+      {showSelectionStatus && session.pendingTargetPlayerId && target && <p role="status" className="text-center text-sm text-muted-foreground">
+        {session.mode === "colossus" ? text.waiting : format(text.selection, { actor: actor?.name ?? "", target: target.name })}
+      </p>}
       {showPoisonConfirmation && session.mode === "poison" && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
-      {!readOnly && (session.mode === "poison" || session.mode === "shaman" || session.mode === "web" || session.mode === "colossus" || (gmControlled && session.mode === "hunt")) && (
+      {!readOnly && (session.mode === "poison" || session.mode === "shaman" || session.mode === "colossus" || (gmControlled && session.mode === "hunt")) && (
         <div className="flex justify-center gap-2">
           {session.mode === "shaman" && (
             <Button variant="secondary" disabled={pending || !connected} onClick={() => onSend("ignore")}>

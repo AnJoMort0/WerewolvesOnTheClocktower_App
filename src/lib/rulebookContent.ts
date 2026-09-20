@@ -2282,15 +2282,15 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, o Padre é chamado e <red>qualquer outro jogador</red> pode levantar a mão para se confessar.`,
+                `<red>Cada noite</red>, o Padre é chamado e <red>qualquer jogador, vivo ou Fantasma</red>, pode levantar a mão para se confessar.`,
                 `O Padre escolhe um jogador com a mão levantada e pode ver o papel desse jogador. Em troca, o jogador escolhido pode acordar e ver quem é o Padre.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, quand le Prêtre est réveillé, <red>tout autre joueur</red> peut lever la main pour se confesser.`,
+                `<red>Chaque nuit</red>, quand le Prêtre est réveillé, <red>tout joueur, vivant ou Fantôme</red>, peut lever la main pour se confesser.`,
                 `Le Prêtre choisit un joueur qui a levé la main et peut voir le rôle de ce joueur. En échange, le joueur choisi peut se réveiller et découvrir qui est le Prêtre.`,
             ],
             en: [
-                `<red>Each night</red>, the Priest is called, and <red>any other player</red> may raise a hand to confess.`,
+                `<red>Each night</red>, the Priest is called, and <red>any player, living or a Ghost</red>, may raise a hand to confess.`,
                 `The Priest chooses a player with a raised hand and may see that player’s role. In return, the chosen player wakes up and sees who the Priest is.`
             ]
         },
@@ -4398,9 +4398,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-v25",
             refs: ["v25"],
             text: {
-                pt: `O Padre acorda. Se algum jogador quiser se confessar, revelando a sua carta ao Padre, pode levantar a mão. O Padre escolhe um desses jogadores, que será tocado para acordar. Ele vê quem é o Padre e mostra o seu papel.`,
-                fr: `Le Prêtre se réveille. Si un joueur souhaite se confesser, révélant ainsi son rôle au Prêtre, il peut lever la main. Le Prêtre choisit l'un de ces joueurs, qui sera touché pour se réveiller. Il voit qui est le Prêtre et montre son rôle.`,
-                en: `The Priest wakes up. Any player who wishes to confess by revealing their card to the Priest may raise a hand. The Priest chooses one of those players, who is touched and wakes up. That player sees who the Priest is and shows their role.`
+                pt: `O Padre acorda. Se algum jogador, vivo ou Fantasma, quiser se confessar, revelando a sua carta ao Padre, pode levantar a mão. O Padre escolhe um desses jogadores, que será tocado para acordar. Ele vê quem é o Padre e mostra o seu papel.`,
+                fr: `Le Prêtre se réveille. Si un joueur, vivant ou Fantôme, souhaite se confesser, révélant ainsi son rôle au Prêtre, il peut lever la main. Le Prêtre choisit l'un de ces joueurs, qui sera touché pour se réveiller. Il voit qui est le Prêtre et montre son rôle.`,
+                en: `The Priest wakes up. Any player, living or a Ghost, who wishes to confess by revealing their card to the Priest may raise a hand. The Priest chooses one of those players, who is touched and wakes up. That player sees who the Priest is and shows their role.`
             }
         },
         {

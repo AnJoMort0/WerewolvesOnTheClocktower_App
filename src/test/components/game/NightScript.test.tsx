@@ -23,6 +23,30 @@ const baseProps = {
 };
 
 describe("NightScript phone controls", () => {
+  it("opens Sleepwalker and Priest actions, but not a poisoned Priest action", () => {
+    const onPhoneToggle = vi.fn();
+    const props = { ...baseProps, nightNumber: 3,
+      activeRoles: new Set(["v16" as const, "v25" as const]),
+      roleAssignments: { sleepwalker: "v16" as const, priest: "v25" as const },
+      abilityRoleAssignments: { sleepwalker: "v16" as const, priest: "v25" as const },
+      players: [{ id: "sleepwalker", name: "Sleepwalker", seat_position: 0 }, { id: "priest", name: "Priest", seat_position: 1 }],
+      onPhoneToggle };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    const visit = container.querySelector<HTMLButtonElement>('[data-phone-mode="sleepwalker"]')!;
+    const confession = container.querySelector<HTMLButtonElement>('[data-phone-mode="priest"]')!;
+    expect(visit.querySelector(".lucide-moon")).toBeInTheDocument();
+    expect(confession.querySelector(".lucide-church")).toBeInTheDocument();
+    fireEvent.click(visit);
+    fireEvent.click(confession);
+    expect(onPhoneToggle).toHaveBeenCalledWith("sleepwalker", expect.any(String), "sleepwalker", expect.any(Number));
+    expect(onPhoneToggle).toHaveBeenCalledWith("priest", expect.any(String), "priest", expect.any(Number));
+
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props}
+      poisonedPlayerId="priest" poisonedPlayerIds={new Set(["priest"])} /></LanguageContext.Provider>);
+    expect(container.querySelector('[data-phone-mode="priest"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-phone-mode="sleepwalker"]')).toBeInTheDocument();
+  });
+
   it("opens the first Spider web and only the copied Spider whose own web needs replacement", () => {
     const onPhoneToggle = vi.fn();
     const firstProps = { ...baseProps, nightNumber: 1, activeRoles: new Set(["v23" as const]),

@@ -1117,7 +1117,8 @@ const PlayerView = () => {
                   onReopen={() => phone.send("reopen")} />
               ) : phone.session && roomStatus === "playing" && playerId ? (
                 <PhoneActionScreen key={phone.session.id} session={phone.session} playerId={playerId}
-                  language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send} />
+                  language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send}
+                  onRoleClick={(roleId) => openRulebook(roleId)} />
               ) : actionMode ? (
                 <motion.div
                   key={`${actionMode}-mode`}

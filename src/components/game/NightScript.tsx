@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Sun, Users } from "lucide-react";
+import { Church, Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Sun, Users } from "lucide-react";
 import { getScriptPhoneMode, type PhoneMode } from "@/lib/phoneActions";
 import { placeColossusLines } from "@/lib/colossus";
 import { Button } from "@/components/ui/button";
@@ -1446,7 +1446,9 @@ export const NightScript = ({
                 ? Object.entries(baseRoleAssignments).find(([, role]) => role === lineRole)?.[0] ?? null
                 : null);
               const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
-              const phoneMode = item.actorNotice ? null : getScriptPhoneMode(item.line);
+              const configuredPhoneMode = item.actorNotice ? null : getScriptPhoneMode(item.line);
+              const phoneMode = configuredPhoneMode === "priest" && sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)
+                ? null : configuredPhoneMode;
               const phoneActive = activePhoneLineKey === item.key;
               const phoneLabel = getTranslation(lang).ui.phoneActions[phoneActive ? "close" : "open"];
               const PhoneActionIcon = phoneMode === "hunt" || phoneMode === "colossus" ? Crosshair
@@ -1454,11 +1456,15 @@ export const NightScript = ({
                 : phoneMode === "poison" ? FlaskConical
                 : phoneMode === "fox" ? PawPrint
                 : phoneMode === "web" ? Eye
+                : phoneMode === "priest" ? Church
+                : phoneMode === "sleepwalker" ? Moon
                 : RotateCcw;
               const phoneIconClass = phoneMode === "poison" ? "text-green-400"
                 : phoneMode === "shaman" ? "text-moon"
                 : phoneMode === "fox" ? "text-amber-400"
                 : phoneMode === "web" ? "text-cyan-400"
+                : phoneMode === "priest" ? "text-amber-200"
+                : phoneMode === "sleepwalker" ? "text-blue-300"
                 : phoneMode === "allies" ? "text-gold"
                 : "text-primary";
               const usesIndependentPowerState = !!independentPowerState || !!item.actorLine

@@ -197,10 +197,49 @@ describe("phone synchronization across GM and player devices", () => {
     const spider = renderHook(() => usePlayerPhoneActions("room", "spider"));
     act(() => gm.result.current.toggle("web", "first-spider-line", "spider", null));
     expect(spider.result.current.session?.mode).toBe("web");
-    act(() => spider.result.current.send("confirm", "victim"));
+    act(() => spider.result.current.send("select", "victim"));
     expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "web", sourcePlayerId: "spider", targetPlayerId: "victim" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "first-spider-line", participantIds: ["spider"] }));
-    expect(spider.result.current.session).toBeNull();
+    expect(spider.result.current.session?.pendingTargetPlayerId).toBe("victim");
+  });
+
+  it("keeps an immediate Sleepwalker visit visible until the GM closes it", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const sleepwalkerWorld: PhoneWorld = { ...world, players: [...world.players, player("sleepwalker", "v16")] };
+    const gm = renderHook(() => useGMPhoneActions({
+      roomId: "room", contextKey: "playing:night:2", enabled: true, world: sleepwalkerWorld, onAction, onComplete,
+    }));
+    const sleepwalker = renderHook(() => usePlayerPhoneActions("room", "sleepwalker"));
+    act(() => gm.result.current.toggle("sleepwalker", "sleepwalker-line", "sleepwalker", 3));
+    act(() => sleepwalker.result.current.send("select", "victim"));
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "sleepwalker", sourcePlayerId: "sleepwalker", targetPlayerId: "victim" });
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect(gm.result.current.session?.pendingTargetPlayerId).toBe("victim");
+    expect(sleepwalker.result.current.session?.pendingTargetPlayerId).toBe("victim");
+    act(() => gm.result.current.close());
+    expect(sleepwalker.result.current.session).toBeNull();
+  });
+
+  it("waits for GM approval before revealing a Priest confessor's character", () => {
+    const onComplete = vi.fn();
+    const priestWorld: PhoneWorld = { ...world, players: [
+      ...world.players, player("priest", "v25"), { ...player("ghost", "v03"), dead: true, canWake: false, displayRole: "v03" },
+    ] };
+    const gm = renderHook(() => useGMPhoneActions({
+      roomId: "room", contextKey: "playing:night:2", enabled: true, world: priestWorld, onAction: vi.fn(), onComplete,
+    }));
+    const priest = renderHook(() => usePlayerPhoneActions("room", "priest"));
+    act(() => gm.result.current.toggle("priest", "priest-line", "priest", 20));
+    act(() => priest.result.current.send("select", "ghost"));
+    const sessionId = gm.result.current.session!.id;
+    expect(gm.result.current.session?.pendingTargetPlayerId).toBe("ghost");
+    expect(onComplete).not.toHaveBeenCalled();
+    act(() => gm.result.current.resolvePriest(sessionId, "ghost", false));
+    expect(priest.result.current.session?.pendingTargetPlayerId).toBeUndefined();
+    act(() => priest.result.current.send("select", "ghost"));
+    act(() => gm.result.current.resolvePriest(sessionId, "ghost", true));
+    expect(priest.result.current.session?.priestReveal).toEqual({ targetPlayerId: "ghost", roleId: "v03" });
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "priest-line", progressOrder: 20 }));
   });
 
   it("waits for Colossus approval, handles denial, and accepts once despite retries", () => {

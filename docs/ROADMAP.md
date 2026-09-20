@@ -28,6 +28,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 * [ ] Adding phone interactions for each character:
     * [x] Make modals consistent. The spider tamer choosing to change the webbed player for example, on the player's device, they can still see the night number and their name, etc. Make it be the standard for all actions
     * [x] Add a button for the Spider tamer to web someone in the first script line and when the webbed player dies. Compatible with copying roles and poison effect
+    * [x] Add a Priest action that lets any other player, including a Ghost, confess. The GM approves the selection before the confessor's character is revealed.
+    * [x] Add a Sleepwalker action that applies the Host effect immediately, including copied-role and poisoned behavior.
   
 ## Future Plans
 

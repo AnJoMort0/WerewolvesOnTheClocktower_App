@@ -228,6 +228,26 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     current.current.onAction({ action: "colossus", targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
     current.current.onComplete?.(latest);
   }, [commit]);
+  const resolvePriest = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
+    const latest = reconcilePhoneSession(current.current.session, current.current.world);
+    if (!latest || latest.mode !== "priest" || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) {
+      commit(latest);
+      return;
+    }
+    if (!accepted) {
+      commit({ ...latest, pendingTargetPlayerId: undefined });
+      return;
+    }
+    const target = current.current.world.players.find((player) => player.id === targetPlayerId);
+    const roleId = target?.illusion ? "a06" : target?.displayRole ?? target?.abilityRole;
+    if (!roleId) {
+      commit({ ...latest, pendingTargetPlayerId: undefined });
+      return;
+    }
+    const revealed = { ...latest, pendingTargetPlayerId: undefined, priestReveal: { targetPlayerId, roleId } };
+    commit(revealed);
+    current.current.onComplete?.(revealed);
+  }, [commit]);
   const close = useCallback(() => {
     const latest = current.current.session;
     commit(latest?.mode === "monkey" || latest?.mode === "fox" ? { ...latest, visible: false } : null);
@@ -235,7 +255,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; commit(null); }, [commit]);
   const monkeySourceIds = Object.values(monkeySessions.current)
     .filter((entry) => entry.monkeyReveal && entry.sourcePlayerId).map((entry) => entry.sourcePlayerId!);
-  return { session: active, toggle, close, reset, confirmMonkey, confirmFox, sendGM, resolveColossus, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
+  return { session: active, toggle, close, reset, confirmMonkey, confirmFox, sendGM, resolveColossus, resolvePriest, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
 }
 
 export function usePlayerPhoneActions(roomId?: string, playerId?: string) {

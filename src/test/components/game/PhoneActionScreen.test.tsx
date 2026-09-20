@@ -81,11 +81,12 @@ describe("PhoneActionScreen", () => {
     expect(screen.getByText(getTranslation("en").ui.phoneActions.waiting)).toBeInTheDocument();
   });
 
-  it("lets a Spider Tamer select and confirm a web target", () => {
+  it("applies a Spider web selection immediately and keeps the target visible", () => {
     const onSend = vi.fn();
-    render(
+    const session: PhoneView = { ...baseView, mode: "web", participantIds: ["wolf"] };
+    const { rerender } = render(
       <PhoneActionScreen
-        session={{ ...baseView, mode: "web", participantIds: ["wolf"] }}
+        session={session}
         playerId="wolf"
         language="en"
         pending={false}
@@ -96,9 +97,20 @@ describe("PhoneActionScreen", () => {
 
     expect(screen.getByRole("region", { name: getTranslation("en").roleLabels.v23 })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    expect(onSend).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
-    expect(onSend).toHaveBeenCalledWith("confirm", "target");
+    expect(onSend).toHaveBeenCalledWith("select", "target");
+    rerender(<PhoneActionScreen session={{ ...session, pendingTargetPlayerId: "target" }} playerId="wolf"
+      language="en" pending={false} connected onSend={onSend} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Wolf selected Target.");
+    expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
+  });
+
+  it("shows an approved Priest character card and opens its rulebook entry", () => {
+    const onRoleClick = vi.fn();
+    render(<PhoneActionScreen session={{ ...baseView, mode: "priest", priestReveal: { targetPlayerId: "target", roleId: "v03" } }}
+      playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} onRoleClick={onRoleClick} />);
+    expect(screen.queryByTestId("phone-action-map")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Raven Tamer/i }));
+    expect(onRoleClick).toHaveBeenCalledWith("v03");
   });
 
   it("uses a fluid map without a horizontal scroll container for large games", () => {

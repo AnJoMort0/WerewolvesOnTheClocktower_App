@@ -4344,14 +4344,18 @@ const GMRoom = () => {
       else if (roleSource === "v16") {
         // Sonâmbulo: if poisoned → random (excluding intended target & sleepwalker)
         const sleepwalkerId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v16" ? sourcePlayerId : getRolePlayerId("v16");
+        const applyHost = (playerId: string) => {
+          if (meta.fromScriptLine && sleepwalkerId && sourcedEffectTargets[sleepwalkerId]?.host === playerId) return;
+          toggleActionEffect(playerId, "host");
+        };
         if (sleepwalkerId && isPlayerActingPoisoned(sleepwalkerId)) {
           const random = pickRandomPlayer((p) => !permanentlyDead.has(p.id) && p.id !== targetPlayerId && p.id !== sleepwalkerId);
           if (random) {
-            toggleActionEffect(random.id, "host");
+            applyHost(random.id);
             toast.info(format(getToast("infoSleepwalkerPoisoned", (room?.language as Language) || "pt"), { name: random.name }));
           }
         } else {
-          toggleActionEffect(targetPlayerId, "host");
+          applyHost(targetPlayerId);
         }
       }
       else if (roleSource === "v17") {
@@ -4783,7 +4787,10 @@ const GMRoom = () => {
       markScriptRoleAction("v04", sourcePlayerId);
       return;
     }
-    const dragAction = action === "colossus" ? "role-v27" : action === "web" ? "role-v23" : action;
+    if (action === "priest") return;
+    const dragAction = action === "colossus" ? "role-v27"
+      : action === "web" ? "role-v23"
+      : action === "sleepwalker" ? "role-v16" : action;
     handleDragAction(dragAction, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
   }, [handleDragAction, handleIndependentPowerStateChange, independentPowerStates, markScriptRoleAction, nightNumber]);
   const completePhoneLine = useCallback((session: PhoneSession) => {
@@ -5848,7 +5855,8 @@ const GMRoom = () => {
       {phoneView && phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
         <GMPhoneActionModal session={phone.session} view={phoneView} language={lang}
           onClose={phone.close} onSend={phone.sendGM}
-          onResolveHunt={phone.resolveHunt} onResolveColossus={phone.resolveColossus} />
+          onResolveHunt={phone.resolveHunt} onResolveColossus={phone.resolveColossus}
+          onResolvePriest={phone.resolvePriest} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
       {actionMirrors.mode && !phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
         <GMPlayerActionModal mode={actionMirrors.mode} language={lang}

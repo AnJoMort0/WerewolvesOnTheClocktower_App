@@ -2,7 +2,7 @@ import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { ScriptLine } from "@/lib/i18n/types";
 import { isColossusTarget } from "@/lib/colossus";
 
-export type PhoneMode = "hunt" | "allies" | "poison" | "shaman" | "monkey" | "fox" | "web" | "colossus";
+export type PhoneMode = "hunt" | "allies" | "poison" | "shaman" | "monkey" | "fox" | "web" | "priest" | "sleepwalker" | "colossus";
 export type MonkeyReveal = { targetPlayerId: string; roleId: RoleId; evil: boolean };
 export type FoxReveal = {
   targetPlayerId: string;
@@ -10,6 +10,7 @@ export type FoxReveal = {
   result: "evil" | "clear" | "confused";
   foxRanAway: boolean;
 };
+export type PriestReveal = { targetPlayerId: string; roleId: RoleId };
 export function shouldExhaustMonkeyPower(reveal: MonkeyReveal, nightNumber: number): boolean {
   return nightNumber > 1 && reveal.evil;
 }
@@ -48,6 +49,7 @@ export type PhoneSession = {
   visible?: boolean;
   monkeyReveal?: MonkeyReveal;
   foxReveal?: FoxReveal;
+  priestReveal?: PriestReveal;
   error?: "noSafeCard";
   pendingTargetPlayerId?: string;
 };
@@ -59,7 +61,7 @@ export type PhoneCommand = {
   targetPlayerId?: string;
 };
 export type PhoneAction = {
-  action: "kill" | "poison" | "shaman" | "monkey" | "fox" | "web" | "colossus";
+  action: "kill" | "poison" | "shaman" | "monkey" | "fox" | "web" | "priest" | "sleepwalker" | "colossus";
   targetPlayerId: string;
   sourcePlayerId: string | null;
   monkeyReveal?: MonkeyReveal;
@@ -69,6 +71,7 @@ export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participan
   visible?: boolean;
   monkeyReveal?: MonkeyReveal;
   foxReveal?: FoxReveal;
+  priestReveal?: PriestReveal;
   error?: "noSafeCard";
   pendingTargetPlayerId?: string;
   players: Array<Pick<PhonePlayer, "id" | "name" | "seat_position"> & {
@@ -139,6 +142,8 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
       : mode === "monkey" ? player.abilityRole === "v26" && !player.monkeyDisabled
       : mode === "fox" ? player.abilityRole === "v04" && !player.foxDisabled
       : mode === "web" ? player.abilityRole === "v23"
+      : mode === "priest" ? player.abilityRole === "v25" && !player.actingPoisoned
+      : mode === "sleepwalker" ? player.abilityRole === "v16"
       : mode === "colossus" ? player.abilityRole === "v27" && !!player.colossusReady
       : mode === "hunt" && !!player.abilityRole && WEREWOLF_ROLES.includes(player.abilityRole);
     return matches ? [sourcePlayerId] : [];
@@ -155,6 +160,8 @@ export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boole
   if (session.mode === "monkey") return !session.monkeyReveal && !!(player.displayRole ?? player.abilityRole);
   if (session.mode === "fox") return !session.foxReveal && !player.dead;
   if (session.mode === "colossus") return isColossusTarget(player);
+  // Any other player may confess to the Priest, including a Ghost.
+  if (session.mode === "priest") return player.id !== session.sourcePlayerId;
   if (session.mode === "allies" || player.dead) return false;
   if (session.mode === "shaman") return player.redX;
   // The Witch can target herself, and pending victims may still be poisoned before dawn.
@@ -171,6 +178,12 @@ export function reconcilePhoneSession(session: PhoneSession | null, world: Phone
   }
   if (session.mode === "fox" && session.foxReveal) {
     return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v04") ? session : null;
+  }
+  if (session.mode === "priest" && session.priestReveal) {
+    return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v25") ? session : null;
+  }
+  if (session.mode === "sleepwalker" && session.pendingTargetPlayerId) {
+    return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v16") ? session : null;
   }
   const participantIds = getPhoneParticipants(session.mode, session.sourcePlayerId, world);
   if (participantIds.length === 0) return null;
@@ -240,7 +253,16 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if (session.mode === "hunt" && command.type === "select") {
     return { session: { ...next, votes: { ...session.votes, [actorId]: target.id } } };
   }
-  if ((session.mode === "poison" || session.mode === "shaman" || session.mode === "web") && command.type === "confirm") {
+  if (session.mode === "priest" && command.type === "select" && !session.pendingTargetPlayerId) {
+    return { session: { ...next, pendingTargetPlayerId: target.id } };
+  }
+  if ((session.mode === "web" || session.mode === "sleepwalker")
+    && command.type === "select" && !session.pendingTargetPlayerId) {
+    const selected = { ...next, pendingTargetPlayerId: target.id };
+    return { session: selected, completedSession: selected,
+      action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };
+  }
+  if ((session.mode === "poison" || session.mode === "shaman") && command.type === "confirm") {
     return { session: null, completedSession: session, action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };
   }
   return { session: next };
@@ -259,6 +281,7 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
       visible: session.visible !== false,
       ...(session.mode === "monkey" ? { monkeyReveal: session.monkeyReveal, error: session.error } : { foxReveal: session.foxReveal }),
     } : {}),
+    ...(session.mode === "priest" ? { priestReveal: session.priestReveal } : {}),
     players: world.players.map((p) => ({
       id: p.id,
       name: p.name,
