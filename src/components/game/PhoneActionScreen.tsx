@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Church, Crosshair, Eye, FlaskConical, Ghost, Moon, PawPrint, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
+import { Check, Church, Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RevealCardGallery } from "./RevealCardGallery";
 import { format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
@@ -7,6 +7,7 @@ import { getFoxTargetPlayerIds, type PhoneCommand, type PhoneView } from "@/lib/
 import { ROLES, type RoleId } from "@/lib/roles";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
+import ghostIcon from "@/assets/display/icons/ghost.webp";
 
 const MAP_MAX_WIDTH = 304;
 const MAP_MIN_HEIGHT = 264;
@@ -148,8 +149,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                     ? <img src={player.marker === "werewolf" ? werewolfIcon : evilBeingIcon} alt="" draggable={false} className="h-8 w-8 object-contain" />
                     : <span className="font-bold">{player.name.charAt(0).toUpperCase()}</span>}
                   {(player.redX || (player.dead && session.mode !== "priest")) && <X className={`absolute h-9 w-9 ${player.redX ? "text-destructive" : "text-muted-foreground"}`} strokeWidth={3} />}
-                  {player.dead && session.mode === "priest" && <Ghost data-testid={`ghost-marker-${player.id}`}
-                    className="absolute -right-1.5 -top-2 h-5 w-5 rounded-full border border-amber-300/60 bg-card p-0.5 text-amber-200 shadow" />}
+                  {player.dead && session.mode === "priest" && <img src={ghostIcon} alt="" data-testid={`ghost-marker-${player.id}`}
+                    className="absolute h-9 w-9 object-contain drop-shadow" />}
                   {voters.length > 0 && (
                     <span title={voters.join(", ")} className="absolute -right-2 -top-2 flex min-w-5 items-center justify-center gap-0.5 rounded-sm border border-primary/50 bg-card px-1 text-xs font-bold text-foreground shadow">
                       <Crosshair className="h-3 w-3" />{voters.length}
@@ -168,7 +169,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
         {session.mode === "colossus" ? text.waiting : format(text.selection, { actor: actor?.name ?? "", target: target.name })}
       </p>}
       {showPoisonConfirmation && session.mode === "poison" && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
-      {!readOnly && (session.mode === "poison" || session.mode === "shaman" || session.mode === "colossus" || confirmsSelection || (gmControlled && session.mode === "hunt")) && (
+      {!readOnly && !session.priestReveal
+        && (session.mode === "poison" || session.mode === "shaman" || session.mode === "colossus" || confirmsSelection || (gmControlled && session.mode === "hunt")) && (
         <div className="flex justify-center gap-2">
           {session.mode === "shaman" && (
             <Button variant="secondary" disabled={pending || !connected} onClick={() => onSend("ignore")}>

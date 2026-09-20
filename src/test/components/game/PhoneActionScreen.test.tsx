@@ -138,6 +138,7 @@ describe("PhoneActionScreen", () => {
     render(<PhoneActionScreen session={{ ...baseView, mode: "priest", priestReveal: { targetPlayerId: "target", roleId: "v03" } }}
       playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} onRoleClick={onRoleClick} />);
     expect(screen.queryByTestId("phone-action-map")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Raven Tamer/i }));
     expect(onRoleClick).toHaveBeenCalledWith("v03");
   });
