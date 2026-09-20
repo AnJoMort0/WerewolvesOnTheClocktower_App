@@ -20,7 +20,8 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
   const proposal = session.pendingTargetPlayerId ?? consensus;
   const name = (id: string | null) => view.players.find((player) => player.id === id)?.name ?? translation.ui.unknown;
   const title = session.mode === "colossus" ? translation.roleLabels.v27
-    : session.mode === "monkey" ? translation.roleLabels.v26 : text[session.mode];
+    : session.mode === "monkey" ? translation.roleLabels.v26
+    : session.mode === "web" ? translation.roleLabels.v23 : text[session.mode];
   const subtitle = proposal ? format(session.mode === "hunt" && !session.sourcePlayerId ? text.huntRequest : text.soloHuntRequest,
     { actor: name(session.sourcePlayerId), target: name(proposal) })
     : session.mode === "hunt" ? text.huntVotes : session.mode === "colossus" ? text.colossusInstructions : undefined;
@@ -36,7 +37,7 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
       <Button variant="destructive" onClick={() => resolve(true)}>{translation.ui.gmAcceptAction}</Button>
     </div> : undefined}>
     <PhoneActionScreen key={session.id} session={view} playerId="gm" language={language}
-      pending={false} connected gmControlled showHeader={false} onSend={onSend} />
+      pending={false} connected gmControlled showHeader={false} unframed onSend={onSend} />
     {session.mode === "hunt" && <ul className="mt-3 space-y-1 text-sm">
       {session.participantIds.map((id) => <li key={id} className="flex justify-between gap-4">
         <span>{name(id)}</span>

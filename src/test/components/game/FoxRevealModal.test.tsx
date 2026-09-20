@@ -13,6 +13,12 @@ const players: PhoneView["players"] = [
 const view: PhoneView = { id: "fox", mode: "fox", participantIds: ["fox"], votes: {}, players };
 
 describe("Fox Tamer reveal modal", () => {
+  it("can render inside the player screen without hiding its surrounding context", () => {
+    render(<FoxRevealModal embedded language="en" session={view} onConfirm={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Fox Tamer" })).toBeVisible();
+  });
+
   it("highlights the living trio, confirms separately, and shows a persistent result", () => {
     const onConfirm = vi.fn(), onClose = vi.fn(), onReopen = vi.fn();
     const props = { language: "en" as const, onConfirm, onClose, onReopen };

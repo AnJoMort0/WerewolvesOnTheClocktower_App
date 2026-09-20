@@ -2,7 +2,7 @@ import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { ScriptLine } from "@/lib/i18n/types";
 import { isColossusTarget } from "@/lib/colossus";
 
-export type PhoneMode = "hunt" | "allies" | "poison" | "shaman" | "monkey" | "fox" | "colossus";
+export type PhoneMode = "hunt" | "allies" | "poison" | "shaman" | "monkey" | "fox" | "web" | "colossus";
 export type MonkeyReveal = { targetPlayerId: string; roleId: RoleId; evil: boolean };
 export type FoxReveal = {
   targetPlayerId: string;
@@ -59,7 +59,7 @@ export type PhoneCommand = {
   targetPlayerId?: string;
 };
 export type PhoneAction = {
-  action: "kill" | "poison" | "shaman" | "monkey" | "fox" | "colossus";
+  action: "kill" | "poison" | "shaman" | "monkey" | "fox" | "web" | "colossus";
   targetPlayerId: string;
   sourcePlayerId: string | null;
   monkeyReveal?: MonkeyReveal;
@@ -138,6 +138,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
       : mode === "shaman" ? player.abilityRole === "e03"
       : mode === "monkey" ? player.abilityRole === "v26" && !player.monkeyDisabled
       : mode === "fox" ? player.abilityRole === "v04" && !player.foxDisabled
+      : mode === "web" ? player.abilityRole === "v23"
       : mode === "colossus" ? player.abilityRole === "v27" && !!player.colossusReady
       : mode === "hunt" && !!player.abilityRole && WEREWOLF_ROLES.includes(player.abilityRole);
     return matches ? [sourcePlayerId] : [];
@@ -239,7 +240,7 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if (session.mode === "hunt" && command.type === "select") {
     return { session: { ...next, votes: { ...session.votes, [actorId]: target.id } } };
   }
-  if ((session.mode === "poison" || session.mode === "shaman") && command.type === "confirm") {
+  if ((session.mode === "poison" || session.mode === "shaman" || session.mode === "web") && command.type === "confirm") {
     return { session: null, completedSession: session, action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };
   }
   return { session: next };

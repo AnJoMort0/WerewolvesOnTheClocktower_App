@@ -22,7 +22,7 @@ export function coerceLanguage(value: unknown, fallback: Language = "pt"): Langu
 export interface ScriptLine {
   text: string;
   /** GM-controlled phone interaction; independent of the translated wording. */
-  phoneMode?: "hunt" | "allies" | "poison" | "shaman" | "fox" | "colossus";
+  phoneMode?: "hunt" | "allies" | "poison" | "shaman" | "fox" | "web" | "colossus";
   requires?: RoleId[];
   conditionKey?: string;
 }
@@ -271,6 +271,7 @@ export interface UIStrings {
     allies: string;
     poison: string;
     shaman: string;
+    web: string;
     poisonConfirm: string;
     save: string;
     ignore: string;

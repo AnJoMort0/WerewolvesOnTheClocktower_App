@@ -81,6 +81,26 @@ describe("PhoneActionScreen", () => {
     expect(screen.getByText(getTranslation("en").ui.phoneActions.waiting)).toBeInTheDocument();
   });
 
+  it("lets a Spider Tamer select and confirm a web target", () => {
+    const onSend = vi.fn();
+    render(
+      <PhoneActionScreen
+        session={{ ...baseView, mode: "web", participantIds: ["wolf"] }}
+        playerId="wolf"
+        language="en"
+        pending={false}
+        connected
+        onSend={onSend}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: getTranslation("en").roleLabels.v23 })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Target" }));
+    expect(onSend).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    expect(onSend).toHaveBeenCalledWith("confirm", "target");
+  });
+
   it("uses a fluid map without a horizontal scroll container for large games", () => {
     const players = Array.from({ length: 24 }, (_, index) => ({
       id: `player-${index}`,

@@ -7,6 +7,12 @@ const view: PhoneView = { id: "monkey", mode: "monkey", participantIds: ["monkey
   { id: "wolf", name: "Wolf", seat_position: 0, dead: false, redX: false, selectable: true, marker: null },
 ] };
 describe("Monkey reveal modal", () => {
+  it("can render inside the player screen without opening a covering dialog", () => {
+    render(<MonkeyRevealModal embedded language="en" session={view} onConfirm={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Monkey Tamer" })).toBeVisible();
+  });
+
   it("requires choosing and confirming a player, then preserves a revealed card when reopened", () => {
     const onConfirm = vi.fn(), onClose = vi.fn(), onReopen = vi.fn(), onRoleClick = vi.fn();
     const props = { language: "en" as const, onConfirm, onClose, onReopen, onRoleClick };

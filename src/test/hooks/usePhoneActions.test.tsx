@@ -188,6 +188,21 @@ describe("phone synchronization across GM and player devices", () => {
     expect(onComplete).toHaveBeenCalledTimes(3);
   });
 
+  it("synchronizes a Spider script selection and completes it once", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const spiderWorld: PhoneWorld = { ...world, players: [...world.players, player("spider", "v23")] };
+    const gm = renderHook(() => useGMPhoneActions({
+      roomId: "room", contextKey: "playing:night:1", enabled: true, world: spiderWorld, onAction, onComplete,
+    }));
+    const spider = renderHook(() => usePlayerPhoneActions("room", "spider"));
+    act(() => gm.result.current.toggle("web", "first-spider-line", "spider", null));
+    expect(spider.result.current.session?.mode).toBe("web");
+    act(() => spider.result.current.send("confirm", "victim"));
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "web", sourcePlayerId: "spider", targetPlayerId: "victim" });
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "first-spider-line", participantIds: ["spider"] }));
+    expect(spider.result.current.session).toBeNull();
+  });
+
   it("waits for Colossus approval, handles denial, and accepts once despite retries", () => {
     const onAction = vi.fn(), onComplete = vi.fn();
     const colossusWorld: PhoneWorld = { ...world, players: [...world.players.map((p) => ({ ...p, actedTonight: true })),

@@ -23,6 +23,34 @@ const baseProps = {
 };
 
 describe("NightScript phone controls", () => {
+  it("opens the first Spider web and only the copied Spider whose own web needs replacement", () => {
+    const onPhoneToggle = vi.fn();
+    const firstProps = { ...baseProps, nightNumber: 1, activeRoles: new Set(["v23" as const]),
+      roleAssignments: { spider: "v23" as const }, abilityRoleAssignments: { spider: "v23" as const },
+      players: [{ id: "spider", name: "Spider", seat_position: 0 }], onPhoneToggle };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...firstProps} /></LanguageContext.Provider>);
+    const firstControl = container.querySelector<HTMLButtonElement>('[data-phone-mode="web"]')!;
+    expect(firstControl.querySelector(".lucide-eye")).toBeInTheDocument();
+    fireEvent.click(firstControl);
+    expect(onPhoneToggle).toHaveBeenLastCalledWith("web", expect.any(String), "spider", null);
+
+    const copiedProps = { ...baseProps, nightNumber: 3,
+      activeRoles: new Set(["v23" as const, "a03" as const, "a04" as const, "a02" as const]),
+      roleAssignments: { spider: "v23" as const, actor: "v23" as const, mime: "a03" as const, dog: "v23" as const },
+      baseRoleAssignments: { spider: "v23" as const, actor: "a04" as const, mime: "a03" as const, dog: "a02" as const },
+      abilityRoleAssignments: { spider: "v23" as const, actor: "v23" as const, mime: "v23" as const, dog: "v23" as const },
+      actorPlayerId: "actor", actorCopiedRole: "v23" as const, actorCopyNoticeNight: 1,
+      mimePlayerId: "mime", mimeMechanicalRole: "v23" as const,
+      dogWolfPlayerIds: ["dog"], dogWolfStates: { dog: createDogWolfState("spider") },
+      players: ["spider", "actor", "mime", "dog"].map((id, seat_position) => ({ id, name: id, seat_position })),
+      conditionKeys: { spiderWebbedDied: true }, deathTriggeredSourcePlayerIds: { spiderWebbedDied: ["mime"] }, onPhoneToggle };
+    rerender(<LanguageContext.Provider value="en"><NightScript {...copiedProps} /></LanguageContext.Provider>);
+    const replacementControls = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-phone-mode="web"]'));
+    expect(replacementControls).toHaveLength(1);
+    fireEvent.click(replacementControls[0]);
+    expect(onPhoneToggle).toHaveBeenLastCalledWith("web", expect.any(String), "mime", expect.any(Number));
+  });
+
   it("only renders Colossus retaliation sources attacked by Werewolves", () => {
     const onPhoneToggle = vi.fn(), onLineCompletedChange = vi.fn();
     const props = { ...baseProps, nightNumber: 3, colossusNightSeed: 0.29,

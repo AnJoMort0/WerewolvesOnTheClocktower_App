@@ -31,6 +31,33 @@ describe("GM-controlled phone rules", () => {
     expect(scripts.normalNight.find((line) => line.requires?.includes("v04"))?.phoneMode).toBe("fox");
   });
 
+  it.each(["pt", "fr", "en"] as const)("registers Spider Tamer controls for the first web and its replacement in %s", (language) => {
+    const scripts = getScripts(language);
+    expect(scripts.firstNight.find((line) => line.requires?.includes("v23"))?.phoneMode).toBe("web");
+    expect(scripts.normalNight.find((line) => line.conditionKey === "spiderWebbedDied")?.phoneMode).toBe("web");
+  });
+
+  it("lets copied Spider powers choose a living web target and completes the script action", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("dog", "v23", { objectiveRole: "a02", seat_position: 0 }),
+      phonePlayer("target", "v01", { seat_position: 1 }),
+      phonePlayer("ghost", "v01", { seat_position: 2, dead: true }),
+    ] };
+    expect(getPhoneParticipants("web", "dog", changed)).toEqual(["dog"]);
+    const session: PhoneSession = { id: "web", mode: "web", lineKey: "web-line", sourcePlayerId: "dog", participantIds: ["dog"], votes: {}, sequences: {} };
+    const confirmed = applyPhoneCommand(session, "dog", {
+      id: "confirm", sessionId: "web", sequence: 1, type: "confirm", targetPlayerId: "target",
+    }, changed);
+    expect(confirmed).toMatchObject({
+      session: null,
+      completedSession: session,
+      action: { action: "web", sourcePlayerId: "dog", targetPlayerId: "target" },
+    });
+    expect(applyPhoneCommand(session, "dog", {
+      id: "dead", sessionId: "web", sequence: 1, type: "confirm", targetPlayerId: "ghost",
+    }, changed).action).toBeUndefined();
+  });
+
   it("checks the selected player and nearest living neighbours around the circle", () => {
     const players = [
       phonePlayer("one", "v01", { seat_position: 0 }),

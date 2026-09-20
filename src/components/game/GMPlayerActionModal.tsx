@@ -23,6 +23,7 @@ export function GMPlayerActionModal({ mode, players, language, onClose, onConfir
   return <GameModal open title={title} subtitle={`${players.find((player) => player.id === mode.actorPlayerId)?.name ?? ""}: ${instructions}`}
     onClose={onClose} closeLabel={getTranslation(language).ui.phoneActions.close}>
     <PhoneActionScreen key={mode.id} session={view} playerId="gm" language={language} pending={false} connected gmControlled showHeader={false}
+      unframed
       appearance={{ title, icon: resurrect ? RotateCcw : web ? Eye : Crosshair,
         border: resurrect ? "border-emerald-500/50 ring-emerald-500/10" : web ? "border-cyan-500/50 ring-cyan-500/10" : "border-destructive/50 ring-destructive/10",
         accent: resurrect ? "text-emerald-300" : web ? "text-cyan-300" : "text-destructive" }}

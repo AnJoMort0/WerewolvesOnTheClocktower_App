@@ -1098,6 +1098,7 @@ export const NightScript = ({
       return localizedScripts.normalNight.find((line) => (
         line.requires?.includes(mimeMechanicalRole)
         && !isSharedWerewolfLine(line)
+        && !(mimeMechanicalRole === "v23" && line.conditionKey === "spiderWebbedDied")
         && shouldShowMimeCopiedLine(line)
       )) ?? getMimeOnlyScriptLine(mimeMechanicalRole, lang);
     };
@@ -1123,7 +1124,7 @@ export const NightScript = ({
       }
       const deathSourcePlayerIds = line.conditionKey ? deathTriggeredSourcePlayerIds[line.conditionKey] ?? [] : [];
       const isDeathOwnedLine = line.conditionKey === "hunterDied" || line.conditionKey === "soldierDied";
-      if (line.conditionKey === "colossusAttacked") {
+      if (line.conditionKey === "colossusAttacked" || line.conditionKey === "spiderWebbedDied") {
         if (!predicate(line)) return [];
         return deathSourcePlayerIds.map((sourcePlayerId) => ({
           line, key: `${nightNumber}:${source}:${index}:death:${sourcePlayerId}`, progressOrder, sourcePlayerId,
@@ -1452,10 +1453,12 @@ export const NightScript = ({
                 : phoneMode === "allies" ? Users
                 : phoneMode === "poison" ? FlaskConical
                 : phoneMode === "fox" ? PawPrint
+                : phoneMode === "web" ? Eye
                 : RotateCcw;
               const phoneIconClass = phoneMode === "poison" ? "text-green-400"
                 : phoneMode === "shaman" ? "text-moon"
                 : phoneMode === "fox" ? "text-amber-400"
+                : phoneMode === "web" ? "text-cyan-400"
                 : phoneMode === "allies" ? "text-gold"
                 : "text-primary";
               const usesIndependentPowerState = !!independentPowerState || !!item.actorLine

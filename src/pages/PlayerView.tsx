@@ -1106,12 +1106,12 @@ const PlayerView = () => {
             )}
             <AnimatePresence mode="wait">
               {phone.session?.mode === "monkey" && roomStatus === "playing" ? (
-                <MonkeyRevealModal key={phone.session.id} session={phone.session} language={language}
+                <MonkeyRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
                   onReopen={() => phone.send("reopen")} onRoleClick={(roleId) => openRulebook(roleId)} />
               ) : phone.session?.mode === "fox" && roomStatus === "playing" ? (
-                <FoxRevealModal key={phone.session.id} session={phone.session} language={language}
+                <FoxRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
                   onReopen={() => phone.send("reopen")} />

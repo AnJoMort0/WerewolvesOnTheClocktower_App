@@ -26,8 +26,8 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 ## Additions
 
 * [ ] Adding phone interactions for each character:
-    * [x] Add a button to v04 script line. The button opens a modal with the player circle, the player picks a player and it automatically shows the selection being the chosen player and the alive neighboors, then there's a confirm button. If one of the three is an evil being, the modal shows a "yes" or thumbs up or some other icon, whatever fits the best and states "one of them is an evil being" otherwise if it isn't it states no and says the fox ran away. Make sure this works with the (Were)wolf Tamer, it doesn't make the fox runaway if it's the first night, and if poison gives the reverse information, but the fox never runs away in that case. Also make it work with the illusioner, stating the fox is confused if one of them is an illusion regardless of their role.
-    * [x] Quickly go back, read the illusioner's card and make sure everything we implemented is working with the illusioner as intended
+    * [x] Make modals consistent. The spider tamer choosing to change the webbed player for example, on the player's device, they can still see the night number and their name, etc. Make it be the standard for all actions
+    * [x] Add a button for the Spider tamer to web someone in the first script line and when the webbed player dies. Compatible with copying roles and poison effect
   
 ## Future Plans
 

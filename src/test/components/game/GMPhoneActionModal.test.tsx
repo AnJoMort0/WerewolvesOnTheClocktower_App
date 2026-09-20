@@ -27,7 +27,7 @@ describe("usable GM action mirrors", () => {
     expect(onResolveHunt).not.toHaveBeenCalled();
   });
 
-  it.each(["poison", "shaman", "hunt"] as const)("allows a GM to confirm a %s target", (mode) => {
+  it.each(["poison", "shaman", "web", "hunt"] as const)("allows a GM to confirm a %s target", (mode) => {
     const onSend = vi.fn();
     render(<GMPhoneActionModal session={{ ...session, mode }} view={{ ...view, mode }} language="en"
       onClose={vi.fn()} onSend={onSend} onResolveHunt={vi.fn()} onResolveColossus={vi.fn()} />);

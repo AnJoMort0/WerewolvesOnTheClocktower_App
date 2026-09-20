@@ -37,7 +37,7 @@ function getEllipseAngles(count: number, radiusX: number, radiusY: number): numb
   });
 }
 
-export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false, selectedPlayerId, showHeader = true, gmControlled = false, confirmLabel, showPoisonConfirmation = true, appearance }: {
+export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, readOnly = false, selectedPlayerId, showHeader = true, unframed = false, gmControlled = false, confirmLabel, showPoisonConfirmation = true, appearance }: {
   session: PhoneView;
   playerId: string;
   language: Language;
@@ -47,6 +47,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   readOnly?: boolean;
   selectedPlayerId?: string | null;
   showHeader?: boolean;
+  unframed?: boolean;
   gmControlled?: boolean;
   confirmLabel?: string;
   showPoisonConfirmation?: boolean;
@@ -66,9 +67,10 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const angles = getEllipseAngles(players.length, MAP_MAX_WIDTH * MAP_HORIZONTAL_RADIUS, verticalRadius);
   const Icon = appearance?.icon ?? (session.mode === "poison" ? FlaskConical : session.mode === "shaman" ? RotateCcw
     : session.mode === "fox" ? PawPrint
-    : session.mode === "monkey" ? Eye : session.mode === "allies" ? Users : Crosshair);
+    : session.mode === "monkey" || session.mode === "web" ? Eye : session.mode === "allies" ? Users : Crosshair);
   const title = appearance?.title ?? (session.mode === "monkey" ? getTranslation(language).roleLabels.v26
     : session.mode === "fox" ? getTranslation(language).roleLabels.v04
+    : session.mode === "web" ? getTranslation(language).roleLabels.v23
     : session.mode === "colossus" ? getTranslation(language).roleLabels.v27 : text[session.mode]);
   const theme = appearance ?? (session.mode === "poison"
     ? { border: "border-emerald-500/50 ring-emerald-500/10", accent: "text-emerald-300" }
@@ -76,13 +78,11 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     ? { border: "border-moon/50 ring-moon/10", accent: "text-moon" }
     : session.mode === "fox"
     ? { border: "border-amber-500/50 ring-amber-500/10", accent: "text-amber-300" }
+    : session.mode === "web"
+    ? { border: "border-cyan-500/50 ring-cyan-500/10", accent: "text-cyan-300" }
     : { border: "border-primary/60 ring-primary/10", accent: "text-primary" });
 
-  return (
-    <section
-      aria-label={title}
-      className={`space-y-4 overflow-hidden rounded-lg border bg-card/90 p-4 shadow-md ring-1 ring-inset paper-texture ${theme.border}`}
-    >
+  const content = <>
       {showHeader && <header className="flex items-center justify-center gap-2 border-b border-border/60 pb-3">
         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background/40 ${theme.accent}`}>
           <Icon className="h-4 w-4" />
@@ -142,7 +142,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
       {pending && session.mode !== "hunt" && <p role="status" className="text-sm text-muted-foreground">{text.waiting}</p>}
       {session.pendingTargetPlayerId && <p role="status" className="text-center text-sm text-muted-foreground">{text.waiting}</p>}
       {showPoisonConfirmation && session.mode === "poison" && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
-      {!readOnly && (session.mode === "poison" || session.mode === "shaman" || session.mode === "colossus" || (gmControlled && session.mode === "hunt")) && (
+      {!readOnly && (session.mode === "poison" || session.mode === "shaman" || session.mode === "web" || session.mode === "colossus" || (gmControlled && session.mode === "hunt")) && (
         <div className="flex justify-center gap-2">
           {session.mode === "shaman" && (
             <Button variant="secondary" disabled={pending || !connected} onClick={() => onSend("ignore")}>
@@ -154,6 +154,16 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
           </Button>
         </div>
       )}
+  </>;
+
+  if (unframed) return <div className="space-y-4">{content}</div>;
+
+  return (
+    <section
+      aria-label={title}
+      className={`space-y-4 overflow-hidden rounded-lg border bg-card/90 p-4 shadow-md ring-1 ring-inset paper-texture ${theme.border}`}
+    >
+      {content}
     </section>
   );
 }
