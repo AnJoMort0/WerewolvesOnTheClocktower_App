@@ -17,6 +17,7 @@ import { GMPhoneActionModal } from "@/components/game/GMPhoneActionModal";
 import { GMPlayerActionModal } from "@/components/game/GMPlayerActionModal";
 import { useGMPlayerActionMirrors } from "@/hooks/usePlayerActionMirrors";
 import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
+import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -4722,6 +4723,7 @@ const GMRoom = () => {
 
   const phoneWorld = useMemo<PhoneWorld>(() => ({
     packBlocked: werewolfPackPoisoned,
+    nightNumber,
     players: players.map((player) => {
       const effects = playerEffects[player.id] ?? new Set<StatusEffect>();
       const dead = permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead";
@@ -4731,6 +4733,7 @@ const GMRoom = () => {
         abilityRole: abilityRoleAssignments[player.id], objectiveRole: objectiveRoleAssignments[player.id],
         displayRole: effectiveRoleAssignments[player.id], actingPoisoned: isPlayerActingPoisoned(player.id),
         illusion: illusionPlayerIds.has(player.id),
+        foxDisabled: independentPowerStates[player.id]?.foxDisabled ?? foxDisabled,
         monkeyDisabled: independentPowerStates[player.id]?.monkeyDisabled ?? monkeyDisabled,
         colossusReady: colossusReadyPlayerIds.has(player.id), actedTonight: actedTonightPlayerIds.has(player.id), host: effects.has("host"),
         werewolfTurned: effects.has("werewolf_turned"), evil: effects.has("evil_being"),
@@ -4740,8 +4743,8 @@ const GMRoom = () => {
         powerless: powerlessPlayerIds.has(player.id),
       };
     }),
-  }), [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, effectiveRoleAssignments, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
-  const applyPhoneAction = useCallback(({ action, targetPlayerId, sourcePlayerId, monkeyReveal }: PhoneAction) => {
+  }), [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, effectiveRoleAssignments, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
+  const applyPhoneAction = useCallback(({ action, targetPlayerId, sourcePlayerId, monkeyReveal, foxReveal }: PhoneAction) => {
     if (action === "monkey") {
       if (!sourcePlayerId || !monkeyReveal) return;
       // Revealed Evil Beings exhaust this source's power without killing them.
@@ -4753,6 +4756,16 @@ const GMRoom = () => {
       }
       handleDragAction("__catch__", targetPlayerId, sourcePlayerId);
       markScriptRoleAction("v26", sourcePlayerId);
+      return;
+    }
+    if (action === "fox") {
+      if (!sourcePlayerId || !foxReveal) return;
+      if (foxReveal.foxRanAway) {
+        const powerState = independentPowerStates[sourcePlayerId];
+        if (powerState) handleIndependentPowerStateChange(sourcePlayerId, { ...powerState, foxDisabled: true });
+        else setFoxDisabled(true);
+      }
+      markScriptRoleAction("v04", sourcePlayerId);
       return;
     }
     handleDragAction(action === "colossus" ? "role-v27" : action, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
@@ -5067,7 +5080,11 @@ const GMRoom = () => {
       : drunkardReplacementCandidates[Math.floor(Math.random() * drunkardReplacementCandidates.length)] ?? null;
 
     return Object.entries(roleAssignments).flatMap(([playerId, role]) => {
-      if (playerId === mimeId || !MIME_COPY_ROLES.includes(role)) return [];
+      if (playerId === mimeId) return [];
+      if (illusionPlayerIds.has(playerId)) {
+        return [{ displayRole: "a06" as RoleId, mechanicalRole: "a06" as RoleId, cornerRole: null }];
+      }
+      if (!MIME_COPY_ROLES.includes(role)) return [];
       if ((role === "e03" || role === "a05" || role === "l06" || role === "v01") && !hasRedX) return [];
       if ((role === "v20" || role === "v12") && poisonedPlayerIds.size === 0) return [];
       if (role === "e04" && lastNightDeadPlayerIds.length === 0) return [];
@@ -5095,6 +5112,7 @@ const GMRoom = () => {
     isWerewolfAttackSource,
     killSourcePlayerIds,
     killSources,
+    illusionPlayerIds,
     lastNightDeadPlayerIds,
     permanentlyDead,
     playerEffects,
@@ -5190,11 +5208,17 @@ const GMRoom = () => {
       });
     }
     return redX.map((pid) => {
-      const card = resolveKillerCard(killSources[pid], roleAssignments, illusionPlayerIds.has(pid) ? pid : null, localLang);
+      const killerPlayerId = killSourcePlayerIds[pid];
+      const card = resolveKillerCard(
+        killSources[pid],
+        roleAssignments,
+        killerPlayerId && illusionPlayerIds.has(killerPlayerId) ? killerPlayerId : null,
+        localLang,
+      );
       const name = players.find((p) => p.id === pid)?.name;
       return { name, image: card.image, label: card.label, roleId: card.roleId };
     });
-  }, [isPlayerActingPoisoned, room, roleAssignments, playerStatuses, killSources, illusionPlayerIds, players]);
+  }, [isPlayerActingPoisoned, room, roleAssignments, playerStatuses, killSources, killSourcePlayerIds, illusionPlayerIds, players]);
 
   const defaultLittleGirlCards = useMemo<RevealCard[]>(() => (
     buildLittleGirlCards(getRolePlayerId("v01"))
@@ -5234,7 +5258,7 @@ const GMRoom = () => {
     const byPlayerId = Object.fromEntries(recipients.map((viewerPlayerId) => {
       const pick = candidates[Math.floor(Math.random() * candidates.length)];
       const mechanicalRole = abilityRoleAssignments[pick.id];
-      const role = roleAssignments[pick.id];
+      let role = roleAssignments[pick.id];
       const powerState = independentPowerStates[pick.id];
       let charges: boolean[] = [false, false];
       if (mechanicalRole === "e03") charges = powerState ? [powerState.shamanCharges > 0, powerState.shamanCharges > 1] : [shamanCharges > 0, shamanCharges > 1];
@@ -5249,6 +5273,9 @@ const GMRoom = () => {
       if (isPlayerActingPoisoned(viewerPlayerId) && charges.length > 0) {
         const flipIndex = Math.floor(Math.random() * charges.length);
         charges = charges.map((checked, index) => index === flipIndex ? !checked : checked);
+      } else if (illusionPlayerIds.has(pick.id)) {
+        role = "a06";
+        charges = [];
       }
       return [viewerPlayerId, { role, charges }];
     }));
@@ -5264,7 +5291,7 @@ const GMRoom = () => {
       type: "broadcast", event: "lamplighter-reveal",
       payload: { show: true, byPlayerId },
     });
-  }, [abilityRoleAssignments, players, permanentlyDead, getRevealRecipientIds, roleAssignments, independentPowerStates, shamanCharges, paranoidCharges, angelCharges, bigBadWolfCharges, cupidCharges, vampireWolfUsed, judgeCharges, accuserCharges, spiderDayChangeUsed, isPlayerActingPoisoned, markScriptRoleAction, roomId, room?.language]);
+  }, [abilityRoleAssignments, players, permanentlyDead, getRevealRecipientIds, roleAssignments, independentPowerStates, shamanCharges, paranoidCharges, angelCharges, bigBadWolfCharges, cupidCharges, vampireWolfUsed, judgeCharges, accuserCharges, spiderDayChangeUsed, isPlayerActingPoisoned, illusionPlayerIds, markScriptRoleAction, roomId, room?.language]);
 
   const handleCloseLamplighterModal = useCallback(() => {
     setLamplighterRevealOpen(false);
@@ -5294,7 +5321,7 @@ const GMRoom = () => {
       if (isPlayerActingPoisoned(viewerPlayerId)) {
         const wrongRoles = inPlayRoles.filter((candidateRole) => candidateRole !== actualRole);
         if (wrongRoles.length > 0) role = wrongRoles[Math.floor(Math.random() * wrongRoles.length)];
-      }
+      } else if (illusionPlayerIds.has(werewolfSeerVictim.id)) role = "a06";
       return [viewerPlayerId, { victimId: werewolfSeerVictim.id, role }];
     }));
     const gmResult = Object.values(byPlayerId)[0];
@@ -5316,7 +5343,7 @@ const GMRoom = () => {
       type: "broadcast", event: "lv-reveal",
       payload: { show: true, byPlayerId },
     });
-  }, [getRevealRecipientIds, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, isPlayerActingPoisoned, werewolfSeerVictim, markScriptRoleAction, roleAssignments, roomId]);
+  }, [getRevealRecipientIds, handleIndependentPowerStateChange, handlePlayerStatusChange, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, werewolfSeerVictim, markScriptRoleAction, roleAssignments, roomId]);
 
   const handleCloseWerewolfSeerModal = useCallback(() => {
     setWerewolfSeerRevealOpen(false);
@@ -5781,7 +5808,7 @@ const GMRoom = () => {
   const scriptPowerlessPlayerIds = new Set(powerlessPlayerIds);
   // This night's resolved line can reopen the card, even after power loss.
   phone.monkeySourceIds.forEach((id) => scriptPowerlessPlayerIds.delete(id));
-  const phoneView = phone.session && phone.session.mode !== "monkey"
+  const phoneView = phone.session && phone.session.mode !== "monkey" && phone.session.mode !== "fox"
     ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
 
   return (
@@ -5793,6 +5820,12 @@ const GMRoom = () => {
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
           language={lang} onConfirm={phone.confirmMonkey} onClose={phone.close}
           onRoleClick={(roleId) => openRulebook(roleId)} />
+      )}
+      {phone.session?.mode === "fox" && !hideScreenMode && (
+        <FoxRevealModal key={phone.session.id}
+          session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
+          language={lang} onConfirm={phone.confirmFox} onClose={phone.close}
+          onReopen={() => phone.sendGM("reopen")} />
       )}
       {phoneView && phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
         <GMPhoneActionModal session={phone.session} view={phoneView} language={lang}

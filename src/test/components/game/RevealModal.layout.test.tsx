@@ -2,13 +2,18 @@ import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { RevealModal } from "@/components/game/RevealModal";
+import { resolveKillerCard, RevealModal } from "@/components/game/RevealModal";
 import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { LanguageContext } from "@/lib/i18n";
 import { ROLES, type RoleId } from "@/lib/roles";
 
 describe("shared reveal dialogs", () => {
+  it("shows the Illusionist when the Little Girl's selected victim was killed by an illusion", () => {
+    expect(resolveKillerCard("e01", { killer: "e01" }, "killer", "en")).toMatchObject({ roleId: "a06", label: "Illusionist" });
+    expect(resolveKillerCard("soldier", { soldier: "v09" }, "soldier", "en")).toMatchObject({ roleId: "a06", label: "Illusionist" });
+  });
+
   it("opens the rulebook over a copied card without dismissing the GM-controlled reveal", () => {
     const onClose = vi.fn();
     function RevealWithRulebook() {

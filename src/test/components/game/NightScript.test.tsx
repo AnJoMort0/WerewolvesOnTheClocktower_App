@@ -495,6 +495,34 @@ describe("NightScript conditional behavior", () => {
     expect(container.textContent).toContain("O Urso não rosna.");
   });
 
+  it("confuses the Raven for any living Illusion and the Bunnies when their tamer is the Illusion", () => {
+    const common = {
+      ...baseProps,
+      players: [
+        { id: "tamer", name: "Tamer", seat_position: 0 },
+        { id: "villager", name: "Villager", seat_position: 1 },
+        { id: "other", name: "Other", seat_position: 2 },
+      ],
+      illusionPlayerIds: new Set(["villager"]),
+    };
+    const { container, rerender } = render(
+      <LanguageContext.Provider value="en">
+        <NightScript {...common} activeRoles={new Set(["v03", "v01"])}
+          roleAssignments={{ tamer: "v03", villager: "v01", other: "v01" }} />
+      </LanguageContext.Provider>,
+    );
+    expect(container.textContent).toContain("The Raven is confused.");
+
+    rerender(
+      <LanguageContext.Provider value="en">
+        <NightScript {...common} activeRoles={new Set(["v05", "v01"])}
+          roleAssignments={{ tamer: "v05", villager: "v01", other: "v01" }}
+          illusionPlayerIds={new Set(["tamer"])} />
+      </LanguageContext.Provider>,
+    );
+    expect(container.textContent).toContain("The Bunnies were confused tonight.");
+  });
+
   it("shows the v12 line only while a poisoned character exists", () => {
     const props = {
       ...baseProps,

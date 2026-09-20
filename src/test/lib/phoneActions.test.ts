@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { getScripts } from "@/lib/i18n";
 import type { RoleId } from "@/lib/roles";
 import {
-  applyPhoneCommand, getHuntConsensus, getPhoneParticipants, getPhoneView, getScriptPhoneMode, reconcilePhoneSession,
+  applyPhoneCommand, getFoxTargetPlayerIds, getHuntConsensus, getPhoneParticipants, getPhoneView, getScriptPhoneMode,
+  reconcilePhoneSession, resolveFoxReveal,
   type PhonePlayer, type PhoneSession, type PhoneWorld,
 } from "@/lib/phoneActions";
 
@@ -22,6 +23,58 @@ const hunt = (): PhoneSession => ({
 describe("GM-controlled phone rules", () => {
   it.each(["pt", "fr", "en"] as const)("finds the allies line independently of the %s wording", (language) => {
     expect(getScripts(language).secondNight.filter((line) => getScriptPhoneMode(line) === "allies")).toHaveLength(1);
+  });
+
+  it.each(["pt", "fr", "en"] as const)("registers Fox Tamer controls on both scripts in %s", (language) => {
+    const scripts = getScripts(language);
+    expect(scripts.firstNight.find((line) => line.requires?.includes("v04"))?.phoneMode).toBe("fox");
+    expect(scripts.normalNight.find((line) => line.requires?.includes("v04"))?.phoneMode).toBe("fox");
+  });
+
+  it("checks the selected player and nearest living neighbours around the circle", () => {
+    const players = [
+      phonePlayer("one", "v01", { seat_position: 0 }),
+      phonePlayer("dead", "v01", { seat_position: 1, dead: true }),
+      phonePlayer("three", "v01", { seat_position: 2 }),
+      phonePlayer("four", "v01", { seat_position: 3 }),
+    ];
+    expect(getFoxTargetPlayerIds(players, "three")).toEqual(["one", "three", "four"]);
+    expect(getFoxTargetPlayerIds(players, "one")).toEqual(["four", "one", "three"]);
+  });
+
+  it("resolves truthful, poisoned, first-night, runaway, and Illusionist Fox information", () => {
+    const players = [
+      phonePlayer("fox", "v04", { seat_position: 0 }),
+      phonePlayer("left", "v01", { seat_position: 1 }),
+      phonePlayer("target", "v01", { seat_position: 2 }),
+      phonePlayer("wolf", "e01", { seat_position: 3 }),
+      phonePlayer("outside", "v01", { seat_position: 4 }),
+    ];
+    expect(resolveFoxReveal("fox", "target", { packBlocked: false, nightNumber: 2, players })).toMatchObject({
+      playerIds: ["left", "target", "wolf"], result: "evil", foxRanAway: false,
+    });
+    const clearPlayers = players.map((player) => player.id === "wolf" ? { ...player, objectiveRole: "v01" as const, abilityRole: "v01" as const } : player);
+    expect(resolveFoxReveal("fox", "target", { packBlocked: false, nightNumber: 1, players: clearPlayers })).toMatchObject({ result: "clear", foxRanAway: false });
+    expect(resolveFoxReveal("fox", "target", { packBlocked: false, nightNumber: 2, players: clearPlayers })).toMatchObject({ result: "clear", foxRanAway: true });
+    const poisoned = clearPlayers.map((player) => player.id === "fox" ? { ...player, actingPoisoned: true } : player);
+    expect(resolveFoxReveal("fox", "target", { packBlocked: false, nightNumber: 2, players: poisoned })).toMatchObject({ result: "evil", foxRanAway: false });
+    const illusion = players.map((player) => player.id === "left" ? { ...player, illusion: true } : player);
+    expect(resolveFoxReveal("fox", "target", { packBlocked: false, nightNumber: 2, players: illusion })).toMatchObject({ result: "confused", foxRanAway: false });
+  });
+
+  it("supports a (Were)wolf Tamer using the Fox power and preserves the confirmed result", () => {
+    const changed: PhoneWorld = { packBlocked: false, nightNumber: 2, players: [
+      phonePlayer("dog", "v04", { objectiveRole: "m06", seat_position: 0 }),
+      phonePlayer("left", "v01", { seat_position: 1 }),
+      phonePlayer("target", "v01", { seat_position: 2 }),
+      phonePlayer("right", "v01", { seat_position: 3 }),
+    ] };
+    expect(getPhoneParticipants("fox", "dog", changed)).toEqual(["dog"]);
+    const session: PhoneSession = { id: "fox", mode: "fox", lineKey: "fox-line", sourcePlayerId: "dog", participantIds: ["dog"], votes: {}, sequences: {} };
+    const result = applyPhoneCommand(session, "dog", { id: "confirm", sessionId: "fox", sequence: 1, type: "confirm", targetPlayerId: "target" }, changed);
+    expect(result.action).toMatchObject({ action: "fox", sourcePlayerId: "dog", foxReveal: { result: "clear", foxRanAway: true } });
+    const exhausted = { ...changed, players: changed.players.map((player) => player.id === "dog" ? { ...player, foxDisabled: true, powerless: true } : player) };
+    expect(reconcilePhoneSession(result.session, exhausted)?.foxReveal?.targetPlayerId).toBe("target");
   });
 
   it("requires every wolf and the Puppeteer to agree", () => {

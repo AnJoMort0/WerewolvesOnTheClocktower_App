@@ -273,6 +273,44 @@ describe("phone synchronization across GM and player devices", () => {
     expect(restored.result.current.session?.monkeyReveal).toBeUndefined();
   });
 
+  it("synchronizes and restores a Fox result after the Fox loses its power", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const foxPlayers = [
+      { ...player("fox", "v04"), seat_position: 0 },
+      { ...player("left", "v01"), seat_position: 1 },
+      { ...player("target", "v01"), seat_position: 2 },
+      { ...player("right", "v01"), seat_position: 3 },
+    ];
+    const foxWorld: PhoneWorld = { packBlocked: false, nightNumber: 2, players: foxPlayers };
+    const props = { roomId: "room", contextKey: "playing:night:2", enabled: true, world: foxWorld, onAction, onComplete };
+    const gm = renderHook((p) => useGMPhoneActions(p), { initialProps: props });
+    const fox = renderHook(() => usePlayerPhoneActions("room", "fox"));
+
+    act(() => gm.result.current.toggle("fox", "fox-line", "fox", 32));
+    act(() => fox.result.current.send("confirm", "target"));
+    expect(gm.result.current.session?.foxReveal).toMatchObject({
+      targetPlayerId: "target",
+      playerIds: ["left", "target", "right"],
+      result: "clear",
+      foxRanAway: true,
+    });
+    expect(onAction).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ action: "fox", sourcePlayerId: "fox" }));
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "fox-line", progressOrder: 32 }));
+
+    gm.rerender({ ...props, world: { ...foxWorld, players: foxPlayers.map((candidate) => (
+      candidate.id === "fox" ? { ...candidate, powerless: true, foxDisabled: true } : candidate
+    )) } });
+    act(() => fox.result.current.send("close"));
+    expect(gm.result.current.session?.visible).toBe(false);
+    act(() => gm.result.current.toggle("fox", "fox-line", "fox", 32));
+    expect(fox.result.current.session?.foxReveal?.foxRanAway).toBe(true);
+    expect(onAction).toHaveBeenCalledTimes(1);
+
+    gm.unmount();
+    const restored = renderHook(() => useGMPhoneActions(props));
+    expect(restored.result.current.session?.foxReveal?.targetPlayerId).toBe("target");
+  });
+
   it("accepts a Monkey selection from the phone and recovers a lost reveal response", () => {
     const onAction = vi.fn(), onComplete = vi.fn();
     const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };

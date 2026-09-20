@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crosshair, Eye, FlaskConical, Moon, RotateCcw, Sun, Users } from "lucide-react";
+import { Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Sun, Users } from "lucide-react";
 import { getScriptPhoneMode, type PhoneMode } from "@/lib/phoneActions";
 import { placeColossusLines } from "@/lib/colossus";
 import { Button } from "@/components/ui/button";
@@ -819,9 +819,7 @@ export const NightScript = ({
 
     const isCrowPoisoned = isPlayerActingPoisoned(crowPlayerId);
     const aliveEvilCount = alivePlayers.filter((p) => countsAsEvilBeing(p.id)).length;
-    const illusionActive = [...illusionPlayerIds].some((playerId) => (
-      !_permanentlyDeadPlayerIds.has(playerId) && countsAsEvilBeing(playerId)
-    ));
+    const illusionActive = [...illusionPlayerIds].some((playerId) => !_permanentlyDeadPlayerIds.has(playerId));
 
     if (isCrowPoisoned) {
       const fakeCount = getGuaranteedWrongCount(aliveEvilCount);
@@ -866,8 +864,8 @@ export const NightScript = ({
 
     if (isBunnyPoisoned) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
 
-    const hasIllusionNeighbor = neighbors.some((n) => illusionPlayerIds.has(n.id));
-    if (hasIllusionNeighbor) return dyn.bunnyConfused;
+    const hasIllusionTarget = relevantIds.some((id) => illusionPlayerIds.has(id));
+    if (hasIllusionTarget) return dyn.bunnyConfused;
 
     if (wasTargeted) return dyn.bunnyHeard;
 
@@ -917,9 +915,7 @@ export const NightScript = ({
       if (isPlayerActingPoisoned(dogPlayerId)) {
         return dyn.crowReveal.replace("{n}", String(getGuaranteedWrongCount(aliveEvilCount)));
       }
-      const illusionActive = [...illusionPlayerIds].some((playerId) => (
-        !_permanentlyDeadPlayerIds.has(playerId) && countsAsEvilBeing(playerId)
-      ));
+      const illusionActive = [...illusionPlayerIds].some((playerId) => !_permanentlyDeadPlayerIds.has(playerId));
       return illusionActive ? dyn.crowConfused : dyn.crowReveal.replace("{n}", String(aliveEvilCount));
     }
     if (role === "v05") {
@@ -927,7 +923,7 @@ export const NightScript = ({
       const relevantIds = [dogPlayerId, ...neighbors.map((neighbor) => neighbor.id)];
       const wasTargeted = relevantIds.some((playerId) => nightTargetedPlayerIds.has(playerId));
       if (isPlayerActingPoisoned(dogPlayerId)) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
-      if (neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id))) return dyn.bunnyConfused;
+      if (relevantIds.some((playerId) => illusionPlayerIds.has(playerId))) return dyn.bunnyConfused;
       return wasTargeted ? dyn.bunnyHeard : `~~${dyn.bunnyNothing}~~`;
     }
     if (role === "v20") {
@@ -970,9 +966,7 @@ export const NightScript = ({
       if (isPlayerActingPoisoned(sourcePlayerId)) {
         return dyn.crowReveal.replace("{n}", String(getGuaranteedWrongCount(aliveEvilCount)));
       }
-      const illusionActive = [...illusionPlayerIds].some((playerId) => (
-        !_permanentlyDeadPlayerIds.has(playerId) && countsAsEvilBeing(playerId)
-      ));
+      const illusionActive = [...illusionPlayerIds].some((playerId) => !_permanentlyDeadPlayerIds.has(playerId));
       return illusionActive ? dyn.crowConfused : dyn.crowReveal.replace("{n}", String(aliveEvilCount));
     }
     if (role === "v05") {
@@ -980,7 +974,7 @@ export const NightScript = ({
       const relevantIds = [sourcePlayerId, ...neighbors.map((neighbor) => neighbor.id)];
       const wasTargeted = relevantIds.some((playerId) => nightTargetedPlayerIds.has(playerId));
       if (isPlayerActingPoisoned(sourcePlayerId)) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
-      if (neighbors.some((neighbor) => illusionPlayerIds.has(neighbor.id))) return dyn.bunnyConfused;
+      if (relevantIds.some((playerId) => illusionPlayerIds.has(playerId))) return dyn.bunnyConfused;
       return wasTargeted ? dyn.bunnyHeard : `~~${dyn.bunnyNothing}~~`;
     }
     if (role === "v20") {
@@ -1457,9 +1451,11 @@ export const NightScript = ({
               const PhoneActionIcon = phoneMode === "hunt" || phoneMode === "colossus" ? Crosshair
                 : phoneMode === "allies" ? Users
                 : phoneMode === "poison" ? FlaskConical
+                : phoneMode === "fox" ? PawPrint
                 : RotateCcw;
               const phoneIconClass = phoneMode === "poison" ? "text-green-400"
                 : phoneMode === "shaman" ? "text-moon"
+                : phoneMode === "fox" ? "text-amber-400"
                 : phoneMode === "allies" ? "text-gold"
                 : "text-primary";
               const usesIndependentPowerState = !!independentPowerState || !!item.actorLine

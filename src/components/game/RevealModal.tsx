@@ -43,6 +43,16 @@ export function resolveKillerCard(
   if (source === "executado") {
     return { image: ghostExecutedIcon, label: t("execution", lang) };
   }
+  if (illusionPlayerId) {
+    const illusionRole = roleAssignments[illusionPlayerId];
+    const sourceRole = source === "soldier" || source === "soldado" ? "v09"
+      : source === "s01-suicide" ? "s01"
+      : source;
+    if (illusionRole === sourceRole) {
+      const role = ROLES["a06"];
+      return { image: role.image, label: getRoleLabel("a06", lang), roleId: "a06" };
+    }
+  }
   if (source === "soldier" || source === "soldado") {
     const role = ROLES["v09"];
     return { image: role.image, label: t("littleGirlSoldier", lang), roleId: "v09" };
@@ -54,13 +64,6 @@ export function resolveKillerCard(
   if (source === "e01") {
     const role = ROLES["e01"];
     return { image: role.image, label: t("littleGirlWerewolves", lang), roleId: "e01" };
-  }
-  if (illusionPlayerId) {
-    const illusionRole = roleAssignments[illusionPlayerId];
-    if (illusionRole === source) {
-      const role = ROLES["a06"];
-      return { image: role.image, label: getRoleLabel("a06", lang), roleId: "a06" };
-    }
   }
   if (source === "v07-poisoned") {
     return { image: ROLES["v07"].image, label: getRoleLabel("v07", lang), roleId: "v07" };

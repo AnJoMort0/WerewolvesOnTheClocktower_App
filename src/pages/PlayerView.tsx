@@ -29,6 +29,7 @@ import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { usePlayerPhoneActions } from "@/hooks/usePhoneActions";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
+import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { usePlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 import { normalizeGameLogSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
 
@@ -1109,6 +1110,11 @@ const PlayerView = () => {
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
                   onReopen={() => phone.send("reopen")} onRoleClick={(roleId) => openRulebook(roleId)} />
+              ) : phone.session?.mode === "fox" && roomStatus === "playing" ? (
+                <FoxRevealModal key={phone.session.id} session={phone.session} language={language}
+                  pending={phone.pending} connected={phone.connected}
+                  onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
+                  onReopen={() => phone.send("reopen")} />
               ) : phone.session && roomStatus === "playing" && playerId ? (
                 <PhoneActionScreen key={phone.session.id} session={phone.session} playerId={playerId}
                   language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send} />

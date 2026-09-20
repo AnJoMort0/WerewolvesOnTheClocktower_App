@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Check, Crosshair, Eye, FlaskConical, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
+import { Check, Crosshair, Eye, FlaskConical, PawPrint, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, getTranslation, type Language } from "@/lib/i18n";
-import type { PhoneCommand, PhoneView } from "@/lib/phoneActions";
+import { getFoxTargetPlayerIds, type PhoneCommand, type PhoneView } from "@/lib/phoneActions";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
 
@@ -54,20 +54,28 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
 }) {
   const text = getTranslation(language).ui.phoneActions;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = session.pendingTargetPlayerId ?? (selectedPlayerId !== undefined ? selectedPlayerId : session.mode === "hunt" && !gmControlled ? session.votes[playerId] : selectedId);
+  const selected = session.foxReveal?.targetPlayerId ?? session.pendingTargetPlayerId
+    ?? (selectedPlayerId !== undefined ? selectedPlayerId : session.mode === "hunt" && !gmControlled ? session.votes[playerId] : selectedId);
   const target = session.players.find((p) => p.id === selected && p.selectable);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
+  const foxTargetIds = new Set(session.mode === "fox" && selected
+    ? session.foxReveal?.playerIds ?? getFoxTargetPlayerIds(players, selected)
+    : []);
   const mapHeight = Math.max(MAP_MIN_HEIGHT, players.length * PLAYER_ARC_SPACE);
   const verticalRadius = mapHeight / 2 - PLAYER_EDGE_SPACE;
   const angles = getEllipseAngles(players.length, MAP_MAX_WIDTH * MAP_HORIZONTAL_RADIUS, verticalRadius);
   const Icon = appearance?.icon ?? (session.mode === "poison" ? FlaskConical : session.mode === "shaman" ? RotateCcw
+    : session.mode === "fox" ? PawPrint
     : session.mode === "monkey" ? Eye : session.mode === "allies" ? Users : Crosshair);
   const title = appearance?.title ?? (session.mode === "monkey" ? getTranslation(language).roleLabels.v26
+    : session.mode === "fox" ? getTranslation(language).roleLabels.v04
     : session.mode === "colossus" ? getTranslation(language).roleLabels.v27 : text[session.mode]);
   const theme = appearance ?? (session.mode === "poison"
     ? { border: "border-emerald-500/50 ring-emerald-500/10", accent: "text-emerald-300" }
     : session.mode === "shaman"
     ? { border: "border-moon/50 ring-moon/10", accent: "text-moon" }
+    : session.mode === "fox"
+    ? { border: "border-amber-500/50 ring-amber-500/10", accent: "text-amber-300" }
     : { border: "border-primary/60 ring-primary/10", accent: "text-primary" });
 
   return (
@@ -100,7 +108,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 aria-label={player.name}
                 aria-pressed={session.mode === "allies" ? undefined : selected === player.id}
                 disabled={readOnly || !!session.pendingTargetPlayerId || !player.selectable || !connected || (pending && session.mode !== "hunt")}
-                onClick={() => (session.mode === "hunt" && !gmControlled) || session.mode === "monkey" ? onSend("select", player.id) : setSelectedId(player.id)}
+                onClick={() => (session.mode === "hunt" && !gmControlled) || session.mode === "monkey" || session.mode === "fox"
+                  ? onSend("select", player.id) : setSelectedId(player.id)}
                 className={`absolute flex w-[3.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
                 style={{
                   left: `${50 + MAP_HORIZONTAL_RADIUS * 100 * Math.cos(angle)}%`,
@@ -109,8 +118,10 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 title={player.name}
               >
                 <span className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 ${
-                  selected === player.id ? "border-gold ring-2 ring-gold/30" : player.marker ? "border-primary" : "border-border"
-                } ${player.marker ? "bg-primary/25" : session.mode === "colossus" && player.selectable ? "bg-emerald-500/25 text-emerald-200" : "bg-background/70"} ${player.dead || (session.mode === "colossus" && !player.selectable) ? "opacity-40" : ""}`}>
+                  selected === player.id ? "border-gold ring-2 ring-gold/30"
+                  : foxTargetIds.has(player.id) ? "border-amber-400 ring-2 ring-amber-400/20"
+                  : player.marker ? "border-primary" : "border-border"
+                } ${foxTargetIds.has(player.id) ? "bg-amber-500/20 text-amber-100" : player.marker ? "bg-primary/25" : session.mode === "colossus" && player.selectable ? "bg-emerald-500/25 text-emerald-200" : "bg-background/70"} ${player.dead || (session.mode === "colossus" && !player.selectable) ? "opacity-40" : ""}`}>
                   {player.marker
                     ? <img src={player.marker === "werewolf" ? werewolfIcon : evilBeingIcon} alt="" draggable={false} className="h-8 w-8 object-contain" />
                     : <span className="font-bold">{player.name.charAt(0).toUpperCase()}</span>}

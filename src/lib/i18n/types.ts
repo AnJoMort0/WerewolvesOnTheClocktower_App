@@ -22,7 +22,7 @@ export function coerceLanguage(value: unknown, fallback: Language = "pt"): Langu
 export interface ScriptLine {
   text: string;
   /** GM-controlled phone interaction; independent of the translated wording. */
-  phoneMode?: "hunt" | "allies" | "poison" | "shaman" | "colossus";
+  phoneMode?: "hunt" | "allies" | "poison" | "shaman" | "fox" | "colossus";
   requires?: RoleId[];
   conditionKey?: string;
 }
@@ -251,6 +251,16 @@ export interface GMRoomStrings {
 /** Static translatable UI strings. */
 export interface UIStrings {
   monkeyReveal: { choose: string; confirm: string; close: string; reopen: string; noCard: string };
+  foxReveal: {
+    choose: string;
+    confirm: string;
+    close: string;
+    reopen: string;
+    evil: string;
+    clear: string;
+    ranAway: string;
+    confused: string;
+  };
   // GM script phone controls, player night modes, and hunt approval dialog.
   phoneActions: {
     colossusInstructions: string;
