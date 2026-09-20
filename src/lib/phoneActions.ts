@@ -253,11 +253,11 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if (session.mode === "hunt" && command.type === "select") {
     return { session: { ...next, votes: { ...session.votes, [actorId]: target.id } } };
   }
-  if (session.mode === "priest" && command.type === "select" && !session.pendingTargetPlayerId) {
+  if (session.mode === "priest" && command.type === "confirm" && !session.pendingTargetPlayerId) {
     return { session: { ...next, pendingTargetPlayerId: target.id } };
   }
-  if ((session.mode === "web" || session.mode === "sleepwalker")
-    && command.type === "select" && !session.pendingTargetPlayerId) {
+  if ((session.mode === "web" && command.type === "select" || session.mode === "sleepwalker" && command.type === "confirm")
+    && !session.pendingTargetPlayerId) {
     const selected = { ...next, pendingTargetPlayerId: target.id };
     return { session: selected, completedSession: selected,
       action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };

@@ -64,7 +64,7 @@ describe("GM-controlled phone rules", () => {
     }, changed).action).toBeUndefined();
   });
 
-  it("lets a copied Sleepwalker apply a visit immediately and keeps the selection visible", () => {
+  it("lets a copied Sleepwalker confirm a visit and keeps the selection visible", () => {
     const changed: PhoneWorld = { packBlocked: false, players: [
       phonePlayer("actor", "v16", { objectiveRole: "a04", seat_position: 0 }),
       phonePlayer("target", "v01", { seat_position: 1 }),
@@ -72,7 +72,7 @@ describe("GM-controlled phone rules", () => {
     expect(getPhoneParticipants("sleepwalker", "actor", changed)).toEqual(["actor"]);
     const session: PhoneSession = { id: "visit", mode: "sleepwalker", lineKey: "visit-line", sourcePlayerId: "actor", participantIds: ["actor"], votes: {}, sequences: {} };
     const result = applyPhoneCommand(session, "actor", {
-      id: "visit", sessionId: "visit", sequence: 1, type: "select", targetPlayerId: "target",
+      id: "visit", sessionId: "visit", sequence: 1, type: "confirm", targetPlayerId: "target",
     }, changed);
     expect(result).toMatchObject({
       session: { pendingTargetPlayerId: "target" },
@@ -92,7 +92,7 @@ describe("GM-controlled phone rules", () => {
     const view = getPhoneView(session, "mime", changed)!;
     expect(view.players.filter((player) => player.selectable).map((player) => player.id)).toEqual(["living", "ghost"]);
     const proposed = applyPhoneCommand(session, "mime", {
-      id: "ghost", sessionId: "confess", sequence: 1, type: "select", targetPlayerId: "ghost",
+      id: "ghost", sessionId: "confess", sequence: 1, type: "confirm", targetPlayerId: "ghost",
     }, changed);
     expect(proposed).toEqual({ session: expect.objectContaining({ pendingTargetPlayerId: "ghost" }) });
     const poisoned = { ...changed, players: changed.players.map((player) => player.id === "mime" ? { ...player, actingPoisoned: true } : player) };

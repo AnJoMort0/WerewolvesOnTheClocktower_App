@@ -104,6 +104,35 @@ describe("PhoneActionScreen", () => {
     expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
   });
 
+  it.each(["sleepwalker", "priest"] as const)("allows a %s to change targets before confirming", (mode) => {
+    const onSend = vi.fn();
+    const session: PhoneView = { ...baseView, mode, participantIds: ["wolf"], players: [
+      ...baseView.players,
+      { id: "other", name: "Other", seat_position: 2, selectable: true, redX: false, dead: false, marker: null },
+    ] };
+    render(<PhoneActionScreen session={session} playerId="wolf" language="en" pending={false} connected onSend={onSend} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Target" }));
+    expect(screen.getByRole("button", { name: "Target" })).toHaveAttribute("aria-pressed", "true");
+    expect(onSend).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Other" }));
+    expect(screen.getByRole("button", { name: "Target" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    expect(onSend).toHaveBeenCalledExactlyOnceWith("confirm", "other");
+  });
+
+  it("shows selectable Priest Ghosts without disabled styling and marks them with a ghost icon", () => {
+    const ghost = { id: "ghost", name: "Ghost", seat_position: 2, selectable: true, redX: false, dead: true, marker: null };
+    render(<PhoneActionScreen session={{ ...baseView, mode: "priest", participantIds: ["wolf"], players: [...baseView.players, ghost] }}
+      playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} />);
+
+    const ghostButton = screen.getByRole("button", { name: "Ghost" });
+    expect(ghostButton).toBeEnabled();
+    expect(ghostButton.querySelector("span")).not.toHaveClass("opacity-40");
+    expect(screen.getByTestId("ghost-marker-ghost")).toBeInTheDocument();
+  });
+
   it("shows an approved Priest character card and opens its rulebook entry", () => {
     const onRoleClick = vi.fn();
     render(<PhoneActionScreen session={{ ...baseView, mode: "priest", priestReveal: { targetPlayerId: "target", roleId: "v03" } }}

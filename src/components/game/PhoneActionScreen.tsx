@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Church, Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
+import { Check, Church, Crosshair, Eye, FlaskConical, Ghost, Moon, PawPrint, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RevealCardGallery } from "./RevealCardGallery";
 import { format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
@@ -64,7 +64,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const target = session.players.find((p) => p.id === selected && p.selectable);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
   const actor = players.find((player) => player.id === session.participantIds[0]);
-  const isDirectSelection = session.mode === "web" || session.mode === "priest" || session.mode === "sleepwalker";
+  const selectsImmediately = session.mode === "web";
+  const confirmsSelection = session.mode === "priest" || session.mode === "sleepwalker";
   const foxTargetIds = new Set(session.mode === "fox" && selected
     ? session.foxReveal?.playerIds ?? getFoxTargetPlayerIds(players, selected)
     : []);
@@ -129,7 +130,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 aria-label={player.name}
                 aria-pressed={session.mode === "allies" ? undefined : selected === player.id}
                 disabled={readOnly || !!session.pendingTargetPlayerId || !player.selectable || !connected || (pending && session.mode !== "hunt")}
-                onClick={() => (session.mode === "hunt" && !gmControlled) || session.mode === "monkey" || session.mode === "fox" || isDirectSelection
+                onClick={() => (session.mode === "hunt" && !gmControlled) || session.mode === "monkey" || session.mode === "fox" || selectsImmediately
                   ? onSend("select", player.id) : setSelectedId(player.id)}
                 className={`absolute flex w-[3.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
                 style={{
@@ -142,11 +143,13 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                   selected === player.id ? "border-gold ring-2 ring-gold/30"
                   : foxTargetIds.has(player.id) ? "border-amber-400 ring-2 ring-amber-400/20"
                   : player.marker ? "border-primary" : "border-border"
-                } ${foxTargetIds.has(player.id) ? "bg-amber-500/20 text-amber-100" : player.marker ? "bg-primary/25" : session.mode === "colossus" && player.selectable ? "bg-emerald-500/25 text-emerald-200" : "bg-background/70"} ${player.dead || (session.mode === "colossus" && !player.selectable) ? "opacity-40" : ""}`}>
+                } ${foxTargetIds.has(player.id) ? "bg-amber-500/20 text-amber-100" : player.marker ? "bg-primary/25" : session.mode === "colossus" && player.selectable ? "bg-emerald-500/25 text-emerald-200" : "bg-background/70"} ${(player.dead && session.mode !== "priest") || (session.mode === "colossus" && !player.selectable) ? "opacity-40" : ""}`}>
                   {player.marker
                     ? <img src={player.marker === "werewolf" ? werewolfIcon : evilBeingIcon} alt="" draggable={false} className="h-8 w-8 object-contain" />
                     : <span className="font-bold">{player.name.charAt(0).toUpperCase()}</span>}
-                  {(player.redX || player.dead) && <X className={`absolute h-9 w-9 ${player.redX ? "text-destructive" : "text-muted-foreground"}`} strokeWidth={3} />}
+                  {(player.redX || (player.dead && session.mode !== "priest")) && <X className={`absolute h-9 w-9 ${player.redX ? "text-destructive" : "text-muted-foreground"}`} strokeWidth={3} />}
+                  {player.dead && session.mode === "priest" && <Ghost data-testid={`ghost-marker-${player.id}`}
+                    className="absolute -right-1.5 -top-2 h-5 w-5 rounded-full border border-amber-300/60 bg-card p-0.5 text-amber-200 shadow" />}
                   {voters.length > 0 && (
                     <span title={voters.join(", ")} className="absolute -right-2 -top-2 flex min-w-5 items-center justify-center gap-0.5 rounded-sm border border-primary/50 bg-card px-1 text-xs font-bold text-foreground shadow">
                       <Crosshair className="h-3 w-3" />{voters.length}
@@ -165,7 +168,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
         {session.mode === "colossus" ? text.waiting : format(text.selection, { actor: actor?.name ?? "", target: target.name })}
       </p>}
       {showPoisonConfirmation && session.mode === "poison" && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
-      {!readOnly && (session.mode === "poison" || session.mode === "shaman" || session.mode === "colossus" || (gmControlled && session.mode === "hunt")) && (
+      {!readOnly && (session.mode === "poison" || session.mode === "shaman" || session.mode === "colossus" || confirmsSelection || (gmControlled && session.mode === "hunt")) && (
         <div className="flex justify-center gap-2">
           {session.mode === "shaman" && (
             <Button variant="secondary" disabled={pending || !connected} onClick={() => onSend("ignore")}>

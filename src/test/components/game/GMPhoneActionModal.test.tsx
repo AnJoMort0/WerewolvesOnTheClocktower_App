@@ -36,12 +36,13 @@ describe("usable GM action mirrors", () => {
     expect(onSend).toHaveBeenCalledWith("confirm", "target");
   });
 
-  it.each(["web", "sleepwalker"] as const)("keeps an immediate %s selection visible without approval controls", (mode) => {
+  it.each(["web", "sleepwalker"] as const)("keeps a submitted %s selection visible without approval controls", (mode) => {
     const onSend = vi.fn();
     const props = { language: "en" as const, onClose: vi.fn(), onSend, onResolveHunt: vi.fn(), onResolveColossus: vi.fn(), onResolvePriest: vi.fn() };
     const { rerender } = render(<GMPhoneActionModal {...props} session={{ ...session, mode }} view={{ ...view, mode }} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    expect(onSend).toHaveBeenCalledWith("select", "target");
+    if (mode === "sleepwalker") fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    expect(onSend).toHaveBeenCalledWith(mode === "web" ? "select" : "confirm", "target");
     rerender(<GMPhoneActionModal {...props} session={{ ...session, mode, pendingTargetPlayerId: "target" }}
       view={{ ...view, mode, pendingTargetPlayerId: "target" }} />);
     expect(screen.getByRole("dialog")).toHaveTextContent("Actor selected Target.");
@@ -55,7 +56,8 @@ describe("usable GM action mirrors", () => {
     const priestView: PhoneView = { ...view, mode: "priest" };
     const { rerender } = render(<GMPhoneActionModal {...props} session={priestSession} view={priestView} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    expect(onSend).toHaveBeenCalledWith("select", "target");
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    expect(onSend).toHaveBeenCalledWith("confirm", "target");
     rerender(<GMPhoneActionModal {...props} session={{ ...priestSession, pendingTargetPlayerId: "target" }}
       view={{ ...priestView, pendingTargetPlayerId: "target" }} />);
     fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.gmAcceptAction }));

@@ -203,7 +203,7 @@ describe("phone synchronization across GM and player devices", () => {
     expect(spider.result.current.session?.pendingTargetPlayerId).toBe("victim");
   });
 
-  it("keeps an immediate Sleepwalker visit visible until the GM closes it", () => {
+  it("keeps a confirmed Sleepwalker visit visible until the GM closes it", () => {
     const onAction = vi.fn(), onComplete = vi.fn();
     const sleepwalkerWorld: PhoneWorld = { ...world, players: [...world.players, player("sleepwalker", "v16")] };
     const gm = renderHook(() => useGMPhoneActions({
@@ -211,7 +211,7 @@ describe("phone synchronization across GM and player devices", () => {
     }));
     const sleepwalker = renderHook(() => usePlayerPhoneActions("room", "sleepwalker"));
     act(() => gm.result.current.toggle("sleepwalker", "sleepwalker-line", "sleepwalker", 3));
-    act(() => sleepwalker.result.current.send("select", "victim"));
+    act(() => sleepwalker.result.current.send("confirm", "victim"));
     expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "sleepwalker", sourcePlayerId: "sleepwalker", targetPlayerId: "victim" });
     expect(onComplete).toHaveBeenCalledOnce();
     expect(gm.result.current.session?.pendingTargetPlayerId).toBe("victim");
@@ -230,13 +230,13 @@ describe("phone synchronization across GM and player devices", () => {
     }));
     const priest = renderHook(() => usePlayerPhoneActions("room", "priest"));
     act(() => gm.result.current.toggle("priest", "priest-line", "priest", 20));
-    act(() => priest.result.current.send("select", "ghost"));
+    act(() => priest.result.current.send("confirm", "ghost"));
     const sessionId = gm.result.current.session!.id;
     expect(gm.result.current.session?.pendingTargetPlayerId).toBe("ghost");
     expect(onComplete).not.toHaveBeenCalled();
     act(() => gm.result.current.resolvePriest(sessionId, "ghost", false));
     expect(priest.result.current.session?.pendingTargetPlayerId).toBeUndefined();
-    act(() => priest.result.current.send("select", "ghost"));
+    act(() => priest.result.current.send("confirm", "ghost"));
     act(() => gm.result.current.resolvePriest(sessionId, "ghost", true));
     expect(priest.result.current.session?.priestReveal).toEqual({ targetPlayerId: "ghost", roleId: "v03" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "priest-line", progressOrder: 20 }));

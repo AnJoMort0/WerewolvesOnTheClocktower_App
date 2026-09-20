@@ -44,7 +44,7 @@ describe("in-app rulebook rendering", () => {
   });
 
   it("states that living players and Ghosts may confess to the Priest", () => {
-    expect(getRulebookHtml("en", "v25")).toContain("any other player, living or a Ghost");
+    expect(getRulebookHtml("en", "v25")).toContain("any player, living or a Ghost");
   });
 
   it("separates story passages from rules and only offers lore where available", () => {
