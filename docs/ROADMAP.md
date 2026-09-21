@@ -13,11 +13,11 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] 
+* [ ] If a player tagged with profecy dies the night they where tagged, they keep their power for an extra day and night, which currently keeps their script for one more night, but players that act during the day (for example the angel and the paranoid) should be able to still act on their devices the day after their death. In the case of the angel, he should even be able ressurect himself.
 
 ## Fixes
 
-* [ ] 
+* [ ] Add Monkey Tamer to Drunkard's choices
 
 ## Balance Changes
 
@@ -26,8 +26,10 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 ## Additions
 
 * [ ] Adding phone interactions for each character, making sure they are compatible with copying characters, illusionist when needed and their poison effects:
-    * [x] v08 and soldier should have the assassinate modal in their script lines, s02 to kill other werewolves
-    * [x] add modal to apply effects applied by: v09, v11, v17, v19, v24 (can also choose to ignore), m05 (pick enemies line), s01 (pick lovers line), f01, a02 (choose an owner), a04 (choose an idol), a05 (only red-x players), a06, as01b (show whether the selected target is correct), l02 (choose dad), l06 (only red-x players)
+  * [ ] v12:
+  * [ ] v15:
+  * [ ] 
+
   
 ## Future Plans
 

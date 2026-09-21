@@ -102,6 +102,8 @@ export type PhoneSession = {
   targetCount?: number;
   approvalResult?: "accepted" | "denied";
   whiteWolfSolo?: boolean;
+  completed?: boolean;
+  ignored?: boolean;
 };
 export type PhoneCommand = {
   id: string;
@@ -120,6 +122,7 @@ export type PhoneAction = {
   foxReveal?: FoxReveal;
 };
 export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participantIds"> & {
+  sourcePlayerId?: string | null;
   visible?: boolean;
   monkeyReveal?: MonkeyReveal;
   foxReveal?: FoxReveal;
@@ -130,6 +133,8 @@ export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participan
   minTargetCount?: number;
   targetCount?: number;
   approvalResult?: "accepted" | "denied";
+  completed?: boolean;
+  ignored?: boolean;
   players: Array<Pick<PhonePlayer, "id" | "name" | "seat_position"> & {
     selectable: boolean;
     redX: boolean;
@@ -240,6 +245,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
 }
 
 export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boolean {
+  if (session.completed) return false;
   if (isRoleActionPhoneMode(session.mode)) {
     if (session.approvalResult) return false;
     if (session.mode === PHONE_MODE.GRAVE_ROBBER_SWAP || session.mode === PHONE_MODE.DEVOUT_SERVANT_SAVE) {
@@ -288,6 +294,9 @@ export function reconcilePhoneSession(session: PhoneSession | null, world: Phone
   if (session.mode === PHONE_MODE.SLEEPWALKER_VISIT && session.pendingTargetPlayerId) {
     return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v16") ? session : null;
   }
+  // Completed actions remain visible until the GM closes them, even when the
+  // action itself changed a target or exhausted its source's power.
+  if (session.completed) return session;
   const participantIds = getPhoneParticipants(session.mode, session.sourcePlayerId, world);
   if (participantIds.length === 0) return null;
   if (session.pendingTargetPlayerId && !world.players.some((p) => p.id === session.pendingTargetPlayerId && isPhoneTarget(session, p))) {
@@ -320,13 +329,15 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if (!session || command.sessionId !== session.id || !session.participantIds.includes(actorId)
     || !Number.isFinite(command.sequence) || command.sequence <= (session.sequences[actorId] ?? 0)) return { session };
   const next = { ...session, sequences: { ...session.sequences, [actorId]: command.sequence } };
+  if (session.completed) return { session: next };
   if ((session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK)
     && (command.type === "close" || command.type === "reopen")) {
     return { session: { ...next, visible: command.type === "reopen" } };
   }
   if (command.type === "ignore" && (session.mode === PHONE_MODE.SHAMAN_SAVE
     || isRoleActionPhoneMode(session.mode) && canIgnoreRoleActionPhoneMode(session.mode))) {
-    return { session: null, completedSession: session };
+    const completed = { ...next, completed: true, ignored: true };
+    return { session: completed, completedSession: completed };
   }
   if (isRoleActionPhoneMode(session.mode) && command.type === "confirm") {
     const targetIds = [...new Set(command.targetPlayerIds?.length ? command.targetPlayerIds : command.targetPlayerId ? [command.targetPlayerId] : [])];
@@ -351,9 +362,15 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
         ...(accepted ? { action: { action: session.mode, targetPlayerId: chosen.id, targetPlayerIds: [chosen.id], sourcePlayerId: actorId } as PhoneAction } : {}),
       };
     }
+    const completed = {
+      ...next,
+      pendingTargetPlayerId: targetIds[0],
+      pendingTargetPlayerIds: targetIds,
+      completed: true,
+    };
     return {
-      session: null,
-      completedSession: session,
+      session: completed,
+      completedSession: completed,
       action: { action: session.mode, targetPlayerId: targetIds[0], targetPlayerIds: targetIds, sourcePlayerId: actorId },
     };
   }
@@ -398,12 +415,13 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if ((session.mode === PHONE_MODE.SPIDER_TAMER_WEB && command.type === "select"
     || session.mode === PHONE_MODE.SLEEPWALKER_VISIT && command.type === "confirm")
     && !session.pendingTargetPlayerId) {
-    const selected = { ...next, pendingTargetPlayerId: target.id };
+    const selected = { ...next, pendingTargetPlayerId: target.id, completed: true };
     return { session: selected, completedSession: selected,
       action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };
   }
   if ((session.mode === PHONE_MODE.EVIL_WITCH_POISON || session.mode === PHONE_MODE.SHAMAN_SAVE) && command.type === "confirm") {
-    return { session: null, completedSession: session, action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };
+    const completed = { ...next, pendingTargetPlayerId: target.id, completed: true };
+    return { session: completed, completedSession: completed, action: { action: session.mode, targetPlayerId: target.id, sourcePlayerId: actorId } };
   }
   return { session: next };
 }
@@ -414,6 +432,7 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
   return {
     id: session.id,
     mode: session.mode,
+    sourcePlayerId: session.sourcePlayerId,
     participantIds: session.participantIds,
     votes: session.votes,
     pendingTargetPlayerId: session.pendingTargetPlayerId,
@@ -421,6 +440,8 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
     minTargetCount: session.minTargetCount,
     targetCount: session.targetCount,
     approvalResult: session.approvalResult,
+    completed: session.completed,
+    ignored: session.ignored,
     ...((session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK) ? {
       visible: session.visible !== false,
       ...(session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? { monkeyReveal: session.monkeyReveal, error: session.error } : { foxReveal: session.foxReveal }),

@@ -287,6 +287,10 @@ export interface UIStrings {
     huntRequest: string;
     soloHuntRequest: string;
     selection: string;
+    assassinationComplete: string;
+    huntComplete: string;
+    selectionComplete: string;
+    ignoredComplete: string;
   };
   appTitle: string;
   appTagline: string;
@@ -294,6 +298,12 @@ export interface UIStrings {
   createRoom: string;
   installApp: string;
   installAppUnavailable: string;
+  scanQr: string;
+  qrScannerTitle: string;
+  qrScannerInstructions: string;
+  qrScannerUpload: string;
+  qrScannerCameraError: string;
+  qrScannerInvalid: string;
   orJoin: string;
   roomCode: string;
   language: string;
@@ -330,6 +340,10 @@ export interface UIStrings {
   gmV10AssassinationRequest: string;
   gmV18ResurrectionRequest: string;
   gmV23WebRequest: string;
+  gmV10AssassinationComplete: string;
+  gmV18ResurrectionComplete: string;
+  gmV23WebComplete: string;
+  gmPlayerActionDenied: string;
   gmAcceptAction: string;
   gmDenyAction: string;
   sessionEnded: string;

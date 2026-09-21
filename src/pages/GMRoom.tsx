@@ -14,7 +14,7 @@ import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/ga
 import { RulebookModal } from "@/components/game/RulebookModal";
 import { GameLogModal } from "@/components/game/GameLogModal";
 import { GMPhoneActionModal } from "@/components/game/GMPhoneActionModal";
-import { GMPlayerActionModal } from "@/components/game/GMPlayerActionModal";
+import { GMPlayerActionModal, type GMPlayerActionModalMode } from "@/components/game/GMPlayerActionModal";
 import { useGMPlayerActionMirrors } from "@/hooks/usePlayerActionMirrors";
 import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
@@ -437,6 +437,11 @@ const GMRoom = () => {
   const [copied, setCopied] = useState(false);
   const [copiedJoinLink, setCopiedJoinLink] = useState(false);
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState>(() => normalizePlayerActionState(null));
+  const [completedPlayerActionMirror, setCompletedPlayerActionMirror] = useState<GMPlayerActionModalMode | null>(null);
+  const [resolvedPlayerActionNotice, setResolvedPlayerActionNotice] = useState<{
+    request: PlayerActionRequest;
+    accepted: boolean;
+  } | null>(null);
   const [joinBaseOverride, setJoinBaseOverride] = useState(() => {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(JOIN_BASE_URL_STORAGE_KEY) ?? "";
@@ -5739,22 +5744,31 @@ const GMRoom = () => {
     if (hideScreenMode || room?.status !== "playing") return null;
     return pruneResolvedPlayerActionState(playerActionState).requests[0] ?? null;
   }, [hideScreenMode, playerActionState, pruneResolvedPlayerActionState, room?.status]);
-  const pendingPlayerActionRole = pendingPlayerActionRequest
-    ? getPlayerActionRole(pendingPlayerActionRequest.kind)
+  const displayedPlayerActionRequest = resolvedPlayerActionNotice?.request ?? pendingPlayerActionRequest;
+  const pendingPlayerActionRole = displayedPlayerActionRequest
+    ? getPlayerActionRole(displayedPlayerActionRequest.kind)
     : "v10";
-  const pendingPlayerActionActorName = pendingPlayerActionRequest
-    ? players.find((player) => player.id === pendingPlayerActionRequest.actorPlayerId)?.name ?? tt("unknown")
+  const pendingPlayerActionActorName = displayedPlayerActionRequest
+    ? players.find((player) => player.id === displayedPlayerActionRequest.actorPlayerId)?.name ?? tt("unknown")
     : "";
-  const pendingPlayerActionTargetName = pendingPlayerActionRequest
-    ? players.find((player) => player.id === pendingPlayerActionRequest.targetPlayerId)?.name ?? tt("unknown")
+  const pendingPlayerActionTargetName = displayedPlayerActionRequest
+    ? players.find((player) => player.id === displayedPlayerActionRequest.targetPlayerId)?.name ?? tt("unknown")
     : "";
-  const pendingPlayerActionDescription = pendingPlayerActionRequest
+  const pendingPlayerActionDescription = displayedPlayerActionRequest
     ? format(tt(
-      pendingPlayerActionRequest.kind === "v18-resurrect"
-        ? "gmV18ResurrectionRequest"
-        : pendingPlayerActionRequest.kind === "v23-web"
-        ? "gmV23WebRequest"
-        : "gmV10AssassinationRequest",
+      resolvedPlayerActionNotice
+        ? !resolvedPlayerActionNotice.accepted
+          ? "gmPlayerActionDenied"
+          : displayedPlayerActionRequest.kind === "v18-resurrect"
+            ? "gmV18ResurrectionComplete"
+            : displayedPlayerActionRequest.kind === "v23-web"
+              ? "gmV23WebComplete"
+              : "gmV10AssassinationComplete"
+        : displayedPlayerActionRequest.kind === "v18-resurrect"
+          ? "gmV18ResurrectionRequest"
+          : displayedPlayerActionRequest.kind === "v23-web"
+            ? "gmV23WebRequest"
+            : "gmV10AssassinationRequest",
     ), {
       actor: pendingPlayerActionActorName,
       target: pendingPlayerActionTargetName,
@@ -5856,6 +5870,7 @@ const GMRoom = () => {
   const phoneView = phone.session && phone.session.mode !== PHONE_MODE.MONKEY_TAMER_REVEAL
     && phone.session.mode !== PHONE_MODE.FOX_TAMER_CHECK
     ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
+  const playerActionModal: GMPlayerActionModalMode | null = completedPlayerActionMirror ?? actionMirrors.mode;
 
   return (
     <LanguageContext.Provider value={lang}>
@@ -5870,26 +5885,29 @@ const GMRoom = () => {
       {phone.session?.mode === PHONE_MODE.FOX_TAMER_CHECK && !hideScreenMode && (
         <FoxRevealModal key={phone.session.id}
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
-          language={lang} onConfirm={phone.confirmFox} onClose={phone.close}
-          onReopen={() => phone.sendGM("reopen")} />
+          language={lang} onConfirm={phone.confirmFox} onClose={phone.close} />
       )}
-      {phoneView && phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
+      {phoneView && phone.session && !hideScreenMode && !displayedPlayerActionRequest && (
         <GMPhoneActionModal session={phone.session} view={phoneView} language={lang}
           onClose={phone.close} onSend={phone.sendGM}
           onResolveHunt={phone.resolveHunt} onResolveColossus={phone.resolveColossus}
           onResolvePriest={phone.resolvePriest} onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {actionMirrors.mode && !phone.session && !hideScreenMode && !pendingPlayerActionRequest && (
-        <GMPlayerActionModal mode={actionMirrors.mode} language={lang}
+      {playerActionModal && !phone.session && !hideScreenMode && !displayedPlayerActionRequest && (
+        <GMPlayerActionModal mode={playerActionModal} language={lang}
           players={players.map((player) => ({ ...player, dead: permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead-this-night" || playerStatuses[player.id] === "dead" }))}
-          onClose={() => actionMirrors.close(actionMirrors.mode!)}
+          onClose={() => {
+            if (!playerActionModal.completedTargetPlayerId) actionMirrors.close(playerActionModal);
+            setCompletedPlayerActionMirror(null);
+          }}
           onConfirm={(targetPlayerId) => {
-            const mode = actionMirrors.mode!;
+            const mode = playerActionModal;
+            setCompletedPlayerActionMirror({ ...mode, completedTargetPlayerId: targetPlayerId });
             actionMirrors.close(mode);
             void resolvePlayerActionRequest({ ...createPlayerActionRequest(mode.kind, mode.actorPlayerId, targetPlayerId), id: mode.id }, true);
           }} />
       )}
-      {pendingPlayerActionRequest && (
+      {displayedPlayerActionRequest && (
         <Dialog
           open
           onOpenChange={() => undefined}
@@ -5908,10 +5926,21 @@ const GMRoom = () => {
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 sm:space-x-0">
+              {resolvedPlayerActionNotice ? <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setResolvedPlayerActionNotice(null)}
+                className="font-display"
+              >
+                {tt("close")}
+              </Button> : <>
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => { void resolvePlayerActionRequest(pendingPlayerActionRequest, false); }}
+                onClick={() => {
+                  setResolvedPlayerActionNotice({ request: displayedPlayerActionRequest, accepted: false });
+                  void resolvePlayerActionRequest(displayedPlayerActionRequest, false);
+                }}
                 className="font-display"
               >
                 {tt("gmDenyAction")}
@@ -5919,11 +5948,15 @@ const GMRoom = () => {
               <Button
                 type="button"
                 variant="destructive"
-                onClick={() => { void resolvePlayerActionRequest(pendingPlayerActionRequest, true); }}
+                onClick={() => {
+                  setResolvedPlayerActionNotice({ request: displayedPlayerActionRequest, accepted: true });
+                  void resolvePlayerActionRequest(displayedPlayerActionRequest, true);
+                }}
                 className="font-display"
               >
                 {tt("gmAcceptAction")}
               </Button>
+              </>}
             </DialogFooter>
           </DialogContent>
         </Dialog>

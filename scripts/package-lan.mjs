@@ -37,6 +37,7 @@ writeFileSync(resolve(kit, "README.md"), readFileSync(resolve(root, "docs/README
 const licenses = resolve(kit, "licenses");
 mkdirSync(licenses, { recursive: true });
 for (const font of ["cinzel", "crimson-text"]) copyFileSync(resolve(root, `node_modules/@fontsource/${font}/LICENSE`), resolve(licenses, `${font}.txt`));
+copyFileSync(resolve(root, "node_modules/qr-scanner/LICENSE"), resolve(licenses, "qr-scanner.txt"));
 if (process.platform === "win32") {
   const license = resolve(dirname(process.execPath), "LICENSE");
   if (!existsSync(license)) throw new Error("The Node.js LICENSE file must be next to node.exe to create a portable Windows kit.");

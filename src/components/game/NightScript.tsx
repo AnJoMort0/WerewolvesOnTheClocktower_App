@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Church, Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Sun, Users } from "lucide-react";
+import { Eye, Moon, Sun } from "lucide-react";
 import { getScriptPhoneMode } from "@/lib/phoneActions";
 import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
+import { PHONE_ACTION_PRESENTATION } from "@/lib/phoneActionPresentation";
 import { placeColossusLines } from "@/lib/colossus";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1452,22 +1453,9 @@ export const NightScript = ({
                 ? null : configuredPhoneMode;
               const phoneActive = activePhoneLineKey === item.key;
               const phoneLabel = getTranslation(lang).ui.phoneActions[phoneActive ? "close" : "open"];
-              const PhoneActionIcon = phoneMode === PHONE_MODE.WEREWOLF_HUNT || phoneMode === PHONE_MODE.COLOSSUS_RETALIATION ? Crosshair
-                : phoneMode === PHONE_MODE.WEREWOLF_ALLIES ? Users
-                : phoneMode === PHONE_MODE.EVIL_WITCH_POISON ? FlaskConical
-                : phoneMode === PHONE_MODE.FOX_TAMER_CHECK ? PawPrint
-                : phoneMode === PHONE_MODE.SPIDER_TAMER_WEB ? Eye
-                : phoneMode === PHONE_MODE.PRIEST_CONFESSION ? Church
-                : phoneMode === PHONE_MODE.SLEEPWALKER_VISIT ? Moon
-                : RotateCcw;
-              const phoneIconClass = phoneMode === PHONE_MODE.EVIL_WITCH_POISON ? "text-green-400"
-                : phoneMode === PHONE_MODE.SHAMAN_SAVE ? "text-moon"
-                : phoneMode === PHONE_MODE.FOX_TAMER_CHECK ? "text-amber-400"
-                : phoneMode === PHONE_MODE.SPIDER_TAMER_WEB ? "text-cyan-400"
-                : phoneMode === PHONE_MODE.PRIEST_CONFESSION ? "text-amber-200"
-                : phoneMode === PHONE_MODE.SLEEPWALKER_VISIT ? "text-blue-300"
-                : phoneMode === PHONE_MODE.WEREWOLF_ALLIES ? "text-gold"
-                : "text-primary";
+              const phonePresentation = phoneMode ? PHONE_ACTION_PRESENTATION[phoneMode] : null;
+              const PhoneActionIcon = phonePresentation?.icon ?? Eye;
+              const phoneIconClass = phonePresentation?.iconClass ?? "text-primary";
               const usesIndependentPowerState = !!independentPowerState || !!item.actorLine
                 || (!!item.drunkardLine && sourcePlayerId === actorPlayerId);
               const powerState = independentPowerState ?? actorPowerState;

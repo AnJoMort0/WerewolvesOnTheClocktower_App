@@ -324,7 +324,11 @@ describe("GM-controlled phone rules", () => {
     const session: PhoneSession = { ...hunt(), mode: PHONE_MODE.EVIL_WITCH_POISON, sourcePlayerId: "mime", participantIds: ["mime"] };
     const command = { id: "poison", sessionId: session.id, sequence: 1, type: "confirm" as const, targetPlayerId: "mime" };
     const result = applyPhoneCommand(session, "mime", command, changed);
-    expect(result).toMatchObject({ session: null, completedSession: session, action: { action: PHONE_MODE.EVIL_WITCH_POISON, sourcePlayerId: "mime", targetPlayerId: "mime" } });
+    expect(result).toMatchObject({
+      session: { completed: true, pendingTargetPlayerId: "mime" },
+      completedSession: { completed: true, pendingTargetPlayerId: "mime" },
+      action: { action: PHONE_MODE.EVIL_WITCH_POISON, sourcePlayerId: "mime", targetPlayerId: "mime" },
+    });
     expect(applyPhoneCommand(result.session, "mime", command, changed).action).toBeUndefined();
   });
 
@@ -341,6 +345,9 @@ describe("GM-controlled phone rules", () => {
     const command = { id: "save", sessionId: session.id, sequence: 1, type: "confirm" as const, targetPlayerId: "victim" };
     expect(applyPhoneCommand(session, "shaman", command, changed).action?.targetPlayerId).toBe("victim");
     expect(applyPhoneCommand(session, "shaman", { ...command, targetPlayerId: "ghost" }, changed).action).toBeUndefined();
-    expect(applyPhoneCommand(session, "shaman", { ...command, type: "ignore" }, changed)).toEqual({ session: null, completedSession: session });
+    expect(applyPhoneCommand(session, "shaman", { ...command, type: "ignore" }, changed)).toMatchObject({
+      session: { completed: true, ignored: true },
+      completedSession: { completed: true, ignored: true },
+    });
   });
 });

@@ -57,7 +57,7 @@ describe("NightScript phone controls", () => {
       players: [{ id: "spider", name: "Spider", seat_position: 0 }], onPhoneToggle };
     const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...firstProps} /></LanguageContext.Provider>);
     const firstControl = container.querySelector<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.SPIDER_TAMER_WEB))!;
-    expect(firstControl.querySelector(".lucide-eye")).toBeInTheDocument();
+    expect(firstControl.querySelector(".lucide-waypoints")).toBeInTheDocument();
     fireEvent.click(firstControl);
     expect(onPhoneToggle).toHaveBeenLastCalledWith(PHONE_MODE.SPIDER_TAMER_WEB, expect.any(String), "spider", null);
 
@@ -242,12 +242,12 @@ describe("NightScript phone controls", () => {
       conditionKeys={{ hasRedXPlayers: true }} onPhoneToggle={onPhoneToggle}
     />);
     container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
-    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.SHAMAN_SAVE)} .lucide-rotate-ccw`)).toBeInTheDocument();
+    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.SHAMAN_SAVE)} .lucide-shield-plus`)).toBeInTheDocument();
     expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.SHAMAN_SAVE, expect.any(String), "mime", expect.anything());
     expect(onPhoneToggle).not.toHaveBeenCalledWith(PHONE_MODE.SHAMAN_SAVE, expect.any(String), "shaman", expect.anything());
   });
 
-  it("uses a crosshair for the pack hunt action", () => {
+  it("uses the Target icon for the pack hunt action", () => {
     const { container } = render(<NightScript {...baseProps}
       activeRoles={new Set(["e01"])}
       roleAssignments={{ wolf: "e01" }}
@@ -255,7 +255,20 @@ describe("NightScript phone controls", () => {
       onPhoneToggle={vi.fn()}
     />);
 
-    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT)} .lucide-crosshair`)).toBeInTheDocument();
+    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT)} .lucide-target`)).toBeInTheDocument();
+  });
+
+  it("uses a shield instead of the generic revolving arrow for the Captain", () => {
+    const { container } = render(<NightScript {...baseProps}
+      activeRoles={new Set(["v09"])}
+      roleAssignments={{ captain: "v09" }}
+      players={[{ id: "captain", name: "Captain", seat_position: 0 }]}
+      onPhoneToggle={vi.fn()}
+    />);
+
+    const control = container.querySelector(phoneModeSelector(PHONE_MODE.CAPTAIN_APPOINT_SOLDIER));
+    expect(control?.querySelector(".lucide-shield-plus")).toBeInTheDocument();
+    expect(control?.querySelector(".lucide-rotate-ccw")).not.toBeInTheDocument();
   });
 });
 

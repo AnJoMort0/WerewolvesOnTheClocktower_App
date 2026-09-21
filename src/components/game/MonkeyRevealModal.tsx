@@ -15,7 +15,7 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
   connected?: boolean;
   embedded?: boolean;
   onConfirm: (playerId: string) => void;
-  onClose: () => void;
+  onClose?: () => void;
   onReopen?: () => void;
   onRoleClick?: (roleId: RoleId) => void;
 }) {
@@ -32,9 +32,9 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
     {!revealed && <Button disabled={!target?.selectable || pending || !connected} onClick={() => target && onConfirm(target.id)}>
       <Eye className="mr-2 h-4 w-4" />{text.confirm}{target ? `: ${target.name}` : ""}
     </Button>}
-    <Button variant="secondary" onClick={onClose} disabled={pending || !connected}>
+    {onClose && <Button variant="secondary" onClick={onClose} disabled={pending || !connected}>
       <X className="mr-2 h-4 w-4" />{text.close}
-    </Button>
+    </Button>}
   </div>;
   const content = revealed ? (
     <div data-testid="monkey-revealed-card">
@@ -52,6 +52,6 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
   const subtitle = revealed ? target?.name : text.choose;
   return embedded
     ? <GamePanel title={title} subtitle={subtitle} footer={footer}>{content}</GamePanel>
-    : <GameModal open onClose={onClose} title={title} subtitle={subtitle} closeLabel={text.close}
-      showCloseButton={false} dismissible={!pending && connected} footer={footer}>{content}</GameModal>;
+    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={text.close}
+      showCloseButton={false} dismissible={!!onClose && !pending && connected} footer={footer}>{content}</GameModal>;
 }

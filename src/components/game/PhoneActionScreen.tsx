@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Check, Church, Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Users, X, type LucideIcon } from "lucide-react";
+import { Check, Crosshair, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RevealCardGallery } from "./RevealCardGallery";
 import { format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import { canIgnoreRoleActionPhoneMode, getFoxTargetPlayerIds, getRoleActionPhoneConfig, isRoleActionPhoneMode, type PhoneCommand, type PhoneView } from "@/lib/phoneActions";
-import { PHONE_MODE } from "@/lib/phoneActionModes";
+import { PHONE_MODE, isAssassinationPhoneMode } from "@/lib/phoneActionModes";
+import { PHONE_ACTION_PRESENTATION } from "@/lib/phoneActionPresentation";
 import { ROLES, type RoleId } from "@/lib/roles";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
@@ -73,12 +74,15 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
       : session.mode === PHONE_MODE.WEREWOLF_HUNT && !gmControlled ? session.votes[playerId] : selectedId);
   const target = session.players.find((p) => p.id === selected && p.selectable);
   const resultTarget = session.players.find((player) => player.id === session.pendingTargetPlayerId);
+  const resultTargets = (session.pendingTargetPlayerIds ?? (session.pendingTargetPlayerId ? [session.pendingTargetPlayerId] : []))
+    .map((id) => session.players.find((player) => player.id === id))
+    .filter((player): player is PhoneView["players"][number] => !!player);
   const roleSelectedIds = session.pendingTargetPlayerIds ?? (session.pendingTargetPlayerId ? [session.pendingTargetPlayerId] : selectedIds);
   const roleTargets = roleSelectedIds.map((id) => session.players.find((player) => player.id === id && player.selectable))
     .filter((player): player is PhoneView["players"][number] => !!player);
   const selectedSet = new Set(isRoleAction ? roleSelectedIds : selected ? [selected] : []);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
-  const actor = players.find((player) => player.id === session.participantIds[0]);
+  const actor = players.find((player) => player.id === (session.sourcePlayerId ?? session.participantIds[0]));
   const selectsImmediately = session.mode === PHONE_MODE.SPIDER_TAMER_WEB;
   const confirmsSelection = session.mode === PHONE_MODE.PRIEST_CONFESSION || session.mode === PHONE_MODE.SLEEPWALKER_VISIT;
   const roleSelectionCount = session.targetCount ?? 1;
@@ -89,13 +93,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const mapHeight = Math.max(MAP_MIN_HEIGHT, players.length * PLAYER_ARC_SPACE);
   const verticalRadius = mapHeight / 2 - PLAYER_EDGE_SPACE;
   const angles = getEllipseAngles(players.length, MAP_MAX_WIDTH * MAP_HORIZONTAL_RADIUS, verticalRadius);
-  const Icon = appearance?.icon ?? (session.mode === PHONE_MODE.EVIL_WITCH_POISON ? FlaskConical
-    : session.mode === PHONE_MODE.SHAMAN_SAVE ? RotateCcw
-    : session.mode === PHONE_MODE.FOX_TAMER_CHECK ? PawPrint
-    : session.mode === PHONE_MODE.PRIEST_CONFESSION ? Church
-    : session.mode === PHONE_MODE.SLEEPWALKER_VISIT ? Moon
-    : session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.SPIDER_TAMER_WEB ? Eye
-    : session.mode === PHONE_MODE.WEREWOLF_ALLIES ? Users : Crosshair);
+  const presentation = PHONE_ACTION_PRESENTATION[session.mode];
+  const Icon = appearance?.icon ?? presentation.icon;
   const title = appearance?.title ?? (session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? getTranslation(language).roleLabels.v26
     : session.mode === PHONE_MODE.FOX_TAMER_CHECK ? getTranslation(language).roleLabels.v04
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB ? getTranslation(language).roleLabels.v23
@@ -120,6 +119,14 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     : session.mode === PHONE_MODE.SLEEPWALKER_VISIT
     ? { border: "border-blue-400/50 ring-blue-400/10", accent: "text-blue-300" }
     : { border: "border-primary/60 ring-primary/10", accent: "text-primary" });
+  const completedTargets = resultTargets.map((player) => player.name).join(", ");
+  const completedText = session.ignored
+    ? format(text.ignoredComplete, { actor: actor?.name ?? "" })
+    : isAssassinationPhoneMode(session.mode)
+      ? session.mode === PHONE_MODE.WEREWOLF_HUNT && !session.sourcePlayerId
+        ? format(text.huntComplete, { targets: completedTargets })
+        : format(text.assassinationComplete, { actor: actor?.name ?? "", targets: completedTargets })
+      : format(text.selectionComplete, { actor: actor?.name ?? "", targets: completedTargets });
 
   const content = <>
       {showHeader && <header className="flex items-center justify-center gap-2 border-b border-border/60 pb-3">
@@ -142,6 +149,9 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
           image: ROLES[session.priestReveal.roleId].image,
           label: getRoleLabel(session.priestReveal.roleId, language),
         }]} />
+      </div> : session.completed ? <div role="status" className="flex flex-col items-center gap-3 rounded-lg border border-primary/40 bg-primary/10 p-6 text-center">
+        <Icon className={`h-12 w-12 ${appearance?.accent ?? presentation.iconClass}`} />
+        <strong className="font-display text-lg text-foreground">{completedText}</strong>
       </div> : <div className="min-w-0 overflow-hidden pb-1">
         <div
           data-testid="phone-action-map"
@@ -200,11 +210,11 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
       </div>}
       {!connected && <p role="status" className="text-sm">{text.reconnecting}</p>}
       {pending && session.mode !== PHONE_MODE.WEREWOLF_HUNT && <p role="status" className="text-sm text-muted-foreground">{text.waiting}</p>}
-      {showSelectionStatus && !session.approvalResult && session.pendingTargetPlayerId && target && <p role="status" className="text-center text-sm text-muted-foreground">
+      {showSelectionStatus && !session.completed && !session.approvalResult && session.pendingTargetPlayerId && target && <p role="status" className="text-center text-sm text-muted-foreground">
         {session.mode === PHONE_MODE.COLOSSUS_RETALIATION ? text.waiting : format(text.selection, { actor: actor?.name ?? "", target: target.name })}
       </p>}
       {showPoisonConfirmation && session.mode === PHONE_MODE.EVIL_WITCH_POISON && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
-      {!readOnly && !session.priestReveal && !session.approvalResult
+      {!readOnly && !session.completed && !session.priestReveal && !session.approvalResult
         && (session.mode === PHONE_MODE.EVIL_WITCH_POISON || session.mode === PHONE_MODE.SHAMAN_SAVE
           || session.mode === PHONE_MODE.COLOSSUS_RETALIATION || confirmsSelection || isRoleAction
           || gmControlled && session.mode === PHONE_MODE.WEREWOLF_HUNT) && (

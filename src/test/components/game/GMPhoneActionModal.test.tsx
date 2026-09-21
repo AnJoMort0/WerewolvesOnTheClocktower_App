@@ -91,4 +91,17 @@ describe("usable GM action mirrors", () => {
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith(resurrection ? "ghost" : "target");
     expect(screen.queryByText(getTranslation("en").ui.phoneActions.poison)).toBeNull();
   });
+
+  it("keeps a completed mirrored assassination visible until the GM closes it", () => {
+    render(<GMPlayerActionModal mode={{
+      id: "day-action", actorPlayerId: "actor", kind: "v10-assassinate", completedTargetPlayerId: "target",
+    }} language="en" onClose={vi.fn()} onConfirm={vi.fn()} players={[
+      { id: "actor", name: "Actor", seat_position: 0, dead: false },
+      { id: "target", name: "Target", seat_position: 1, dead: false },
+    ]} />);
+
+    expect(screen.getByRole("dialog")).toHaveTextContent("Actor chose to assassinate Target.");
+    expect(screen.queryByRole("button", { name: "Target" })).not.toBeInTheDocument();
+    expect(document.querySelector(".lucide-target")).toBeInTheDocument();
+  });
 });

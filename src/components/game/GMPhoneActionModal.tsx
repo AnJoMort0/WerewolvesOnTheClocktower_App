@@ -53,7 +53,7 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
     || session.mode === PHONE_MODE.PRIEST_CONFESSION;
   return <GameModal open onClose={onClose} title={title} subtitle={subtitle}
     closeLabel={text.close} dismissible={false} showCloseButton
-    footer={proposal && requiresApproval && !session.approvalResult ? <div className="flex flex-wrap justify-end gap-2">
+    footer={proposal && requiresApproval && !session.completed && !session.approvalResult ? <div className="flex flex-wrap justify-end gap-2">
       <Button variant="secondary" onClick={() => resolve(false)}>{translation.ui.gmDenyAction}</Button>
       <Button variant="destructive" onClick={() => resolve(true)}>{translation.ui.gmAcceptAction}</Button>
     </div> : undefined}>

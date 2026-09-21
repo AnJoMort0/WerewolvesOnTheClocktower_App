@@ -272,8 +272,10 @@ describe("phone synchronization across GM and player devices", () => {
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "2:normal:retaliation", progressOrder: 29, participantIds: ["colossus"] }));
     bus.dropStates(false);
     act(() => vi.advanceTimersByTime(2500));
-    expect(colossus.result.current.session).toBeNull();
+    expect(colossus.result.current.session).toMatchObject({ completed: true, pendingTargetPlayerId: "witch" });
     expect(colossus.result.current.pending).toBe(false);
+    act(() => gm.result.current.close());
+    expect(colossus.result.current.session).toBeNull();
   });
 
   it("withdraws a Colossus request when its target becomes ineligible before approval", () => {
@@ -308,14 +310,10 @@ describe("phone synchronization across GM and player devices", () => {
     expect(onAction).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "monkey-line", progressOrder: 31 }));
     gm.rerender({ ...props, world: { ...monkeyWorld, players: monkeyWorld.players.map((p) => p.id === "monkey" ? { ...p, powerless: true, monkeyDisabled: true } : p) } });
-    act(() => monkey.result.current.send("close"));
-    expect(gm.result.current.session?.visible).toBe(false);
-    act(() => gm.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "monkey-line", "monkey", 31));
-    expect(monkey.result.current.session?.visible).toBe(true);
     act(() => gm.result.current.close());
-    expect(monkey.result.current.session?.visible).toBe(false);
-    act(() => monkey.result.current.send("reopen"));
-    expect(gm.result.current.session?.monkeyReveal?.roleId).toBe("e01");
+    expect(monkey.result.current.session).toBeNull();
+    act(() => gm.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "monkey-line", "monkey", 31));
+    expect(monkey.result.current.session?.monkeyReveal?.roleId).toBe("e01");
     gm.unmount();
     const restored = renderHook(() => useGMPhoneActions(props));
     expect(restored.result.current.session?.monkeyReveal?.roleId).toBe("e01");
@@ -413,6 +411,9 @@ describe("phone synchronization across GM and player devices", () => {
     });
     expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "kill", sourcePlayerId: null, targetPlayerId: "victim" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "hunt-line" }));
+    expect(wolf.result.current.session).toMatchObject({ completed: true, pendingTargetPlayerId: "victim" });
+    expect(puppet.result.current.session).toMatchObject({ completed: true, pendingTargetPlayerId: "victim" });
+    act(() => gm.result.current.close());
     expect(wolf.result.current.session).toBeNull();
     expect(puppet.result.current.session).toBeNull();
   });
@@ -452,7 +453,7 @@ describe("phone synchronization across GM and player devices", () => {
     expect(witch.result.current.pending).toBe(true);
     bus.dropStates(false);
     act(() => vi.advanceTimersByTime(2500));
-    expect(witch.result.current.session).toBeNull();
+    expect(witch.result.current.session).toMatchObject({ completed: true, pendingTargetPlayerId: "victim" });
     expect(witch.result.current.pending).toBe(false);
     expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: PHONE_MODE.EVIL_WITCH_POISON, sourcePlayerId: "witch", targetPlayerId: "victim" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "witch-line", sourcePlayerId: "witch", progressOrder: 7 }));
@@ -504,7 +505,7 @@ describe("phone synchronization across GM and player devices", () => {
     act(() => shaman.result.current.send("ignore"));
     expect(onAction).not.toHaveBeenCalled();
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "shaman-line", progressOrder: 35 }));
-    expect(shaman.result.current.session).toBeNull();
+    expect(shaman.result.current.session).toMatchObject({ completed: true, ignored: true });
   });
 
   it("synchronizes a copied role's multi-target action and completes it once", () => {
@@ -522,7 +523,9 @@ describe("phone synchronization across GM and player devices", () => {
       action: PHONE_MODE.CUPID_PAIR, sourcePlayerId: "copy", targetPlayerId: "victim", targetPlayerIds: ["victim", "second"],
     });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "cupid-line", participantIds: ["copy"] }));
-    expect(phone.result.current.session).toBeNull();
+    expect(phone.result.current.session).toMatchObject({
+      completed: true, pendingTargetPlayerIds: ["victim", "second"],
+    });
   });
 
   it("returns the Secret Lover's correct or wrong result without GM approval", () => {

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Crown, BookOpen, Download } from "lucide-react";
+import { Users, Crown, BookOpen, Download, QrCode } from "lucide-react";
 import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorModal";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import villagerIcon from "@/assets/display/icons/villager.webp";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { cleanupObsoleteGameStorage } from "@/lib/playerSession";
 import { usePwaInstallPrompt } from "@/lib/pwaInstall";
 import { getLanConfig, lanText, unlockLanHost, prepareLanStorage } from "@/lib/lanMode";
+import { RoomQrScannerModal } from "@/components/RoomQrScannerModal";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [hostPin, setHostPin] = useState("");
   const [lanHost, setLanHost] = useState(getLanConfig()?.host ?? false);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const lan = getLanConfig();
   const [language, setLanguage] = useState<Language>(() => {
     const stored = localStorage.getItem("preferred_language");
@@ -217,12 +219,31 @@ const Index = () => {
               disabled={joinCode.trim().length < 4}
               variant="secondary"
               className="h-14 px-6"
+              aria-label={t("enter", language)}
+              title={t("enter", language)}
             >
               <Users className="h-5 w-5" />
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setQrScannerOpen(true)}
+              variant="secondary"
+              className="h-14 px-4"
+              aria-label={t("scanQr", language)}
+              title={t("scanQr", language)}
+            >
+              <QrCode className="h-5 w-5" />
             </Button>
           </div>
         </motion.div>
       </motion.div>
+      <RoomQrScannerModal open={qrScannerOpen} language={language} onClose={() => setQrScannerOpen(false)}
+        onScanned={(destination) => {
+          setQrScannerOpen(false);
+          const target = new URL(destination.href);
+          if (target.origin === window.location.origin) navigate(`/join/${destination.code}`);
+          else window.location.assign(destination.href);
+        }} />
     </div>
   );
 };

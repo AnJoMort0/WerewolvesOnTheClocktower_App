@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw, ScrollText } from "lucide-react";
+import { Clock, Target, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw, ScrollText, Waypoints } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
@@ -934,7 +934,7 @@ const PlayerView = () => {
   const actionMode: PlayerDeviceActionMode | null = assassinationMode ? "v10" : resurrectionMode ? "v18" : webMode ? "v23" : null;
   const actionPlayers = seatedPlayers.length > 0 ? seatedPlayers : roomPlayers;
   const actionTotalSlots = actionPlayers.length || 1;
-  const actionIcon = actionMode === "v18" ? RotateCcw : actionMode === "v23" ? Eye : Crosshair;
+  const actionIcon = actionMode === "v18" ? RotateCcw : actionMode === "v23" ? Waypoints : Target;
   const ActionIcon = actionIcon;
   const actionTitle = actionMode === "v18"
     ? t("resurrectionMode", language)
@@ -1109,13 +1109,11 @@ const PlayerView = () => {
               {phone.session?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL && roomStatus === "playing" ? (
                 <MonkeyRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
-                  onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
-                  onReopen={() => phone.send("reopen")} onRoleClick={(roleId) => openRulebook(roleId)} />
+                  onConfirm={(id) => phone.send("confirm", id)} onRoleClick={(roleId) => openRulebook(roleId)} />
               ) : phone.session?.mode === PHONE_MODE.FOX_TAMER_CHECK && roomStatus === "playing" ? (
                 <FoxRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
-                  onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
-                  onReopen={() => phone.send("reopen")} />
+                  onConfirm={(id) => phone.send("confirm", id)} />
               ) : phone.session && roomStatus === "playing" && playerId ? (
                 <PhoneActionScreen key={phone.session.id} session={phone.session} playerId={playerId}
                   language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send}
@@ -1373,7 +1371,7 @@ const PlayerView = () => {
                         }}
                         className="w-full font-display tracking-wider"
                       >
-                        <Crosshair className="mr-2 h-4 w-4" />
+                        <Target className="mr-2 h-4 w-4" />
                         {t("assassinate", language)}
                       </Button>
                       {visiblePendingV10Request && (

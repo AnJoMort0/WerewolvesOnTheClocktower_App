@@ -1675,7 +1675,7 @@ export const RULEBOOK_CHARACTERS = {
             en: [
                 `<red>Twice during the entire game</red>, may reveal himself and cancel an execution during the Tribunal.`,
                 `This power may only be used once per day.`,
-                `<red>If assassinated</red>, the Ghost <red>may continue voting</red>, and their vote counts double.`
+                `<red>If assassinated</red>, the Ghost <red>may continue voting</red>, and his vote counts double.`
             ]
         },
         details: [
@@ -2496,7 +2496,7 @@ export const RULEBOOK_CHARACTERS = {
             ],
             en: [
                 `<red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
-                `If killed by <red>execution</red>, the Ghost may continue voting, and their vote counts double.`
+                `If killed by <red>execution</red>, the Ghost may continue voting, and his vote counts double.`
             ]
         },
         details: [
@@ -2931,7 +2931,7 @@ export const RULEBOOK_CHARACTERS = {
             en: [
                 `<red>On the second night</red>, may <red>choose</red> between becoming a normal Werewolf (👎) <red>or</red> becoming a Dog (👍):`,
                 `The Dog chooses an owner and copies that owner’s powers.`,
-                `<red>Each night</red>, the Dog wakes up with the owner, and each uses their action independently.`
+                `<red>Each night</red>, the Dog wakes up with the owner, and each uses his action independently.`
             ]
         },
         details: [
@@ -3086,7 +3086,7 @@ export const RULEBOOK_CHARACTERS = {
                 `<red>Each night</red>, is shown the victims.`,
                 `Without knowing their powers, the Grave Robber may choose to swap roles with one of them (👈/👎).`,
                 `After a victim is chosen, that role is revealed.`,
-                `The Grave Robber permanently uses the stolen powers instead of their own. The victim becomes the Grave Robber.`,
+                `The Grave Robber permanently uses the stolen powers instead of his own. The victim becomes the Grave Robber.`,
                 `From then on, the Grave Robber is called by the name of the character they replaced.`
             ]
         },
@@ -4391,7 +4391,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Domador do Macaco acorda e escolhe um jogador cuja carta lhe será revelada. Se a personagem revelada for uma Criatura Malvada, o Domador do Macaco perde o seu poder.`,
                 fr: `Le Maître du Singe se réveille et choisit un joueur dont la carte lui sera révélée. Si le personnage révélé est une Créature Maléfique, le Maître du Singe perd son pouvoir.`,
-                en: `The Monkey Tamer wakes up and chooses a player whose card will be revealed. If the revealed character is an Evil Being, the Monkey Tamer loses their power.`
+                en: `The Monkey Tamer wakes up and chooses a player whose card will be revealed. If the revealed character is an Evil Being, the Monkey Tamer loses his power.`
             }
         },
         {

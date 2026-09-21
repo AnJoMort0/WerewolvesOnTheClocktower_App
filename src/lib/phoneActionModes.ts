@@ -38,3 +38,14 @@ export const PHONE_MODE = {
 
 export type PhoneMode = typeof PHONE_MODE[keyof typeof PHONE_MODE];
 
+const ASSASSINATION_PHONE_MODES = new Set<PhoneMode>([
+  PHONE_MODE.WEREWOLF_HUNT,
+  PHONE_MODE.COLOSSUS_RETALIATION,
+  PHONE_MODE.HUNTER_ASSASSINATION,
+  PHONE_MODE.SOLDIER_ASSASSINATION,
+  PHONE_MODE.WHITE_WEREWOLF_ASSASSINATION,
+]);
+
+export function isAssassinationPhoneMode(mode: PhoneMode): boolean {
+  return ASSASSINATION_PHONE_MODES.has(mode);
+}

@@ -223,6 +223,21 @@ describe("PhoneActionScreen", () => {
     expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
   });
 
+  it("keeps a completed assassination visible with its actor and target", () => {
+    render(<PhoneActionScreen session={{
+      ...baseView,
+      mode: PHONE_MODE.HUNTER_ASSASSINATION,
+      sourcePlayerId: "wolf",
+      completed: true,
+      pendingTargetPlayerId: "target",
+    }} playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Wolf chose to assassinate Target.");
+    expect(screen.getByRole("status").querySelector(".lucide-target")).toBeInTheDocument();
+    expect(screen.queryByTestId("phone-action-map")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
+  });
+
   it("lets optional role actions be ignored", () => {
     const onSend = vi.fn();
     render(<PhoneActionScreen session={{ ...baseView, mode: PHONE_MODE.VINTNER_POISON }} playerId="wolf"

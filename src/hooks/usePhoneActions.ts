@@ -185,14 +185,15 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
 
   const resolveHunt = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
     const latest = reconcilePhoneSession(current.current.session, current.current.world);
-    if (!latest || latest.id !== sessionId || getHuntConsensus(latest) !== targetPlayerId) { commit(latest); return; }
+    if (!latest || latest.completed || latest.id !== sessionId || getHuntConsensus(latest) !== targetPlayerId) { commit(latest); return; }
     if (!accepted) { commit({ ...latest, votes: {} }); return; }
-    commit(null);
+    const completed = { ...latest, pendingTargetPlayerId: targetPlayerId, completed: true };
+    commit(completed);
     // A pending victim remains selectable so the phones do not reveal other night kills.
     if (!current.current.world.players.find((p) => p.id === targetPlayerId)?.redX) {
       current.current.onAction({ action: "kill", targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
     }
-    current.current.onComplete?.(latest);
+    current.current.onComplete?.(completed);
   }, [commit]);
 
   const active = enabled ? reconcilePhoneSession(session, world) : null;
@@ -201,10 +202,11 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     if (!current.current.enabled || !latest) return;
     if (latest.mode === PHONE_MODE.WEREWOLF_HUNT && type === "confirm") {
       const target = current.current.world.players.find((p) => p.id === targetPlayerId && isPhoneTarget(latest, p));
-      if (!target) return;
-      commit(null);
+      if (!target || latest.completed) return;
+      const completed = { ...latest, pendingTargetPlayerId: target.id, completed: true };
+      commit(completed);
       if (!target.redX) current.current.onAction({ action: "kill", targetPlayerId: target.id, sourcePlayerId: latest.sourcePlayerId });
-      current.current.onComplete?.(latest);
+      current.current.onComplete?.(completed);
       return;
     }
     const source = latest.sourcePlayerId ?? latest.participantIds[0];
@@ -228,11 +230,12 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   }, [sendGM]);
   const resolveColossus = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
     const latest = reconcilePhoneSession(current.current.session, current.current.world);
-    if (!latest || latest.mode !== PHONE_MODE.COLOSSUS_RETALIATION || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) { commit(latest); return; }
+    if (!latest || latest.completed || latest.mode !== PHONE_MODE.COLOSSUS_RETALIATION || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) { commit(latest); return; }
     if (!accepted) { commit({ ...latest, pendingTargetPlayerId: undefined }); return; }
-    commit(null);
+    const completed = { ...latest, completed: true };
+    commit(completed);
     current.current.onAction({ action: PHONE_MODE.COLOSSUS_RETALIATION, targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
-    current.current.onComplete?.(latest);
+    current.current.onComplete?.(completed);
   }, [commit]);
   const resolvePriest = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
     const latest = reconcilePhoneSession(current.current.session, current.current.world);
@@ -254,11 +257,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     commit(revealed);
     current.current.onComplete?.(revealed);
   }, [commit]);
-  const close = useCallback(() => {
-    const latest = current.current.session;
-    commit(latest?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || latest?.mode === PHONE_MODE.FOX_TAMER_CHECK
-      ? { ...latest, visible: false } : null);
-  }, [commit]);
+  const close = useCallback(() => commit(null), [commit]);
   const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; commit(null); }, [commit]);
   const monkeySourceIds = Object.values(monkeySessions.current)
     .filter((entry) => entry.monkeyReveal && entry.sourcePlayerId).map((entry) => entry.sourcePlayerId!);
