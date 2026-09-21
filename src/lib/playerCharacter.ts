@@ -8,6 +8,7 @@ const OBJECTIVE_ROLE_KEY = "objectiveRole";
 const OBJECTIVE_EFFECTS_KEY = "objectives";
 const DOG_ACTOR_COPY_KEY = "dogActorCopy";
 const MIME_COPY_KEY = "mimeCopy";
+const PROPHECY_UNTIL_KEY = "prophecyUntil";
 
 export const OBJECTIVE_EFFECT_IDS = ["lover", "evil_being", "werewolf_turned"] as const;
 export type ObjectiveEffectId = typeof OBJECTIVE_EFFECT_IDS[number];
@@ -19,6 +20,7 @@ export type PlayerCharacterMetadata = {
   objectiveEffects: ObjectiveEffectId[];
   dogActorCopiedRole: RoleId | null;
   mimeCopiedRole?: RoleId | null;
+  prophecyRetainedUntilNight?: number | null;
 };
 
 export function stripPlayerCharacterMetadata(character: string | null | undefined): string | null {
@@ -52,6 +54,8 @@ export function parsePlayerCharacterMetadata(character: string | null | undefine
   if (dogActorCopiedRole && ROLES[dogActorCopiedRole]) metadata.dogActorCopiedRole = dogActorCopiedRole;
   const mimeCopiedRole = params.get(MIME_COPY_KEY) as RoleId | null;
   if (mimeCopiedRole && ROLES[mimeCopiedRole]) metadata.mimeCopiedRole = mimeCopiedRole;
+  const prophecyUntil = Number(params.get(PROPHECY_UNTIL_KEY));
+  if (Number.isInteger(prophecyUntil) && prophecyUntil >= 1) metadata.prophecyRetainedUntilNight = prophecyUntil;
   return metadata;
 }
 
@@ -65,6 +69,10 @@ export function encodePlayerCharacterMetadata(
   if (metadata.objectiveRole) params.set(OBJECTIVE_ROLE_KEY, metadata.objectiveRole);
   if (metadata.dogActorCopiedRole) params.set(DOG_ACTOR_COPY_KEY, metadata.dogActorCopiedRole);
   if (metadata.mimeCopiedRole) params.set(MIME_COPY_KEY, metadata.mimeCopiedRole);
+  const prophecyUntil = metadata.prophecyRetainedUntilNight;
+  if (typeof prophecyUntil === "number" && Number.isInteger(prophecyUntil) && prophecyUntil >= 1) {
+    params.set(PROPHECY_UNTIL_KEY, String(prophecyUntil));
+  }
   const objectiveEffects = metadata.objectiveEffects?.filter(
     (effect): effect is ObjectiveEffectId => OBJECTIVE_EFFECT_IDS.includes(effect),
   );

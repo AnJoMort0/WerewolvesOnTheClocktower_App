@@ -57,6 +57,7 @@ import { useGameRuntime } from "@/hooks/useGameRuntime";
 import { formatGameRuntime } from "@/lib/gameRuntime";
 import { getPhoneView, getRoleActionPhoneConfig, isRoleActionPhoneMode, shouldExhaustMonkeyPower, type PhoneAction, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
+import { isProphecyRetentionActive } from "@/lib/prophecy";
 import { canColossusRetaliate, isColossusTarget, resolveColossusTarget } from "@/lib/colossus";
 import {
   EMPTY_ACTOR_POWER_STATE,
@@ -668,16 +669,24 @@ const GMRoom = () => {
     }
     return playerIds;
   }, [prophecyDeadAtNight, nightNumber]);
+  const prophecyPowerPlayerIds = useMemo(() => {
+    const playerIds = new Set<string>();
+    const phase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
+    for (const [playerId, deathNight] of Object.entries(prophecyDeadAtNight)) {
+      if (isProphecyRetentionActive(deathNight + 1, { phase, number: nightNumber })) playerIds.add(playerId);
+    }
+    return playerIds;
+  }, [dayPhase, gameCyclePhase, nightNumber, prophecyDeadAtNight]);
   const abilityRoleAssignments = useMemo(() => {
     const assignments = getDogWolfAbilityRoleAssignments(
       effectiveRoleAssignments,
       dogWolfStates,
       permanentlyDead,
-      prophecyGhostPlayerIds,
+      prophecyPowerPlayerIds,
     );
     if (mimePlayerId && mimeMechanicalRole) assignments[mimePlayerId] = mimeMechanicalRole;
     return assignments;
-  }, [dogWolfStates, effectiveRoleAssignments, permanentlyDead, prophecyGhostPlayerIds, mimeMechanicalRole, mimePlayerId]);
+  }, [dogWolfStates, effectiveRoleAssignments, permanentlyDead, prophecyPowerPlayerIds, mimeMechanicalRole, mimePlayerId]);
   const objectiveRoleAssignments = useMemo(() => {
     const assignments = { ...effectiveRoleAssignments };
     if (drunkardPlayerId) assignments[drunkardPlayerId] = "a01";
@@ -834,6 +843,9 @@ const GMRoom = () => {
   const pruneResolvedPlayerActionState = useCallback((state: PlayerActionState): PlayerActionState => {
     const requests = state.requests.filter((request) => {
       if (resolvedPlayerActionRequestIdsRef.current.has(request.id)) return false;
+      const actionRole = getPlayerActionRole(request.kind);
+      if (abilityRoleAssignments[request.actorPlayerId] !== actionRole) return false;
+      if (permanentlyDead.has(request.actorPlayerId) && !prophecyPowerPlayerIds.has(request.actorPlayerId)) return false;
       const targetStatus = playerStatuses[request.targetPlayerId];
       if (request.kind === "v10-assassinate") {
         return targetStatus !== "dead-this-night"
@@ -851,7 +863,7 @@ const GMRoom = () => {
       return true;
     });
     return requests.length === state.requests.length ? state : { ...state, requests };
-  }, [permanentlyDead, playerStatuses]);
+  }, [abilityRoleAssignments, permanentlyDead, playerStatuses, prophecyPowerPlayerIds]);
 
   useEffect(() => {
     if (!roomId || !gmSnapshotLoaded || room?.status !== "playing") return;
@@ -2375,8 +2387,11 @@ const GMRoom = () => {
         effectiveActorCopiedRole,
         drunkardReplacementRole,
       ),
+      prophecyRetainedUntilNight: prophecyDeadAtNight[playerId] !== undefined
+        ? prophecyDeadAtNight[playerId] + 1
+        : null,
     });
-  }, [actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveActorCopiedRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, mimeCopiedRole, mimeCornerRole, mimePlayerId, objectiveRoleAssignments]);
+  }, [actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveActorCopiedRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, mimeCopiedRole, mimeCornerRole, mimePlayerId, objectiveRoleAssignments, prophecyDeadAtNight]);
 
   const syncActorCharacter = useCallback((copiedRole: RoleId | null) => {
     if (!actorPlayerId) return;
@@ -2397,17 +2412,20 @@ const GMRoom = () => {
         copiedRole,
         drunkardReplacementRole,
       ),
+      prophecyRetainedUntilNight: prophecyDeadAtNight[actorPlayerId] !== undefined
+        ? prophecyDeadAtNight[actorPlayerId] + 1
+        : null,
     });
     setPlayers((prev) => prev.map((player) => player.id === actorPlayerId ? { ...player, character } : player));
     void supabase.from("players").update({ character }).eq("id", actorPlayerId).then(() => {
       broadcastPlayerSync([actorPlayerId]);
     });
-  }, [actorPlayerId, broadcastPlayerSync, dogWolfOwnerRoles, dogWolfStates, drunkardReplacementRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, objectiveRoleAssignments]);
+  }, [actorPlayerId, broadcastPlayerSync, dogWolfOwnerRoles, dogWolfStates, drunkardReplacementRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, objectiveRoleAssignments, prophecyDeadAtNight]);
 
   useEffect(() => {
     if (!rolesAssigned || room?.status !== "playing" || pendingChanges) return;
     const changes = Object.entries(roleAssignments).flatMap(([playerId, role]) => {
-      if (permanentlyDead.has(playerId)) return [];
+      if (permanentlyDead.has(playerId) && prophecyDeadAtNight[playerId] === undefined) return [];
       const character = getStoredCharacter(playerId, role);
       const currentCharacter = players.find((player) => player.id === playerId)?.character;
       return currentCharacter === character ? [] : [{ playerId, character }];
@@ -2420,7 +2438,7 @@ const GMRoom = () => {
     void Promise.all(changes.map(({ playerId, character }) => (
       supabase.from("players").update({ character }).eq("id", playerId)
     ))).then(() => broadcastPlayerSync(changes.map(({ playerId }) => playerId)));
-  }, [broadcastPlayerSync, getStoredCharacter, pendingChanges, permanentlyDead, players, roleAssignments, rolesAssigned, room?.status]);
+  }, [broadcastPlayerSync, getStoredCharacter, pendingChanges, permanentlyDead, players, prophecyDeadAtNight, roleAssignments, rolesAssigned, room?.status]);
 
   const confirmPendingChanges = async () => {
     if (!roomId) return;
@@ -4828,7 +4846,8 @@ const GMRoom = () => {
   });
   const actionMirrors = useGMPlayerActionMirrors(roomId, gmSnapshotLoaded && room?.status === "playing", (mode) => (
     abilityRoleAssignments[mode.actorPlayerId] === getPlayerActionRole(mode.kind)
-    && !permanentlyDead.has(mode.actorPlayerId) && playerStatuses[mode.actorPlayerId] !== "dead-this-night"
+    && ((!permanentlyDead.has(mode.actorPlayerId) && playerStatuses[mode.actorPlayerId] !== "dead-this-night")
+      || prophecyPowerPlayerIds.has(mode.actorPlayerId))
     && !powerlessPlayerIds.has(mode.actorPlayerId)
   ));
   monkeyDragRef.current = (sourcePlayerId, targetPlayerId) => {
@@ -4853,10 +4872,14 @@ const GMRoom = () => {
     const actorExists = players.some((player) => player.id === request.actorPlayerId);
     const targetExists = players.some((player) => player.id === request.targetPlayerId);
     const actionRole = getPlayerActionRole(request.kind);
+    const actorCanAct = abilityRoleAssignments[request.actorPlayerId] === actionRole
+      && ((!permanentlyDead.has(request.actorPlayerId) && playerStatuses[request.actorPlayerId] !== "dead-this-night")
+        || prophecyPowerPlayerIds.has(request.actorPlayerId))
+      && !powerlessPlayerIds.has(request.actorPlayerId);
     const targetIsDead = playerStatuses[request.targetPlayerId] === "dead-this-night"
       || playerStatuses[request.targetPlayerId] === "dead"
       || permanentlyDead.has(request.targetPlayerId);
-    const shouldApply = accepted && actorExists && targetExists && (
+    const shouldApply = accepted && actorExists && actorCanAct && targetExists && (
       (request.kind === "v10-assassinate" && !targetIsDead)
       || (request.kind === "v18-resurrect" && permanentlyDead.has(request.targetPlayerId))
       || (request.kind === "v23-web" && !targetIsDead)
@@ -4914,7 +4937,7 @@ const GMRoom = () => {
     if (updateResult.error) {
       toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
     }
-  }, [getStoredDogWolfFallbackState, handleDragAction, independentPowerStates, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionPowerUsesByRole, playerActionState, playerStatuses, players, pruneResolvedPlayerActionState, room?.language, roomId, spiderWebbedDiedSourcePlayerIds]);
+  }, [abilityRoleAssignments, getStoredDogWolfFallbackState, handleDragAction, independentPowerStates, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionPowerUsesByRole, playerActionState, playerStatuses, players, powerlessPlayerIds, prophecyPowerPlayerIds, pruneResolvedPlayerActionState, room?.language, roomId, spiderWebbedDiedSourcePlayerIds]);
 
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
@@ -4923,7 +4946,7 @@ const GMRoom = () => {
     const isMime = roleAssignments[playerId] === "a03";
     const dogState = dogWolfStates[playerId];
     const roleAction = ROLE_DRAG_ACTIONS[role];
-    if (roleAction && !permanentlyDead.has(playerId)) {
+    if (roleAction && (!permanentlyDead.has(playerId) || prophecyPowerPlayerIds.has(playerId))) {
       // a05 disabled when poisoned
       if (role === "a05" && isPlayerActingPoisoned(playerId)) return {};
       if (dogState && role === "s01") return {};
@@ -6533,7 +6556,7 @@ const GMRoom = () => {
                             </div>
                           )}
                           {/* Paranoid charges */}
-                          {mechanicalRoleId === "v10" && !isPermanentDead && (
+                          {mechanicalRoleId === "v10" && (!isPermanentDead || prophecyPowerPlayerIds.has(player.id)) && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
@@ -6550,7 +6573,7 @@ const GMRoom = () => {
                             </div>
                           )}
                           {/* Angel charges */}
-                          {mechanicalRoleId === "v18" && !isPermanentDead && (
+                          {mechanicalRoleId === "v18" && (!isPermanentDead || prophecyPowerPlayerIds.has(player.id)) && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {[0, 1].map((idx) => (
                                 <Checkbox
@@ -6584,7 +6607,7 @@ const GMRoom = () => {
                             </div>
                           )}
                           {/* Domador da Aranha daytime web-change */}
-                          {mechanicalRoleId === "v23" && !isPermanentDead && (
+                          {mechanicalRoleId === "v23" && (!isPermanentDead || prophecyPowerPlayerIds.has(player.id)) && (
                             <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <Checkbox
                                 checked={independentPowerState?.spiderDayChangeUsed ?? spiderDayChangeUsed}

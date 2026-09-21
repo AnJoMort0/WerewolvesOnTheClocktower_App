@@ -33,6 +33,7 @@ import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { usePlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 import { normalizeGameLogSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
+import { isProphecyRetentionActive } from "@/lib/prophecy";
 
 type RoomPlayer = {
   id: string;
@@ -677,6 +678,10 @@ const PlayerView = () => {
   const isSpy = displayRole === "f02";
   const isMime = parsedCharacter.baseRole === "a03";
   const playerIsDead = !!player && !player.is_alive;
+  const hasRetainedProphecyPower = playerIsDead && isProphecyRetentionActive(
+    characterMetadata.prophecyRetainedUntilNight,
+    phaseInfo,
+  );
   const currentRoomId = player?.room_id ?? null;
   const isParanoidPower = copiedActionRole === "v10";
   const isAngelPower = copiedActionRole === "v18";
@@ -699,16 +704,16 @@ const PlayerView = () => {
   const v23Uses = playerId ? playerActionState.powerUses.v23?.[playerId] ?? 0 : 0;
   const canStartAssassination = isParanoidPower
     && roomStatus === "playing"
-    && !playerIsDead
+    && (!playerIsDead || hasRetainedProphecyPower)
     && !visiblePendingV10Request;
   const canStartResurrection = isAngelPower
     && roomStatus === "playing"
-    && !playerIsDead
+    && (!playerIsDead || hasRetainedProphecyPower)
     && !visiblePendingV18Request
     && roomPlayers.some((roomPlayer) => !roomPlayer.is_alive);
   const canStartWebChange = isSpiderPower
     && roomStatus === "playing"
-    && !playerIsDead
+    && (!playerIsDead || hasRetainedProphecyPower)
     && !visiblePendingV23Request;
 
   useEffect(() => {
@@ -1153,6 +1158,7 @@ const PlayerView = () => {
                         <button
                           key={p.id}
                           type="button"
+                          aria-label={p.name}
                           disabled={!selectable}
                           onClick={() => setActionTargetId(p.id)}
                           className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-transform ${selectable ? "hover:scale-105" : "cursor-not-allowed opacity-45"}`}

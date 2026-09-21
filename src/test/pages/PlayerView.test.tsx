@@ -1,8 +1,9 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import PlayerView from "@/pages/PlayerView";
 import { t } from "@/lib/i18n";
+import { encodePlayerCharacterMetadata } from "@/lib/playerCharacter";
 
 const backend = vi.hoisted(() => {
   type Result = { data: unknown; error: { message: string } | null };
@@ -11,6 +12,9 @@ const backend = vi.hoisted(() => {
   const channels = new Set<Channel>();
   const state = {
     failOwn: false, missing: false, ownReads: 0, phase: 1,
+    phaseKind: "night" as "night" | "day" | "tribunal",
+    character: "v01",
+    alive: true,
     pending: null as Promise<Result> | null,
   };
   return {
@@ -28,14 +32,14 @@ const backend = vi.hoisted(() => {
           if (table === "players" && columns === "name, character, is_alive, room_id") {
             state.ownReads++;
             const result = state.pending ?? Promise.resolve({
-              data: state.failOwn || state.missing ? null : { name: "Human", character: "v01", is_alive: true, room_id: "room" },
+              data: state.failOwn || state.missing ? null : { name: "Human", character: state.character, is_alive: state.alive, room_id: "room" },
               error: state.failOwn ? { message: "Temporary network failure" } : null,
             });
             return result.then(resolve, reject);
           }
           const data = table === "rooms"
-            ? { status: "playing", language: "en", player_action_state: null, phase_state: { phase: "night", number: state.phase }, timer_state: null, game_over_state: null }
-            : [{ id: "player", name: "Human", seat_position: 0, is_alive: true }];
+            ? { status: "playing", language: "en", player_action_state: null, phase_state: { phase: state.phaseKind, number: state.phase }, timer_state: null, game_over_state: null }
+            : [{ id: "player", name: "Human", seat_position: 0, is_alive: state.alive }];
           return Promise.resolve({ data, error: null }).then(resolve, reject);
         },
       };
@@ -69,7 +73,9 @@ const loaded = () => waitFor(() => expect(screen.getAllByText("Human").length).t
 
 beforeEach(() => {
   window.localStorage.clear();
-  Object.assign(backend.state, { failOwn: false, missing: false, ownReads: 0, phase: 1, pending: null });
+  Object.assign(backend.state, {
+    failOwn: false, missing: false, ownReads: 0, phase: 1, phaseKind: "night", character: "v01", alive: true, pending: null,
+  });
 });
 afterEach(() => { cleanup(); backend.channels.clear(); vi.restoreAllMocks(); });
 
@@ -131,5 +137,20 @@ describe("player recovery and room isolation", () => {
     backend.state.missing = true;
     showPlayer();
     await waitFor(() => expect(screen.getByText(t("sessionEnded", "pt"))).toBeInTheDocument());
+  });
+
+  it("lets a prophetic dead Angel select and resurrect themself on the following day", async () => {
+    backend.state.character = encodePlayerCharacterMetadata("v18", { prophecyRetainedUntilNight: 2 });
+    backend.state.alive = false;
+    backend.state.phaseKind = "day";
+    showPlayer();
+    await loaded();
+
+    const resurrect = screen.getByRole("button", { name: t("resurrectPlayer", "en") });
+    expect(resurrect).toBeEnabled();
+    fireEvent.click(resurrect);
+    await screen.findByText(t("resurrectionMode", "en"));
+    const selfTarget = screen.getByRole("button", { name: "Human" });
+    expect(selfTarget).toBeEnabled();
   });
 });

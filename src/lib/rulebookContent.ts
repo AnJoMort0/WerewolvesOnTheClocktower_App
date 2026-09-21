@@ -2872,17 +2872,17 @@ export const RULEBOOK_CHARACTERS = {
         mainDescription: {
             pt: [
                 `<red>Não sabe que é o Bêbado</red>.`,
-                `<red>Substitui</red> a Vidente, o Domador do Urso, o Domador dos Coelhos, o Domador do Corvo, o Domador da Raposa ou o Domador da Aranha (aleatório a cada jogo).`,
+                `<red>Substitui</red> a Vidente, o Domador do Urso, o Domador dos Coelhos, o Domador do Corvo, o Domador da Raposa, o Domador do Macaco ou o Domador da Aranha (aleatório a cada jogo).`,
                 `Mas todas as informações que lhe são dadas são como se o personagem estivesse envenenado.`,
             ],
             fr: [
                 `<red>Ne sait pas qu’il est l'ivrogne</red>.`,
-                `<red>Remplace</red> la Voyante, le Maître de l’Ours, le Maître des Lapins, le Maître du Corbeau, le Maître du Renard ou le Maître de l’Araignée (aléatoire à chaque jeu).`,
+                `<red>Remplace</red> la Voyante, le Maître de l’Ours, le Maître des Lapins, le Maître du Corbeau, le Maître du Renard, le Maître du Singe ou le Maître de l’Araignée (aléatoire à chaque jeu).`,
                 `Mais toutes les informations reçues sont comme si la carte était empoisonnée.`,
             ],
             en: [
                 `<red>Does not know they are the Drunkard</red>.`,
-                `<red>Replaces</red> the Fortune Teller, Bear Tamer, Bunny Tamer, Raven Tamer, Fox Tamer, or Spider Tamer, chosen randomly each game.`,
+                `<red>Replaces</red> the Fortune Teller, Bear Tamer, Bunny Tamer, Raven Tamer, Fox Tamer, the Monkey Tamer or Spider Tamer, chosen randomly each game.`,
                 `All information received is given as though that character were poisoned.`
             ]
         },

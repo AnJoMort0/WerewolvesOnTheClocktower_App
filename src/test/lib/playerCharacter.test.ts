@@ -14,6 +14,7 @@ describe("private player character metadata", () => {
       objectiveRole: "a01",
       objectiveEffects: ["evil_being", "lover"],
       dogActorCopiedRole: "v16",
+      prophecyRetainedUntilNight: 4,
     });
     expect(stripPlayerCharacterMetadata(character)).toBe("a02");
     expect(parsePlayerCharacterMetadata(character)).toEqual({
@@ -22,8 +23,14 @@ describe("private player character metadata", () => {
       objectiveRole: "a01",
       objectiveEffects: ["evil_being", "lover"],
       dogActorCopiedRole: "v16",
+      prophecyRetainedUntilNight: 4,
     });
     expect(parsePlayerCharacter(character).baseRole).toBe("a02");
+  });
+
+  it("ignores malformed prophecy retention metadata", () => {
+    expect(parsePlayerCharacterMetadata("v18|prophecyUntil=tomorrow").prophecyRetainedUntilNight).toBeUndefined();
+    expect(parsePlayerCharacterMetadata("v18|prophecyUntil=-2").prophecyRetainedUntilNight).toBeUndefined();
   });
 
   it("keeps Actor identity parsing intact when metadata is present", () => {
