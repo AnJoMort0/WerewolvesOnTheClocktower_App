@@ -3,6 +3,7 @@ import { PhoneActionScreen } from "./PhoneActionScreen";
 import { getTranslation, t, type Language } from "@/lib/i18n";
 import type { PlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 import type { PhoneView } from "@/lib/phoneActions";
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { Crosshair, Eye, RotateCcw } from "lucide-react";
 
 export function GMPlayerActionModal({ mode, players, language, onClose, onConfirm }: {
@@ -16,7 +17,7 @@ export function GMPlayerActionModal({ mode, players, language, onClose, onConfir
   const title = t(resurrect ? "resurrectionMode" : web ? "webMode" : "assassinationMode", language);
   const instructions = t(resurrect ? "resurrectionChooseTarget" : web ? "webChooseTarget" : "assassinationChooseTarget", language);
   const view: PhoneView = {
-    id: mode.id, mode: "poison", participantIds: [mode.actorPlayerId], votes: {},
+    id: mode.id, mode: PHONE_MODE.EVIL_WITCH_POISON, participantIds: [mode.actorPlayerId], votes: {},
     players: players.map((player) => ({ ...player, redX: false, marker: null,
       selectable: resurrect ? player.dead : !player.dead && (web || player.id !== mode.actorPlayerId) })),
   };

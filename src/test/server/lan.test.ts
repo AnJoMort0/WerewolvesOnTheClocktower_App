@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { connect } from "node:net";
 import { once } from "node:events";
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { createLanServer } from "../../../server/lan/server.mjs";
 
 let root: string;
@@ -128,7 +129,7 @@ describe("offline LAN server", () => {
     expect(phoneMessages).toHaveLength(0);
     expect(outsiderMessages).toHaveLength(0);
     expect((await phone.request("broadcast", { topic, event: "state", payload: {} })).status).toBe(403);
-    const payload = { revision: 1, session: { mode: "monkey", monkeyReveal: { roleId: "e01", evil: true } } };
+    const payload = { revision: 1, session: { mode: PHONE_MODE.MONKEY_TAMER_REVEAL, monkeyReveal: { roleId: "e01", evil: true } } };
     await gm.request("broadcast", { topic, event: "state", payload, clientId: gmId });
     await expect.poll(() => phoneMessages.length).toBe(1);
     expect(phoneMessages[0].payload).toEqual(payload);
@@ -153,7 +154,7 @@ describe("offline LAN server", () => {
     const gm = await device(true), phone = await device();
     const game = await room(gm), alice = await player(phone, game.id, "Alice");
     const topic = `phone-${game.id}-${alice.id}`;
-    await gm.request("broadcast", { topic, event: "state", payload: { revision: 10, session: { mode: "hunt" } } });
+    await gm.request("broadcast", { topic, event: "state", payload: { revision: 10, session: { mode: PHONE_MODE.WEREWOLF_HUNT } } });
     await gm.request("snapshots", { [`wotct_gm_snapshot_${game.id}`]: JSON.stringify({ version: 1, nightNumber: 2 }), wotct_current_player_session: "never back this up" });
     await lan.close();
     await start();

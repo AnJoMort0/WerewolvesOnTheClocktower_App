@@ -1,5 +1,6 @@
 import type { RoleId } from "@/lib/roles";
 import type { StatusEffect } from "@/lib/effects";
+import type { PhoneMode } from "@/lib/phoneActionModes";
 
 export type Language = "pt" | "fr" | "en";
 
@@ -22,7 +23,7 @@ export function coerceLanguage(value: unknown, fallback: Language = "pt"): Langu
 export interface ScriptLine {
   text: string;
   /** GM-controlled phone interaction; independent of the translated wording. */
-  phoneMode?: "hunt" | "allies" | "poison" | "shaman" | "fox" | "web" | "priest" | "sleepwalker" | "colossus";
+  phoneMode?: PhoneMode;
   requires?: RoleId[];
   conditionKey?: string;
 }
@@ -274,6 +275,9 @@ export interface UIStrings {
     web: string;
     priest: string;
     sleepwalker: string;
+    soldier: string;
+    approved: string;
+    denied: string;
     poisonConfirm: string;
     save: string;
     ignore: string;

@@ -1,3 +1,4 @@
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { describe, expect, it } from "vitest";
 import { canColossusRetaliate, isColossusTarget, placeColossusLines, resolveColossusTarget } from "@/lib/colossus";
 import { applyPhoneCommand, getPhoneParticipants, getPhoneView, reconcilePhoneSession, type PhonePlayer, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
@@ -18,7 +19,7 @@ const world: PhoneWorld = { packBlocked: false, players: [
   player("host", { actedTonight: true, host: true }),
   player("victim", { actedTonight: true, redX: true }), player("ghost", { actedTonight: true, dead: true }),
 ] };
-const session: PhoneSession = { id: "retaliation", mode: "colossus", lineKey: "2:normal:colossus", sourcePlayerId: "colossus", participantIds: ["colossus"], votes: {}, sequences: {} };
+const session: PhoneSession = { id: "retaliation", mode: PHONE_MODE.COLOSSUS_RETALIATION, lineKey: "2:normal:colossus", sourcePlayerId: "colossus", participantIds: ["colossus"], votes: {}, sequences: {} };
 
 describe("Colossus retaliation", () => {
   it("only wakes for an unspent Werewolf death, including copied abilities", () => {
@@ -27,8 +28,8 @@ describe("Colossus retaliation", () => {
     for (const blocked of [{ attackedByWerewolves: false }, { used: true }, { dead: true }, { redX: false }, { powerless: true }, { host: true }, { burned: true }, { abilityRole: "a04" }]) {
       expect(canColossusRetaliate({ ...ready, ...blocked })).toBe(false);
     }
-    expect(getPhoneParticipants("colossus", "colossus", world)).toEqual(["colossus"]);
-    expect(getPhoneParticipants("colossus", "colossus", { ...world, players: [player("colossus", { abilityRole: "v27", objectiveRole: "a04", colossusReady: true })] })).toEqual(["colossus"]);
+    expect(getPhoneParticipants(PHONE_MODE.COLOSSUS_RETALIATION, "colossus", world)).toEqual(["colossus"]);
+    expect(getPhoneParticipants(PHONE_MODE.COLOSSUS_RETALIATION, "colossus", { ...world, players: [player("colossus", { abilityRole: "v27", objectiveRole: "a04", colossusReady: true })] })).toEqual(["colossus"]);
   });
 
   it("only exposes living, completed-script participants without Host", () => {
@@ -86,7 +87,7 @@ describe("Colossus retaliation", () => {
   it.each(["en", "fr", "pt"] as const)("registers the ordered card and printed script in %s", (language) => {
     expect(RULEBOOK_CHARACTER_ORDER[RULEBOOK_CHARACTER_ORDER.indexOf("v09") + 1]).toBe("v27");
     const lines = getScripts(language).normalNight;
-    expect(lines.find((line) => line.requires?.includes("v27"))).toMatchObject({ conditionKey: "colossusAttacked", phoneMode: "colossus" });
+    expect(lines.find((line) => line.requires?.includes("v27"))).toMatchObject({ conditionKey: "colossusAttacked", phoneMode: PHONE_MODE.COLOSSUS_RETALIATION });
     const printed = RULEBOOK_NIGHT_SCRIPT.normalNight;
     expect(printed[printed.findIndex((line) => line.id === "normal-s02") + 1].id).toBe("normal-v27");
     expect(EXTRA_DEATH_ROLES).toContain("v27");

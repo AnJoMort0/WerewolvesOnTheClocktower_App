@@ -28,6 +28,7 @@ import { createPlayerActionRequest, normalizePlayerActionState, upsertPowerUses,
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { usePlayerPhoneActions } from "@/hooks/usePhoneActions";
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { usePlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
@@ -1105,12 +1106,12 @@ const PlayerView = () => {
               </div>
             )}
             <AnimatePresence mode="wait">
-              {phone.session?.mode === "monkey" && roomStatus === "playing" ? (
+              {phone.session?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL && roomStatus === "playing" ? (
                 <MonkeyRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
                   onReopen={() => phone.send("reopen")} onRoleClick={(roleId) => openRulebook(roleId)} />
-              ) : phone.session?.mode === "fox" && roomStatus === "playing" ? (
+              ) : phone.session?.mode === PHONE_MODE.FOX_TAMER_CHECK && roomStatus === "playing" ? (
                 <FoxRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}

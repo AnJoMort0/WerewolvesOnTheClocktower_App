@@ -1,3 +1,4 @@
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
@@ -10,7 +11,7 @@ const players: PhoneView["players"] = [
   { id: "right", name: "Right", seat_position: 2, dead: false, redX: false, selectable: true, marker: null },
   { id: "outside", name: "Outside", seat_position: 3, dead: false, redX: false, selectable: true, marker: null },
 ];
-const view: PhoneView = { id: "fox", mode: "fox", participantIds: ["fox"], votes: {}, players };
+const view: PhoneView = { id: "fox", mode: PHONE_MODE.FOX_TAMER_CHECK, participantIds: ["fox"], votes: {}, players };
 
 describe("Fox Tamer reveal modal", () => {
   it("can render inside the player screen without hiding its surrounding context", () => {

@@ -1,3 +1,4 @@
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useGMPhoneActions, usePlayerPhoneActions } from "@/hooks/usePhoneActions";
@@ -84,8 +85,8 @@ describe("phone synchronization across GM and player devices", () => {
     const monkey = renderHook(() => usePlayerPhoneActions("room", "monkey"));
     renderHook(() => usePlayerPhoneActions("room", "witch"));
     bus.sent.length = 0;
-    act(() => gm.result.current.toggle("monkey", "monkey-line", "monkey"));
-    expect(monkey.result.current.session?.mode).toBe("monkey");
+    act(() => gm.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "monkey-line", "monkey"));
+    expect(monkey.result.current.session?.mode).toBe(PHONE_MODE.MONKEY_TAMER_REVEAL);
     expect(bus.sent.filter((message) => message.event === "state").map((message) => message.topic)).toEqual(["phone-room-monkey"]);
     bus.sent.length = 0;
     gm.rerender({ ...props, world: { ...monkeyWorld, players: monkeyWorld.players.map((p) => ({ ...p })) } });
@@ -154,12 +155,12 @@ describe("phone synchronization across GM and player devices", () => {
     const gm = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "playing:night:1", enabled: true, world: monkeyWorld, onAction }));
     const monkey = renderHook(() => usePlayerPhoneActions("room", "monkey"));
     act(() => {
-      gm.result.current.toggle("monkey", "1:drag:monkey:monkey", "monkey");
+      gm.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "1:drag:monkey:monkey", "monkey");
       gm.result.current.confirmMonkey("wolf");
     });
     expect(monkey.result.current.session?.monkeyReveal).toMatchObject({ targetPlayerId: "wolf", roleId: "e01", evil: true });
     act(() => gm.result.current.close());
-    act(() => gm.result.current.toggle("monkey", "1:first:monkey", "monkey", null));
+    act(() => gm.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "1:first:monkey", "monkey", null));
     expect(gm.result.current.session?.monkeyReveal?.targetPlayerId).toBe("wolf");
     act(() => gm.result.current.confirmMonkey("victim"));
     expect(onAction).toHaveBeenCalledTimes(1);
@@ -171,13 +172,13 @@ describe("phone synchronization across GM and player devices", () => {
     const onAction = vi.fn(), onComplete = vi.fn();
     const gmWorld: PhoneWorld = { ...world, players: [...world.players, player("shaman", "e03")].map((p) => p.id === "victim" ? { ...p, redX: true } : p) };
     const gm = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "playing:night:2", enabled: true, world: gmWorld, onAction, onComplete }));
-    act(() => gm.result.current.toggle("poison", "witch-line", "witch"));
+    act(() => gm.result.current.toggle(PHONE_MODE.EVIL_WITCH_POISON, "witch-line", "witch"));
     act(() => gm.result.current.sendGM("confirm", "wolf"));
-    expect(onAction).toHaveBeenLastCalledWith({ action: "poison", targetPlayerId: "wolf", sourcePlayerId: "witch" });
-    act(() => gm.result.current.toggle("shaman", "shaman-line", "shaman"));
+    expect(onAction).toHaveBeenLastCalledWith({ action: PHONE_MODE.EVIL_WITCH_POISON, targetPlayerId: "wolf", sourcePlayerId: "witch" });
+    act(() => gm.result.current.toggle(PHONE_MODE.SHAMAN_SAVE, "shaman-line", "shaman"));
     act(() => gm.result.current.sendGM("confirm", "victim"));
-    expect(onAction).toHaveBeenLastCalledWith({ action: "shaman", targetPlayerId: "victim", sourcePlayerId: "shaman" });
-    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    expect(onAction).toHaveBeenLastCalledWith({ action: PHONE_MODE.SHAMAN_SAVE, targetPlayerId: "victim", sourcePlayerId: "shaman" });
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_HUNT, "hunt-line", null));
     expect(gm.result.current.consensus).toBeNull();
     act(() => {
       gm.result.current.sendGM("confirm", "witch");
@@ -195,10 +196,10 @@ describe("phone synchronization across GM and player devices", () => {
       roomId: "room", contextKey: "playing:night:1", enabled: true, world: spiderWorld, onAction, onComplete,
     }));
     const spider = renderHook(() => usePlayerPhoneActions("room", "spider"));
-    act(() => gm.result.current.toggle("web", "first-spider-line", "spider", null));
-    expect(spider.result.current.session?.mode).toBe("web");
+    act(() => gm.result.current.toggle(PHONE_MODE.SPIDER_TAMER_WEB, "first-spider-line", "spider", null));
+    expect(spider.result.current.session?.mode).toBe(PHONE_MODE.SPIDER_TAMER_WEB);
     act(() => spider.result.current.send("select", "victim"));
-    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "web", sourcePlayerId: "spider", targetPlayerId: "victim" });
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: PHONE_MODE.SPIDER_TAMER_WEB, sourcePlayerId: "spider", targetPlayerId: "victim" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "first-spider-line", participantIds: ["spider"] }));
     expect(spider.result.current.session?.pendingTargetPlayerId).toBe("victim");
   });
@@ -210,9 +211,9 @@ describe("phone synchronization across GM and player devices", () => {
       roomId: "room", contextKey: "playing:night:2", enabled: true, world: sleepwalkerWorld, onAction, onComplete,
     }));
     const sleepwalker = renderHook(() => usePlayerPhoneActions("room", "sleepwalker"));
-    act(() => gm.result.current.toggle("sleepwalker", "sleepwalker-line", "sleepwalker", 3));
+    act(() => gm.result.current.toggle(PHONE_MODE.SLEEPWALKER_VISIT, "sleepwalker-line", "sleepwalker", 3));
     act(() => sleepwalker.result.current.send("confirm", "victim"));
-    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "sleepwalker", sourcePlayerId: "sleepwalker", targetPlayerId: "victim" });
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: PHONE_MODE.SLEEPWALKER_VISIT, sourcePlayerId: "sleepwalker", targetPlayerId: "victim" });
     expect(onComplete).toHaveBeenCalledOnce();
     expect(gm.result.current.session?.pendingTargetPlayerId).toBe("victim");
     expect(sleepwalker.result.current.session?.pendingTargetPlayerId).toBe("victim");
@@ -229,7 +230,7 @@ describe("phone synchronization across GM and player devices", () => {
       roomId: "room", contextKey: "playing:night:2", enabled: true, world: priestWorld, onAction: vi.fn(), onComplete,
     }));
     const priest = renderHook(() => usePlayerPhoneActions("room", "priest"));
-    act(() => gm.result.current.toggle("priest", "priest-line", "priest", 20));
+    act(() => gm.result.current.toggle(PHONE_MODE.PRIEST_CONFESSION, "priest-line", "priest", 20));
     act(() => priest.result.current.send("confirm", "ghost"));
     const sessionId = gm.result.current.session!.id;
     expect(gm.result.current.session?.pendingTargetPlayerId).toBe("ghost");
@@ -249,7 +250,7 @@ describe("phone synchronization across GM and player devices", () => {
     const props = { roomId: "room", contextKey: "playing:night:2", enabled: true, world: colossusWorld, onAction, onComplete };
     const gm = renderHook(() => useGMPhoneActions(props));
     const colossus = renderHook(() => usePlayerPhoneActions("room", "colossus"));
-    act(() => gm.result.current.toggle("colossus", "2:normal:retaliation", "colossus", 29));
+    act(() => gm.result.current.toggle(PHONE_MODE.COLOSSUS_RETALIATION, "2:normal:retaliation", "colossus", 29));
     act(() => colossus.result.current.send("confirm", "victim"));
     const sessionId = gm.result.current.session!.id;
     expect(colossus.result.current.session?.pendingTargetPlayerId).toBe("victim");
@@ -267,7 +268,7 @@ describe("phone synchronization across GM and player devices", () => {
       gm.result.current.resolveColossus(sessionId, "witch", true);
       colossus.result.current.send("confirm", "witch");
     });
-    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "colossus", sourcePlayerId: "colossus", targetPlayerId: "witch" });
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: PHONE_MODE.COLOSSUS_RETALIATION, sourcePlayerId: "colossus", targetPlayerId: "witch" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "2:normal:retaliation", progressOrder: 29, participantIds: ["colossus"] }));
     bus.dropStates(false);
     act(() => vi.advanceTimersByTime(2500));
@@ -281,7 +282,7 @@ describe("phone synchronization across GM and player devices", () => {
       { ...player("colossus", "v27"), redX: true, colossusReady: true }] };
     const props = { roomId: "room", contextKey: "playing:night:2", enabled: true, world: colossusWorld, onAction };
     const gm = renderHook((p) => useGMPhoneActions(p), { initialProps: props });
-    act(() => gm.result.current.toggle("colossus", "retaliation", "colossus"));
+    act(() => gm.result.current.toggle(PHONE_MODE.COLOSSUS_RETALIATION, "retaliation", "colossus"));
     act(() => gm.result.current.sendGM("confirm", "victim"));
     const sessionId = gm.result.current.session!.id;
     gm.rerender({ ...props, world: { ...colossusWorld, players: colossusWorld.players.map((p) => p.id === "victim" ? { ...p, host: true } : p) } });
@@ -297,8 +298,8 @@ describe("phone synchronization across GM and player devices", () => {
     const gm = renderHook((p) => useGMPhoneActions(p), { initialProps: props });
     const monkey = renderHook(() => usePlayerPhoneActions("room", "monkey"));
     const outsider = renderHook(() => usePlayerPhoneActions("room", "witch"));
-    act(() => gm.result.current.toggle("monkey", "monkey-line", "monkey", 31));
-    expect(monkey.result.current.session?.mode).toBe("monkey");
+    act(() => gm.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "monkey-line", "monkey", 31));
+    expect(monkey.result.current.session?.mode).toBe(PHONE_MODE.MONKEY_TAMER_REVEAL);
     expect(outsider.result.current.session).toBeNull();
     expect(onComplete).not.toHaveBeenCalled();
     act(() => gm.result.current.confirmMonkey("wolf"));
@@ -309,7 +310,7 @@ describe("phone synchronization across GM and player devices", () => {
     gm.rerender({ ...props, world: { ...monkeyWorld, players: monkeyWorld.players.map((p) => p.id === "monkey" ? { ...p, powerless: true, monkeyDisabled: true } : p) } });
     act(() => monkey.result.current.send("close"));
     expect(gm.result.current.session?.visible).toBe(false);
-    act(() => gm.result.current.toggle("monkey", "monkey-line", "monkey", 31));
+    act(() => gm.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "monkey-line", "monkey", 31));
     expect(monkey.result.current.session?.visible).toBe(true);
     act(() => gm.result.current.close());
     expect(monkey.result.current.session?.visible).toBe(false);
@@ -318,12 +319,12 @@ describe("phone synchronization across GM and player devices", () => {
     gm.unmount();
     const restored = renderHook(() => useGMPhoneActions(props));
     expect(restored.result.current.session?.monkeyReveal?.roleId).toBe("e01");
-    act(() => restored.result.current.toggle("allies", "allies-line", null));
-    act(() => restored.result.current.toggle("monkey", "monkey-line", "monkey", 31));
+    act(() => restored.result.current.toggle(PHONE_MODE.WEREWOLF_ALLIES, "allies-line", null));
+    act(() => restored.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "monkey-line", "monkey", 31));
     expect(restored.result.current.session?.monkeyReveal?.roleId).toBe("e01");
     expect(onAction).toHaveBeenCalledTimes(1);
     act(() => restored.result.current.reset());
-    act(() => restored.result.current.toggle("monkey", "monkey-line", "monkey", 31));
+    act(() => restored.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "monkey-line", "monkey", 31));
     expect(restored.result.current.session?.monkeyReveal).toBeUndefined();
   });
 
@@ -340,7 +341,7 @@ describe("phone synchronization across GM and player devices", () => {
     const gm = renderHook((p) => useGMPhoneActions(p), { initialProps: props });
     const fox = renderHook(() => usePlayerPhoneActions("room", "fox"));
 
-    act(() => gm.result.current.toggle("fox", "fox-line", "fox", 32));
+    act(() => gm.result.current.toggle(PHONE_MODE.FOX_TAMER_CHECK, "fox-line", "fox", 32));
     act(() => fox.result.current.send("confirm", "target"));
     expect(gm.result.current.session?.foxReveal).toMatchObject({
       targetPlayerId: "target",
@@ -348,7 +349,7 @@ describe("phone synchronization across GM and player devices", () => {
       result: "clear",
       foxRanAway: true,
     });
-    expect(onAction).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ action: "fox", sourcePlayerId: "fox" }));
+    expect(onAction).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ action: PHONE_MODE.FOX_TAMER_CHECK, sourcePlayerId: "fox" }));
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "fox-line", progressOrder: 32 }));
 
     gm.rerender({ ...props, world: { ...foxWorld, players: foxPlayers.map((candidate) => (
@@ -356,7 +357,7 @@ describe("phone synchronization across GM and player devices", () => {
     )) } });
     act(() => fox.result.current.send("close"));
     expect(gm.result.current.session?.visible).toBe(false);
-    act(() => gm.result.current.toggle("fox", "fox-line", "fox", 32));
+    act(() => gm.result.current.toggle(PHONE_MODE.FOX_TAMER_CHECK, "fox-line", "fox", 32));
     expect(fox.result.current.session?.foxReveal?.foxRanAway).toBe(true);
     expect(onAction).toHaveBeenCalledTimes(1);
 
@@ -370,7 +371,7 @@ describe("phone synchronization across GM and player devices", () => {
     const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };
     const gm = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "playing:night:2", enabled: true, world: monkeyWorld, onAction, onComplete }));
     const monkey = renderHook(() => usePlayerPhoneActions("room", "monkey"));
-    act(() => gm.result.current.toggle("monkey", "monkey-line", "monkey"));
+    act(() => gm.result.current.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, "monkey-line", "monkey"));
     bus.dropStates(true);
     act(() => monkey.result.current.send("confirm", "wolf"));
     expect(onAction).toHaveBeenCalledTimes(1);
@@ -395,9 +396,9 @@ describe("phone synchronization across GM and player devices", () => {
 
   it("shares selections, waits for the Puppeteer, and executes an accepted kill once", () => {
     const { gm, wolf, puppet, witch, onAction, onComplete } = setup();
-    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
-    expect(wolf.result.current.session?.mode).toBe("hunt");
-    expect(puppet.result.current.session?.mode).toBe("hunt");
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_HUNT, "hunt-line", null));
+    expect(wolf.result.current.session?.mode).toBe(PHONE_MODE.WEREWOLF_HUNT);
+    expect(puppet.result.current.session?.mode).toBe(PHONE_MODE.WEREWOLF_HUNT);
     expect(witch.result.current.session).toBeNull();
     act(() => wolf.result.current.send("select", "victim"));
     expect(puppet.result.current.session?.votes.wolf).toBe("victim");
@@ -418,7 +419,7 @@ describe("phone synchronization across GM and player devices", () => {
 
   it("denial clears votes without killing or repeating the prompt", () => {
     const { gm, wolf, puppet, onAction, onComplete } = setup();
-    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_HUNT, "hunt-line", null));
     act(() => wolf.result.current.send("select", "victim"));
     act(() => puppet.result.current.send("select", "victim"));
     act(() => gm.result.current.resolveHunt(gm.result.current.session!.id, "victim", false));
@@ -431,9 +432,9 @@ describe("phone synchronization across GM and player devices", () => {
 
   it("cancellation reaches phones even when the first close broadcast was lost", () => {
     const { gm, wolf, puppet } = setup();
-    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_HUNT, "hunt-line", null));
     bus.dropStates(true);
-    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_HUNT, "hunt-line", null));
     expect(wolf.result.current.session).not.toBeNull();
     bus.dropStates(false);
     act(() => vi.advanceTimersByTime(2500));
@@ -443,7 +444,7 @@ describe("phone synchronization across GM and player devices", () => {
 
   it("retries an unacknowledged poison without applying it again or leaving the phone stuck", () => {
     const { gm, witch, onAction, onComplete } = setup();
-    act(() => gm.result.current.toggle("poison", "witch-line", "witch", 7));
+    act(() => gm.result.current.toggle(PHONE_MODE.EVIL_WITCH_POISON, "witch-line", "witch", 7));
     expect(onComplete).not.toHaveBeenCalled();
     bus.dropStates(true);
     act(() => witch.result.current.send("confirm", "victim"));
@@ -453,13 +454,13 @@ describe("phone synchronization across GM and player devices", () => {
     act(() => vi.advanceTimersByTime(2500));
     expect(witch.result.current.session).toBeNull();
     expect(witch.result.current.pending).toBe(false);
-    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: "poison", sourcePlayerId: "witch", targetPlayerId: "victim" });
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: PHONE_MODE.EVIL_WITCH_POISON, sourcePlayerId: "witch", targetPlayerId: "victim" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "witch-line", sourcePlayerId: "witch", progressOrder: 7 }));
   });
 
   it("recovers an active session after a phone reload and after a GM reload", () => {
     const { gm, wolf, puppet, onAction } = setup();
-    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_HUNT, "hunt-line", null));
     act(() => wolf.result.current.send("select", "victim"));
     wolf.unmount();
     const reloadedWolf = renderHook(() => usePlayerPhoneActions("room", "wolf"));
@@ -472,7 +473,7 @@ describe("phone synchronization across GM and player devices", () => {
 
   it("cancels on phase change and never revives a previous night's session", () => {
     const { gm, wolf, onAction, onComplete } = setup();
-    act(() => gm.result.current.toggle("hunt", "hunt-line", null));
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_HUNT, "hunt-line", null));
     gm.rerender({ roomId: "room", contextKey: "playing:day:2", enabled: false, world, onAction, onComplete });
     expect(wolf.result.current.session).toBeNull();
     gm.rerender({ roomId: "room", contextKey: "playing:night:3", enabled: true, world, onAction, onComplete });
@@ -482,13 +483,13 @@ describe("phone synchronization across GM and player devices", () => {
 
   it("completes allies on opening, but never completes a manually cancelled action", () => {
     const { gm, onComplete } = setup();
-    act(() => gm.result.current.toggle("allies", "allies-line", null));
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_ALLIES, "allies-line", null));
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "allies-line" }));
-    act(() => gm.result.current.toggle("allies", "allies-line", null));
+    act(() => gm.result.current.toggle(PHONE_MODE.WEREWOLF_ALLIES, "allies-line", null));
     expect(onComplete).toHaveBeenCalledTimes(1);
-    act(() => gm.result.current.toggle("poison", "witch-line", "witch"));
+    act(() => gm.result.current.toggle(PHONE_MODE.EVIL_WITCH_POISON, "witch-line", "witch"));
     act(() => gm.result.current.close());
-    act(() => gm.result.current.toggle("poison", "invalid-line", "wolf"));
+    act(() => gm.result.current.toggle(PHONE_MODE.EVIL_WITCH_POISON, "invalid-line", "wolf"));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
@@ -498,11 +499,56 @@ describe("phone synchronization across GM and player devices", () => {
     const shamanWorld: PhoneWorld = { ...world, players: [...world.players, player("shaman", "e03")] };
     const gm = renderHook(() => useGMPhoneActions({ roomId: "room", contextKey: "playing:night:2", enabled: true, world: shamanWorld, onAction, onComplete }));
     const shaman = renderHook(() => usePlayerPhoneActions("room", "shaman"));
-    act(() => gm.result.current.toggle("shaman", "shaman-line", "shaman", 35));
+    act(() => gm.result.current.toggle(PHONE_MODE.SHAMAN_SAVE, "shaman-line", "shaman", 35));
     expect(onComplete).not.toHaveBeenCalled();
     act(() => shaman.result.current.send("ignore"));
     expect(onAction).not.toHaveBeenCalled();
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "shaman-line", progressOrder: 35 }));
     expect(shaman.result.current.session).toBeNull();
+  });
+
+  it("synchronizes a copied role's multi-target action and completes it once", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const copiedCupid = { ...player("copy", "s01"), objectiveRole: "a04" as const };
+    const copiedWorld: PhoneWorld = { ...world, players: [...world.players, copiedCupid, player("second", "v02")] };
+    const gm = renderHook(() => useGMPhoneActions({
+      roomId: "room", contextKey: "playing:night:1", enabled: true, world: copiedWorld, onAction, onComplete,
+    }));
+    const phone = renderHook(() => usePlayerPhoneActions("room", "copy"));
+    act(() => gm.result.current.toggle(PHONE_MODE.CUPID_PAIR, "cupid-line", "copy", 1));
+    expect(phone.result.current.session).toMatchObject({ mode: PHONE_MODE.CUPID_PAIR, minTargetCount: 2, targetCount: 2 });
+    act(() => phone.result.current.send("confirm", "victim", ["victim", "second"]));
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({
+      action: PHONE_MODE.CUPID_PAIR, sourcePlayerId: "copy", targetPlayerId: "victim", targetPlayerIds: ["victim", "second"],
+    });
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "cupid-line", participantIds: ["copy"] }));
+    expect(phone.result.current.session).toBeNull();
+  });
+
+  it("returns the Secret Lover's correct or wrong result without GM approval", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const secretWorld: PhoneWorld = { ...world, players: [
+      ...world.players,
+      player("secret", "as01b"),
+      { ...player("lover", "v02"), lover: true },
+      { ...player("protected", "v03"), lover: true, identityProtected: true },
+    ] };
+    const gm = renderHook(() => useGMPhoneActions({
+      roomId: "room", contextKey: "playing:night:2", enabled: true, world: secretWorld, onAction, onComplete,
+    }));
+    const secret = renderHook(() => usePlayerPhoneActions("room", "secret"));
+    act(() => gm.result.current.toggle(PHONE_MODE.SECRET_LOVER_CHECK, "secret-line", "secret", 4));
+    act(() => secret.result.current.send("confirm", "protected", ["protected"]));
+    expect(secret.result.current.session?.approvalResult).toBe("denied");
+    expect(onAction).not.toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledOnce();
+    act(() => gm.result.current.close());
+    act(() => gm.result.current.toggle(PHONE_MODE.SECRET_LOVER_CHECK, "secret-line-next", "secret", 5));
+    act(() => secret.result.current.send("confirm", "lover", ["lover"]));
+    expect(secret.result.current.session?.approvalResult).toBe("accepted");
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({
+      action: PHONE_MODE.SECRET_LOVER_CHECK, sourcePlayerId: "secret", targetPlayerId: "lover", targetPlayerIds: ["lover"],
+    });
+    expect(onComplete).toHaveBeenCalledTimes(2);
   });
 });

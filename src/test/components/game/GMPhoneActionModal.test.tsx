@@ -1,3 +1,4 @@
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { GMPhoneActionModal } from "@/components/game/GMPhoneActionModal";
@@ -5,7 +6,7 @@ import { GMPlayerActionModal } from "@/components/game/GMPlayerActionModal";
 import { getTranslation, t } from "@/lib/i18n";
 import type { PhoneSession, PhoneView } from "@/lib/phoneActions";
 
-const session: PhoneSession = { id: "retaliation", mode: "colossus", sourcePlayerId: "actor", lineKey: "line", participantIds: ["actor"], votes: {}, sequences: {} };
+const session: PhoneSession = { id: "retaliation", mode: PHONE_MODE.COLOSSUS_RETALIATION, sourcePlayerId: "actor", lineKey: "line", participantIds: ["actor"], votes: {}, sequences: {} };
 const view: PhoneView = { ...session, players: [
   { id: "actor", name: "Actor", seat_position: 0, dead: false, redX: false, marker: null, selectable: false },
   { id: "target", name: "Target", seat_position: 1, dead: false, redX: false, marker: null, selectable: true },
@@ -27,22 +28,29 @@ describe("usable GM action mirrors", () => {
     expect(onResolveHunt).not.toHaveBeenCalled();
   });
 
-  it.each(["poison", "shaman", "hunt"] as const)("allows a GM to confirm a %s target", (mode) => {
+  it.each([
+    PHONE_MODE.EVIL_WITCH_POISON,
+    PHONE_MODE.SHAMAN_SAVE,
+    PHONE_MODE.WEREWOLF_HUNT,
+  ] as const)("allows a GM to confirm a %s target", (mode) => {
     const onSend = vi.fn();
     render(<GMPhoneActionModal session={{ ...session, mode }} view={{ ...view, mode }} language="en"
       onClose={vi.fn()} onSend={onSend} onResolveHunt={vi.fn()} onResolveColossus={vi.fn()} onResolvePriest={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    fireEvent.click(screen.getByRole("button", { name: mode === "shaman" ? getTranslation("en").ui.phoneActions.save : getTranslation("en").ui.phoneActions.confirm }));
+    fireEvent.click(screen.getByRole("button", { name: mode === PHONE_MODE.SHAMAN_SAVE ? getTranslation("en").ui.phoneActions.save : getTranslation("en").ui.phoneActions.confirm }));
     expect(onSend).toHaveBeenCalledWith("confirm", "target");
   });
 
-  it.each(["web", "sleepwalker"] as const)("keeps a submitted %s selection visible without approval controls", (mode) => {
+  it.each([
+    PHONE_MODE.SPIDER_TAMER_WEB,
+    PHONE_MODE.SLEEPWALKER_VISIT,
+  ] as const)("keeps a submitted %s selection visible without approval controls", (mode) => {
     const onSend = vi.fn();
     const props = { language: "en" as const, onClose: vi.fn(), onSend, onResolveHunt: vi.fn(), onResolveColossus: vi.fn(), onResolvePriest: vi.fn() };
     const { rerender } = render(<GMPhoneActionModal {...props} session={{ ...session, mode }} view={{ ...view, mode }} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    if (mode === "sleepwalker") fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
-    expect(onSend).toHaveBeenCalledWith(mode === "web" ? "select" : "confirm", "target");
+    if (mode === PHONE_MODE.SLEEPWALKER_VISIT) fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    expect(onSend).toHaveBeenCalledWith(mode === PHONE_MODE.SPIDER_TAMER_WEB ? "select" : "confirm", "target");
     rerender(<GMPhoneActionModal {...props} session={{ ...session, mode, pendingTargetPlayerId: "target" }}
       view={{ ...view, mode, pendingTargetPlayerId: "target" }} />);
     expect(screen.getByRole("dialog")).toHaveTextContent("Actor selected Target.");
@@ -52,8 +60,8 @@ describe("usable GM action mirrors", () => {
   it("requires GM approval before showing the Priest's revealed character", () => {
     const onSend = vi.fn(), onResolvePriest = vi.fn(), onRoleClick = vi.fn();
     const props = { language: "en" as const, onClose: vi.fn(), onSend, onResolveHunt: vi.fn(), onResolveColossus: vi.fn(), onResolvePriest, onRoleClick };
-    const priestSession: PhoneSession = { ...session, mode: "priest" };
-    const priestView: PhoneView = { ...view, mode: "priest" };
+    const priestSession: PhoneSession = { ...session, mode: PHONE_MODE.PRIEST_CONFESSION };
+    const priestView: PhoneView = { ...view, mode: PHONE_MODE.PRIEST_CONFESSION };
     const { rerender } = render(<GMPhoneActionModal {...props} session={priestSession} view={priestView} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
     fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));

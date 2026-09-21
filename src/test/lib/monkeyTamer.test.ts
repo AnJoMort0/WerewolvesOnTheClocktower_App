@@ -1,3 +1,4 @@
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { describe, expect, it } from "vitest";
 import { EVIL_ROLES, EXTRA_DEATH_ROLES } from "@/lib/roles";
 import { getScripts } from "@/lib/i18n";
@@ -9,7 +10,7 @@ const player = (id: string, role: PhonePlayer["abilityRole"], extra: Partial<Pho
   dead: false, redX: false, canWake: true, powerless: false, mime: false, evil: false, werewolfTurned: false, ...extra,
 });
 const world: PhoneWorld = { packBlocked: false, players: [player("monkey", "v26"), player("wolf", "e01"), player("seer", "e04"), player("shaman", "e03")] };
-const session = (): PhoneSession => ({ id: "monkey-session", mode: "monkey", lineKey: "monkey-line", sourcePlayerId: "monkey", participantIds: ["monkey"], votes: {}, sequences: {} });
+const session = (): PhoneSession => ({ id: "monkey-session", mode: PHONE_MODE.MONKEY_TAMER_REVEAL, lineKey: "monkey-line", sourcePlayerId: "monkey", participantIds: ["monkey"], votes: {}, sequences: {} });
 const reveal = (target: string, changed = world) => applyPhoneCommand(session(), "monkey", { id: "confirm", sessionId: "monkey-session", sequence: 1, type: "confirm", targetPlayerId: target }, changed);
 
 describe("Monkey Tamer", () => {
@@ -25,7 +26,7 @@ describe("Monkey Tamer", () => {
   it("reveals the chosen card once and flags only revealed Evil Being cards", () => {
     expect(EXTRA_DEATH_ROLES).not.toContain("v26");
     const result = reveal("wolf");
-    expect(result.action).toMatchObject({ action: "monkey", sourcePlayerId: "monkey", monkeyReveal: { roleId: "e01", evil: true } });
+    expect(result.action).toMatchObject({ action: PHONE_MODE.MONKEY_TAMER_REVEAL, sourcePlayerId: "monkey", monkeyReveal: { roleId: "e01", evil: true } });
     expect(result.completedSession?.lineKey).toBe("monkey-line");
     expect(reveal("seer").action?.monkeyReveal).toMatchObject({ roleId: "e04", evil: false });
     expect(applyPhoneCommand(result.session, "monkey", { id: "again", sessionId: "monkey-session", sequence: 2, type: "confirm", targetPlayerId: "seer" }, world).action).toBeUndefined();

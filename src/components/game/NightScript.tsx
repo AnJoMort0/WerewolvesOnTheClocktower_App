@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Church, Crosshair, Eye, FlaskConical, Moon, PawPrint, RotateCcw, Sun, Users } from "lucide-react";
-import { getScriptPhoneMode, type PhoneMode } from "@/lib/phoneActions";
+import { getScriptPhoneMode } from "@/lib/phoneActions";
+import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
 import { placeColossusLines } from "@/lib/colossus";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1348,7 +1349,7 @@ export const NightScript = ({
 
     return lines.map((section) => {
       const items = placeColossusLines(section.items,
-        (item) => item.line.conditionKey === "colossusAttacked", (item) => item.line.phoneMode === "hunt" && !item.mimeLine,
+        (item) => item.line.conditionKey === "colossusAttacked", (item) => item.line.phoneMode === PHONE_MODE.WEREWOLF_HUNT && !item.mimeLine,
         colossusNightSeed, (item) => item.sourcePlayerId ?? item.key,
         { getOrder: (item) => item.progressOrder, lastOrder: localizedScripts.normalNight.length - 1 });
       let previousOrder: number | null = null;
@@ -1447,25 +1448,25 @@ export const NightScript = ({
                 : null);
               const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
               const configuredPhoneMode = item.actorNotice ? null : getScriptPhoneMode(item.line);
-              const phoneMode = configuredPhoneMode === "priest" && sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)
+              const phoneMode = configuredPhoneMode === PHONE_MODE.PRIEST_CONFESSION && sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)
                 ? null : configuredPhoneMode;
               const phoneActive = activePhoneLineKey === item.key;
               const phoneLabel = getTranslation(lang).ui.phoneActions[phoneActive ? "close" : "open"];
-              const PhoneActionIcon = phoneMode === "hunt" || phoneMode === "colossus" ? Crosshair
-                : phoneMode === "allies" ? Users
-                : phoneMode === "poison" ? FlaskConical
-                : phoneMode === "fox" ? PawPrint
-                : phoneMode === "web" ? Eye
-                : phoneMode === "priest" ? Church
-                : phoneMode === "sleepwalker" ? Moon
+              const PhoneActionIcon = phoneMode === PHONE_MODE.WEREWOLF_HUNT || phoneMode === PHONE_MODE.COLOSSUS_RETALIATION ? Crosshair
+                : phoneMode === PHONE_MODE.WEREWOLF_ALLIES ? Users
+                : phoneMode === PHONE_MODE.EVIL_WITCH_POISON ? FlaskConical
+                : phoneMode === PHONE_MODE.FOX_TAMER_CHECK ? PawPrint
+                : phoneMode === PHONE_MODE.SPIDER_TAMER_WEB ? Eye
+                : phoneMode === PHONE_MODE.PRIEST_CONFESSION ? Church
+                : phoneMode === PHONE_MODE.SLEEPWALKER_VISIT ? Moon
                 : RotateCcw;
-              const phoneIconClass = phoneMode === "poison" ? "text-green-400"
-                : phoneMode === "shaman" ? "text-moon"
-                : phoneMode === "fox" ? "text-amber-400"
-                : phoneMode === "web" ? "text-cyan-400"
-                : phoneMode === "priest" ? "text-amber-200"
-                : phoneMode === "sleepwalker" ? "text-blue-300"
-                : phoneMode === "allies" ? "text-gold"
+              const phoneIconClass = phoneMode === PHONE_MODE.EVIL_WITCH_POISON ? "text-green-400"
+                : phoneMode === PHONE_MODE.SHAMAN_SAVE ? "text-moon"
+                : phoneMode === PHONE_MODE.FOX_TAMER_CHECK ? "text-amber-400"
+                : phoneMode === PHONE_MODE.SPIDER_TAMER_WEB ? "text-cyan-400"
+                : phoneMode === PHONE_MODE.PRIEST_CONFESSION ? "text-amber-200"
+                : phoneMode === PHONE_MODE.SLEEPWALKER_VISIT ? "text-blue-300"
+                : phoneMode === PHONE_MODE.WEREWOLF_ALLIES ? "text-gold"
                 : "text-primary";
               const usesIndependentPowerState = !!independentPowerState || !!item.actorLine
                 || (!!item.drunkardLine && sourcePlayerId === actorPlayerId);
@@ -1514,7 +1515,7 @@ export const NightScript = ({
                 onLamplighterReveal={onLamplighterReveal}
                 onWerewolfSeerReveal={onWerewolfSeerReveal}
                 onMimeReveal={onMimeReveal}
-                onMonkeyReveal={(source) => onPhoneToggle?.("monkey", item.key, source ?? null, item.progressOrder)}
+                onMonkeyReveal={(source) => onPhoneToggle?.(PHONE_MODE.MONKEY_TAMER_REVEAL, item.key, source ?? null, item.progressOrder)}
                 dynamicText={getDynamicText(item.line, sourcePlayerId, !!item.dogWolfLine, !!item.mimeLine)}
                 foxDisabled={usesIndependentPowerState ? powerState.foxDisabled : foxDisabled}
                 onFoxDisabledToggle={usesIndependentPowerState ? () => toggleBoolean("foxDisabled") : onFoxDisabledToggle}

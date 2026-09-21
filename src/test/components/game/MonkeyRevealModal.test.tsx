@@ -1,9 +1,10 @@
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import type { PhoneView } from "@/lib/phoneActions";
 
-const view: PhoneView = { id: "monkey", mode: "monkey", participantIds: ["monkey"], votes: {}, players: [
+const view: PhoneView = { id: "monkey", mode: PHONE_MODE.MONKEY_TAMER_REVEAL, participantIds: ["monkey"], votes: {}, players: [
   { id: "wolf", name: "Wolf", seat_position: 0, dead: false, redX: false, selectable: true, marker: null },
 ] };
 describe("Monkey reveal modal", () => {

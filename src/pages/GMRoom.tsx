@@ -55,7 +55,8 @@ import { hasAttackImmunity, resolveProtectedDeaths } from "@/lib/immunity";
 import { useGMPhoneActions } from "@/hooks/usePhoneActions";
 import { useGameRuntime } from "@/hooks/useGameRuntime";
 import { formatGameRuntime } from "@/lib/gameRuntime";
-import { getPhoneView, shouldExhaustMonkeyPower, type PhoneAction, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
+import { getPhoneView, getRoleActionPhoneConfig, isRoleActionPhoneMode, shouldExhaustMonkeyPower, type PhoneAction, type PhoneSession, type PhoneWorld } from "@/lib/phoneActions";
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { canColossusRetaliate, isColossusTarget, resolveColossusTarget } from "@/lib/colossus";
 import {
   EMPTY_ACTOR_POWER_STATE,
@@ -4293,6 +4294,7 @@ const GMRoom = () => {
     } else if (action === "illusion") {
       const illusionistId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "a06" ? sourcePlayerId : getRolePlayerId("a06");
       if (illusionistId && isPlayerActingPoisoned(illusionistId)) return;
+      if (meta.fromScriptLine && illusionistId && illusionTargetsBySource[illusionistId] === targetPlayerId) return;
       handleSetIllusion(targetPlayerId, sourcePlayerId);
     } else if (action.startsWith("role-")) {
       const roleSource = action.replace("role-", "");
@@ -4327,6 +4329,7 @@ const GMRoom = () => {
           }));
         } else {
           if (!actorPlayerId || sourcePlayerId !== actorPlayerId || targetPlayerId === actorPlayerId || permanentlyDead.has(targetPlayerId) || actorIdolUses >= 2 || effectiveActorCopiedRole) return;
+          if (actorIdolPlayerId === targetPlayerId) return;
           toggleActionEffect(targetPlayerId, "idol");
         }
       }
@@ -4375,7 +4378,9 @@ const GMRoom = () => {
           const prevEff = playerEffects[previousTarget] || new Set();
           if (prevEff.has("immunity_full")) toggleActionEffect(previousTarget, "immunity_full");
         }
-        toggleActionEffect(actualTarget, "immunity_full");
+        if (!playerEffects[actualTarget]?.has("immunity_full") || previousTarget !== actualTarget) {
+          toggleActionEffect(actualTarget, "immunity_full");
+        }
         if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, saviourLastTarget: actualTarget });
         else setSaviourLastTarget(actualTarget);
       }
@@ -4432,7 +4437,9 @@ const GMRoom = () => {
           const otherKey: StatusEffect = effectKey === "vote_double" ? "vote_against" : "vote_double";
           if (prevEff.has(otherKey)) toggleActionEffect(previousTarget, otherKey);
         }
-        toggleActionEffect(targetPlayerId, effectKey);
+        if (!playerEffects[targetPlayerId]?.has(effectKey) || previousTarget !== targetPlayerId) {
+          toggleActionEffect(targetPlayerId, effectKey);
+        }
         if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, villageElderLastTarget: targetPlayerId });
         else setVillageElderLastTarget(targetPlayerId);
       }
@@ -4516,38 +4523,37 @@ const GMRoom = () => {
         }
       }
       else if (roleSource === "s01") {
-        const cupidId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "s01" ? sourcePlayerId : getRolePlayerId("s01");
-        if (cupidId && isPlayerActingPoisoned(cupidId)) {
-          toast.warning(getToast("warnCupidPoisoned", (room?.language as Language) || "pt"));
-          return;
-        }
-        if (cupidId && dogWolfStates[cupidId]) return;
         toggleActionEffect(targetPlayerId, "lover");
       }
       else if (roleSource === "m05") {
         const evilCupidId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "m05" ? sourcePlayerId : getRolePlayerId("m05");
         if (!evilCupidId) return;
+        if (isPlayerActingPoisoned(evilCupidId)) return;
         if (dogWolfStates[evilCupidId]) {
-          const state = dogWolfStates[evilCupidId];
-          const livingEnemyIds = (state.enemyPlayerIds ?? []).filter((playerId) => !permanentlyDead.has(playerId));
-          const alreadySelected = livingEnemyIds.includes(targetPlayerId);
-          if (!alreadySelected && livingEnemyIds.length >= 2) {
-            toast.warning(getToast("warn2Enemies", (room?.language as Language) || "pt"));
-            return;
-          }
-          const enemyPlayerIds = alreadySelected
-            ? livingEnemyIds.filter((playerId) => playerId !== targetPlayerId)
-            : [...livingEnemyIds, targetPlayerId];
-          if (!alreadySelected) {
-            pendingGameActionLogSourcesRef.current.set(`effect:${targetPlayerId}:enemy_dog`, evilCupidId);
-          }
-          setDogWolfStates((previous) => ({
-            ...previous,
-            [evilCupidId]: { ...previous[evilCupidId], enemyPlayerIds },
-          }));
+          setDogWolfStates((previous) => {
+            const state = previous[evilCupidId];
+            const livingEnemyIds = (state?.enemyPlayerIds ?? []).filter((playerId) => !permanentlyDead.has(playerId));
+            const alreadySelected = livingEnemyIds.includes(targetPlayerId);
+            if (!alreadySelected && livingEnemyIds.length >= 2) return previous;
+            const enemyPlayerIds = alreadySelected
+              ? livingEnemyIds.filter((playerId) => playerId !== targetPlayerId)
+              : [...livingEnemyIds, targetPlayerId];
+            if (!alreadySelected) pendingGameActionLogSourcesRef.current.set(`effect:${targetPlayerId}:enemy_dog`, evilCupidId);
+            return { ...previous, [evilCupidId]: { ...state, enemyPlayerIds } };
+          });
         } else {
           toggleActionEffect(targetPlayerId, "enemy");
         }
+      }
+      else if (roleSource === "as01b") {
+        const secretLoverId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "as01b" ? sourcePlayerId : getRolePlayerId("as01b");
+        if (!secretLoverId || isPlayerActingPoisoned(secretLoverId) || !playerEffects[targetPlayerId]?.has("lover")) return;
+        for (const player of players) {
+          if (player.id !== targetPlayerId && player.id !== secretLoverId && playerEffects[player.id]?.has("lover")) {
+            toggleActionEffect(player.id, "lover");
+          }
+        }
+        if (!playerEffects[secretLoverId]?.has("lover")) toggleActionEffect(secretLoverId, "lover");
       }
       else if (roleSource === "v15") {
         // Pyromaniac: poisoned -> random acquitted target gets burned.
@@ -4732,13 +4738,14 @@ const GMRoom = () => {
       }
       else if (roleSource === "soldier-kill") {
         // Soldier ghost kill
+        if (sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)) return;
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", "soldier", sourcePlayerId);
       }
       else {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const phoneWorld = useMemo<PhoneWorld>(() => ({
     packBlocked: werewolfPackPoisoned,
@@ -4754,7 +4761,11 @@ const GMRoom = () => {
         illusion: illusionPlayerIds.has(player.id),
         foxDisabled: independentPowerStates[player.id]?.foxDisabled ?? foxDisabled,
         monkeyDisabled: independentPowerStates[player.id]?.monkeyDisabled ?? monkeyDisabled,
-        colossusReady: colossusReadyPlayerIds.has(player.id), actedTonight: actedTonightPlayerIds.has(player.id), host: effects.has("host"),
+        colossusReady: colossusReadyPlayerIds.has(player.id), actedTonight: actedTonightPlayerIds.has(player.id), host: effects.has("host"), soldier: effects.has("soldier"),
+        lover: effects.has("lover"), identityProtected: effects.has("immunity_cupid"), enemy: effects.has("enemy"),
+        enemySourceIds: Object.entries(dogWolfStates)
+          .filter(([, state]) => state.enemyPlayerIds?.includes(player.id))
+          .map(([sourcePlayerId]) => sourcePlayerId),
         werewolfTurned: effects.has("werewolf_turned"), evil: effects.has("evil_being"),
         mime: player.id === mimePlayerId,
         canWake: (!dead || prophecyGhostPlayerIds.has(player.id)) && !effects.has("host") && !effects.has("burned")
@@ -4762,9 +4773,9 @@ const GMRoom = () => {
         powerless: powerlessPlayerIds.has(player.id),
       };
     }),
-  }), [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, effectiveRoleAssignments, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
-  const applyPhoneAction = useCallback(({ action, targetPlayerId, sourcePlayerId, monkeyReveal, foxReveal }: PhoneAction) => {
-    if (action === "monkey") {
+  }), [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, effectiveRoleAssignments, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
+  const applyPhoneAction = useCallback(({ action, targetPlayerId, targetPlayerIds, sourcePlayerId, monkeyReveal, foxReveal }: PhoneAction) => {
+    if (action === PHONE_MODE.MONKEY_TAMER_REVEAL) {
       if (!sourcePlayerId || !monkeyReveal) return;
       // Revealed Evil Beings exhaust this source's power without killing them.
       // Preserve independent state when the Monkey power belongs to a copy.
@@ -4777,7 +4788,7 @@ const GMRoom = () => {
       markScriptRoleAction("v26", sourcePlayerId);
       return;
     }
-    if (action === "fox") {
+    if (action === PHONE_MODE.FOX_TAMER_CHECK) {
       if (!sourcePlayerId || !foxReveal) return;
       if (foxReveal.foxRanAway) {
         const powerState = independentPowerStates[sourcePlayerId];
@@ -4787,10 +4798,19 @@ const GMRoom = () => {
       markScriptRoleAction("v04", sourcePlayerId);
       return;
     }
-    if (action === "priest") return;
-    const dragAction = action === "colossus" ? "role-v27"
-      : action === "web" ? "role-v23"
-      : action === "sleepwalker" ? "role-v16" : action;
+    if (action === PHONE_MODE.PRIEST_CONFESSION) return;
+    if (isRoleActionPhoneMode(action)) {
+      const { dragAction } = getRoleActionPhoneConfig(action);
+      (targetPlayerIds ?? [targetPlayerId]).forEach((targetId) => {
+        handleDragAction(dragAction, targetId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
+      });
+      return;
+    }
+    const dragAction = action === PHONE_MODE.COLOSSUS_RETALIATION ? "role-v27"
+      : action === PHONE_MODE.SPIDER_TAMER_WEB ? "role-v23"
+      : action === PHONE_MODE.SLEEPWALKER_VISIT ? "role-v16"
+      : action === PHONE_MODE.EVIL_WITCH_POISON ? "poison"
+      : action === PHONE_MODE.SHAMAN_SAVE ? "shaman" : action;
     handleDragAction(dragAction, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
   }, [handleDragAction, handleIndependentPowerStateChange, independentPowerStates, markScriptRoleAction, nightNumber]);
   const completePhoneLine = useCallback((session: PhoneSession) => {
@@ -4807,7 +4827,7 @@ const GMRoom = () => {
     && !powerlessPlayerIds.has(mode.actorPlayerId)
   ));
   monkeyDragRef.current = (sourcePlayerId, targetPlayerId) => {
-    if (phone.toggle("monkey", `${nightNumber}:drag:monkey:${sourcePlayerId}`, sourcePlayerId)) phone.confirmMonkey(targetPlayerId);
+    if (phone.toggle(PHONE_MODE.MONKEY_TAMER_REVEAL, `${nightNumber}:drag:monkey:${sourcePlayerId}`, sourcePlayerId)) phone.confirmMonkey(targetPlayerId);
   };
 
   const handleListDrop = (e: React.DragEvent, targetPlayerId: string) => {
@@ -5833,20 +5853,21 @@ const GMRoom = () => {
   const scriptPowerlessPlayerIds = new Set(powerlessPlayerIds);
   // This night's resolved line can reopen the card, even after power loss.
   phone.monkeySourceIds.forEach((id) => scriptPowerlessPlayerIds.delete(id));
-  const phoneView = phone.session && phone.session.mode !== "monkey" && phone.session.mode !== "fox"
+  const phoneView = phone.session && phone.session.mode !== PHONE_MODE.MONKEY_TAMER_REVEAL
+    && phone.session.mode !== PHONE_MODE.FOX_TAMER_CHECK
     ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
 
   return (
     <LanguageContext.Provider value={lang}>
     <OpaqueModalBackdropContext.Provider value={true}>
     <div className="min-h-screen p-4">
-      {phone.session?.mode === "monkey" && !hideScreenMode && (
+      {phone.session?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL && !hideScreenMode && (
         <MonkeyRevealModal key={phone.session.id}
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
           language={lang} onConfirm={phone.confirmMonkey} onClose={phone.close}
           onRoleClick={(roleId) => openRulebook(roleId)} />
       )}
-      {phone.session?.mode === "fox" && !hideScreenMode && (
+      {phone.session?.mode === PHONE_MODE.FOX_TAMER_CHECK && !hideScreenMode && (
         <FoxRevealModal key={phone.session.id}
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
           language={lang} onConfirm={phone.confirmFox} onClose={phone.close}

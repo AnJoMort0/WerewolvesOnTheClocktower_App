@@ -1,3 +1,4 @@
+import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NightScript } from "@/components/game/NightScript";
@@ -22,6 +23,8 @@ const baseProps = {
   nightTargetedPlayerIds: new Set<string>(),
 };
 
+const phoneModeSelector = (mode: string) => `[data-phone-mode="${mode}"]`;
+
 describe("NightScript phone controls", () => {
   it("opens Sleepwalker and Priest actions, but not a poisoned Priest action", () => {
     const onPhoneToggle = vi.fn();
@@ -32,19 +35,19 @@ describe("NightScript phone controls", () => {
       players: [{ id: "sleepwalker", name: "Sleepwalker", seat_position: 0 }, { id: "priest", name: "Priest", seat_position: 1 }],
       onPhoneToggle };
     const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
-    const visit = container.querySelector<HTMLButtonElement>('[data-phone-mode="sleepwalker"]')!;
-    const confession = container.querySelector<HTMLButtonElement>('[data-phone-mode="priest"]')!;
+    const visit = container.querySelector<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.SLEEPWALKER_VISIT))!;
+    const confession = container.querySelector<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.PRIEST_CONFESSION))!;
     expect(visit.querySelector(".lucide-moon")).toBeInTheDocument();
     expect(confession.querySelector(".lucide-church")).toBeInTheDocument();
     fireEvent.click(visit);
     fireEvent.click(confession);
-    expect(onPhoneToggle).toHaveBeenCalledWith("sleepwalker", expect.any(String), "sleepwalker", expect.any(Number));
-    expect(onPhoneToggle).toHaveBeenCalledWith("priest", expect.any(String), "priest", expect.any(Number));
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.SLEEPWALKER_VISIT, expect.any(String), "sleepwalker", expect.any(Number));
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.PRIEST_CONFESSION, expect.any(String), "priest", expect.any(Number));
 
     rerender(<LanguageContext.Provider value="en"><NightScript {...props}
       poisonedPlayerId="priest" poisonedPlayerIds={new Set(["priest"])} /></LanguageContext.Provider>);
-    expect(container.querySelector('[data-phone-mode="priest"]')).not.toBeInTheDocument();
-    expect(container.querySelector('[data-phone-mode="sleepwalker"]')).toBeInTheDocument();
+    expect(container.querySelector(phoneModeSelector(PHONE_MODE.PRIEST_CONFESSION))).not.toBeInTheDocument();
+    expect(container.querySelector(phoneModeSelector(PHONE_MODE.SLEEPWALKER_VISIT))).toBeInTheDocument();
   });
 
   it("opens the first Spider web and only the copied Spider whose own web needs replacement", () => {
@@ -53,10 +56,10 @@ describe("NightScript phone controls", () => {
       roleAssignments: { spider: "v23" as const }, abilityRoleAssignments: { spider: "v23" as const },
       players: [{ id: "spider", name: "Spider", seat_position: 0 }], onPhoneToggle };
     const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...firstProps} /></LanguageContext.Provider>);
-    const firstControl = container.querySelector<HTMLButtonElement>('[data-phone-mode="web"]')!;
+    const firstControl = container.querySelector<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.SPIDER_TAMER_WEB))!;
     expect(firstControl.querySelector(".lucide-eye")).toBeInTheDocument();
     fireEvent.click(firstControl);
-    expect(onPhoneToggle).toHaveBeenLastCalledWith("web", expect.any(String), "spider", null);
+    expect(onPhoneToggle).toHaveBeenLastCalledWith(PHONE_MODE.SPIDER_TAMER_WEB, expect.any(String), "spider", null);
 
     const copiedProps = { ...baseProps, nightNumber: 3,
       activeRoles: new Set(["v23" as const, "a03" as const, "a04" as const, "a02" as const]),
@@ -69,10 +72,10 @@ describe("NightScript phone controls", () => {
       players: ["spider", "actor", "mime", "dog"].map((id, seat_position) => ({ id, name: id, seat_position })),
       conditionKeys: { spiderWebbedDied: true }, deathTriggeredSourcePlayerIds: { spiderWebbedDied: ["mime"] }, onPhoneToggle };
     rerender(<LanguageContext.Provider value="en"><NightScript {...copiedProps} /></LanguageContext.Provider>);
-    const replacementControls = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-phone-mode="web"]'));
+    const replacementControls = Array.from(container.querySelectorAll<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.SPIDER_TAMER_WEB)));
     expect(replacementControls).toHaveLength(1);
     fireEvent.click(replacementControls[0]);
-    expect(onPhoneToggle).toHaveBeenLastCalledWith("web", expect.any(String), "mime", expect.any(Number));
+    expect(onPhoneToggle).toHaveBeenLastCalledWith(PHONE_MODE.SPIDER_TAMER_WEB, expect.any(String), "mime", expect.any(Number));
   });
 
   it("only renders Colossus retaliation sources attacked by Werewolves", () => {
@@ -87,15 +90,15 @@ describe("NightScript phone controls", () => {
       players: ["wolf", "colossus", "actor", "mime", "dog"].map((id, seat_position) => ({ id, name: id, seat_position })),
       onPhoneToggle, onLineCompletedChange };
     const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
-    expect(container.querySelectorAll('[data-phone-mode="colossus"]')).toHaveLength(0);
+    expect(container.querySelectorAll(phoneModeSelector(PHONE_MODE.COLOSSUS_RETALIATION))).toHaveLength(0);
     rerender(<LanguageContext.Provider value="en"><NightScript {...props}
       conditionKeys={{ colossusAttacked: true }} deathTriggeredSourcePlayerIds={{ colossusAttacked: ["actor", "mime", "dog"] }} /></LanguageContext.Provider>);
-    const controls = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-phone-mode="colossus"]'));
+    const controls = Array.from(container.querySelectorAll<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.COLOSSUS_RETALIATION)));
     expect(controls).toHaveLength(3);
     controls.forEach((control) => fireEvent.click(control));
     expect(onPhoneToggle.mock.calls.map(([, , id]) => id)).toEqual(expect.arrayContaining(["actor", "mime", "dog"]));
     expect(onLineCompletedChange).not.toHaveBeenCalled();
-    const hunt = container.querySelector('[data-phone-mode="hunt"]')!;
+    const hunt = container.querySelector(phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT))!;
     controls.forEach((control) => {
       expect(hunt.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
@@ -112,7 +115,7 @@ describe("NightScript phone controls", () => {
       activeRoles={new Set(["e01", "v06", "e02"])} roleAssignments={{ wolf: "e01", puppet: "v06", witch: "e02" }}
       players={[{ id: "wolf", name: "Wolf", seat_position: 0 }, { id: "puppet", name: "Puppet", seat_position: 1 }, { id: "witch", name: "Witch", seat_position: 2 }]}
       onPhoneToggle={vi.fn()} onLineCompletedChange={onLineCompletedChange} onScriptLinesChange={onScriptLinesChange} /></LanguageContext.Provider>);
-    const hunt = container.querySelector('[data-phone-mode="hunt"]')!.closest('[draggable="true"]')!;
+    const hunt = container.querySelector(phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT))!.closest('[draggable="true"]')!;
     fireEvent.click(hunt.querySelector('[data-line-checkbox]')!);
     expect(onLineCompletedChange).toHaveBeenCalledWith(expect.stringContaining("3:normal:"), true, expect.any(Number), ["wolf", "puppet"]);
     expect(onScriptLinesChange).toHaveBeenLastCalledWith(expect.arrayContaining([
@@ -190,9 +193,9 @@ describe("NightScript phone controls", () => {
     const eyes = getAllByRole("button", { name: getRoleLabel("v26", "pt") });
     expect(eyes).toHaveLength(2);
     eyes.forEach((eye) => { expect(eye.querySelector(".lucide-eye")).toBeInTheDocument(); fireEvent.click(eye); });
-    expect(onPhoneToggle).toHaveBeenCalledWith("monkey", expect.any(String), "monkey", expect.any(Number));
-    expect(onPhoneToggle).toHaveBeenCalledWith("monkey", expect.any(String), "actor", expect.any(Number));
-    expect(container.querySelector('[data-phone-mode="monkey"]')).not.toBeInTheDocument();
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.MONKEY_TAMER_REVEAL, expect.any(String), "monkey", expect.any(Number));
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.MONKEY_TAMER_REVEAL, expect.any(String), "actor", expect.any(Number));
+    expect(container.querySelector(phoneModeSelector(PHONE_MODE.MONKEY_TAMER_REVEAL))).not.toBeInTheDocument();
   });
   it("opens Witch and allies modes without marking either line completed", () => {
     const onPhoneToggle = vi.fn();
@@ -204,10 +207,10 @@ describe("NightScript phone controls", () => {
       expect(button.closest("[data-script-actions]")).toHaveClass("absolute", "right-10");
       fireEvent.click(button);
     });
-    expect(container.querySelector('[data-phone-mode="allies"] .lucide-users')).toBeInTheDocument();
-    expect(container.querySelector('[data-phone-mode="poison"] .lucide-flask-conical')).toBeInTheDocument();
-    expect(onPhoneToggle).toHaveBeenCalledWith("allies", expect.any(String), null, null);
-    expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), "witch", expect.anything());
+    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.WEREWOLF_ALLIES)} .lucide-users`)).toBeInTheDocument();
+    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.EVIL_WITCH_POISON)} .lucide-flask-conical`)).toBeInTheDocument();
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.WEREWOLF_ALLIES, expect.any(String), null, null);
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.EVIL_WITCH_POISON, expect.any(String), "witch", expect.anything());
     expect(onLineCompletedChange).not.toHaveBeenCalled();
   });
 
@@ -226,7 +229,7 @@ describe("NightScript phone controls", () => {
     />);
     container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
     for (const id of ["witch", "actor", "drunkard", "dog", "mime"]) {
-      expect(onPhoneToggle).toHaveBeenCalledWith("poison", expect.any(String), id, expect.anything());
+      expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.EVIL_WITCH_POISON, expect.any(String), id, expect.anything());
     }
   });
 
@@ -239,9 +242,9 @@ describe("NightScript phone controls", () => {
       conditionKeys={{ hasRedXPlayers: true }} onPhoneToggle={onPhoneToggle}
     />);
     container.querySelectorAll("button[data-phone-control]").forEach((button) => fireEvent.click(button));
-    expect(container.querySelector('[data-phone-mode="shaman"] .lucide-rotate-ccw')).toBeInTheDocument();
-    expect(onPhoneToggle).toHaveBeenCalledWith("shaman", expect.any(String), "mime", expect.anything());
-    expect(onPhoneToggle).not.toHaveBeenCalledWith("shaman", expect.any(String), "shaman", expect.anything());
+    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.SHAMAN_SAVE)} .lucide-rotate-ccw`)).toBeInTheDocument();
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.SHAMAN_SAVE, expect.any(String), "mime", expect.anything());
+    expect(onPhoneToggle).not.toHaveBeenCalledWith(PHONE_MODE.SHAMAN_SAVE, expect.any(String), "shaman", expect.anything());
   });
 
   it("uses a crosshair for the pack hunt action", () => {
@@ -252,7 +255,7 @@ describe("NightScript phone controls", () => {
       onPhoneToggle={vi.fn()}
     />);
 
-    expect(container.querySelector('[data-phone-mode="hunt"] .lucide-crosshair')).toBeInTheDocument();
+    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT)} .lucide-crosshair`)).toBeInTheDocument();
   });
 });
 

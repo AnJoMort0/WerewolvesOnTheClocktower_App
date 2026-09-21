@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { createPlayerActionRequestId } from "@/lib/playerActions";
 import {
-  applyPhoneCommand, getHuntConsensus, getPhoneParticipants, getPhoneView, isPhoneTarget, reconcilePhoneSession,
-  type PhoneAction, type PhoneCommand, type PhoneMode, type PhoneSession, type PhoneView, type PhoneWorld,
+  applyPhoneCommand, getHuntConsensus, getPhoneMinimumTargetCount, getPhoneParticipants, getPhoneTargetCount, getPhoneView, isPhoneTarget, isWhiteWolfSolo, reconcilePhoneSession,
+  type PhoneAction, type PhoneCommand, type PhoneSession, type PhoneView, type PhoneWorld,
 } from "@/lib/phoneActions";
+import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
 
 type Channel = ReturnType<typeof supabase.channel>;
 const topic = (roomId: string, playerId: string) => `phone-${roomId}-${playerId}`;
@@ -50,14 +51,14 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   // Commit before executing an action, so retried phone messages cannot execute it twice.
   const commit = useCallback((next: PhoneSession | null) => {
     current.current.session = next;
-    if (next?.mode === "monkey") {
+    if (next?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL) {
       // Dragging and the script button address the same nightly reveal.
       for (const [key, entry] of Object.entries(monkeySessions.current)) {
         if (entry.sourcePlayerId === next.sourcePlayerId) delete monkeySessions.current[key];
       }
       monkeySessions.current[next.lineKey] = next;
     }
-    if (next?.mode === "fox") {
+    if (next?.mode === PHONE_MODE.FOX_TAMER_CHECK) {
       for (const [key, entry] of Object.entries(foxSessions.current)) {
         if (entry.sourcePlayerId === next.sourcePlayerId) delete foxSessions.current[key];
       }
@@ -87,7 +88,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
         if (stored?.contextKey === contextKey && stored.monkeySessions && typeof stored.monkeySessions === "object") {
           for (const [key, value] of Object.entries(stored.monkeySessions)) {
             const entry = value as PhoneSession;
-            if (entry?.mode === "monkey" && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
+            if (entry?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
               const valid = reconcilePhoneSession(entry, current.current.world);
               if (valid) monkeySessions.current[key] = valid;
             }
@@ -96,7 +97,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
         if (stored?.contextKey === contextKey && stored.foxSessions && typeof stored.foxSessions === "object") {
           for (const [key, value] of Object.entries(stored.foxSessions)) {
             const entry = value as PhoneSession;
-            if (entry?.mode === "fox" && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
+            if (entry?.mode === PHONE_MODE.FOX_TAMER_CHECK && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
               const valid = reconcilePhoneSession(entry, current.current.world);
               if (valid) foxSessions.current[key] = valid;
             }
@@ -156,13 +157,13 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
 
   const toggle = useCallback((mode: PhoneMode, lineKey: string, sourcePlayerId: string | null, progressOrder: number | null = null) => {
     if (!current.current.enabled) return false;
-    if (mode === "monkey") {
+    if (mode === PHONE_MODE.MONKEY_TAMER_REVEAL) {
       const saved = monkeySessions.current[lineKey] ?? Object.values(monkeySessions.current)
         .find((entry) => entry.sourcePlayerId === sourcePlayerId);
       const cached = reconcilePhoneSession(saved ?? null, current.current.world);
       if (cached) { commit({ ...cached, lineKey, progressOrder, visible: true }); return true; }
     }
-    if (mode === "fox") {
+    if (mode === PHONE_MODE.FOX_TAMER_CHECK) {
       const saved = foxSessions.current[lineKey] ?? Object.values(foxSessions.current)
         .find((entry) => entry.sourcePlayerId === sourcePlayerId);
       const cached = reconcilePhoneSession(saved ?? null, current.current.world);
@@ -171,9 +172,14 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     if (current.current.session?.lineKey === lineKey) { commit(null); return false; }
     const participantIds = getPhoneParticipants(mode, sourcePlayerId, current.current.world);
     if (participantIds.length === 0) return false;
-    const next = { id: createPlayerActionRequestId("gm", lineKey), lineKey, mode, sourcePlayerId, progressOrder, participantIds, votes: {}, sequences: {} };
+    const next = {
+      id: createPlayerActionRequestId("gm", lineKey), lineKey, mode, sourcePlayerId, progressOrder, participantIds,
+      votes: {}, sequences: {}, minTargetCount: getPhoneMinimumTargetCount(mode),
+      targetCount: getPhoneTargetCount(mode, sourcePlayerId, current.current.world),
+      ...(mode === PHONE_MODE.WHITE_WEREWOLF_ASSASSINATION ? { whiteWolfSolo: isWhiteWolfSolo(sourcePlayerId, current.current.world) } : {}),
+    };
     commit(next);
-    if (mode === "allies") current.current.onComplete?.(next);
+    if (mode === PHONE_MODE.WEREWOLF_ALLIES) current.current.onComplete?.(next);
     return true;
   }, [commit]);
 
@@ -190,10 +196,10 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   }, [commit]);
 
   const active = enabled ? reconcilePhoneSession(session, world) : null;
-  const sendGM = useCallback((type: PhoneCommand["type"], targetPlayerId?: string) => {
+  const sendGM = useCallback((type: PhoneCommand["type"], targetPlayerId?: string, targetPlayerIds?: string[]) => {
     const latest = reconcilePhoneSession(current.current.session, current.current.world);
     if (!current.current.enabled || !latest) return;
-    if (latest.mode === "hunt" && type === "confirm") {
+    if (latest.mode === PHONE_MODE.WEREWOLF_HUNT && type === "confirm") {
       const target = current.current.world.players.find((p) => p.id === targetPlayerId && isPhoneTarget(latest, p));
       if (!target) return;
       commit(null);
@@ -205,7 +211,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     if (!source) return;
     const result = applyPhoneCommand(latest, source, {
       id: createPlayerActionRequestId("gm", targetPlayerId ?? type), sessionId: latest.id,
-      sequence: Math.max(Date.now(), (latest.sequences[source] ?? 0) + 1), type, targetPlayerId,
+      sequence: Math.max(Date.now(), (latest.sequences[source] ?? 0) + 1), type, targetPlayerId, targetPlayerIds,
     }, current.current.world);
     // A GM selection is authoritative but is not a command from the phone.
     // Preserve its sequence so the next phone close/reopen is never discarded.
@@ -215,22 +221,22 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     if (result.completedSession) current.current.onComplete?.(result.completedSession);
   }, [commit]);
   const confirmMonkey = useCallback((targetPlayerId: string) => {
-    if (current.current.session?.mode === "monkey") sendGM("confirm", targetPlayerId);
+    if (current.current.session?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL) sendGM("confirm", targetPlayerId);
   }, [sendGM]);
   const confirmFox = useCallback((targetPlayerId: string) => {
-    if (current.current.session?.mode === "fox") sendGM("confirm", targetPlayerId);
+    if (current.current.session?.mode === PHONE_MODE.FOX_TAMER_CHECK) sendGM("confirm", targetPlayerId);
   }, [sendGM]);
   const resolveColossus = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
     const latest = reconcilePhoneSession(current.current.session, current.current.world);
-    if (!latest || latest.mode !== "colossus" || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) { commit(latest); return; }
+    if (!latest || latest.mode !== PHONE_MODE.COLOSSUS_RETALIATION || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) { commit(latest); return; }
     if (!accepted) { commit({ ...latest, pendingTargetPlayerId: undefined }); return; }
     commit(null);
-    current.current.onAction({ action: "colossus", targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
+    current.current.onAction({ action: PHONE_MODE.COLOSSUS_RETALIATION, targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
     current.current.onComplete?.(latest);
   }, [commit]);
   const resolvePriest = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
     const latest = reconcilePhoneSession(current.current.session, current.current.world);
-    if (!latest || latest.mode !== "priest" || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) {
+    if (!latest || latest.mode !== PHONE_MODE.PRIEST_CONFESSION || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) {
       commit(latest);
       return;
     }
@@ -250,7 +256,8 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   }, [commit]);
   const close = useCallback(() => {
     const latest = current.current.session;
-    commit(latest?.mode === "monkey" || latest?.mode === "fox" ? { ...latest, visible: false } : null);
+    commit(latest?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || latest?.mode === PHONE_MODE.FOX_TAMER_CHECK
+      ? { ...latest, visible: false } : null);
   }, [commit]);
   const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; commit(null); }, [commit]);
   const monkeySourceIds = Object.values(monkeySessions.current)
@@ -329,10 +336,10 @@ export function usePlayerPhoneActions(roomId?: string, playerId?: string) {
     };
   }, [roomId, playerId]);
 
-  const send = useCallback((type: PhoneCommand["type"], targetPlayerId?: string) => {
+  const send = useCallback((type: PhoneCommand["type"], targetPlayerId?: string, targetPlayerIds?: string[]) => {
     if (!session || !channelRef.current) return;
     sequence.current = Math.max(Date.now(), sequence.current + 1);
-    const command: PhoneCommand = { id: createPlayerActionRequestId(playerId ?? "phone", targetPlayerId ?? type), sessionId: session.id, sequence: sequence.current, type, targetPlayerId };
+    const command: PhoneCommand = { id: createPlayerActionRequestId(playerId ?? "phone", targetPlayerId ?? type), sessionId: session.id, sequence: sequence.current, type, targetPlayerId, targetPlayerIds };
     pendingCommand.current = command;
     setPending(true);
     nextSyncAt.current = Date.now() + 2500;
