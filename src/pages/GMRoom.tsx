@@ -6417,6 +6417,7 @@ const GMRoom = () => {
                         <div
                           className={`flex items-center gap-2 bg-card border rounded-lg p-2 ${borderClass} ${isPermanentDead ? "opacity-40 grayscale" : ""} ${hasHostileObjectiveMarker ? "shadow-[0_0_12px_hsl(var(--destructive)/0.45)]" : ""} ${listDragProps.draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
                           onDrop={(e) => handleListDrop(e, player.id)}
+                          onDragEnter={handleListDragOver}
                           onDragOver={handleListDragOver}
                           {...listDragProps}
                         >

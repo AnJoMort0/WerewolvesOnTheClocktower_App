@@ -789,6 +789,7 @@ export const PlayerCircle = ({
             className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: x, top: y }}
             onDrop={(e) => handleDrop(e, i)}
+            onDragEnter={handleDragOver}
             onDragOver={handleDragOver}
           >
             {wrappedNode}

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
 
-describe("Monkey power controls in the GM circle", () => {
+describe("PlayerCircle drag and power controls", () => {
   it("drags Monkey and ready Colossus copies with their own source IDs", () => {
     const { container, rerender } = render(<PlayerCircle isGM isPlaying totalSlots={4} onDropPlayer={vi.fn()}
       players={["colossus", "actor", "monkey", "waiting"].map((id, seat_position) => ({ id, name: id, seat_position, character: "v27", is_alive: true }))}
@@ -34,6 +34,15 @@ describe("Monkey power controls in the GM circle", () => {
     expect(queryByRole("checkbox", { name: "Poder esgotado" })).toBeNull();
     rerender(<PlayerCircle {...props} showFoxCheckbox />);
     expect(getByRole("checkbox", { name: "Poder esgotado" })).not.toBeChecked();
+  });
+
+  it("does not make Little Girl draggable from the player circle", () => {
+    const { container } = render(<PlayerCircle isGM isPlaying totalSlots={1} onDropPlayer={vi.fn()}
+      players={[{ id: "girl", name: "Little Girl", seat_position: 0, character: "v01", is_alive: true }]}
+      roleAssignments={{ girl: "v01" }} />);
+
+    expect(container.querySelector('[draggable="true"]')).toBeNull();
+    expect(container.querySelector("img")?.closest('[draggable="true"]')).toBeNull();
   });
 
   it("allows restoring exhausted powers independently without changing player status", () => {
