@@ -31,7 +31,7 @@ describe("PhoneActionScreen", () => {
     const session: PhoneView = { ...baseView, mode: PHONE_MODE.COLOSSUS_RETALIATION, players: baseView.players.map((p) => p.id === "wolf" ? { ...p, selectable: false } : p) };
     const { rerender } = render(<PhoneActionScreen session={session} playerId="wolf" language="en" pending={false} connected onSend={onSend} />);
     expect(screen.getByRole("button", { name: "Wolf" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Wolf" }).querySelector("span")).toHaveClass("opacity-40");
+    expect(screen.getByRole("button", { name: "Wolf" }).querySelector("span")).toHaveClass("grayscale", "opacity-30");
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
     fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
     expect(onSend).toHaveBeenCalledWith("confirm", "target");
@@ -39,6 +39,23 @@ describe("PhoneActionScreen", () => {
     expect(screen.getByRole("button", { name: "Target" })).toBeDisabled();
     expect(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.phoneActions.waiting);
+  });
+
+  it("clearly distinguishes selectable Pyromaniac targets from unavailable players", () => {
+    const session: PhoneView = {
+      ...baseView,
+      mode: PHONE_MODE.PYROMANIAC_BURN,
+      sourcePlayerId: "wolf",
+      players: baseView.players.map((player) => player.id === "wolf" ? { ...player, selectable: false } : player),
+    };
+    render(<PhoneActionScreen session={session} playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} />);
+
+    const unavailable = screen.getByRole("button", { name: "Wolf" });
+    const selectable = screen.getByRole("button", { name: "Target" });
+    expect(unavailable).toBeDisabled();
+    expect(unavailable.querySelector("span")).toHaveClass("grayscale", "opacity-30");
+    expect(selectable).toBeEnabled();
+    expect(selectable.querySelector("span")).toHaveClass("border-orange-400", "bg-orange-500/25");
   });
   it("mirrors votes for the GM without allowing a GM vote", () => {
     const onSend = vi.fn();

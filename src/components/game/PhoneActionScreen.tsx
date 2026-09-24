@@ -87,6 +87,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const confirmsSelection = session.mode === PHONE_MODE.PRIEST_CONFESSION || session.mode === PHONE_MODE.SLEEPWALKER_VISIT;
   const roleSelectionCount = session.targetCount ?? 1;
   const roleMinimumSelectionCount = session.minTargetCount ?? roleSelectionCount;
+  const highlightsEligibility = session.mode === PHONE_MODE.COLOSSUS_RETALIATION
+    || session.mode === PHONE_MODE.PYROMANIAC_BURN;
   const neighborhoodTargetIds = new Set((session.mode === PHONE_MODE.FOX_TAMER_CHECK || session.mode === PHONE_MODE.GYPSY_POISON_CHECK) && selected
     ? session.foxReveal?.playerIds ?? session.gypsyReveal?.playerIds ?? getFoxTargetPlayerIds(players, selected)
     : []);
@@ -192,8 +194,16 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 <span className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 ${
                   selectedSet.has(player.id) ? "border-gold ring-2 ring-gold/30"
                   : neighborhoodTargetIds.has(player.id) ? "border-amber-400 ring-2 ring-amber-400/20"
+                  : session.mode === PHONE_MODE.PYROMANIAC_BURN && player.selectable ? "border-orange-400 ring-2 ring-orange-400/25"
+                  : session.mode === PHONE_MODE.COLOSSUS_RETALIATION && player.selectable ? "border-emerald-400 ring-2 ring-emerald-400/25"
                   : player.marker ? "border-primary" : "border-border"
-                } ${neighborhoodTargetIds.has(player.id) ? "bg-amber-500/20 text-amber-100" : player.marker ? "bg-primary/25" : session.mode === PHONE_MODE.COLOSSUS_RETALIATION && player.selectable ? "bg-emerald-500/25 text-emerald-200" : "bg-background/70"} ${(player.dead && session.mode !== PHONE_MODE.PRIEST_CONFESSION) || (session.mode === PHONE_MODE.COLOSSUS_RETALIATION && !player.selectable) ? "opacity-40" : ""}`}>
+                } ${neighborhoodTargetIds.has(player.id) ? "bg-amber-500/20 text-amber-100"
+                  : session.mode === PHONE_MODE.PYROMANIAC_BURN && player.selectable ? "bg-orange-500/25 text-orange-100"
+                  : session.mode === PHONE_MODE.COLOSSUS_RETALIATION && player.selectable ? "bg-emerald-500/25 text-emerald-200"
+                  : player.marker ? "bg-primary/25" : "bg-background/70"} ${
+                  (player.dead && session.mode !== PHONE_MODE.PRIEST_CONFESSION) || (highlightsEligibility && !player.selectable)
+                    ? "grayscale opacity-30" : ""
+                }`}>
                   {player.marker
                     ? <img src={player.marker === "werewolf" ? werewolfIcon : evilBeingIcon} alt="" draggable={false} className="h-8 w-8 object-contain" />
                     : <span className="font-bold">{player.name.charAt(0).toUpperCase()}</span>}
