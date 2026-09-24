@@ -34,6 +34,8 @@ export const STATUS_EFFECTS = [
 
 export type StatusEffect = typeof STATUS_EFFECTS[number];
 
+export type PlayerStatus = "alive" | "poisoned" | "dead-this-night" | "dead";
+
 const STATUS_EFFECT_SET = new Set<string>(STATUS_EFFECTS);
 
 const LEGACY_STATUS_EFFECT_ALIASES: Record<string, StatusEffect> = {

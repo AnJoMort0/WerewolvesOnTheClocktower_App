@@ -1,13 +1,10 @@
-// Backwards-compat re-exports. Use @/lib/i18n directly for multi-language support.
 import { pt } from "@/lib/i18n/pt";
 import type { RoleId } from "./roles";
 import type { ScriptLine } from "@/lib/i18n/types";
 
 export type { ScriptLine };
 
-export const firstNightScript: ScriptLine[] = pt.scripts.firstNight;
-export const secondNightScript: ScriptLine[] = pt.scripts.secondNight;
-export const normalNightScript: ScriptLine[] = pt.scripts.normalNight;
+const normalNightScript: ScriptLine[] = pt.scripts.normalNight;
 
 /** Render script text with character names wrapped in blue spans. */
 export function parseScriptText(text: string): { segments: Array<{ text: string; isRole: boolean }> } {

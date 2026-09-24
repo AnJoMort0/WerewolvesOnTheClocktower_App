@@ -7,15 +7,15 @@ import { ROLES, type RoleId } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import type { GameLogEvent, GameLogPlayerSnapshot, GameLogSnapshotPlayer } from "@/lib/gameLog";
-import type { PlayerStatus, StatusEffect } from "@/components/game/PlayerStatusPopover";
-import { STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
+import type { PlayerStatus, StatusEffect } from "@/lib/effects";
+import { STATUS_EFFECT_ICONS } from "@/lib/effectPresentation";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { formatGameRuntime } from "@/lib/gameRuntime";
 import poisonedIcon from "@/assets/display/icons/poisoned.webp";
 import illusionIcon from "@/assets/display/icons/illusion.webp";
 import ghostIcon from "@/assets/display/icons/ghost.webp";
 import ghostExecutedIcon from "@/assets/display/icons/ghost_executed.webp";
-import ghostRessurectIcon from "@/assets/display/icons/ghost_ressurect.webp";
+import ghostResurrectIcon from "@/assets/display/icons/ghost_resurrect.webp";
 import villagerIcon from "@/assets/display/icons/villager.webp";
 import cardSwitchIcon from "@/assets/display/icons/card_switch.webp";
 
@@ -41,7 +41,7 @@ function getEventIcon(event: GameLogEvent) {
   if (event.action === "poison") return poisonedIcon;
   if (event.action === "illusion") return illusionIcon;
   if (event.action === "execute") return ghostExecutedIcon;
-  if (event.action === "resurrect") return ghostRessurectIcon;
+  if (event.action === "resurrect") return ghostResurrectIcon;
   if (event.action === "kill") return ghostIcon;
   if (event.action === "role_change") return cardSwitchIcon;
   return null;

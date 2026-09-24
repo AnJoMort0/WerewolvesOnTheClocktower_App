@@ -45,7 +45,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
   * [ ] Evil Twin (evil - we could just use the sisters card here tbf): The first night, they are assigned a Good Twin (a random villager). They will wake up to see eachother. If the Good Twin is killed by execution, another random Villager will die as well. The Evil Twin will then receive a new Twin.
   * [ ] Slanderer (evil): Each night picks a player, that player will be shown as a random evil being to all role abilities
   * [ ] Teacher (villager): Twice per game, can pick a player, that player will act twice during that night if their ability permits it
-  * [ ] Swan Tamer (villager): Each night learns how many pairs of eveil beings are in game (as in groups of 2 evil players next to each other)
+  * [ ] Swan Tamer (villager): Each night learns how many pairs of evil beings are in game (as in groups of 2 evil players next to each other)
   * [ ] Private Investigator (villager): Called at the end of the night. Each night select a group of 3 neighbouring players and learn how many of them were called tonight
   * [ ] Vigilante (villager): Called at the end of the night. If noone died that night, is called and asked to kill someone (or choose to kill someone?)
   * [ ] Seamstress (villager): Twice per game, chose two player dead or alive and get to know if YES or NO they are from the same alignement

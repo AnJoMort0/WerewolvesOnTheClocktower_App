@@ -2,29 +2,30 @@ import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { ScriptLine } from "@/lib/i18n/types";
 import { isColossusTarget } from "@/lib/colossus";
 import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
+import { ROLE_DRAG_ACTIONS } from "@/lib/roleActions";
 
 const ROLE_ACTION_PHONE_MODES = {
-  [PHONE_MODE.HUNTER_ASSASSINATION]: { roleId: "v08", dragAction: "role-v08" },
+  [PHONE_MODE.HUNTER_ASSASSINATION]: { roleId: "v08", dragAction: ROLE_DRAG_ACTIONS.v08 },
   [PHONE_MODE.SOLDIER_ASSASSINATION]: { roleId: "v09", dragAction: "role-soldier-kill" },
-  [PHONE_MODE.WHITE_WEREWOLF_ASSASSINATION]: { roleId: "s02", dragAction: "role-s02" },
-  [PHONE_MODE.CAPTAIN_APPOINT_SOLDIER]: { roleId: "v09", dragAction: "role-v09" },
-  [PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES]: { roleId: "v11", dragAction: "role-v11" },
-  [PHONE_MODE.SAVIOUR_PROTECT]: { roleId: "v17", dragAction: "role-v17" },
-  [PHONE_MODE.PROPHET_MARK]: { roleId: "v19", dragAction: "role-v19" },
-  [PHONE_MODE.VINTNER_POISON]: { roleId: "v24", dragAction: "role-v24", canIgnore: true },
-  [PHONE_MODE.PYROMANIAC_BURN]: { roleId: "v15", dragAction: "role-v15", canIgnore: true },
-  [PHONE_MODE.EVIL_CUPID_PAIR]: { roleId: "m05", dragAction: "role-m05" },
-  [PHONE_MODE.EVIL_CUPID_REPLACE]: { roleId: "m05", dragAction: "role-m05" },
+  [PHONE_MODE.WHITE_WEREWOLF_ASSASSINATION]: { roleId: "s02", dragAction: ROLE_DRAG_ACTIONS.s02 },
+  [PHONE_MODE.CAPTAIN_APPOINT_SOLDIER]: { roleId: "v09", dragAction: ROLE_DRAG_ACTIONS.v09 },
+  [PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES]: { roleId: "v11", dragAction: ROLE_DRAG_ACTIONS.v11 },
+  [PHONE_MODE.SAVIOUR_PROTECT]: { roleId: "v17", dragAction: ROLE_DRAG_ACTIONS.v17 },
+  [PHONE_MODE.PROPHET_MARK]: { roleId: "v19", dragAction: ROLE_DRAG_ACTIONS.v19 },
+  [PHONE_MODE.VINTNER_POISON]: { roleId: "v24", dragAction: ROLE_DRAG_ACTIONS.v24, canIgnore: true },
+  [PHONE_MODE.PYROMANIAC_BURN]: { roleId: "v15", dragAction: ROLE_DRAG_ACTIONS.v15, canIgnore: true },
+  [PHONE_MODE.EVIL_CUPID_PAIR]: { roleId: "m05", dragAction: ROLE_DRAG_ACTIONS.m05 },
+  [PHONE_MODE.EVIL_CUPID_REPLACE]: { roleId: "m05", dragAction: ROLE_DRAG_ACTIONS.m05 },
   [PHONE_MODE.CUPID_PAIR]: { roleId: "s01", dragAction: "role-s01" },
-  [PHONE_MODE.THIEF_REVOKE_VOTE]: { roleId: "f01", dragAction: "role-f01" },
-  [PHONE_MODE.WOLF_DOG_CHOOSE_OWNER]: { roleId: "a02", dragAction: "role-a02" },
-  [PHONE_MODE.ACTOR_CHOOSE_IDOL]: { roleId: "a04", dragAction: "role-a04" },
-  [PHONE_MODE.ACTOR_CHANGE_IDOL]: { roleId: "a04", dragAction: "role-a04", canIgnore: true },
-  [PHONE_MODE.GRAVE_ROBBER_SWAP]: { roleId: "a05", dragAction: "role-a05", canIgnore: true },
+  [PHONE_MODE.THIEF_REVOKE_VOTE]: { roleId: "f01", dragAction: ROLE_DRAG_ACTIONS.f01 },
+  [PHONE_MODE.WOLF_DOG_CHOOSE_OWNER]: { roleId: "a02", dragAction: ROLE_DRAG_ACTIONS.a02 },
+  [PHONE_MODE.ACTOR_CHOOSE_IDOL]: { roleId: "a04", dragAction: ROLE_DRAG_ACTIONS.a04 },
+  [PHONE_MODE.ACTOR_CHANGE_IDOL]: { roleId: "a04", dragAction: ROLE_DRAG_ACTIONS.a04, canIgnore: true },
+  [PHONE_MODE.GRAVE_ROBBER_SWAP]: { roleId: "a05", dragAction: ROLE_DRAG_ACTIONS.a05, canIgnore: true },
   [PHONE_MODE.ILLUSIONIST_HIDE]: { roleId: "a06", dragAction: "illusion" },
   [PHONE_MODE.SECRET_LOVER_CHECK]: { roleId: "as01b", dragAction: "role-as01b" },
-  [PHONE_MODE.WILD_CHILD_CHOOSE_PARENT]: { roleId: "l02", dragAction: "role-l02" },
-  [PHONE_MODE.DEVOUT_SERVANT_SAVE]: { roleId: "l06", dragAction: "role-l06", canIgnore: true },
+  [PHONE_MODE.WILD_CHILD_CHOOSE_PARENT]: { roleId: "l02", dragAction: ROLE_DRAG_ACTIONS.l02 },
+  [PHONE_MODE.DEVOUT_SERVANT_SAVE]: { roleId: "l06", dragAction: ROLE_DRAG_ACTIONS.l06, canIgnore: true },
 } as const satisfies Partial<Record<PhoneMode, { roleId: RoleId; dragAction: string; canIgnore?: boolean }>>;
 export type RoleActionPhoneMode = keyof typeof ROLE_ACTION_PHONE_MODES;
 export function isRoleActionPhoneMode(mode: string): mode is RoleActionPhoneMode {

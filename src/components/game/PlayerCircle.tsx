@@ -6,14 +6,17 @@ import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { useRoleLabel, useT, useLanguage, getEffectLabel, getToast } from "@/lib/i18n";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
-import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS } from "./PlayerStatusPopover";
+import { PlayerStatusPopover } from "./PlayerStatusPopover";
+import type { PlayerStatus, StatusEffect } from "@/lib/effects";
+import { STATUS_EFFECT_ICONS } from "@/lib/effectPresentation";
 import poisonedIcon from "@/assets/display/icons/poisoned.webp";
 import illusionIcon from "@/assets/display/icons/illusion.webp";
-import imunityIcon from "@/assets/display/icons/imunity_full.webp";
-import immunityWerewolfIcon from "@/assets/display/icons/imunity_werewolf.webp";
+import immunityIcon from "@/assets/display/icons/immunity_full.webp";
+import immunityWerewolfIcon from "@/assets/display/icons/immunity_werewolf.webp";
 import { toast } from "sonner";
 import type { ActorPowerState } from "@/lib/actor";
 import type { DogWolfStates } from "@/lib/dogWolf";
+import { ROLE_DRAG_ACTIONS as SHARED_ROLE_DRAG_ACTIONS } from "@/lib/roleActions";
 
 type Player = {
   id: string;
@@ -33,32 +36,9 @@ const KILL_DRAG_ROLE: RoleId = "e01";
 const SHAMAN_ROLE: RoleId = "e03";
 const ILLUSION_DRAG_ROLE: RoleId = "a06";
 const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
-  v19: "role-v19",
-  v22: "role-v22",
-  v16: "role-v16",
-  v17: "role-v17",
-  v24: "role-v24",
+  ...SHARED_ROLE_DRAG_ACTIONS,
   m06: "kill",
-  v09: "role-v09",
-  v26: "role-v26",
-  v27: "role-v27",
-  v11: "role-v11",
-  v12: "role-v12",
-  f01: "role-f01",
-  l02: "role-l02",
   s01: "role-s01",
-  v15: "role-v15",
-  v18: "role-v18",
-  s02: "role-s02",
-  v08: "role-v08",
-  m03: "role-m03",
-  v10: "role-v10",
-  v23: "role-v23",
-  a05: "role-a05",
-  a04: "role-a04",
-  a02: "role-a02",
-  m05: "role-m05",
-  l06: "role-l06",
 };
 
 interface PlayerCircleProps {
@@ -87,7 +67,6 @@ interface PlayerCircleProps {
   shamanCharges?: number;
   onShamanChargeToggle?: (index: number) => void;
   onShamanDrop?: (targetPlayerId: string) => void;
-  isWitchPoisoned?: boolean;
   compact?: boolean;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
@@ -110,7 +89,6 @@ interface PlayerCircleProps {
   vampireVictimKeepsPower?: boolean;
   onVampireVictimToggle?: () => void;
   playerEffects?: Record<string, Set<StatusEffect>>;
-  gameCyclePhase?: "night" | "day" | "tribunal";
   availableEffects?: (playerId: string) => StatusEffect[];
   onToggleEffect?: (playerId: string, effect: StatusEffect) => void;
   onExecute?: (playerId: string) => void;
@@ -122,7 +100,6 @@ interface PlayerCircleProps {
   actorCopyActive?: boolean;
   actorCopiesDrunkard?: boolean;
   onActorIdolUseToggle?: (idx: number) => void;
-  actorPowerState?: ActorPowerState;
   onActorPowerStateChange?: (state: ActorPowerState) => void;
   independentPowerStates?: Record<string, ActorPowerState>;
   onIndependentPowerStateChange?: (playerId: string, state: ActorPowerState) => void;
@@ -159,7 +136,6 @@ export const PlayerCircle = ({
   shamanCharges = 0,
   onShamanChargeToggle,
   onShamanDrop,
-  isWitchPoisoned = false,
   compact = false,
   foxDisabled = false,
   onFoxDisabledToggle,
@@ -182,7 +158,6 @@ export const PlayerCircle = ({
   vampireVictimKeepsPower = true,
   onVampireVictimToggle,
   playerEffects: _playerEffects = {},
-  gameCyclePhase = "night",
   availableEffects: _availableEffects,
   onToggleEffect: _onToggleEffect,
   onExecute: _onExecute,
@@ -194,7 +169,6 @@ export const PlayerCircle = ({
   actorCopyActive = false,
   actorCopiesDrunkard = false,
   onActorIdolUseToggle,
-  actorPowerState,
   onActorPowerStateChange,
   independentPowerStates = {},
   onIndependentPowerStateChange,
@@ -280,7 +254,6 @@ export const PlayerCircle = ({
 
   const getStatusClasses = (playerId: string) => {
     if (hideSensitiveInfo) return permanentlyDead.has(playerId) ? "grayscale opacity-50" : "";
-    const status = playerStatuses[playerId];
     const isPDead = permanentlyDead.has(playerId);
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
     if (isPDead) return "grayscale opacity-50";
@@ -527,7 +500,7 @@ export const PlayerCircle = ({
                 {/* Witch immunity icon when poisoned */}
                 {isThisWitchPoisoned && (
                   <>
-                    <img src={imunityIcon} alt="imunidade" className="absolute -top-1 -left-1 w-5 h-5" />
+                    <img src={immunityIcon} alt="imunidade" className="absolute -top-1 -left-1 w-5 h-5" />
                     <img src={poisonedIcon} alt="envenenado" className="absolute -bottom-1 -right-1 w-5 h-5" />
                   </>
                 )}
@@ -755,7 +728,6 @@ export const PlayerCircle = ({
 
         const showPoison = true;
         const showIllusion = isPuppeteer;
-        const showExecutado = gameCyclePhase === "tribunal";
         const availableEffectsForPlayer = seated && _availableEffects ? _availableEffects(seated.id) : [];
 
         const wrappedNode = seated && !hideSensitiveInfo && isGM && isPlaying && onPlayerStatusChange ? (
@@ -768,7 +740,6 @@ export const PlayerCircle = ({
             showPoison={showPoison}
             showIllusion={showIllusion}
             isIllusion={isThisIllusion}
-            showExecutado={showExecutado}
             poisonDisabled={isWitchPermaDead}
             activeEffects={effects}
             availableEffects={availableEffectsForPlayer}

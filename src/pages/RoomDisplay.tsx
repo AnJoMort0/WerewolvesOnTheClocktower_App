@@ -12,7 +12,7 @@ import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { LanguageContext, coerceLanguage, getTranslation } from "@/lib/i18n";
 import { getRoomDisplayStorageKey, readRoomDisplaySnapshot, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
 import { normalizeStatusEffectSet } from "@/lib/effects";
-import type { StatusEffect } from "@/components/game/PlayerStatusPopover";
+import type { StatusEffect } from "@/lib/effects";
 
 function formatTimer(seconds: number) {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;

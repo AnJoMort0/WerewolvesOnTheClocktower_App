@@ -1,80 +1,13 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useT, useLanguage, getEffectLabel } from "@/lib/i18n";
-import type { StatusEffect } from "@/lib/effects";
+import type { PlayerStatus, StatusEffect } from "@/lib/effects";
+import { STATUS_EFFECT_ICONS } from "@/lib/effectPresentation";
 import poisonedIcon from "@/assets/display/icons/poisoned.webp";
 import ghostIcon from "@/assets/display/icons/ghost.webp";
 import illusionIcon from "@/assets/display/icons/illusion.webp";
-import ghostRessurectIcon from "@/assets/display/icons/ghost_ressurect.webp";
+import ghostResurrectIcon from "@/assets/display/icons/ghost_resurrect.webp";
 import ghostExecutedIcon from "@/assets/display/icons/ghost_executed.webp";
-import soldierIcon from "@/assets/display/icons/soldier.webp";
-import voteAgainstIcon from "@/assets/display/icons/vote_against.webp";
-import voteDoubleIcon from "@/assets/display/icons/vote_double.webp";
-import voteInnocentIcon from "@/assets/display/icons/vote_innocent.webp";
-import asleepIcon from "@/assets/display/icons/asleep.webp";
-import immunityFullIcon from "@/assets/display/icons/imunity_full.webp";
-import ghostProphecyIcon from "@/assets/display/icons/ghost_prophecy.webp";
-import voteAccusedIcon from "@/assets/display/icons/vote_accused.webp";
-import voteAccusedLastTribunalIcon from "@/assets/display/icons/vote_accused_last_nigt.webp";
-import werewolfIcon from "@/assets/display/icons/werewolf.webp";
-import enemyIcon from "@/assets/display/icons/enemy.webp";
-import immunityOnetimeIcon from "@/assets/display/icons/imunity_onetime.webp";
-import loverIcon from "@/assets/display/icons/lover.webp";
-import immunityCupidIcon from "@/assets/display/icons/imunity_cupid.webp";
-import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
-import voteRevokedIcon from "@/assets/display/icons/vote_revoked.webp";
-import adoptiveDadIcon from "@/assets/display/icons/adoptive_dad.webp";
-import burnedIcon from "@/assets/display/icons/burned.webp";
-import tetanusIcon from "@/assets/display/icons/tetanus.webp";
-import webbedIcon from "@/assets/display/icons/webbed.webp";
-import caughtIcon from "@/assets/display/icons/caught.webp";
-import spiedOnIcon from "@/assets/display/icons/spied_on.webp";
-import immunityWerewolfIcon from "@/assets/display/icons/imunity_werewolf.webp";
-import dugUpIcon from "@/assets/display/icons/dug_up.webp";
-import idolIcon from "@/assets/display/icons/idol.webp";
-import ownerIcon from "@/assets/display/icons/owner.webp";
-import dogIdolIcon from "@/assets/display/icons/idol_dog.webp";
-import dogAdoptiveDadIcon from "@/assets/display/icons/adoptive_dad_dog.webp";
-import dogEnemyIcon from "@/assets/display/icons/enemy_dog.webp";
-import dogDugUpIcon from "@/assets/display/icons/dug_up_dog.webp";
-import mimeDugUpIcon from "@/assets/display/icons/dug_up_mime.webp";
-
-export type PlayerStatus = "alive" | "poisoned" | "dead-this-night" | "dead";
-export type { StatusEffect };
-
-export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
-  soldier: soldierIcon,
-  vote_against: voteAgainstIcon,
-  vote_double: voteDoubleIcon,
-  acquitted: voteInnocentIcon,
-  host: asleepIcon,
-  immunity_full: immunityFullIcon,
-  prophecy: ghostProphecyIcon,
-  accused: voteAccusedIcon,
-  accused_next: voteAccusedLastTribunalIcon,
-  werewolf_turned: werewolfIcon,
-  enemy: enemyIcon,
-  immunity_onetime: immunityOnetimeIcon,
-  lover: loverIcon,
-  immunity_cupid: immunityCupidIcon,
-  evil_being: evilBeingIcon,
-  vote_revoked: voteRevokedIcon,
-  adoptive_dad: adoptiveDadIcon,
-  burned: burnedIcon,
-  immunity_werewolf: immunityWerewolfIcon,
-  tetanus: tetanusIcon,
-  webbed: webbedIcon,
-  caught: caughtIcon,
-  spied_on: spiedOnIcon,
-  dug_up: dugUpIcon,
-  idol: idolIcon,
-  idol_dog: dogIdolIcon,
-  adoptive_dad_dog: dogAdoptiveDadIcon,
-  enemy_dog: dogEnemyIcon,
-  dug_up_dog: dogDugUpIcon,
-  dug_up_mime: mimeDugUpIcon,
-  owner: ownerIcon,
-};
 
 interface PlayerStatusPopoverProps {
   children: React.ReactNode;
@@ -95,7 +28,6 @@ interface PlayerStatusPopoverProps {
   isIllusion?: boolean;
   activeEffects?: Set<StatusEffect>;
   availableEffects?: StatusEffect[];
-  showExecutado?: boolean;
   /** When true, hide the poison option (Evil Witch is perma-dead) */
   poisonDisabled?: boolean;
 }
@@ -119,7 +51,6 @@ export const PlayerStatusPopover = ({
   isIllusion = false,
   activeEffects = new Set(),
   availableEffects = [],
-  showExecutado = false,
   poisonDisabled = false,
 }: PlayerStatusPopoverProps) => {
   const t = useT();
@@ -134,7 +65,7 @@ export const PlayerStatusPopover = ({
   if (isPermanentlyDead || status === "dead-this-night") {
     removers.push({
       key: "alive",
-      icon: ghostRessurectIcon,
+      icon: ghostResurrectIcon,
       label: t("actionResurrect"),
       onClick: onSetAlive,
       className: "text-green-400 hover:text-green-300",

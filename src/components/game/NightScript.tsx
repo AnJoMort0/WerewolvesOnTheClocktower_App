@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useCallback, useRef, type ReactNode } from "react";
+import { motion } from "framer-motion";
 import { Eye, Moon, Sun } from "lucide-react";
 import { getScriptPhoneMode } from "@/lib/phoneActions";
 import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
@@ -12,16 +12,17 @@ import {
   type ScriptLine,
 } from "@/lib/nightScript";
 import { useLanguage, getScripts, getDynamic, getRoleLabel, getTranslation, t, getToast, type Language } from "@/lib/i18n";
-import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
 import poisonedIcon from "@/assets/display/icons/poisoned.webp";
 import { toast } from "sonner";
-import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
+import type { PlayerStatus } from "@/lib/effects";
 import { EMPTY_ACTOR_POWER_STATE, type ActorPowerState } from "@/lib/actor";
 import { isDrunkardActingPoisoned } from "@/lib/drunkard";
 import type { DogWolfStates } from "@/lib/dogWolf";
+import { ROLE_DRAG_ACTIONS } from "@/lib/roleActions";
 
 const EMPTY_COMPLETED_LINE_KEYS = new Set<string>();
 
@@ -39,30 +40,7 @@ const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
   m06: "kill",
   e03: "shaman",
   a06: "illusion",
-  v19: "role-v19",
-  v22: "role-v22",
-  v16: "role-v16",
-  v17: "role-v17",
-  v24: "role-v24",
-  v09: "role-v09",
-  v26: "role-v26",
-  v27: "role-v27",
-  v11: "role-v11",
-  v12: "role-v12",
-  f01: "role-f01",
-  l02: "role-l02",
-  v10: "role-v10",
-  v15: "role-v15",
-  v18: "role-v18",
-  s02: "role-s02",
-  v08: "role-v08",
-  m03: "role-m03",
-  v23: "role-v23",
-  a05: "role-a05",
-  a04: "role-a04",
-  a02: "role-a02",
-  m05: "role-m05",
-  l06: "role-l06",
+  ...ROLE_DRAG_ACTIONS,
 };
 
 interface NightScriptProps {
@@ -161,8 +139,6 @@ type ScriptRenderItem = {
 
 function isLineRelevant(
   line: ScriptLine,
-  activeRoles: Set<RoleId>,
-  permanentlyDeadRoles: Set<RoleId>,
   roleAssignments: Record<string, RoleId>,
   permanentlyDeadPlayerIds: Set<string>,
   prophecyGhostPlayerIds: Set<string> = new Set(),
@@ -634,7 +610,7 @@ function ScriptLineDisplay({
 export const NightScript = ({
   onPhoneToggle,
   activePhoneLineKey,
-  activeRoles,
+  activeRoles: _activeRoles,
   permanentlyDead: _permanentlyDeadPlayerIds,
   poisonedPlayerId,
   poisonedPlayerIds = poisonedPlayerId ? new Set([poisonedPlayerId]) : new Set(),
@@ -649,7 +625,7 @@ export const NightScript = ({
   lastNightDeadPlayerIds,
   players,
   onFortuneTellerReveal,
-  playerStatuses = {},
+  playerStatuses: _playerStatuses = {},
   foxDisabled,
   onFoxDisabledToggle,
   monkeyDisabled = false,
@@ -738,22 +714,6 @@ export const NightScript = ({
     powerlessPlayerIds.forEach((pid) => s.add(pid));
     return s;
   }, [_permanentlyDeadPlayerIds, powerlessPlayerIds]);
-
-  // Only mark a role as dead if ALL players with that role are permanently dead
-  const permanentlyDeadRoles = useMemo(() => {
-    const s = new Set<RoleId>();
-    const rolePlayers: Record<string, string[]> = {};
-    Object.entries(roleAssignments).forEach(([pid, r]) => {
-      if (!rolePlayers[r]) rolePlayers[r] = [];
-      rolePlayers[r].push(pid);
-    });
-    Object.entries(rolePlayers).forEach(([role, pids]) => {
-      if (pids.every((pid) => effectivelyDead.has(pid))) {
-        s.add(role as RoleId);
-      }
-    });
-    return s;
-  }, [effectivelyDead, roleAssignments]);
 
   const poisonedRoles = useMemo(() => {
     const s = new Set<RoleId>();
@@ -1063,7 +1023,7 @@ export const NightScript = ({
   }, [roleAssignments, _playerEffects]);
 
   const filterLine = useCallback((l: ScriptLine): boolean => {
-    if (!isLineRelevant(l, activeRoles, permanentlyDeadRoles, roleAssignments, effectivelyDead, prophecyGhostPlayerIds)) return false;
+    if (!isLineRelevant(l, roleAssignments, effectivelyDead, prophecyGhostPlayerIds)) return false;
     if (l.conditionKey && !conditionKeys[l.conditionKey]) return false;
     if (l.requires?.length === 1 && l.requires[0] === ("e03" as RoleId) && shamanCharges >= 2) return false;
     if (l.requires?.length === 1 && l.requires[0] === ("e04" as RoleId) && !shouldShowFortuneTellerLine) return false;
@@ -1078,7 +1038,7 @@ export const NightScript = ({
       if (secretLoverId && _playerEffects[secretLoverId]?.has("lover")) return false;
     }
     return true;
-  }, [activeRoles, permanentlyDeadRoles, roleAssignments, effectivelyDead, conditionKeys, shamanCharges, shouldShowFortuneTellerLine, foxDisabled, prophecyGhostPlayerIds, _playerEffects, actorCopiedRole, actorPowerState.foxDisabled, drunkardReplacementRole]);
+  }, [roleAssignments, effectivelyDead, conditionKeys, shamanCharges, shouldShowFortuneTellerLine, foxDisabled, prophecyGhostPlayerIds, _playerEffects, actorCopiedRole, actorPowerState.foxDisabled, drunkardReplacementRole]);
 
   const shouldShowMimeCopiedLine = useCallback((l: ScriptLine): boolean => {
     if (l.conditionKey && !conditionKeys[l.conditionKey]) return false;
@@ -1333,10 +1293,10 @@ export const NightScript = ({
     };
 
     if (nightNumber === 1) {
-      const filtered = makeItems("first", localizedScripts.firstNight, (line) => isLineRelevant(line, activeRoles, permanentlyDeadRoles, roleAssignments, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds));
+      const filtered = makeItems("first", localizedScripts.firstNight, (line) => isLineRelevant(line, roleAssignments, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds));
       if (filtered.length > 0) lines.push({ section: sectionLabels.first, items: filtered });
     } else if (nightNumber === 2) {
-      const filtered2 = makeItems("second", localizedScripts.secondNight, (line) => isLineRelevant(line, activeRoles, permanentlyDeadRoles, roleAssignments, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds));
+      const filtered2 = makeItems("second", localizedScripts.secondNight, (line) => isLineRelevant(line, roleAssignments, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds));
       if (filtered2.length > 0) lines.push({ section: sectionLabels.secondStart, items: filtered2 });
       const filteredNormal = makeItems("normal", localizedScripts.normalNight, filterLine);
       addDogEvilCupidSetupLines(filteredNormal);
@@ -1381,7 +1341,7 @@ export const NightScript = ({
         return item;
       }) };
     });
-  }, [colossusNightSeed, nightNumber, activeRoles, permanentlyDeadRoles, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+  }, [colossusNightSeed, nightNumber, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
 
   const getItemParticipants = useCallback((item: ScriptRenderItem): string[] => {
     const sourcePlayerId = item.sourcePlayerId ?? (item.actorLine || item.actorNotice ? actorPlayerId : item.mimeLine ? mimePlayerId : null);

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Crown, BookOpen, Download, QrCode } from "lucide-react";
-import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorModal";
+import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorButton";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import villagerIcon from "@/assets/display/icons/villager.webp";
 import { SUPPORTED_LANGUAGES, coerceLanguage, getToast, t, type Language } from "@/lib/i18n";

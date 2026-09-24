@@ -1115,7 +1115,8 @@ const PlayerView = () => {
               {phone.session?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL && roomStatus === "playing" ? (
                 <MonkeyRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
-                  onConfirm={(id) => phone.send("confirm", id)} onRoleClick={(roleId) => openRulebook(roleId)} />
+                  onConfirm={(id) => phone.send("confirm", id)} onClose={() => phone.send("close")}
+                  onReopen={() => phone.send("reopen")} onRoleClick={(roleId) => openRulebook(roleId)} />
               ) : phone.session?.mode === PHONE_MODE.FOX_TAMER_CHECK && roomStatus === "playing" ? (
                 <FoxRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}

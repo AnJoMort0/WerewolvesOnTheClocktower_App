@@ -85,9 +85,9 @@ export interface ToastStrings {
   warnAllSpied: string;
   warnNoLimitedRoles: string;
   warnNoTargets: string;
-  okShamanRessurected: string;
+  okShamanResurrected: string;
   errShamanDragOnlyDead: string;
-  okDevoutServantRessurected: string;
+  okDevoutServantResurrected: string;
   errDevoutServantDragOnlyDead: string;
   okJoinLinkCopied: string;
   okRoomReset: string;

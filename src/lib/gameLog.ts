@@ -1,5 +1,4 @@
-import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
-import { normalizeStatusEffect, normalizeStatusEffectSet, type StatusEffect } from "@/lib/effects";
+import { normalizeStatusEffect, normalizeStatusEffectSet, type PlayerStatus, type StatusEffect } from "@/lib/effects";
 import { ROLES, type RoleId } from "@/lib/roles";
 import type { WinKind } from "@/lib/i18n";
 

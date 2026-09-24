@@ -23,7 +23,6 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
   const consensus = getHuntConsensus(session);
   const proposal = session.pendingTargetPlayerId ?? consensus;
   const name = (id: string | null) => view.players.find((player) => player.id === id)?.name ?? translation.ui.unknown;
-  const roleAction = isRoleActionPhoneMode(session.mode);
   const roleActionConfig = isRoleActionPhoneMode(session.mode) ? getRoleActionPhoneConfig(session.mode) : null;
   const title = session.mode === PHONE_MODE.COLOSSUS_RETALIATION ? translation.roleLabels.v27
     : session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? translation.roleLabels.v26

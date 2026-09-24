@@ -1,5 +1,4 @@
-import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
-import type { StatusEffect } from "@/lib/effects";
+import type { PlayerStatus, StatusEffect } from "@/lib/effects";
 import type { RoleId } from "@/lib/roles";
 
 export function hasAttackImmunity(effects: ReadonlySet<StatusEffect>, werewolfAttack: boolean): boolean {

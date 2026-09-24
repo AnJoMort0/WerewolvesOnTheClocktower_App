@@ -1,4 +1,4 @@
-import type { PlayerStatus } from "@/components/game/PlayerStatusPopover";
+import type { PlayerStatus } from "@/lib/effects";
 import { normalizeStatusEffectSet, type StatusEffect } from "@/lib/effects";
 import { normalizeGameLogEvents, type GameLogEvent } from "@/lib/gameLog";
 import type { Language, WinKind } from "@/lib/i18n";

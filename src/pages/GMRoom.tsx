@@ -8,7 +8,7 @@ import { AddPlayerForm } from "@/components/game/AddPlayerForm";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import { NightScript } from "@/components/game/NightScript";
 import { DayTribunalPanel, type DayTribunalPanelHandle } from "@/components/game/DayTribunalPanel";
-import { PlayerStatusPopover, type PlayerStatus, type StatusEffect, STATUS_EFFECT_ICONS } from "@/components/game/PlayerStatusPopover";
+import { PlayerStatusPopover } from "@/components/game/PlayerStatusPopover";
 import { FortuneTellerRevealModal } from "@/components/game/FortuneTellerRevealModal";
 import { RevealModal, resolveKillerCard, type RevealCard } from "@/components/game/RevealModal";
 import { RulebookModal } from "@/components/game/RulebookModal";
@@ -21,9 +21,8 @@ import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
 import { GMPlayerActionApprovalPanel } from "@/components/game/GMPlayerActionApprovalPanel";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
-import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp, Smartphone } from "lucide-react";
+import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -52,7 +51,8 @@ import { detectAutomaticVictory, getVictoryStateSignature, playerWinsAnyVictoryG
 import { WinConfirmModal, WinPickerModal } from "@/components/game/WinConfirmModal";
 import { MAX_GAME_LOG_EVENTS, normalizeGameLogEvents, type GameLogEvent, type GameLogPhase, type GameLogPlayerSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
 import { getRoomDisplayStorageKey, ROOM_DISPLAY_SNAPSHOT_VERSION, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
-import { normalizeStatusEffectSet } from "@/lib/effects";
+import { normalizeStatusEffectSet, type PlayerStatus, type StatusEffect } from "@/lib/effects";
+import { STATUS_EFFECT_ICONS } from "@/lib/effectPresentation";
 import { hasAttackImmunity, resolveProtectedDeaths } from "@/lib/immunity";
 import { useGMPhoneActions } from "@/hooks/usePhoneActions";
 import { useGameRuntime } from "@/hooks/useGameRuntime";
@@ -102,8 +102,9 @@ import {
 import { ESSENTIAL_ROLES, getDuplicateUniqueRoles } from "@/lib/roleValidation";
 import poisonedIcon from "@/assets/display/icons/poisoned.webp";
 import illusionIcon from "@/assets/display/icons/illusion.webp";
-import imunityIcon from "@/assets/display/icons/imunity_full.webp";
+import immunityIcon from "@/assets/display/icons/immunity_full.webp";
 import villagerIcon from "@/assets/display/icons/villager.webp";
+import { ROLE_DRAG_ACTIONS as SHARED_ROLE_DRAG_ACTIONS } from "@/lib/roleActions";
 
 const JOIN_BASE_URL_STORAGE_KEY = "wotct_join_base_url";
 const GM_ADVANCED_STORAGE_PREFIX = "wotct_gm_advanced_";
@@ -112,31 +113,8 @@ const GM_SNAPSHOT_VERSION = 1;
 const GM_SNAPSHOT_RETENTION_MS = 24 * 60 * 60 * 1000;
 const SOLO_OBJECTIVE_ROLES: RoleId[] = ["s01", "s02", "as01b"];
 const ROLE_DRAG_ACTIONS: Partial<Record<RoleId, string>> = {
-  v26: "role-v26",
-  v27: "role-v27",
-  v19: "role-v19",
-  v22: "role-v22",
-  v16: "role-v16",
-  v17: "role-v17",
-  v24: "role-v24",
-  v09: "role-v09",
-  v11: "role-v11",
-  v12: "role-v12",
-  f01: "role-f01",
-  l02: "role-l02",
+  ...SHARED_ROLE_DRAG_ACTIONS,
   s01: "role-s01",
-  v15: "role-v15",
-  v18: "role-v18",
-  s02: "role-s02",
-  v08: "role-v08",
-  m03: "role-m03",
-  v10: "role-v10",
-  v23: "role-v23",
-  a05: "role-a05",
-  a04: "role-a04",
-  a02: "role-a02",
-  m05: "role-m05",
-  l06: "role-l06",
 };
 
 function getPlayerActionRole(kind: PlayerActionRequest["kind"]): RoleId {
@@ -971,11 +949,6 @@ const GMRoom = () => {
       .map(([playerId]) => playerId);
     return witchPlayerIds.length > 0 && witchPlayerIds.every((playerId) => permanentlyDead.has(playerId));
   }, [abilityRoleAssignments, permanentlyDead]);
-
-  const isWitchPoisoned = useMemo(() => {
-    return Object.entries(abilityRoleAssignments)
-      .some(([playerId, role]) => role === "e02" && isPlayerPoisoned(playerId));
-  }, [abilityRoleAssignments, isPlayerPoisoned]);
 
   const isPuppeteer = useMemo(() => {
     for (const [pid, role] of Object.entries(effectiveRoleAssignments)) {
@@ -2864,7 +2837,7 @@ const GMRoom = () => {
       } else {
         setShamanCharges((c) => Math.min(c + 1, 2));
       }
-      toast.success(getToast("okShamanRessurected", (room?.language as Language) || "pt"));
+      toast.success(getToast("okShamanResurrected", (room?.language as Language) || "pt"));
     } else {
       toast.error(getToast("errShamanDragOnlyDead", (room?.language as Language) || "pt"));
     }
@@ -4760,7 +4733,7 @@ const GMRoom = () => {
         setPlayerStatuses((prev) => ({ ...prev, [servantId]: "dead-this-night" }));
         setKillSources((prev) => ({ ...prev, [servantId]: publicSourceRole ?? "l06" }));
         setKillSourcePlayerIds((prev) => ({ ...prev, [servantId]: servantId }));
-        toast.success(getToast("okDevoutServantRessurected", (room?.language as Language) || "pt"));
+        toast.success(getToast("okDevoutServantResurrected", (room?.language as Language) || "pt"));
       }
       else if (roleSource === "soldier-kill") {
         // Soldier ghost kill
@@ -6125,7 +6098,6 @@ const GMRoom = () => {
                   shamanCharges={shamanCharges}
                   onShamanChargeToggle={(index) => { handleShamanChargeToggle(index); markScriptRoleAction("e03"); }}
                   onShamanDrop={handleShamanDrop}
-                  isWitchPoisoned={isWitchPoisoned}
                   foxDisabled={foxDisabled}
                   onFoxDisabledToggle={() => { setFoxDisabled((v) => !v); markScriptRoleAction("v04"); }}
                   monkeyDisabled={monkeyDisabled}
@@ -6133,7 +6105,6 @@ const GMRoom = () => {
                   showFoxCheckbox={nightNumber > 1}
                   nightNumber={nightNumber}
                   playerEffects={displayedPlayerEffects}
-                  gameCyclePhase={gameCyclePhase}
                   availableEffects={getAvailableEffects}
                   onToggleEffect={toggleEffect}
                   onExecute={handleExecute}
@@ -6173,7 +6144,6 @@ const GMRoom = () => {
                   actorCopyActive={!!effectiveActorCopiedRole}
                   actorCopiesDrunkard={effectiveActorCopiedRole === "a01"}
                   onActorIdolUseToggle={(idx) => setActorIdolUses((uses) => uses > idx ? idx : idx + 1)}
-                  actorPowerState={actorPowerState}
                   onActorPowerStateChange={handleActorPowerStateChange}
                   independentPowerStates={independentPowerStates}
                   onIndependentPowerStateChange={(playerId, state) => {
@@ -6474,7 +6444,7 @@ const GMRoom = () => {
                                 <img src={poisonedIcon} alt="envenenado" className="absolute -bottom-1 -right-1 w-4 h-4" />
                               )}
                                {isThisWitchPoisoned && (
-                                 <img src={imunityIcon} alt="imunidade" className="absolute -top-1 -left-1 w-4 h-4" />
+                                 <img src={immunityIcon} alt="imunidade" className="absolute -top-1 -left-1 w-4 h-4" />
                                )}
                                {isActor && roleId !== "a04" && (
                                  <img src={resolveRoleImage("a04", { skinPackId }).src} alt={roleLabel("a04")} className="absolute -bottom-1 -left-1 h-4 w-4 rounded-sm border border-primary object-cover" />
@@ -6733,7 +6703,6 @@ const GMRoom = () => {
 
                       const showPoison = true;
                       const showIllusion = isPuppeteer;
-                      const showExecutado = gameCyclePhase === "tribunal";
                       const availableEffectsForPlayer = getAvailableEffects(player.id);
 
                       return (
@@ -6749,7 +6718,6 @@ const GMRoom = () => {
                           isIllusion={isThisIllusion}
                           activeEffects={effects}
                           availableEffects={availableEffectsForPlayer}
-                          showExecutado={showExecutado}
                           poisonDisabled={isWitchPermaDead}
                           onSetPoisoned={() => {
                             handlePlayerStatusChange(player.id, "poisoned");

@@ -95,8 +95,8 @@ try {
 
   await cdp.wait(gm, "!!document.querySelector('button[aria-label=\"Monkey Tamer\"]')");
   await cdp.evaluate(gm, "document.querySelector('button[aria-label=\"Monkey Tamer\"]').click()");
-  await cdp.wait(phones[0], "!!document.querySelector('[role=dialog] button[aria-label=Wolf]')");
-  await cdp.evaluate(phones[0], "document.querySelector('[role=dialog] button[aria-label=Wolf]').click()");
+  await cdp.wait(phones[0], "!!document.querySelector('[data-testid=phone-action-map] button[aria-label=Wolf]')");
+  await cdp.evaluate(phones[0], "document.querySelector('[data-testid=phone-action-map] button[aria-label=Wolf]').click()");
   await cdp.wait(phones[0], "[...document.querySelectorAll('button')].some(button => button.textContent.includes('Reveal card: Wolf') && !button.disabled)");
   await cdp.evaluate(phones[0], "[...document.querySelectorAll('button')].find(button => button.textContent.includes('Reveal card: Wolf')).click()");
   await cdp.wait(phones[0], "!!document.querySelector('[data-testid=monkey-revealed-card]')");
