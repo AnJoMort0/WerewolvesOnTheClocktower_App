@@ -25,8 +25,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] Adding phone interactions for each character, making sure they are compatible with copying characters, illusionist when needed and their poison effects:
-  * [ ] 
+* [ ] 
   
 ## Future Plans
 

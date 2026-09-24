@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Target, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw, ScrollText, Waypoints } from "lucide-react";
+import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw, ScrollText, Waypoints } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
@@ -940,7 +940,7 @@ const PlayerView = () => {
   const actionMode: PlayerDeviceActionMode | null = assassinationMode ? "v10" : resurrectionMode ? "v18" : webMode ? "v23" : null;
   const actionPlayers = seatedPlayers.length > 0 ? seatedPlayers : roomPlayers;
   const actionTotalSlots = actionPlayers.length || 1;
-  const actionIcon = actionMode === "v18" ? RotateCcw : actionMode === "v23" ? Waypoints : Target;
+  const actionIcon = actionMode === "v18" ? RotateCcw : actionMode === "v23" ? Waypoints : Crosshair;
   const ActionIcon = actionIcon;
   const actionTitle = actionMode === "v18"
     ? t("resurrectionMode", language)
@@ -1382,7 +1382,7 @@ const PlayerView = () => {
                         }}
                         className="w-full font-display tracking-wider"
                       >
-                        <Target className="mr-2 h-4 w-4" />
+                        <Crosshair className="mr-2 h-4 w-4" />
                         {t("assassinate", language)}
                       </Button>
                       {visiblePendingV10Request && (

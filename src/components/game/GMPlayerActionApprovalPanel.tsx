@@ -13,7 +13,7 @@ export function GMPlayerActionApprovalPanel({ title, description, acceptLabel, d
 }) {
   return <aside
     data-testid="gm-player-action-approval"
-    className="relative z-20 mx-auto mt-3 w-[min(92vw,24rem)] rounded-xl border border-destructive/50 bg-card/95 p-4 shadow-2xl backdrop-blur-sm lg:absolute lg:right-4 lg:top-4 lg:mt-0"
+    className="fixed inset-x-3 top-3 z-[70] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-xl border border-destructive/50 bg-card p-4 shadow-2xl sm:left-auto sm:right-4 sm:top-4 sm:w-96"
   >
     <h2 className="font-display text-xl text-destructive">{title}</h2>
     <p className="mt-2 text-sm text-muted-foreground">{description}</p>
