@@ -104,7 +104,15 @@ export const PlayerStatusPopover = ({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-auto p-2 flex flex-col gap-1 max-h-[400px] overflow-y-auto" side="top" align="center">
+      <PopoverContent
+        className="w-auto p-2 flex flex-col gap-1 max-h-[400px] overflow-y-auto"
+        side="top"
+        align="center"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement).focus({ preventScroll: true });
+        }}
+      >
         {/* Action verbs at top */}
         {showAliveActions && (
           <>
