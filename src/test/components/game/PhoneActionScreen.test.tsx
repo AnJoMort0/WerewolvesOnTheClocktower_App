@@ -233,7 +233,7 @@ describe("PhoneActionScreen", () => {
     }} playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} />);
 
     expect(screen.getByRole("status")).toHaveTextContent("Wolf chose to assassinate Target.");
-    expect(screen.getByRole("status").querySelector(".lucide-target")).toBeInTheDocument();
+    expect(screen.getByRole("status").querySelector(".lucide-crosshair")).toBeInTheDocument();
     expect(screen.queryByTestId("phone-action-map")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
   });

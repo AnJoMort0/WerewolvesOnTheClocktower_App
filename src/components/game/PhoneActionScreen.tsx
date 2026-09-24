@@ -69,7 +69,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   }, [session.id]);
   const isRoleAction = isRoleActionPhoneMode(session.mode);
   const roleActionConfig = isRoleActionPhoneMode(session.mode) ? getRoleActionPhoneConfig(session.mode) : null;
-  const selected = session.foxReveal?.targetPlayerId ?? session.priestReveal?.targetPlayerId ?? session.pendingTargetPlayerId
+  const selected = session.foxReveal?.targetPlayerId ?? session.gypsyReveal?.targetPlayerId ?? session.priestReveal?.targetPlayerId ?? session.pendingTargetPlayerId
     ?? (selectedPlayerId !== undefined ? selectedPlayerId
       : session.mode === PHONE_MODE.WEREWOLF_HUNT && !gmControlled ? session.votes[playerId] : selectedId);
   const target = session.players.find((p) => p.id === selected && p.selectable);
@@ -87,8 +87,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const confirmsSelection = session.mode === PHONE_MODE.PRIEST_CONFESSION || session.mode === PHONE_MODE.SLEEPWALKER_VISIT;
   const roleSelectionCount = session.targetCount ?? 1;
   const roleMinimumSelectionCount = session.minTargetCount ?? roleSelectionCount;
-  const foxTargetIds = new Set(session.mode === PHONE_MODE.FOX_TAMER_CHECK && selected
-    ? session.foxReveal?.playerIds ?? getFoxTargetPlayerIds(players, selected)
+  const neighborhoodTargetIds = new Set((session.mode === PHONE_MODE.FOX_TAMER_CHECK || session.mode === PHONE_MODE.GYPSY_POISON_CHECK) && selected
+    ? session.foxReveal?.playerIds ?? session.gypsyReveal?.playerIds ?? getFoxTargetPlayerIds(players, selected)
     : []);
   const mapHeight = Math.max(MAP_MIN_HEIGHT, players.length * PLAYER_ARC_SPACE);
   const verticalRadius = mapHeight / 2 - PLAYER_EDGE_SPACE;
@@ -97,6 +97,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const Icon = appearance?.icon ?? presentation.icon;
   const title = appearance?.title ?? (session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? getTranslation(language).roleLabels.v26
     : session.mode === PHONE_MODE.FOX_TAMER_CHECK ? getTranslation(language).roleLabels.v04
+    : session.mode === PHONE_MODE.GYPSY_POISON_CHECK ? getTranslation(language).roleLabels.v12
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB ? getTranslation(language).roleLabels.v23
     : session.mode === PHONE_MODE.PRIEST_CONFESSION ? getTranslation(language).roleLabels.v25
     : session.mode === PHONE_MODE.SLEEPWALKER_VISIT ? getTranslation(language).roleLabels.v16
@@ -112,6 +113,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     ? { border: "border-moon/50 ring-moon/10", accent: "text-moon" }
     : session.mode === PHONE_MODE.FOX_TAMER_CHECK
     ? { border: "border-amber-500/50 ring-amber-500/10", accent: "text-amber-300" }
+    : session.mode === PHONE_MODE.GYPSY_POISON_CHECK
+    ? { border: "border-purple-500/50 ring-purple-500/10", accent: "text-purple-300" }
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB
     ? { border: "border-cyan-500/50 ring-cyan-500/10", accent: "text-cyan-300" }
     : session.mode === PHONE_MODE.PRIEST_CONFESSION
@@ -171,7 +174,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 aria-pressed={session.mode === PHONE_MODE.WEREWOLF_ALLIES ? undefined : selectedSet.has(player.id)}
                 disabled={readOnly || !!session.pendingTargetPlayerId || !!session.approvalResult || !player.selectable || !connected || (pending && session.mode !== PHONE_MODE.WEREWOLF_HUNT)}
                 onClick={() => (session.mode === PHONE_MODE.WEREWOLF_HUNT && !gmControlled)
-                  || session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK || selectsImmediately
+                  || session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK
+                  || session.mode === PHONE_MODE.GYPSY_POISON_CHECK || selectsImmediately
                   ? onSend("select", player.id) : isRoleAction
                   ? setSelectedIds((current) => current.includes(player.id)
                     ? current.filter((id) => id !== player.id)
@@ -187,9 +191,9 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
               >
                 <span className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 ${
                   selectedSet.has(player.id) ? "border-gold ring-2 ring-gold/30"
-                  : foxTargetIds.has(player.id) ? "border-amber-400 ring-2 ring-amber-400/20"
+                  : neighborhoodTargetIds.has(player.id) ? "border-amber-400 ring-2 ring-amber-400/20"
                   : player.marker ? "border-primary" : "border-border"
-                } ${foxTargetIds.has(player.id) ? "bg-amber-500/20 text-amber-100" : player.marker ? "bg-primary/25" : session.mode === PHONE_MODE.COLOSSUS_RETALIATION && player.selectable ? "bg-emerald-500/25 text-emerald-200" : "bg-background/70"} ${(player.dead && session.mode !== PHONE_MODE.PRIEST_CONFESSION) || (session.mode === PHONE_MODE.COLOSSUS_RETALIATION && !player.selectable) ? "opacity-40" : ""}`}>
+                } ${neighborhoodTargetIds.has(player.id) ? "bg-amber-500/20 text-amber-100" : player.marker ? "bg-primary/25" : session.mode === PHONE_MODE.COLOSSUS_RETALIATION && player.selectable ? "bg-emerald-500/25 text-emerald-200" : "bg-background/70"} ${(player.dead && session.mode !== PHONE_MODE.PRIEST_CONFESSION) || (session.mode === PHONE_MODE.COLOSSUS_RETALIATION && !player.selectable) ? "opacity-40" : ""}`}>
                   {player.marker
                     ? <img src={player.marker === "werewolf" ? werewolfIcon : evilBeingIcon} alt="" draggable={false} className="h-8 w-8 object-contain" />
                     : <span className="font-bold">{player.name.charAt(0).toUpperCase()}</span>}

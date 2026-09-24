@@ -102,6 +102,6 @@ describe("usable GM action mirrors", () => {
 
     expect(screen.getByRole("dialog")).toHaveTextContent("Actor chose to assassinate Target.");
     expect(screen.queryByRole("button", { name: "Target" })).not.toBeInTheDocument();
-    expect(document.querySelector(".lucide-target")).toBeInTheDocument();
+    expect(document.querySelector(".lucide-crosshair")).toBeInTheDocument();
   });
 });

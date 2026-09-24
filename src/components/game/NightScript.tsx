@@ -896,8 +896,24 @@ export const NightScript = ({
     return [findNeighbor(-1), findNeighbor(1)].filter(Boolean) as typeof players;
   };
 
+  const getBoyDynamicText = (line: ScriptLine, sourcePlayerId: string): string | undefined => {
+    const accusedPlayers = players.filter((player) => _playerEffects[player.id]?.has("accused"));
+    if (accusedPlayers.length === 0) return undefined;
+    const sourcePoisoned = isPlayerActingPoisoned(sourcePlayerId);
+    const labels = getTranslation(lang).ui.nightScript;
+    const answers = accusedPlayers.map((player) => {
+      if (illusionPlayerIds.has(player.id)) return `${player.name}: ${labels.boyIllusion}`;
+      const effects = _playerEffects[player.id] ?? new Set<string>();
+      const objectiveRole = objectiveRoleAssignments[player.id] ?? abilityRoleAssignments[player.id];
+      const isWerewolf = effects.has("werewolf_turned") || WEREWOLF_ROLES.includes(objectiveRole);
+      return `${player.name}: ${(sourcePoisoned ? !isWerewolf : isWerewolf) ? labels.boyYes : labels.boyNo}`;
+    });
+    return `${line.text.replace(/\.$/, "")} (${answers.join(", ")})`;
+  };
+
   const getDogDynamicText = (line: ScriptLine, dogPlayerId: string): string | undefined => {
     const role = line.requires?.length === 1 ? line.requires[0] : null;
+    if (role === "v22") return getBoyDynamicText(line, dogPlayerId);
     if (role === "a04") {
       const state = dogWolfStates[dogPlayerId];
       if (state && !state.actorModeActive && !state.actorIdolPlayerId) {
@@ -955,6 +971,7 @@ export const NightScript = ({
 
   const getCopiedDynamicText = (line: ScriptLine, sourcePlayerId: string): string | undefined => {
     const role = line.requires?.length === 1 ? line.requires[0] : null;
+    if (role === "v22") return getBoyDynamicText(line, sourcePlayerId);
     if (role === "v02") {
       const neighbors = getLivingNeighbors(sourcePlayerId);
       const hasEvilNeighbor = neighbors.some((neighbor) => countsAsEvilBeing(neighbor.id));
@@ -1016,6 +1033,7 @@ export const NightScript = ({
     if (line.requires?.length === 1 && line.requires[0] === "v03") return crowDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v05") return bunnyDynamicText;
     if (line.requires?.length === 1 && line.requires[0] === "v20") return houseMaidDynamicText;
+    if (line.requires?.length === 1 && line.requires[0] === "v22" && sourcePlayerId) return getBoyDynamicText(line, sourcePlayerId);
     if (line.requires?.length === 1 && line.requires[0] === "s02" && line.conditionKey === "whitewolfNight" && conditionKeys.whitewolfSolo) {
       return dyn.whiteWolfSoloKill;
     }

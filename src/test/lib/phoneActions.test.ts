@@ -5,7 +5,7 @@ import type { RoleId } from "@/lib/roles";
 import {
   applyPhoneCommand, getFoxTargetPlayerIds, getHuntConsensus, getPhoneMinimumTargetCount, getPhoneParticipants,
   getPhoneTargetCount, getPhoneView, getRoleActionPhoneConfig, getScriptPhoneMode,
-  reconcilePhoneSession, resolveFoxReveal,
+  reconcilePhoneSession, resolveFoxReveal, resolveGypsyReveal,
   type PhonePlayer, type PhoneSession, type PhoneWorld,
 } from "@/lib/phoneActions";
 
@@ -49,6 +49,12 @@ describe("GM-controlled phone rules", () => {
     const scripts = getScripts(language).normalNight;
     expect(scripts.find((line) => line.requires?.includes("v25"))?.phoneMode).toBe(PHONE_MODE.PRIEST_CONFESSION);
     expect(scripts.find((line) => line.requires?.includes("v16"))?.phoneMode).toBe(PHONE_MODE.SLEEPWALKER_VISIT);
+  });
+
+  it.each(["pt", "fr", "en"] as const)("registers Gypsy and Pyromaniac controls in %s", (language) => {
+    const scripts = getScripts(language).normalNight;
+    expect(scripts.find((line) => line.requires?.includes("v12"))?.phoneMode).toBe(PHONE_MODE.GYPSY_POISON_CHECK);
+    expect(scripts.find((line) => line.requires?.includes("v15"))?.phoneMode).toBe(PHONE_MODE.PYROMANIAC_BURN);
   });
 
   it.each(["pt", "fr", "en"] as const)("registers every new role action on the intended script line in %s", (language) => {
@@ -258,6 +264,42 @@ describe("GM-controlled phone rules", () => {
     expect(result.action).toMatchObject({ action: PHONE_MODE.FOX_TAMER_CHECK, sourcePlayerId: "dog", foxReveal: { result: "clear", foxRanAway: true } });
     const exhausted = { ...changed, players: changed.players.map((player) => player.id === "dog" ? { ...player, foxDisabled: true, powerless: true } : player) };
     expect(reconcilePhoneSession(result.session, exhausted)?.foxReveal?.targetPlayerId).toBe("target");
+  });
+
+  it("checks the Gypsy's chosen trio and transfers the actual poisoned target without revealing who it was", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("gypsy", "v12", { seat_position: 0 }),
+      phonePlayer("left", "v01", { seat_position: 1, poisoned: true }),
+      phonePlayer("target", "v02", { seat_position: 2 }),
+      phonePlayer("right", "v03", { seat_position: 3 }),
+      phonePlayer("outside", "v04", { seat_position: 4, poisoned: true }),
+    ] };
+    expect(resolveGypsyReveal("target", changed)).toEqual({
+      reveal: { targetPlayerId: "target", playerIds: ["left", "target", "right"], poisoned: true },
+      poisonedPlayerId: "left",
+    });
+    const session: PhoneSession = { id: "gypsy", mode: PHONE_MODE.GYPSY_POISON_CHECK, lineKey: "gypsy-line", sourcePlayerId: "gypsy", participantIds: ["gypsy"], votes: {}, sequences: {} };
+    const result = applyPhoneCommand(session, "gypsy", {
+      id: "confirm", sessionId: "gypsy", sequence: 1, type: "confirm", targetPlayerId: "target",
+    }, changed);
+    expect(result.action).toMatchObject({ action: PHONE_MODE.GYPSY_POISON_CHECK, sourcePlayerId: "gypsy", targetPlayerId: "left" });
+    expect(result.session?.gypsyReveal).toEqual({ targetPlayerId: "target", playerIds: ["left", "target", "right"], poisoned: true });
+    expect(JSON.stringify(getPhoneView(result.session, "gypsy", changed))).not.toContain("poisonedPlayerId");
+  });
+
+  it("only offers the Pyromaniac the acquitted target belonging to that copied power", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("pyro", "v15", { objectiveRole: "a04" }),
+      phonePlayer("own", "v01", { acquitted: true, acquittedSourceIds: ["pyro"] }),
+      phonePlayer("other", "v02", { acquitted: true, acquittedSourceIds: ["another"] }),
+      phonePlayer("ordinary", "v03"),
+    ] };
+    expect(getPhoneParticipants(PHONE_MODE.PYROMANIAC_BURN, "pyro", changed)).toEqual(["pyro"]);
+    const session: PhoneSession = { id: "pyro", mode: PHONE_MODE.PYROMANIAC_BURN, lineKey: "pyro-line", sourcePlayerId: "pyro", participantIds: ["pyro"], votes: {}, sequences: {} };
+    expect(getPhoneView(session, "pyro", changed)?.players.filter((player) => player.selectable).map((player) => player.id)).toEqual(["own"]);
+    expect(applyPhoneCommand(session, "pyro", {
+      id: "burn", sessionId: "pyro", sequence: 1, type: "confirm", targetPlayerId: "own",
+    }, changed).action).toMatchObject({ action: PHONE_MODE.PYROMANIAC_BURN, targetPlayerId: "own", sourcePlayerId: "pyro" });
   });
 
   it("requires every wolf and the Puppeteer to agree", () => {

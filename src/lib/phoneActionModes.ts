@@ -10,6 +10,8 @@ export const PHONE_MODE = {
   SHAMAN_SAVE: "shaman-save",
   MONKEY_TAMER_REVEAL: "monkey-tamer-reveal",
   FOX_TAMER_CHECK: "fox-tamer-check",
+  GYPSY_POISON_CHECK: "gypsy-poison-check",
+  PYROMANIAC_BURN: "pyromaniac-burn",
   SPIDER_TAMER_WEB: "spider-tamer-web",
   PRIEST_CONFESSION: "priest-confession",
   SLEEPWALKER_VISIT: "sleepwalker-visit",

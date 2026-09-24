@@ -95,8 +95,8 @@ export const pt: Translation = {
       { text: "A {Bruxa Malvada} acorda e escolhe um jogador que irá envenenar esta noite.", requires: ["e02"], phoneMode: PHONE_MODE.EVIL_WITCH_POISON },
       { text: "O {Vinicultor} acorda e escolhe um jogador que irá envenenar mas que receberá imunidade.", requires: ["v24"], phoneMode: PHONE_MODE.VINTNER_POISON },
       { text: "A {Empregada} acorda e é-lhe revelada a distância até a pessoa envenenada.", requires: ["v20"], conditionKey: "houseMaidVisible" },
-      { text: "O {Piromaníaco} acorda. São-lhe mostradas as pessoas inocentadas no último tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.", requires: ["v15"], conditionKey: "pyromaniacVisible" },
-      { text: "A {Cigana} acorda e indica 3 vizinhos. Se um deles estiver envenenado, ele perde o veneno e a {Cigana} passa a estar envenenada.", requires: ["v12"], conditionKey: "poisonedCharacterPresent" },
+      { text: "O {Piromaníaco} acorda. São-lhe mostradas as pessoas inocentadas no último tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.", requires: ["v15"], conditionKey: "pyromaniacVisible", phoneMode: PHONE_MODE.PYROMANIAC_BURN },
+      { text: "A {Cigana} acorda e indica 3 vizinhos. Se um deles estiver envenenado, ele perde o veneno e a {Cigana} passa a estar envenenada.", requires: ["v12"], conditionKey: "poisonedCharacterPresent", phoneMode: PHONE_MODE.GYPSY_POISON_CHECK },
       { text: "O {Ilusionista} acorda e indica o jogador cuja a identidade será obstruída.", requires: ["a06"], phoneMode: PHONE_MODE.ILLUSIONIST_HIDE },
       { text: "(Alguém morreu) A {Vidente} acorda e é-lhe revelado o papel dos mortos de ontem.", requires: ["e04"] },
       { text: "O {Espião} acorda e é-lhe revelado um papel em jogo.", requires: ["f02"], conditionKey: "spyHasUnseen" },
@@ -154,14 +154,22 @@ export const pt: Translation = {
       noCard: "Não há uma carta disponível. Contacta o Narrador.",
     },
     foxReveal: {
-      choose: "Escolhe um trio de jogadores para inspecionar.",
+      choose: "Escolhe um trio de jogadores.",
       confirm: "Verificar estes jogadores",
       close: "Fechar",
       reopen: "Reabrir resultado",
       evil: "Sim — um deles é uma Criatura Malvada.",
       clear: "Não — nenhum deles é uma Criatura Malvada.",
       ranAway: "A Raposa fugiu. O Domador da Raposa perdeu o seu poder.",
-      confused: "A Raposa está confusa por causa de uma Ilusão.",
+      confused: "A Raposa está confusa.",
+    },
+    gypsyReveal: {
+      choose: "Escolhe um trio de jogadores.",
+      confirm: "Beber destes jogadores",
+      close: "Fechar",
+      reopen: "Reabrir resultado",
+      poisoned: "Sim — um deles está envenenado.",
+      clear: "Não — nenhum deles está envenenado.",
     },
     // GM phone controls and player night action screens.
     phoneActions: {
@@ -600,6 +608,9 @@ export const pt: Translation = {
     // Linhas auxiliares do script da noite criadas pela UI.
     nightScript: {
       dogArticle: "O",
+      boyYes: "SIM",
+      boyNo: "NÃO",
+      boyIllusion: "ILUSÃO",
       dogHousemaidDistance: "O {Cão} acorda e é-lhe revelada a distância até à pessoa envenenada",
       mimeOnlyLines: {
         v10: {

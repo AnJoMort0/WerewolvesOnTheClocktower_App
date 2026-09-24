@@ -27,6 +27,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const revision = useRef(Date.now());
   const monkeySessions = useRef<Record<string, PhoneSession>>({});
   const foxSessions = useRef<Record<string, PhoneSession>>({});
+  const gypsySessions = useRef<Record<string, PhoneSession>>({});
   const storageKey = roomId ? `wotct_phone_${roomId}` : null;
 
   const publish = useCallback((playerId?: string, force = false) => {
@@ -64,6 +65,12 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
       }
       foxSessions.current[next.lineKey] = next;
     }
+    if (next?.mode === PHONE_MODE.GYPSY_POISON_CHECK) {
+      for (const [key, entry] of Object.entries(gypsySessions.current)) {
+        if (entry.sourcePlayerId === next.sourcePlayerId) delete gypsySessions.current[key];
+      }
+      gypsySessions.current[next.lineKey] = next;
+    }
     setSession(next);
     if (storageKey) {
       try {
@@ -72,6 +79,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
           session: next,
           monkeySessions: monkeySessions.current,
           foxSessions: foxSessions.current,
+          gypsySessions: gypsySessions.current,
         }));
       } catch { /* Gameplay still works when browser storage is unavailable. */ }
     }
@@ -82,6 +90,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     let restored: PhoneSession | null = null;
     monkeySessions.current = {};
     foxSessions.current = {};
+    gypsySessions.current = {};
     if (storageKey && enabled) {
       try {
         const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? "null");
@@ -100,6 +109,15 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
             if (entry?.mode === PHONE_MODE.FOX_TAMER_CHECK && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
               const valid = reconcilePhoneSession(entry, current.current.world);
               if (valid) foxSessions.current[key] = valid;
+            }
+          }
+        }
+        if (stored?.contextKey === contextKey && stored.gypsySessions && typeof stored.gypsySessions === "object") {
+          for (const [key, value] of Object.entries(stored.gypsySessions)) {
+            const entry = value as PhoneSession;
+            if (entry?.mode === PHONE_MODE.GYPSY_POISON_CHECK && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
+              const valid = reconcilePhoneSession(entry, current.current.world);
+              if (valid) gypsySessions.current[key] = valid;
             }
           }
         }
@@ -169,6 +187,12 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
       const cached = reconcilePhoneSession(saved ?? null, current.current.world);
       if (cached) { commit({ ...cached, lineKey, progressOrder, visible: true }); return true; }
     }
+    if (mode === PHONE_MODE.GYPSY_POISON_CHECK) {
+      const saved = gypsySessions.current[lineKey] ?? Object.values(gypsySessions.current)
+        .find((entry) => entry.sourcePlayerId === sourcePlayerId);
+      const cached = reconcilePhoneSession(saved ?? null, current.current.world);
+      if (cached) { commit({ ...cached, lineKey, progressOrder, visible: true }); return true; }
+    }
     if (current.current.session?.lineKey === lineKey) { commit(null); return false; }
     const participantIds = getPhoneParticipants(mode, sourcePlayerId, current.current.world);
     if (participantIds.length === 0) return false;
@@ -228,6 +252,9 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const confirmFox = useCallback((targetPlayerId: string) => {
     if (current.current.session?.mode === PHONE_MODE.FOX_TAMER_CHECK) sendGM("confirm", targetPlayerId);
   }, [sendGM]);
+  const confirmGypsy = useCallback((targetPlayerId: string) => {
+    if (current.current.session?.mode === PHONE_MODE.GYPSY_POISON_CHECK) sendGM("confirm", targetPlayerId);
+  }, [sendGM]);
   const resolveColossus = useCallback((sessionId: string, targetPlayerId: string, accepted: boolean) => {
     const latest = reconcilePhoneSession(current.current.session, current.current.world);
     if (!latest || latest.completed || latest.mode !== PHONE_MODE.COLOSSUS_RETALIATION || latest.id !== sessionId || latest.pendingTargetPlayerId !== targetPlayerId) { commit(latest); return; }
@@ -258,10 +285,10 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     current.current.onComplete?.(revealed);
   }, [commit]);
   const close = useCallback(() => commit(null), [commit]);
-  const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; commit(null); }, [commit]);
+  const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; gypsySessions.current = {}; commit(null); }, [commit]);
   const monkeySourceIds = Object.values(monkeySessions.current)
     .filter((entry) => entry.monkeyReveal && entry.sourcePlayerId).map((entry) => entry.sourcePlayerId!);
-  return { session: active, toggle, close, reset, confirmMonkey, confirmFox, sendGM, resolveColossus, resolvePriest, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
+  return { session: active, toggle, close, reset, confirmMonkey, confirmFox, confirmGypsy, sendGM, resolveColossus, resolvePriest, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
 }
 
 export function usePlayerPhoneActions(roomId?: string, playerId?: string) {

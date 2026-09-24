@@ -241,6 +241,9 @@ export interface RulebookUiStrings {
 export interface NightScriptUiStrings {
   dogArticle: string;
   dogHousemaidDistance: string;
+  boyYes: string;
+  boyNo: string;
+  boyIllusion: string;
   mimeOnlyLines: Partial<Record<RoleId, ScriptLine>>;
 }
 
@@ -261,6 +264,14 @@ export interface UIStrings {
     clear: string;
     ranAway: string;
     confused: string;
+  };
+  gypsyReveal: {
+    choose: string;
+    confirm: string;
+    close: string;
+    reopen: string;
+    poisoned: string;
+    clear: string;
   };
   // GM script phone controls, player night modes, and hunt approval dialog.
   phoneActions: {

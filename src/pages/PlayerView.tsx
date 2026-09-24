@@ -31,6 +31,7 @@ import { usePlayerPhoneActions } from "@/hooks/usePhoneActions";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
+import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
 import { usePlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 import { normalizeGameLogSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
 import { isProphecyRetentionActive } from "@/lib/prophecy";
@@ -1117,6 +1118,10 @@ const PlayerView = () => {
                   onConfirm={(id) => phone.send("confirm", id)} onRoleClick={(roleId) => openRulebook(roleId)} />
               ) : phone.session?.mode === PHONE_MODE.FOX_TAMER_CHECK && roomStatus === "playing" ? (
                 <FoxRevealModal key={phone.session.id} session={phone.session} language={language} embedded
+                  pending={phone.pending} connected={phone.connected}
+                  onConfirm={(id) => phone.send("confirm", id)} />
+              ) : phone.session?.mode === PHONE_MODE.GYPSY_POISON_CHECK && roomStatus === "playing" ? (
+                <GypsyRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} />
               ) : phone.session && roomStatus === "playing" && playerId ? (

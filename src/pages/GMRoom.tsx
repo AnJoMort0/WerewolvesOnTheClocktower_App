@@ -18,6 +18,8 @@ import { GMPlayerActionModal, type GMPlayerActionModalMode } from "@/components/
 import { useGMPlayerActionMirrors } from "@/hooks/usePlayerActionMirrors";
 import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
+import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
+import { GMPlayerActionApprovalPanel } from "@/components/game/GMPlayerActionApprovalPanel";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -4583,15 +4585,14 @@ const GMRoom = () => {
         const piroId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "v15" ? sourcePlayerId : getRolePlayerId("v15");
         const targetEffects = playerEffects[targetPlayerId] || new Set();
         if (piroId && isPlayerActingPoisoned(piroId)) {
-          const ownedInnocentTarget = sourcedEffectTargets[piroId]?.acquitted;
-          const acquittedPlayers = players.filter((p) =>
-            playerEffects[p.id]?.has("acquitted")
-            && (!ownedInnocentTarget || p.id === ownedInnocentTarget)
+          const wrongHouseCandidates = players.filter((p) =>
+            !permanentlyDead.has(p.id)
+            && playerStatuses[p.id] !== "dead-this-night"
             && p.id !== piroId
             && p.id !== targetPlayerId
           );
-          if (acquittedPlayers.length > 0) {
-            const victim = acquittedPlayers[Math.floor(Math.random() * acquittedPlayers.length)];
+          if (wrongHouseCandidates.length > 0) {
+            const victim = wrongHouseCandidates[Math.floor(Math.random() * wrongHouseCandidates.length)];
             toggleActionEffect(victim.id, "burned");
             toast.info(format(getToast("infoPiromaniacPoisoned", (room?.language as Language) || "pt"), { name: victim.name }));
           }
@@ -4786,6 +4787,10 @@ const GMRoom = () => {
         monkeyDisabled: independentPowerStates[player.id]?.monkeyDisabled ?? monkeyDisabled,
         colossusReady: colossusReadyPlayerIds.has(player.id), actedTonight: actedTonightPlayerIds.has(player.id), host: effects.has("host"), soldier: effects.has("soldier"),
         lover: effects.has("lover"), identityProtected: effects.has("immunity_cupid"), enemy: effects.has("enemy"),
+        poisoned: poisonedPlayerIds.has(player.id), acquitted: effects.has("acquitted"),
+        acquittedSourceIds: Object.entries(sourcedEffectTargets)
+          .filter(([, targets]) => targets.acquitted === player.id)
+          .map(([sourcePlayerId]) => sourcePlayerId),
         enemySourceIds: Object.entries(dogWolfStates)
           .filter(([, state]) => state.enemyPlayerIds?.includes(player.id))
           .map(([sourcePlayerId]) => sourcePlayerId),
@@ -4796,7 +4801,7 @@ const GMRoom = () => {
         powerless: powerlessPlayerIds.has(player.id),
       };
     }),
-  }), [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, effectiveRoleAssignments, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, powerlessPlayerIds, prophecyGhostPlayerIds, werewolfPackPoisoned]);
+  }), [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, effectiveRoleAssignments, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerIds, powerlessPlayerIds, prophecyGhostPlayerIds, sourcedEffectTargets, werewolfPackPoisoned]);
   const applyPhoneAction = useCallback(({ action, targetPlayerId, targetPlayerIds, sourcePlayerId, monkeyReveal, foxReveal }: PhoneAction) => {
     if (action === PHONE_MODE.MONKEY_TAMER_REVEAL) {
       if (!sourcePlayerId || !monkeyReveal) return;
@@ -4819,6 +4824,12 @@ const GMRoom = () => {
         else setFoxDisabled(true);
       }
       markScriptRoleAction("v04", sourcePlayerId);
+      return;
+    }
+    if (action === PHONE_MODE.GYPSY_POISON_CHECK) {
+      if (!sourcePlayerId) return;
+      handleDragAction("role-v12", targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
+      markScriptRoleAction("v12", sourcePlayerId);
       return;
     }
     if (action === PHONE_MODE.PRIEST_CONFESSION) return;
@@ -5767,7 +5778,9 @@ const GMRoom = () => {
     if (hideScreenMode || room?.status !== "playing") return null;
     return pruneResolvedPlayerActionState(playerActionState).requests[0] ?? null;
   }, [hideScreenMode, playerActionState, pruneResolvedPlayerActionState, room?.status]);
-  const displayedPlayerActionRequest = resolvedPlayerActionNotice?.request ?? pendingPlayerActionRequest;
+  const displayedPlayerActionRequest = hideScreenMode
+    ? null
+    : resolvedPlayerActionNotice?.request ?? pendingPlayerActionRequest;
   const pendingPlayerActionRole = displayedPlayerActionRequest
     ? getPlayerActionRole(displayedPlayerActionRequest.kind)
     : "v10";
@@ -5892,6 +5905,7 @@ const GMRoom = () => {
   phone.monkeySourceIds.forEach((id) => scriptPowerlessPlayerIds.delete(id));
   const phoneView = phone.session && phone.session.mode !== PHONE_MODE.MONKEY_TAMER_REVEAL
     && phone.session.mode !== PHONE_MODE.FOX_TAMER_CHECK
+    && phone.session.mode !== PHONE_MODE.GYPSY_POISON_CHECK
     ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
   const playerActionModal: GMPlayerActionModalMode | null = completedPlayerActionMirror ?? actionMirrors.mode;
 
@@ -5909,6 +5923,11 @@ const GMRoom = () => {
         <FoxRevealModal key={phone.session.id}
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
           language={lang} onConfirm={phone.confirmFox} onClose={phone.close} />
+      )}
+      {phone.session?.mode === PHONE_MODE.GYPSY_POISON_CHECK && !hideScreenMode && (
+        <GypsyRevealModal key={phone.session.id}
+          session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
+          language={lang} onConfirm={phone.confirmGypsy} onClose={phone.close} />
       )}
       {phoneView && phone.session && !hideScreenMode && !displayedPlayerActionRequest && (
         <GMPhoneActionModal session={phone.session} view={phoneView} language={lang}
@@ -5929,60 +5948,6 @@ const GMRoom = () => {
             actionMirrors.close(mode);
             void resolvePlayerActionRequest({ ...createPlayerActionRequest(mode.kind, mode.actorPlayerId, targetPlayerId), id: mode.id }, true);
           }} />
-      )}
-      {displayedPlayerActionRequest && (
-        <Dialog
-          open
-          onOpenChange={() => undefined}
-        >
-          <DialogContent
-            className="border-destructive/50 [&>button]:hidden"
-            onEscapeKeyDown={(event) => event.preventDefault()}
-            onPointerDownOutside={(event) => event.preventDefault()}
-          >
-            <DialogHeader>
-              <DialogTitle className="font-display text-2xl text-destructive">
-                {tt("gmPlayerActionTitle")}
-              </DialogTitle>
-              <DialogDescription>
-                {pendingPlayerActionDescription}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:space-x-0">
-              {resolvedPlayerActionNotice ? <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setResolvedPlayerActionNotice(null)}
-                className="font-display"
-              >
-                {tt("close")}
-              </Button> : <>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setResolvedPlayerActionNotice({ request: displayedPlayerActionRequest, accepted: false });
-                  void resolvePlayerActionRequest(displayedPlayerActionRequest, false);
-                }}
-                className="font-display"
-              >
-                {tt("gmDenyAction")}
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => {
-                  setResolvedPlayerActionNotice({ request: displayedPlayerActionRequest, accepted: true });
-                  void resolvePlayerActionRequest(displayedPlayerActionRequest, true);
-                }}
-                className="font-display"
-              >
-                {tt("gmAcceptAction")}
-              </Button>
-              </>}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       )}
       <div className="w-full space-y-6">
         {/* Header */}
@@ -6129,6 +6094,7 @@ const GMRoom = () => {
         {isPlaying ? (
           <>
             {/* Circle - full width when playing */}
+            <div className="relative w-full">
             <div className="w-full flex justify-center overflow-x-auto">
               {players.length > 0 ? (
                 <PlayerCircle
@@ -6232,6 +6198,26 @@ const GMRoom = () => {
                   <p className="text-muted-foreground font-display text-lg">{tt("waitingForPlayers")}</p>
                 </motion.div>
               )}
+            </div>
+            {displayedPlayerActionRequest && (
+              <GMPlayerActionApprovalPanel
+                title={tt("gmPlayerActionTitle")}
+                description={pendingPlayerActionDescription}
+                acceptLabel={tt("gmAcceptAction")}
+                denyLabel={tt("gmDenyAction")}
+                closeLabel={tt("close")}
+                resolved={!!resolvedPlayerActionNotice}
+                onClose={() => setResolvedPlayerActionNotice(null)}
+                onDeny={() => {
+                  setResolvedPlayerActionNotice({ request: displayedPlayerActionRequest, accepted: false });
+                  void resolvePlayerActionRequest(displayedPlayerActionRequest, false);
+                }}
+                onAccept={() => {
+                  setResolvedPlayerActionNotice({ request: displayedPlayerActionRequest, accepted: true });
+                  void resolvePlayerActionRequest(displayedPlayerActionRequest, true);
+                }}
+              />
+            )}
             </div>
 
             {/* Below circle: Script left, Player list right */}

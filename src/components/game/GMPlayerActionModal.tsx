@@ -4,7 +4,7 @@ import { getTranslation, t, type Language } from "@/lib/i18n";
 import type { PlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 import type { PhoneView } from "@/lib/phoneActions";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
-import { RotateCcw, Target, Waypoints } from "lucide-react";
+import { Crosshair, RotateCcw, Waypoints } from "lucide-react";
 
 export type GMPlayerActionModalMode = PlayerActionMirror & { completedTargetPlayerId?: string };
 
@@ -33,7 +33,7 @@ export function GMPlayerActionModal({ mode, players, language, onClose, onConfir
     onClose={onClose} closeLabel={getTranslation(language).ui.phoneActions.close}>
     <PhoneActionScreen key={mode.id} session={view} playerId="gm" language={language} pending={false} connected gmControlled showHeader={false}
       unframed
-      appearance={{ title, icon: resurrect ? RotateCcw : web ? Waypoints : Target,
+      appearance={{ title, icon: resurrect ? RotateCcw : web ? Waypoints : Crosshair,
         border: resurrect ? "border-emerald-500/50 ring-emerald-500/10" : web ? "border-cyan-500/50 ring-cyan-500/10" : "border-destructive/50 ring-destructive/10",
         accent: resurrect ? "text-emerald-300" : web ? "text-cyan-300" : "text-destructive" }}
       confirmLabel={t(resurrect ? "resurrectPlayer" : web ? "changeWeb" : "assassinationConfirm", language)}

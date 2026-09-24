@@ -247,7 +247,7 @@ describe("NightScript phone controls", () => {
     expect(onPhoneToggle).not.toHaveBeenCalledWith(PHONE_MODE.SHAMAN_SAVE, expect.any(String), "shaman", expect.anything());
   });
 
-  it("uses the Target icon for the pack hunt action", () => {
+  it("uses the Crosshair icon for the pack hunt action", () => {
     const { container } = render(<NightScript {...baseProps}
       activeRoles={new Set(["e01"])}
       roleAssignments={{ wolf: "e01" }}
@@ -255,7 +255,7 @@ describe("NightScript phone controls", () => {
       onPhoneToggle={vi.fn()}
     />);
 
-    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT)} .lucide-target`)).toBeInTheDocument();
+    expect(container.querySelector(`${phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT)} .lucide-crosshair`)).toBeInTheDocument();
   });
 
   it("uses a shield instead of the generic revolving arrow for the Captain", () => {
@@ -612,6 +612,34 @@ describe("NightScript conditional behavior", () => {
       </LanguageContext.Provider>,
     );
     expect(container.textContent).toContain("indica 3 vizinhos");
+  });
+
+  it("writes the Boy's YES, NO, and ILLUSION answers into the script line and reverses ordinary answers when poisoned", () => {
+    const props = {
+      ...baseProps,
+      activeRoles: new Set(["v22" as const, "e01" as const, "v01" as const]),
+      roleAssignments: { boy: "v22" as const, wolf: "e01" as const, villager: "v01" as const, illusion: "v01" as const },
+      abilityRoleAssignments: { boy: "v22" as const, wolf: "e01" as const, villager: "v01" as const, illusion: "v01" as const },
+      objectiveRoleAssignments: { boy: "v22" as const, wolf: "e01" as const, villager: "v01" as const, illusion: "v01" as const },
+      players: [
+        { id: "boy", name: "Boy", seat_position: 0 },
+        { id: "wolf", name: "Wolf", seat_position: 1 },
+        { id: "villager", name: "Villager", seat_position: 2 },
+        { id: "illusion", name: "Hidden", seat_position: 3 },
+      ],
+      playerEffects: {
+        wolf: new Set(["accused"]), villager: new Set(["accused"]), illusion: new Set(["accused"]),
+      },
+      illusionPlayerIds: new Set(["illusion"]),
+    };
+    const { container, rerender } = render(
+      <LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>,
+    );
+    expect(container.textContent).toContain("Wolf: YES, Villager: NO, Hidden: ILLUSION");
+
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props}
+      poisonedPlayerId="boy" poisonedPlayerIds={new Set(["boy"])} /></LanguageContext.Provider>);
+    expect(container.textContent).toContain("Wolf: NO, Villager: YES, Hidden: ILLUSION");
   });
 
   it("makes only Cupid's first-night line draggable", () => {

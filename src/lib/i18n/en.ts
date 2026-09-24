@@ -95,8 +95,8 @@ export const en: Translation = {
       { text: "The {Evil Witch} wakes up and chooses a player to poison tonight.", requires: ["e02"], phoneMode: PHONE_MODE.EVIL_WITCH_POISON },
       { text: "The {Vintner} wakes up and chooses a player to poison; that player also receives immunity.", requires: ["v24"], phoneMode: PHONE_MODE.VINTNER_POISON },
       { text: "The {Housemaid} wakes up and learns the distance to the poisoned player.", requires: ["v20"], conditionKey: "houseMaidVisible" },
-      { text: "The {Pyromaniac} wakes up. The players acquitted at the previous Tribunal are shown. By pointing at one of them or showing a thumbs-down, the {Pyromaniac} decides whether to set one of their homes on fire.", requires: ["v15"], conditionKey: "pyromaniacVisible" },
-      { text: "The {Gypsy} wakes up and indicates 3 neighboring players. If one of them is poisoned, that player loses the poison and the {Gypsy} becomes poisoned instead.", requires: ["v12"], conditionKey: "poisonedCharacterPresent" },
+      { text: "The {Pyromaniac} wakes up. The players acquitted at the previous Tribunal are shown. By pointing at one of them or showing a thumbs-down, the {Pyromaniac} decides whether to set one of their homes on fire.", requires: ["v15"], conditionKey: "pyromaniacVisible", phoneMode: PHONE_MODE.PYROMANIAC_BURN },
+      { text: "The {Gypsy} wakes up and indicates 3 neighboring players. If one of them is poisoned, that player loses the poison and the {Gypsy} becomes poisoned instead.", requires: ["v12"], conditionKey: "poisonedCharacterPresent", phoneMode: PHONE_MODE.GYPSY_POISON_CHECK },
       { text: "The {Illusionist} wakes up and indicates the player whose identity will be obscured.", requires: ["a06"], phoneMode: PHONE_MODE.ILLUSIONIST_HIDE },
       { text: "(Someone died) The {Fortune Teller} wakes up and is shown the roles of those who died yesterday.", requires: ["e04"] },
       { text: "The {Spy} wakes up and is shown a role that is in play.", requires: ["f02"], conditionKey: "spyHasUnseen" },
@@ -147,21 +147,29 @@ export const en: Translation = {
 
   ui: {
     monkeyReveal: {
-      choose: "Choose a player to see their card.",
+      choose: "Choose a player.",
       confirm: "Reveal card",
       close: "Close",
       reopen: "Reopen card",
       noCard: "No card is available. Ask the Game Master.",
     },
     foxReveal: {
-      choose: "Choose a trio of players to inspect.",
+      choose: "Choose a trio of players.",
       confirm: "Check these players",
       close: "Close",
       reopen: "Reopen result",
       evil: "Yes — one of them is an Evil Being.",
       clear: "No — none of them is an Evil Being.",
       ranAway: "The Fox ran away. The Fox Tamer has lost their power.",
-      confused: "The Fox is confused by an Illusion.",
+      confused: "The Fox is confused.",
+    },
+    gypsyReveal: {
+      choose: "Choose a trio of players.",
+      confirm: "Drink from these players",
+      close: "Close",
+      reopen: "Reopen result",
+      poisoned: "Yes — one of them is poisoned.",
+      clear: "No — none of them is poisoned.",
     },
     // GM phone controls and player night action screens.
     phoneActions: {
@@ -600,6 +608,9 @@ export const en: Translation = {
     // Night script helper lines created by the UI.
     nightScript: {
       dogArticle: "The",
+      boyYes: "YES",
+      boyNo: "NO",
+      boyIllusion: "ILLUSION",
       dogHousemaidDistance: "The {Dog} wakes up and learns the distance to the poisoned player",
       mimeOnlyLines: {
         v10: {
