@@ -897,7 +897,10 @@ export const NightScript = ({
   };
 
   const getBoyDynamicText = (line: ScriptLine, sourcePlayerId: string): string | undefined => {
-    const accusedPlayers = players.filter((player) => _playerEffects[player.id]?.has("accused"));
+    // `accused_next` is the target selected at the most recent Tribunal and is
+    // the information the Boy receives tonight. `accused` is only the lasting
+    // history marker that prevents the Boy from selecting that player again.
+    const accusedPlayers = players.filter((player) => _playerEffects[player.id]?.has("accused_next"));
     if (accusedPlayers.length === 0) return undefined;
     const sourcePoisoned = isPlayerActingPoisoned(sourcePlayerId);
     const labels = getTranslation(lang).ui.nightScript;

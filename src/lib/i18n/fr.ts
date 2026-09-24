@@ -344,7 +344,7 @@ export const fr: Translation = {
       immunity_full: "Immunité Totale",
       prophecy: "Prophétie",
       accused: "Accusé",
-      accused_next: "Accusé",
+      accused_next: "Accusé au dernier Tribunal",
       werewolf_turned: "Transformé en Loup-garou",
       enemy: "Ennemi",
       immunity_onetime: "Immunité Unique",

@@ -15,7 +15,7 @@ import asleepIcon from "@/assets/display/icons/asleep.webp";
 import immunityFullIcon from "@/assets/display/icons/imunity_full.webp";
 import ghostProphecyIcon from "@/assets/display/icons/ghost_prophecy.webp";
 import voteAccusedIcon from "@/assets/display/icons/vote_accused.webp";
-import voteAccusedLastNightIcon from "@/assets/display/icons/vote_accused_last_nigt.webp";
+import voteAccusedLastTribunalIcon from "@/assets/display/icons/vote_accused_last_nigt.webp";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import enemyIcon from "@/assets/display/icons/enemy.webp";
 import immunityOnetimeIcon from "@/assets/display/icons/imunity_onetime.webp";
@@ -51,7 +51,7 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   immunity_full: immunityFullIcon,
   prophecy: ghostProphecyIcon,
   accused: voteAccusedIcon,
-  accused_next: voteAccusedLastNightIcon,
+  accused_next: voteAccusedLastTribunalIcon,
   werewolf_turned: werewolfIcon,
   enemy: enemyIcon,
   immunity_onetime: immunityOnetimeIcon,

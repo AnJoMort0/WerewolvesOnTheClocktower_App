@@ -2940,6 +2940,8 @@ const GMRoom = () => {
     const newEffects = { ...newEffectsForTetanus };
     for (const [pid, effects] of Object.entries(newEffects)) {
       const cleaned = new Set(effects);
+      // The Boy has now received tonight's answer. Preserve a history marker
+      // so this player cannot be brought to Tribunal by the Boy again.
       if (cleaned.has("accused_next")) {
         cleaned.delete("accused_next");
         cleaned.add("accused");

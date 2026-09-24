@@ -127,6 +127,24 @@ describe("random assignment eligibility", () => {
     }
   });
 
+  it("keeps extra Evil Beings out of drafts below twelve players", () => {
+    const extraEvilRoles = ["m01", "m02", "m03", "m04", "m05", "s02", "a06"] as const;
+    for (const role of extraEvilRoles) {
+      expect(canRandomlyAssignRole(role, [], 11)).toBe(false);
+    }
+    for (const role of ["m01", "m02", "m03", "m04", "m05", "a06"] as const) {
+      expect(canRandomlyAssignRole(role, [], 12)).toBe(true);
+    }
+
+    for (const count of [8, 9, 10, 11]) {
+      for (let draw = 0; draw < 50; draw++) {
+        const roles = assignRoles(count, true);
+        expect(roles.filter((role) => extraEvilRoles.includes(role as typeof extraEvilRoles[number]))).toEqual([]);
+        expect(roles).toContain("e02");
+      }
+    }
+  });
+
   it("keeps every generated lot valid, including linked roles and families", () => {
     for (const count of [8, 11, 12, 16, 19, 20, 40, 60]) {
       for (let draw = 0; draw < 40; draw++) {

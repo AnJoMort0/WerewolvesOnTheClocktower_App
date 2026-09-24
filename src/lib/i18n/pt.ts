@@ -344,7 +344,7 @@ export const pt: Translation = {
       immunity_full: "Imunidade Total",
       prophecy: "Profecia",
       accused: "Acusado",
-      accused_next: "Acusado",
+      accused_next: "Acusado no último Tribunal",
       werewolf_turned: "Virar Lobisomem",
       enemy: "Inimigo",
       immunity_onetime: "Imunidade Única",

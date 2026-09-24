@@ -344,7 +344,7 @@ export const en: Translation = {
       immunity_full: "Full Immunity",
       prophecy: "Prophecy",
       accused: "Accused",
-      accused_next: "Accused",
+      accused_next: "Accused last Tribunal",
       werewolf_turned: "Turned Werewolf",
       enemy: "Enemy",
       immunity_onetime: "One-Time Immunity",

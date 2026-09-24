@@ -35,11 +35,14 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
     : session.mode === PHONE_MODE.WEREWOLF_HUNT ? text.hunt
     : session.mode === PHONE_MODE.WEREWOLF_ALLIES ? text.allies
     : session.mode === PHONE_MODE.EVIL_WITCH_POISON ? text.poison : text.shaman;
-  const showsSelection = session.mode === PHONE_MODE.PRIEST_CONFESSION || session.mode === PHONE_MODE.SPIDER_TAMER_WEB
-    || session.mode === PHONE_MODE.SLEEPWALKER_VISIT || roleAction;
-  const subtitle = proposal ? format(showsSelection ? text.selection
-    : session.mode === PHONE_MODE.WEREWOLF_HUNT && !session.sourcePlayerId ? text.huntRequest : text.soloHuntRequest,
-  { actor: name(session.sourcePlayerId), target: name(proposal) })
+  const requiresApproval = session.mode === PHONE_MODE.WEREWOLF_HUNT || session.mode === PHONE_MODE.COLOSSUS_RETALIATION
+    || session.mode === PHONE_MODE.PRIEST_CONFESSION;
+  const proposalText = session.mode === PHONE_MODE.WEREWOLF_HUNT
+    ? session.sourcePlayerId ? text.soloHuntRequest : text.huntRequest
+    : session.mode === PHONE_MODE.COLOSSUS_RETALIATION
+    ? text.soloHuntRequest
+    : text.selection;
+  const subtitle = proposal ? format(proposalText, { actor: name(session.sourcePlayerId), target: name(proposal) })
     : session.priestReveal ? format(text.selection, { actor: name(session.sourcePlayerId), target: name(session.priestReveal.targetPlayerId) })
     : session.mode === PHONE_MODE.WEREWOLF_HUNT ? text.huntVotes
     : session.mode === PHONE_MODE.COLOSSUS_RETALIATION ? text.colossusInstructions : undefined;
@@ -49,8 +52,6 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
     else if (session.mode === PHONE_MODE.PRIEST_CONFESSION) onResolvePriest(session.id, proposal, accepted);
     else onResolveHunt(session.id, proposal, accepted);
   };
-  const requiresApproval = session.mode === PHONE_MODE.WEREWOLF_HUNT || session.mode === PHONE_MODE.COLOSSUS_RETALIATION
-    || session.mode === PHONE_MODE.PRIEST_CONFESSION;
   return <GameModal open onClose={onClose} title={title} subtitle={subtitle}
     closeLabel={text.close} dismissible={false} showCloseButton
     footer={proposal && requiresApproval && !session.completed && !session.approvalResult ? <div className="flex flex-wrap justify-end gap-2">

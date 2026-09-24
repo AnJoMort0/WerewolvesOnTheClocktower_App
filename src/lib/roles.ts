@@ -200,6 +200,9 @@ export function canRandomlyAssignRole(id: RoleId, roles: readonly RoleId[], play
   const prerequisite = ROLES[id].requires;
   // Linked cards must have their parent: Red Hood/Hunter and Secret Lover/Cupid.
   if (prerequisite && !roles.includes(prerequisite)) return false;
+  // Small games keep only the core Werewolves and Evil Witch. Additional Evil
+  // Beings enter the automatic draft from twelve players onward.
+  if (playerCount < 12 && EVIL_ROLES.includes(id) && id !== "e01" && id !== "e02") return false;
   // Little Girl needs two distinct extra characters that can explain a death.
   if (id === "v01") return roles.filter((role) => EXTRA_DEATH_ROLES.includes(role)).length >= 2;
   // Puppeteer's false pack identity needs a village of at least twelve.

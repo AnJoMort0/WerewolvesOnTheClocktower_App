@@ -626,9 +626,11 @@ describe("NightScript conditional behavior", () => {
         { id: "wolf", name: "Wolf", seat_position: 1 },
         { id: "villager", name: "Villager", seat_position: 2 },
         { id: "illusion", name: "Hidden", seat_position: 3 },
+        { id: "historical", name: "Old target", seat_position: 4 },
       ],
       playerEffects: {
-        wolf: new Set(["accused"]), villager: new Set(["accused"]), illusion: new Set(["accused"]),
+        wolf: new Set(["accused_next"]), villager: new Set(["accused_next"]), illusion: new Set(["accused_next"]),
+        historical: new Set(["accused"]),
       },
       illusionPlayerIds: new Set(["illusion"]),
     };
@@ -636,6 +638,7 @@ describe("NightScript conditional behavior", () => {
       <LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>,
     );
     expect(container.textContent).toContain("Wolf: YES, Villager: NO, Hidden: ILLUSION");
+    expect(container.textContent).not.toContain("Old target:");
 
     rerender(<LanguageContext.Provider value="en"><NightScript {...props}
       poisonedPlayerId="boy" poisonedPlayerIds={new Set(["boy"])} /></LanguageContext.Provider>);

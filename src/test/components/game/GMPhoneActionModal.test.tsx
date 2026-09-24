@@ -42,6 +42,18 @@ describe("usable GM action mirrors", () => {
   });
 
   it.each([
+    PHONE_MODE.EVIL_WITCH_POISON,
+    PHONE_MODE.SHAMAN_SAVE,
+    PHONE_MODE.SAVIOUR_PROTECT,
+  ] as const)("describes a submitted %s action as a selection rather than a kill approval", (mode) => {
+    render(<GMPhoneActionModal session={{ ...session, mode, pendingTargetPlayerId: "target", completed: true }}
+      view={{ ...view, mode, pendingTargetPlayerId: "target", completed: true }} language="en"
+      onClose={vi.fn()} onSend={vi.fn()} onResolveHunt={vi.fn()} onResolveColossus={vi.fn()} onResolvePriest={vi.fn()} />);
+    expect(screen.getByRole("dialog")).toHaveTextContent("Actor selected Target.");
+    expect(screen.getByRole("dialog")).not.toHaveTextContent("Accept the kill?");
+  });
+
+  it.each([
     PHONE_MODE.SPIDER_TAMER_WEB,
     PHONE_MODE.SLEEPWALKER_VISIT,
   ] as const)("keeps a submitted %s selection visible without approval controls", (mode) => {

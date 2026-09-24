@@ -13,12 +13,11 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [x] If a player tagged with profecy dies the night they where tagged, they keep their power for an extra day and night, which currently keeps their script for one more night, but players that act during the day (for example the angel and the paranoid) should be able to still act on their devices the day after their death. In the case of the angel, he should even be able ressurect himself.
+* [ ] 
 
 ## Fixes
 
-* [x] Add Monkey Tamer to Drunkard's choices
-* [x] The GM accepting pop-up from the Paranoid, the Angel and the Spider Tamer and other non script phone actions (and for future ones), should not hide the player circle, it actually should appear next/pop-up near the player's circle, because the idea is for the GM to see what's going on before accepting anything, to check that it is a valid action. Also this pop-up should not appear when the GM device is in hidden mode, it should only appear once the hidden mode is disabled
+* [ ] 
 
 ## Balance Changes
 
@@ -27,9 +26,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 ## Additions
 
 * [ ] Adding phone interactions for each character, making sure they are compatible with copying characters, illusionist when needed and their poison effects:
-  * [x] v12: same selection as the Fox Tamer, with once confirmed, tells either one of those 3 character were posioned and it automatically applies the poison effect to the Gypsy like described in her character rules
-  * [x] v15: follow the current rules for whom the pyromaniac can burn for his selection
-* [x] v22's script line could already give the GM the answer they should give: "[script line] ({player tagged with vote accused last night} : YES, {player... accused last night} : NO, {player... accused last night} : ILLUSION)
+  * [ ] 
   
 ## Future Plans
 
