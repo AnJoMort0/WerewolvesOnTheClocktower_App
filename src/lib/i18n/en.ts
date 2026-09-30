@@ -65,6 +65,7 @@ export const en: Translation = {
   scripts: {
     firstNight: [
       { text: "There will be no deaths tonight." },
+      { text: "The {Gambler} wakes up, points at a player, and discreetly asks the Narrator whether that player has a specific role.", requires: ["t02"] },
       { text: "{Cupid} wakes up and chooses two players who will become Lovers. {Cupid} goes back to sleep, and the Lovers are now touched so they can wake up and get to know each other. If one Lover dies, the other commits suicide. The goal of the Lovers and {Cupid} is for the Lovers to be the last survivors. The game continues for as long as both Lovers are alive.", requires: ["s01"], phoneMode: PHONE_MODE.CUPID_PAIR },
       { text: "{Evil Cupid} wakes up and chooses two players who will become Enemies. {Evil Cupid} goes back to sleep, and the Enemies are touched so they can wake up and get to know each other. If one Enemy manages to have the other condemned to execution, the first gains immunity from the next assassination attempt.", requires: ["m05"], phoneMode: PHONE_MODE.EVIL_CUPID_PAIR },
       { text: "The {Sisters} wake up to see each other.", requires: ["l03"] },
@@ -86,6 +87,7 @@ export const en: Translation = {
       { text: "The Werewolves wake up and are shown the Evil Beings.", phoneMode: PHONE_MODE.WEREWOLF_ALLIES },
     ],
     normalNight: [
+      { text: "The {Gambler} wakes up, points at a player, and discreetly asks the Narrator whether that player has a specific role.", requires: ["t02"] },
       { text: "The {Spider Tamer} wakes up and chooses a new player on whom to weave a web.", requires: ["v23"], conditionKey: "spiderWebbedDied", phoneMode: PHONE_MODE.SPIDER_TAMER_WEB },
       { text: "(The {Hunter} died) The {Hunter}'s Ghost wakes up and chooses whom to assassinate.", requires: ["v08"], conditionKey: "hunterDied", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
       { text: "({Little Red Riding Hood} was executed) The {Hunter} wakes up furious and chooses whom to assassinate.", requires: ["v08"], conditionKey: "redHoodExecuted", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
@@ -496,6 +498,7 @@ export const en: Translation = {
     },
     uses: "Uses:",
     powerExhausted: "Power exhausted",
+    actionUsed: "Action used",
     keepsPowers: "Keeps powers",
     diedOfTetanus: "died of Tetanus.",
     diedSimple: "died.",
@@ -578,6 +581,7 @@ export const en: Translation = {
         illusion: "Illusion",
         effect_add: "Effect applied",
         role_change: "Card changed",
+        traveller_join: "Traveller joined",
         game_over: "Game over",
       },
     },

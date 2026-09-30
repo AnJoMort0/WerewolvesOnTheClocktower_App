@@ -26,6 +26,20 @@ const baseProps = {
 const phoneModeSelector = (mode: string) => `[data-phone-mode="${mode}"]`;
 
 describe("NightScript phone controls", () => {
+  it("gives the Gambler a GM-only suicide action", () => {
+    const onGamblerSuicide = vi.fn();
+    const { getByRole } = render(<LanguageContext.Provider value="en"><NightScript
+      {...baseProps}
+      activeRoles={new Set(["t02"])}
+      roleAssignments={{ gambler: "t02" }}
+      abilityRoleAssignments={{ gambler: "t02" }}
+      players={[{ id: "gambler", name: "Gambler", seat_position: 0 }]}
+      onGamblerSuicide={onGamblerSuicide}
+    /></LanguageContext.Provider>);
+    fireEvent.click(getByRole("button", { name: "Kill" }));
+    expect(onGamblerSuicide).toHaveBeenCalledWith("gambler");
+  });
+
   it("opens Sleepwalker and Priest actions, but not a poisoned Priest action", () => {
     const onPhoneToggle = vi.fn();
     const props = { ...baseProps, nightNumber: 3,

@@ -66,6 +66,42 @@ describe("PlayerCircle drag and power controls", () => {
     expect(onInsertPlayer).toHaveBeenCalledWith("traveller", 0);
   });
 
+  it("lets any lobby player be dropped between occupied seats", () => {
+    const onInsertPlayer = vi.fn();
+    const { getByLabelText } = render(<PlayerCircle
+      isGM
+      totalSlots={3}
+      allowSeatDrag
+      onInsertPlayer={onInsertPlayer}
+      onDropPlayer={vi.fn()}
+      players={[
+        { id: "alice", name: "Alice", seat_position: 0, character: null, is_alive: true },
+        { id: "bob", name: "Bob", seat_position: 1, character: null, is_alive: true },
+        { id: "charlie", name: "Charlie", seat_position: null, character: null, is_alive: true },
+      ]}
+    />);
+    const dataTransfer = { getData: (key: string) => key === "playerId" ? "charlie" : "", setData: vi.fn(), effectAllowed: "" };
+    fireEvent.drop(getByLabelText("Insert after seat 1"), { dataTransfer });
+    expect(onInsertPlayer).toHaveBeenCalledWith("charlie", 0);
+  });
+
+  it("makes an unused Gunslinger draggable and disables the drag after use", () => {
+    const player = { id: "gunslinger", name: "Gunslinger", seat_position: 0, character: "t03", is_alive: true };
+    const props = { isGM: true, isPlaying: true, totalSlots: 1, onDropPlayer: vi.fn(), players: [player],
+      roleAssignments: { gunslinger: "t03" as const }, abilityRoleAssignments: { gunslinger: "t03" as const },
+      onTravellerPowerUsedToggle: vi.fn() };
+    const { container, getByRole, rerender } = render(<PlayerCircle {...props} usedTravellerPowerIds={new Set()} />);
+    const draggable = container.querySelector<HTMLElement>('[draggable="true"]')!;
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    fireEvent.dragStart(draggable, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-t03");
+    expect(getByRole("checkbox", { name: "Ação usada" })).not.toBeChecked();
+
+    rerender(<PlayerCircle {...props} usedTravellerPowerIds={new Set(["gunslinger"])} />);
+    expect(container.querySelector('[draggable="true"]')).toBeNull();
+    expect(getByRole("checkbox", { name: "Ação usada" })).toBeChecked();
+  });
+
   it("allows restoring exhausted powers independently without changing player status", () => {
     const onMonkeyDisabledToggle = vi.fn(), onIndependentPowerStateChange = vi.fn(), onPlayerStatusChange = vi.fn();
     const { getAllByRole, rerender } = render(<PlayerCircle isGM isPlaying totalSlots={2}

@@ -1288,33 +1288,40 @@ const PlayerView = () => {
                       const cy = r * Math.sin(angle) + 140;
                       const isMe = p.id === playerId;
                       const pDead = !p.is_alive;
+                      const publicTravellerRole = p.is_traveller && p.traveller_role && ROLES[p.traveller_role as RoleId]
+                        ? p.traveller_role as RoleId
+                        : null;
                       return (
                         <div
                           key={p.id}
                           className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
                           style={{ left: cx, top: cy }}
                         >
-                          <div className={`relative w-9 h-9 rounded-full border-2 flex items-center justify-center ${isMe ? "border-primary bg-primary/20" : "border-border/50 bg-card"} ${pDead ? "opacity-40 grayscale" : ""}`}>
-                            <span className="font-display text-xs font-bold">
-                              {p.name.charAt(0).toUpperCase()}
-                            </span>
+                          <button
+                            type="button"
+                            onClick={publicTravellerRole ? () => openRulebook(publicTravellerRole) : undefined}
+                            disabled={!publicTravellerRole}
+                            aria-label={publicTravellerRole ? getRoleLabel(publicTravellerRole, language) : undefined}
+                            className={`relative w-9 h-9 overflow-hidden rounded-full border-2 flex items-center justify-center ${isMe ? "border-primary bg-primary/20" : "border-border/50 bg-card"} ${pDead ? "opacity-40 grayscale" : ""} ${publicTravellerRole ? "cursor-pointer" : "cursor-default"}`}
+                          >
+                            {publicTravellerRole ? (
+                              <img
+                                src={ROLES[publicTravellerRole].image}
+                                alt={getRoleLabel(publicTravellerRole, language)}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="font-display text-xs font-bold">
+                                {p.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
                             {pDead && (
                               <X className="absolute w-6 h-6 text-muted-foreground" strokeWidth={3} />
                             )}
-                          </div>
+                          </button>
                           <span className={`text-[10px] font-body truncate max-w-[60px] mt-0.5 ${pDead ? "text-muted-foreground/50" : ""}`}>
                             {p.name}
                           </span>
-                          {p.is_traveller && p.traveller_role && ROLES[p.traveller_role as RoleId] && (
-                            <button
-                              type="button"
-                              onClick={() => openRulebook(p.traveller_role as RoleId)}
-                              className="mt-0.5 flex items-center gap-1 rounded border border-gold/50 bg-gold/10 px-1 py-0.5 text-[8px] text-gold"
-                            >
-                              <img src={ROLES[p.traveller_role as RoleId].image} alt="" className="h-3.5 w-3.5 rounded-sm" />
-                              <span className="max-w-12 truncate">{getRoleLabel(p.traveller_role as RoleId, language)}</span>
-                            </button>
-                          )}
                         </div>
                       );
                     })}

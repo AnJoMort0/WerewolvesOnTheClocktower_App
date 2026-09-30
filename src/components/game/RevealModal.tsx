@@ -47,6 +47,7 @@ export function resolveKillerCard(
     const illusionRole = roleAssignments[illusionPlayerId];
     const sourceRole = source === "soldier" || source === "soldado" ? "v09"
       : source === "s01-suicide" ? "s01"
+      : source === "t02-suicide" ? "t02"
       : source;
     if (illusionRole === sourceRole) {
       const role = ROLES["a06"];
@@ -60,6 +61,10 @@ export function resolveKillerCard(
   if (source === "s01-suicide") {
     const role = ROLES["s01"];
     return { image: role.image, label: t("littleGirlSuicide", lang), roleId: "s01" };
+  }
+  if (source === "t02-suicide") {
+    const role = ROLES["t02"];
+    return { image: role.image, label: t("littleGirlSuicide", lang), roleId: "t02" };
   }
   if (source === "e01") {
     const role = ROLES["e01"];

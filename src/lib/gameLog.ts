@@ -13,6 +13,7 @@ export type GameLogAction =
   | "illusion"
   | "effect_add"
   | "role_change"
+  | "traveller_join"
   | "game_over";
 
 export type GameLogPlayerSnapshot = {

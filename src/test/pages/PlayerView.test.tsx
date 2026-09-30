@@ -179,4 +179,19 @@ describe("player recovery and room isolation", () => {
     expect(screen.getAllByText("Lawyer").length).toBeGreaterThan(0);
     expect(screen.getByText("The Werewolves are marked below.")).toBeInTheDocument();
   });
+
+  it("uses the public Traveller card in place of the player's initial", async () => {
+    backend.state.traveller = true;
+    backend.state.travellerState = "placed";
+    backend.state.travellerRole = "t03";
+    backend.state.travellerAlignment = "villager";
+    backend.state.character = encodePlayerCharacterMetadata("t03", {});
+
+    showPlayer();
+    await loaded();
+    fireEvent.click(screen.getByRole("button", { name: "Hide Role" }));
+    const publicCard = await screen.findByRole("button", { name: "Gunslinger" });
+    expect(publicCard.querySelector("img")).toHaveAttribute("alt", "Gunslinger");
+    expect(publicCard.textContent).toBe("");
+  });
 });

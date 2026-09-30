@@ -236,6 +236,7 @@ type GMSnapshot = {
   completedScriptLineKeys: string[];
   completedScriptLineActors?: Record<string, string[]>;
   colossusUsedPlayerIds?: string[];
+  usedTravellerPowerIds?: string[];
   colossusNightSeed?: number;
   werewolfDeathFlags?: Record<string, boolean>;
   gameLogEvents: GameLogEvent[];
@@ -575,6 +576,7 @@ const GMRoom = () => {
   const colossusUsedRef = useRef(colossusUsedPlayerIds);
   colossusUsedRef.current = colossusUsedPlayerIds;
   const [colossusNightSeed, setColossusNightSeed] = useState(Math.random);
+  const [usedTravellerPowerIds, setUsedTravellerPowerIds] = useState<Set<string>>(new Set());
   const [werewolfDeathFlags, setWerewolfDeathFlags] = useState<Record<string, boolean>>({});
   const monkeyDragRef = useRef<(sourcePlayerId: string, targetPlayerId: string) => void>(() => {});
   const scriptLinesRef = useRef<import("@/components/game/NightScript").ScriptActionLine[]>([]);
@@ -1402,6 +1404,7 @@ const GMRoom = () => {
       setCompletedScriptLineKeys(new Set(snapshot.completedScriptLineKeys ?? []));
       setCompletedScriptLineActors(snapshot.completedScriptLineActors ?? {});
       setColossusUsedPlayerIds(new Set(snapshot.colossusUsedPlayerIds ?? []));
+      setUsedTravellerPowerIds(new Set(snapshot.usedTravellerPowerIds ?? []));
       setColossusNightSeed(snapshot.colossusNightSeed ?? Math.random());
       setWerewolfDeathFlags(snapshot.werewolfDeathFlags ?? {});
       setGameLogEvents(normalizeGameLogEvents(snapshot.gameLogEvents));
@@ -1480,6 +1483,7 @@ const GMRoom = () => {
       completedScriptLineKeys: Array.from(completedScriptLineKeys),
       completedScriptLineActors,
       colossusUsedPlayerIds: Array.from(colossusUsedPlayerIds),
+      usedTravellerPowerIds: Array.from(usedTravellerPowerIds),
       colossusNightSeed,
       werewolfDeathFlags,
       monkeyDisabled,
@@ -1553,6 +1557,7 @@ const GMRoom = () => {
     completedScriptLineKeys,
     completedScriptLineActors,
     colossusUsedPlayerIds,
+    usedTravellerPowerIds,
     colossusNightSeed,
     werewolfDeathFlags,
     monkeyDisabled,
@@ -1975,6 +1980,7 @@ const GMRoom = () => {
     setCompletedScriptLineKeys(new Set());
     setCompletedScriptLineActors({});
     setColossusUsedPlayerIds(new Set());
+    setUsedTravellerPowerIds(new Set());
     setColossusNightSeed(Math.random());
     setWerewolfDeathFlags({});
     setScriptAutoComplete({ role: null, sourcePlayerIds: [], version: 0 });
@@ -2190,6 +2196,25 @@ const GMRoom = () => {
     await supabase.from("players").update({ seat_position: position }).eq("id", playerId);
   };
 
+  const insertLobbyPlayerAfter = async (playerId: string, afterPosition: number) => {
+    if (rolesAssigned) return;
+    const draggedPlayer = players.find((player) => player.id === playerId);
+    if (!draggedPlayer) return;
+    const orderedPlayers = players
+      .filter((player) => player.id !== playerId && player.seat_position !== null)
+      .sort((left, right) => left.seat_position! - right.seat_position!);
+    const insertIndex = orderedPlayers.filter((player) => player.seat_position! <= afterPosition).length;
+    orderedPlayers.splice(insertIndex, 0, draggedPlayer);
+    const positions = new Map(orderedPlayers.map((player, index) => [player.id, index]));
+
+    setPlayers((current) => current.map((player) => positions.has(player.id)
+      ? { ...player, seat_position: positions.get(player.id)! }
+      : player));
+    await Promise.all(orderedPlayers.map((player, index) => (
+      supabase.from("players").update({ seat_position: index }).eq("id", player.id)
+    )));
+  };
+
   const acceptTraveller = async (playerId: string) => {
     const usedTravellerRoles = players
       .map((player) => player.traveller_role as RoleId | null)
@@ -2280,6 +2305,27 @@ const GMRoom = () => {
       }
       return player;
     }));
+    const createdAt = Date.now();
+    const role = roleAssignments[playerId] ?? (traveller.traveller_role as RoleId | null);
+    const joinEvent: GameLogEvent = {
+      id: `${createdAt}-${Math.random().toString(36).slice(2, 9)}`,
+      createdAt,
+      phase: gameCyclePhase === "day" ? dayPhase : gameCyclePhase,
+      phaseNumber: nightNumber,
+      action: "traveller_join",
+      target: {
+        id: traveller.id,
+        name: traveller.name,
+        role,
+        status: playerStatuses[playerId] ?? "alive",
+        permanentlyDead: permanentlyDead.has(playerId),
+        poisoned: poisonedPlayerIds.has(playerId),
+        illusion: illusionPlayerIds.has(playerId),
+        effects: Array.from(playerEffects[playerId] || []),
+      },
+      participants: [playerId],
+    };
+    setGameLogEvents((previous) => [...previous, joinEvent].slice(-MAX_GAME_LOG_EVENTS));
     broadcastPlayerSync();
   };
 
@@ -3661,6 +3707,7 @@ const GMRoom = () => {
   const getSourceRole = useCallback((source: string | null | undefined): RoleId | null => {
     if (!source) return null;
     if (source === "s01-suicide") return "s01";
+    if (source === "t02-suicide") return "t02";
     if (source === "soldier" || source === "soldado") return "v09";
     if (ROLES[source as RoleId]) return source as RoleId;
     return null;
@@ -3735,6 +3782,24 @@ const GMRoom = () => {
     }
     setScriptAutoComplete((current) => ({ role, sourcePlayerIds, version: current.version + 1 }));
   }, [gameCyclePhase, getCoupledActionPlayerIds]);
+
+  const toggleTravellerPowerUsed = useCallback((playerId: string) => {
+    setUsedTravellerPowerIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(playerId)) next.delete(playerId);
+      else next.add(playerId);
+      return next;
+    });
+  }, []);
+
+  const handleGamblerSuicide = useCallback((sourcePlayerId?: string | null) => {
+    const gamblerPlayerId = sourcePlayerId ?? getRolePlayerId("t02");
+    if (!gamblerPlayerId
+      || permanentlyDead.has(gamblerPlayerId)
+      || playerStatuses[gamblerPlayerId] === "dead-this-night") return;
+    handlePlayerStatusChange(gamblerPlayerId, "dead-this-night", "t02-suicide", gamblerPlayerId);
+    markScriptRoleAction("t02", gamblerPlayerId, [gamblerPlayerId]);
+  }, [getRolePlayerId, handlePlayerStatusChange, markScriptRoleAction, permanentlyDead, playerStatuses]);
 
   useEffect(() => {
     const copiedRole = pendingActorCopyLogRef.current;
@@ -4407,6 +4472,30 @@ const GMRoom = () => {
         ? "a03"
         : roleAssignments[sourcePlayerId] ?? actionRole
       : actionRole;
+    if (actionRole === "t03") {
+      if (!sourcePlayerId
+        || usedTravellerPowerIds.has(sourcePlayerId)
+        || permanentlyDead.has(sourcePlayerId)
+        || playerStatuses[sourcePlayerId] === "dead-this-night"
+        || targetPlayerId === sourcePlayerId
+        || permanentlyDead.has(targetPlayerId)
+        || playerStatuses[targetPlayerId] === "dead-this-night") return;
+      let killId = targetPlayerId;
+      if (isPlayerActingPoisoned(sourcePlayerId)) {
+        const randomTarget = pickRandomPlayer((player) => (
+          player.id !== sourcePlayerId
+          && player.id !== targetPlayerId
+          && !permanentlyDead.has(player.id)
+          && playerStatuses[player.id] !== "dead-this-night"
+        ));
+        if (!randomTarget) return;
+        killId = randomTarget.id;
+      }
+      setUsedTravellerPowerIds((previous) => new Set(previous).add(sourcePlayerId));
+      applyCaughtIfWebbed();
+      handlePlayerStatusChange(killId, "dead-this-night", "t03", sourcePlayerId);
+      return;
+    }
     if (actionRole === "v27") {
       const eligible = (id: string) => isColossusTarget({
         dead: permanentlyDead.has(id) || playerStatuses[id] === "dead", redX: playerStatuses[id] === "dead-this-night",
@@ -4927,7 +5016,7 @@ const GMRoom = () => {
         handlePlayerStatusChange(targetPlayerId, "dead-this-night", publicSourceRole ?? roleSource, sourcePlayerId);
       }
     }
-  }, [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [actedTonightPlayerIds, colossusReadyPlayerIds, usedTravellerPowerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const phoneWorld = useMemo<PhoneWorld>(() => ({
     packBlocked: werewolfPackPoisoned,
@@ -5112,6 +5201,7 @@ const GMRoom = () => {
     if (!isPlaying) return {};
     const role = abilityRoleAssignments[playerId];
     if (role === "v27" && !colossusReadyPlayerIds.has(playerId)) return {};
+    if (role === "t03" && (usedTravellerPowerIds.has(playerId) || playerStatuses[playerId] === "dead-this-night")) return {};
     const isMime = roleAssignments[playerId] === "a03";
     const dogState = dogWolfStates[playerId];
     const roleAction = ROLE_DRAG_ACTIONS[role];
@@ -6297,6 +6387,8 @@ const GMRoom = () => {
                   roleAssignments={rolesAssigned ? displayRoleAssignments : undefined}
                   abilityRoleAssignments={rolesAssigned ? abilityRoleAssignments : undefined}
                   colossusReadyPlayerIds={colossusReadyPlayerIds}
+                  usedTravellerPowerIds={usedTravellerPowerIds}
+                  onTravellerPowerUsedToggle={toggleTravellerPowerUsed}
                   baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                   objectiveRoleAssignments={rolesAssigned ? objectiveRoleAssignments : undefined}
                   playerStatuses={playerStatuses}
@@ -6501,6 +6593,7 @@ const GMRoom = () => {
                     onLamplighterReveal={handleLamplighterReveal}
                     onWerewolfSeerReveal={werewolfSeerVictim ? handleWerewolfSeerReveal : undefined}
                     onMimeReveal={handleMimeReveal}
+                    onGamblerSuicide={handleGamblerSuicide}
                     houseMaidDynamicText={houseMaidDynamicText}
                     playerStatuses={playerStatuses}
                     foxDisabled={foxDisabled}
@@ -6742,6 +6835,17 @@ const GMRoom = () => {
                                 className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                               />
                               <span className="text-[9px] text-muted-foreground">{tt("powerExhausted")}</span>
+                            </div>
+                          )}
+                          {(mechanicalRoleId === "t01" || mechanicalRoleId === "t03") && !isPermanentDead && (
+                            <div className="flex items-center gap-1 flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+                              <Checkbox
+                                checked={usedTravellerPowerIds.has(player.id)}
+                                aria-label={tt("actionUsed")}
+                                onCheckedChange={() => toggleTravellerPowerUsed(player.id)}
+                                className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                              />
+                              <span className="text-[9px] text-muted-foreground">{tt("actionUsed")}</span>
                             </div>
                           )}
                           {/* Paranoid charges */}
@@ -7046,6 +7150,7 @@ const GMRoom = () => {
                     dogWolfOwnerRoles={dogWolfOwnerRoles}
                     dogWolfStates={dogWolfStates}
                     allowSeatDrag={!rolesAssigned}
+                    onInsertPlayer={(playerId, afterPosition) => void insertLobbyPlayerAfter(playerId, afterPosition)}
                   />
                 </div>
               ) : (

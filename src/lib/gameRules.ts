@@ -55,7 +55,7 @@ export const LITTLE_GIRL_POISONED_ANSWERS: Array<{ kind: LittleGirlAnswerKind; r
 
 export function getLittleGirlAnswerKind(source: string | undefined): LittleGirlAnswerKind | null {
   if (source === "soldier" || source === "soldado") return "soldier";
-  if (source === "s01-suicide") return "suicide";
+  if (source === "s01-suicide" || source === "t02-suicide") return "suicide";
   if (source === "v08") return "hunter";
   if (source === "v27") return "colossus";
   if (source === "v10") return "paranoid";

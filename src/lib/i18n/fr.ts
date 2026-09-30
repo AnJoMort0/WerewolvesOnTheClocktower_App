@@ -65,6 +65,7 @@ export const fr: Translation = {
   scripts: {
     firstNight: [
       { text: "Cette nuit n'aura pas de morts." },
+      { text: "Le {Parieur} se réveille, désigne un joueur et demande discrètement au Meneur si ce joueur possède un personnage précis.", requires: ["t02"] },
       { text: "Le {Cupidon} se réveille et choisit deux joueurs qui seront Amoureux. Le {Cupidon} s'endort et les Amoureux seront maintenant touchés et peuvent se connaître. Si un Amoureux meurt, l'autre se suicide. L'objectif des Amoureux et du {Cupidon} est que les Amoureux soient les derniers survivants. Tant que les Amoureux sont en vie, le jeu continue.", requires: ["s01"], phoneMode: PHONE_MODE.CUPID_PAIR },
       { text: "Le {Méchant Cupidon} se réveille et choisit deux joueurs qui seront Ennemis. Le {Méchant Cupidon} s'endort et les Ennemis seront touchés et peuvent se connaître. Si un Ennemi parvient à faire condamner l'autre à l'exécution, le premier reçoit une immunité contre la prochaine tentative d'assassinat.", requires: ["m05"], phoneMode: PHONE_MODE.EVIL_CUPID_PAIR },
       { text: "Les {Sœurs} se réveillent pour se connaître.", requires: ["l03"] },
@@ -86,6 +87,7 @@ export const fr: Translation = {
       { text: "Les Loups-garous se réveillent et les Créatures Maléfiques leur sont présentées.", phoneMode: PHONE_MODE.WEREWOLF_ALLIES },
     ],
     normalNight: [
+      { text: "Le {Parieur} se réveille, désigne un joueur et demande discrètement au Meneur si ce joueur possède un personnage précis.", requires: ["t02"] },
       { text: "Le {Maître de l'Araignée} se réveille et choisit un nouveau joueur sur lequel il tisse sa toile.", requires: ["v23"], conditionKey: "spiderWebbedDied", phoneMode: PHONE_MODE.SPIDER_TAMER_WEB },
       { text: "({Chasseur} est mort) Le Fantôme du {Chasseur} se réveille et choisit qui il veut assassiner.", requires: ["v08"], conditionKey: "hunterDied", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
       { text: "({Petit Chaperon Rouge} a été exécuté) Le {Chasseur} se réveille furieux et choisit qui il veut assassiner.", requires: ["v08"], conditionKey: "redHoodExecuted", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
@@ -496,6 +498,7 @@ export const fr: Translation = {
     },
     uses: "Utilisations :",
     powerExhausted: "Pouvoir épuisé",
+    actionUsed: "Action utilisée",
     keepsPowers: "Garde ses pouvoirs",
     diedOfTetanus: "est mort du Tétanos.",
     diedSimple: "est mort.",
@@ -578,6 +581,7 @@ export const fr: Translation = {
         illusion: "Illusion",
         effect_add: "Effet appliqué",
         role_change: "Carte modifiée",
+        traveller_join: "Voyageur arrivé",
         game_over: "Fin de partie",
       },
     },

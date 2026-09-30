@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useCallback, useRef, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Eye, Moon, Sun } from "lucide-react";
+import { Eye, Moon, Skull, Sun } from "lucide-react";
 import { getScriptPhoneMode } from "@/lib/phoneActions";
 import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
 import { PHONE_ACTION_PRESENTATION } from "@/lib/phoneActionPresentation";
@@ -74,6 +74,7 @@ interface NightScriptProps {
   onLamplighterReveal?: (sourcePlayerId?: string | null) => void;
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
   onMimeReveal?: (sourcePlayerId?: string | null) => void;
+  onGamblerSuicide?: (sourcePlayerId?: string | null) => void;
   // Inline checkbox state for roles with limited uses
   onPhoneToggle?: (mode: PhoneMode, lineKey: string, sourcePlayerId: string | null, progressOrder: number | null) => void;
   activePhoneLineKey?: string | null;
@@ -227,6 +228,7 @@ function ScriptLineDisplay({
   onWerewolfSeerReveal,
   onMimeReveal,
   onMonkeyReveal,
+  onGamblerSuicide,
   dynamicText,
   foxDisabled,
   onFoxDisabledToggle,
@@ -284,6 +286,7 @@ function ScriptLineDisplay({
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
   onMimeReveal?: (sourcePlayerId?: string | null) => void;
   onMonkeyReveal?: (sourcePlayerId?: string | null) => void;
+  onGamblerSuicide?: (sourcePlayerId?: string | null) => void;
   dynamicText?: string;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
@@ -359,6 +362,7 @@ function ScriptLineDisplay({
   const isWerewolfSeerLine = line.requires?.length === 1 && line.requires[0] === ("m02" as RoleId);
   const isMimeRevealLine = line.requires?.length === 1 && line.requires[0] === ("a03" as RoleId);
   const isMonkeyLine = line.requires?.length === 1 && line.requires[0] === "v26";
+  const isGamblerLine = line.requires?.length === 1 && line.requires[0] === "t02";
   const isParanoidLine = line.requires?.length === 1 && line.requires[0] === ("v10" as RoleId);
   const isAngelLine = line.requires?.length === 1 && line.requires[0] === ("v18" as RoleId);
   const isBigBadWolfLine = line.requires?.length === 1 && line.requires[0] === ("m01" as RoleId);
@@ -381,7 +385,7 @@ function ScriptLineDisplay({
     || (isSpiderCaughtLine && !dynamicText && !!onSpiderReveal)
     || (isSpyLine && !!onSpyReveal)
   );
-  const hasActionControl = !!phoneControl || hasRevealAction;
+  const hasActionControl = !!phoneControl || hasRevealAction || (isGamblerLine && !!onGamblerSuicide);
   const revealButtonClass = "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-blue-400 transition-colors hover:bg-primary/20";
 
   const isShamanPoisoned = useMemo(() => {
@@ -486,6 +490,17 @@ function ScriptLineDisplay({
               <button type="button" onClick={(event) => { event.stopPropagation(); onMonkeyReveal(sourcePlayerId); }}
                 className={revealButtonClass} aria-label={getRoleLabel("v26", lang)} title={getRoleLabel("v26", lang)}>
                 <Eye className="h-4 w-4" />
+              </button>
+            )}
+            {isGamblerLine && onGamblerSuicide && (
+              <button
+                type="button"
+                onClick={(event) => { event.stopPropagation(); onGamblerSuicide(sourcePlayerId); }}
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-destructive transition-colors hover:bg-destructive/15"
+                aria-label={t("actionKill", lang)}
+                title={t("actionKill", lang)}
+              >
+                <Skull className="h-4 w-4" />
               </button>
             )}
           </div>
@@ -640,6 +655,7 @@ export const NightScript = ({
   onLamplighterReveal,
   onWerewolfSeerReveal,
   onMimeReveal,
+  onGamblerSuicide,
   paranoidCharges,
   onParanoidChargeToggle,
   angelCharges,
@@ -1484,6 +1500,7 @@ export const NightScript = ({
                 onLamplighterReveal={onLamplighterReveal}
                 onWerewolfSeerReveal={onWerewolfSeerReveal}
                 onMimeReveal={onMimeReveal}
+                onGamblerSuicide={onGamblerSuicide}
                 onMonkeyReveal={(source) => onPhoneToggle?.(PHONE_MODE.MONKEY_TAMER_REVEAL, item.key, source ?? null, item.progressOrder)}
                 dynamicText={getDynamicText(item.line, sourcePlayerId, !!item.dogWolfLine, !!item.mimeLine)}
                 foxDisabled={usesIndependentPowerState ? powerState.foxDisabled : foxDisabled}

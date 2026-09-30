@@ -15,6 +15,7 @@ describe("poisoned information rules", () => {
     expect(getLittleGirlAnswerKind("soldier")).toBe("soldier");
     expect(getLittleGirlAnswerKind("soldado")).toBe("soldier");
     expect(getLittleGirlAnswerKind("s01-suicide")).toBe("suicide");
+    expect(getLittleGirlAnswerKind("t02-suicide")).toBe("suicide");
     expect(getLittleGirlAnswerKind("e01")).toBe("werewolves");
     expect(getLittleGirlAnswerKind("m06")).toBeNull();
     expect(getLittleGirlAnswerKind("s02")).toBe("whiteWerewolf");

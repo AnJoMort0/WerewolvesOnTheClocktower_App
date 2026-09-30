@@ -150,6 +150,8 @@ describe("random assignment eligibility", () => {
       expect(assignRoles(count, true).some((role) => ROLES[role].category === "t")).toBe(false);
     }
     expect(MIME_COPY_ROLES.filter((role) => TRAVELLER_ROLES.includes(role))).toEqual([]);
+    expect(LIMITED_USE_ROLES).not.toContain("t01");
+    expect(LIMITED_USE_ROLES).not.toContain("t03");
   });
 
   it("keeps every generated lot valid, including linked roles and families", () => {

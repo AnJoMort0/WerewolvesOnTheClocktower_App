@@ -43,7 +43,7 @@ function getEventIcon(event: GameLogEvent) {
   if (event.action === "execute") return ghostExecutedIcon;
   if (event.action === "resurrect") return ghostResurrectIcon;
   if (event.action === "kill") return ghostIcon;
-  if (event.action === "role_change") return cardSwitchIcon;
+  if (event.action === "role_change" || event.action === "traveller_join") return cardSwitchIcon;
   return null;
 }
 

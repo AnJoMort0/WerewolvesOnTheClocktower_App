@@ -135,7 +135,7 @@ try {
   assert.ok(["t01", "t02", "t03"].includes(traveller?.traveller_role));
   const travellerRoleNames = { t01: "Lawyer", t02: "Gambler", t03: "Gunslinger" };
   await cdp.click(phones[1], "Hide Role");
-  await cdp.wait(phones[1], `document.body.innerText.includes(${JSON.stringify(travellerRoleNames[traveller.traveller_role])})`);
+  await cdp.wait(phones[1], `!!document.querySelector(${JSON.stringify(`button[aria-label="${travellerRoleNames[traveller.traveller_role]}"]`)})`);
   console.log("Late Traveller request, approval, secret alignment reveal, public role and circle placement worked through the real LAN transport.");
 
   await cdp.wait(gm, "!!document.querySelector('button[aria-label=\"Monkey Tamer\"]')");

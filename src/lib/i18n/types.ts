@@ -176,6 +176,7 @@ export type GameLogActionKey =
   | "illusion"
   | "effect_add"
   | "role_change"
+  | "traveller_join"
   | "game_over";
 
 export interface GameLogStrings {
@@ -477,6 +478,7 @@ export interface UIStrings {
   gameOver: GameOverStrings;
   uses: string;             // "Usos:" / "Utilisations :"
   powerExhausted: string;   // "Poder esgotado" / "Pouvoir épuisé"
+  actionUsed: string;
   keepsPowers: string;      // "Mantém os poderes"
   diedOfTetanus: string;    // "morreu de Tétano." (used in tribunal lines)
   diedSimple: string;       // "morreu."

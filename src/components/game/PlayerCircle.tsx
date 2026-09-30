@@ -53,6 +53,8 @@ interface PlayerCircleProps {
   publicRoleAssignments?: Record<string, RoleId>;
   abilityRoleAssignments?: Record<string, RoleId>;
   colossusReadyPlayerIds?: Set<string>;
+  usedTravellerPowerIds?: Set<string>;
+  onTravellerPowerUsedToggle?: (playerId: string) => void;
   baseRoleAssignments?: Record<string, RoleId>;
   objectiveRoleAssignments?: Record<string, RoleId>;
   playerStatuses?: Record<string, PlayerStatus>;
@@ -128,6 +130,8 @@ export const PlayerCircle = ({
   publicRoleAssignments = {},
   abilityRoleAssignments,
   colossusReadyPlayerIds = new Set(),
+  usedTravellerPowerIds = new Set(),
+  onTravellerPowerUsedToggle,
   baseRoleAssignments,
   objectiveRoleAssignments,
   playerStatuses = {},
@@ -263,7 +267,9 @@ export const PlayerCircle = ({
   const handleInsertionDrop = (event: React.DragEvent, afterPosition: number) => {
     event.preventDefault();
     const playerId = event.dataTransfer.getData("playerId");
-    if (playerId && playerId === insertionPlayerId) onInsertPlayer?.(playerId, afterPosition);
+    if (playerId && (!insertionPlayerId || playerId === insertionPlayerId)) {
+      onInsertPlayer?.(playerId, afterPosition);
+    }
   };
 
   const handleUnseat = (playerId: string) => {
@@ -342,6 +348,7 @@ export const PlayerCircle = ({
     if (!isPlaying || !roleAssignments) return {};
     const role = abilityRoleAssignments?.[playerId] ?? roleAssignments[playerId];
     if (role === "v27" && !colossusReadyPlayerIds.has(playerId)) return {};
+    if (role === "t03" && (usedTravellerPowerIds.has(playerId) || playerStatuses[playerId] === "dead-this-night")) return {};
     const isActor = baseRoleAssignments?.[playerId] === "a04";
     const isMime = baseRoleAssignments?.[playerId] === "a03";
     const dogState = dogWolfStates[playerId];
@@ -644,6 +651,17 @@ export const PlayerCircle = ({
                   <span className="text-[9px] text-muted-foreground">⚡</span>
                 </div>
               )}
+              {isGM && !isPermanentlyDead && (mechanicalRole === "t01" || mechanicalRole === "t03") && onTravellerPowerUsedToggle && (
+                <div className="flex items-center gap-1 mt-0.5" onClick={(event) => event.stopPropagation()}>
+                  <Checkbox
+                    checked={usedTravellerPowerIds.has(seated.id)}
+                    aria-label={t("actionUsed")}
+                    onCheckedChange={() => onTravellerPowerUsedToggle(seated.id)}
+                    className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                  />
+                  <span className="text-[9px] text-muted-foreground">{t("actionUsed")}</span>
+                </div>
+              )}
               {/* Cupid (s01) protection charges */}
               {isGM && mechanicalRole === ("s01" as RoleId) && showCupidCheckboxes && !isPermanentlyDead && onCupidChargeToggle && (
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
@@ -836,16 +854,22 @@ export const PlayerCircle = ({
         );
       })}
 
-      {insertionPlayerId && totalSlots > 0 && Array.from({ length: totalSlots }).map((_, index) => {
-        const angle = (2 * Math.PI * (index + 0.5)) / totalSlots - Math.PI / 2;
+      {(insertionPlayerId || (allowSeatDrag && onInsertPlayer)) && totalSlots > 0 && seatedPlayers
+        .map((player) => player.seat_position)
+        .filter((position): position is number => position !== null)
+        .sort((left, right) => left - right)
+        .map((position, index, positions) => {
+        const nextPosition = positions[(index + 1) % positions.length] + (index === positions.length - 1 ? totalSlots : 0);
+        const midpoint = (position + (nextPosition - position) / 2) % totalSlots;
+        const angle = (2 * Math.PI * midpoint) / totalSlots - Math.PI / 2;
         const x = radiusX * Math.cos(angle) + containerW / 2;
         const y = radiusY * Math.sin(angle) + containerH / 2;
         return <div
-          key={`insert-${index}`}
-          aria-label={`Insert after seat ${index + 1}`}
+          key={`insert-${position}`}
+          aria-label={`Insert after seat ${position + 1}`}
           className="absolute flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-dashed border-gold bg-background/90 text-lg font-bold text-gold shadow-lg"
           style={{ left: x, top: y }}
-          onDrop={(event) => handleInsertionDrop(event, index)}
+          onDrop={(event) => handleInsertionDrop(event, position)}
           onDragEnter={handleDragOver}
           onDragOver={handleDragOver}
         >+</div>;

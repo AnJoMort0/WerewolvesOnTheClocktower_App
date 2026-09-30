@@ -65,6 +65,7 @@ export const pt: Translation = {
   scripts: {
     firstNight: [
       { text: "Esta noite não terá mortos." },
+      { text: "O {Apostador} acorda, aponta para um jogador e pergunta discretamente ao Narrador se esse jogador tem uma personagem específica.", requires: ["t02"] },
       { text: "O {Cupido} acorda e escolhe dois jogadores que serão Namorados. O {Cupido} adormece e os Namorados serão agora tocados e podem se conhecer. Se um Namorado morre, o outro se suicida. O objetivo dos Namorados e do {Cupido} é que os Namorados sejam os últimos sobreviventes. Enquanto os Namorados estiverem vivos, o jogo continua.", requires: ["s01"], phoneMode: PHONE_MODE.CUPID_PAIR },
       { text: "O {Cupido Malvado} acorda e escolhe dois jogadores que serão Inimigos. O {Cupido Malvado} adormece e os Inimigos serão tocados e podem se conhecer. Se um Inimigo consegue condenar o outro a execução, o primeiro recebe imunidade na próxima tentativa de assassinato.", requires: ["m05"], phoneMode: PHONE_MODE.EVIL_CUPID_PAIR },
       { text: "As {Irmãs} acordam para se conhecerem.", requires: ["l03"] },
@@ -86,6 +87,7 @@ export const pt: Translation = {
       { text: "Os Lobisomens acordam e são-lhe apresentados as Criaturas Malvadas.", phoneMode: PHONE_MODE.WEREWOLF_ALLIES },
     ],
     normalNight: [
+      { text: "O {Apostador} acorda, aponta para um jogador e pergunta discretamente ao Narrador se esse jogador tem uma personagem específica.", requires: ["t02"] },
       { text: "O {Domador da Aranha} acorda e escolhe um novo jogador no qual tece uma teia.", requires: ["v23"], conditionKey: "spiderWebbedDied", phoneMode: PHONE_MODE.SPIDER_TAMER_WEB },
       { text: "(O {Caçador} morreu) O Fantasma do {Caçador} acorda e escolhe quem quer assassinar.", requires: ["v08"], conditionKey: "hunterDied", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
       { text: "(O {Capuchinho Vermelho} foi executado) O {Caçador} acorda furioso e escolhe quem quer assassinar.", requires: ["v08"], conditionKey: "redHoodExecuted", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
@@ -496,6 +498,7 @@ export const pt: Translation = {
     },
     uses: "Usos:",
     powerExhausted: "Poder esgotado",
+    actionUsed: "Ação usada",
     keepsPowers: "Mantém os poderes",
     diedOfTetanus: "morreu de Tétano.",
     diedSimple: "morreu.",
@@ -578,6 +581,7 @@ export const pt: Translation = {
         illusion: "Ilusão",
         effect_add: "Efeito aplicado",
         role_change: "Carta alterada",
+        traveller_join: "Viajante entrou",
         game_over: "Fim do jogo",
       },
     },

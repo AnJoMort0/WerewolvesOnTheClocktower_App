@@ -3249,7 +3249,7 @@ export const RULEBOOK_CHARACTERS = {
         objective: {
             pt: `Aleatório (50%).`,
             fr: `Aléatoire (50 %).`,
-            en: `Random, (50%).`
+            en: `Random (50%).`
         }
     },
 
@@ -3279,7 +3279,7 @@ export const RULEBOOK_CHARACTERS = {
         objective: {
             pt: `Aleatório (50%).`,
             fr: `Aléatoire (50 %).`,
-            en: `Random, (50%).`
+            en: `Random (50%).`
         }
     },
 
@@ -3309,7 +3309,7 @@ export const RULEBOOK_CHARACTERS = {
         objective: {
             pt: `Aleatório (50%).`,
             fr: `Aléatoire (50 %).`,
-            en: `Random, (50%).`
+            en: `Random (50%).`
         }
     },
 
@@ -3718,7 +3718,7 @@ export const RULEBOOK_CHARACTERS = {
         objective: {
             pt: `Aleatório (50%).`,
             fr: `Aléatoire (50 %).`,
-            en: `Random, (50%).`
+            en: `Random (50%).`
         }
     },
 
@@ -4045,6 +4045,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             }
         },
         {
+            id: "first-t02",
+            refs: ["t02"],
+            text: {
+                pt: `O Apostador acorda, aponta para um jogador e pergunta discretamente ao Narrador se esse jogador tem uma personagem específica.`,
+                fr: `Le Parieur se réveille, désigne un joueur et demande discrètement au Meneur si ce joueur possède un personnage précis.`,
+                en: `The Gambler wakes up, points at a player, and discreetly asks the Narrator whether that player has a specific role.`
+            }
+        },
+        {
             id: "first-s01",
             refs: ["s01"],
             text: {
@@ -4210,6 +4219,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `Lançar um d12.`,
                 fr: `Lancer un d12.`,
                 en: `Roll a d12.`
+            }
+        },
+        {
+            id: "normal-t02",
+            refs: ["t02"],
+            text: {
+                pt: `O Apostador acorda, aponta para um jogador e pergunta discretamente ao Narrador se esse jogador tem uma personagem específica.`,
+                fr: `Le Parieur se réveille, désigne un joueur et demande discrètement au Meneur si ce joueur possède un personnage précis.`,
+                en: `The Gambler wakes up, points at a player, and discreetly asks the Narrator whether that player has a specific role.`
             }
         },
         {

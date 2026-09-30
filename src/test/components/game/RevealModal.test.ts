@@ -23,4 +23,12 @@ describe("resolveKillerCard", () => {
       roleId: "e01",
     });
   });
+
+  it("shows the Gambler card and Suicide label for a Gambler death", () => {
+    expect(resolveKillerCard("t02-suicide", {}, null, "en")).toMatchObject({
+      image: ROLES.t02.image,
+      label: "Suicide",
+      roleId: "t02",
+    });
+  });
 });
