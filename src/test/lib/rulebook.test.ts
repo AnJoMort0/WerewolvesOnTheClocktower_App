@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ALL_ROLE_IDS } from "@/lib/roles";
+import { getRoleLabel } from "@/lib/i18n";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID } from "@/lib/rulebook";
 import { RULEBOOK_CHARACTERS, RULEBOOK_CHARACTER_ORDER, RULEBOOK_TEXT, type RulebookCharacter, type RulebookSectionBlock } from "@/lib/rulebookContent";
 
@@ -9,6 +10,7 @@ describe("in-app rulebook rendering", () => {
 
     expect(html).toContain(`id="${RULEBOOK_SUMMARY_ID}"`);
     expect(html).toContain('class="role-row faction-evil" id="e01"');
+    expect(html).toContain('class="role-row faction-traveller" id="t01"');
     expect(html).toContain("rule-red");
     expect(html).toContain("x.as01b.1_card.webp");
     expect(html).toContain('class="rulebook-night-script-link" href="#rulebook-night-script"');
@@ -41,6 +43,18 @@ describe("in-app rulebook rendering", () => {
       expect(RULEBOOK_CHARACTERS).toHaveProperty(roleId);
       expect(orderedIds.has(roleId)).toBe(true);
     }
+  });
+
+  it("uses the same translated role names as the rest of the game", () => {
+    const mismatches: string[] = [];
+    for (const roleId of ALL_ROLE_IDS) {
+      for (const language of ["pt", "fr", "en"] as const) {
+        const rulebookName = RULEBOOK_CHARACTERS[roleId].name[language];
+        const gameName = getRoleLabel(roleId, language);
+        if (rulebookName !== gameName) mismatches.push(`${roleId}.${language}: ${rulebookName} != ${gameName}`);
+      }
+    }
+    expect(mismatches).toEqual([]);
   });
 
   it("states that living players and Ghosts may confess to the Priest", () => {

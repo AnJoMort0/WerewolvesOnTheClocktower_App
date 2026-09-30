@@ -13,6 +13,8 @@ export type RoomDisplayPlayer = {
   seat_position: number | null;
   character: string | null;
   is_alive: boolean;
+  is_traveller?: boolean;
+  traveller_role?: string | null;
 };
 
 export type RoomDisplaySnapshot = {

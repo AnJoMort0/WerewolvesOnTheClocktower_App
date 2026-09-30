@@ -20,6 +20,13 @@ import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
 import { GMPlayerActionApprovalPanel } from "@/components/game/GMPlayerActionApprovalPanel";
+import { TravellerAlignmentModal } from "@/components/game/TravellerAlignmentModal";
+import {
+  TravellerAssignmentCard,
+  TravellerInviteModal,
+  TravellerPlacementToken,
+  TravellerRequestPanel,
+} from "@/components/game/TravellerControls";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { Copy, Check, Users, Send, AlertTriangle, X, Minus, Play, Pause, Settings, FlaskConical, BookOpen, RotateCcw, Trash2, Trophy, Eye, EyeOff, ScrollText, MonitorUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { assignRoles, EVIL_ROLES, LIMITED_USE_ROLES, ROLES, MIME_COPY_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
+import { assignRoles, EVIL_ROLES, LIMITED_USE_ROLES, ROLES, MIME_COPY_ROLES, TRAVELLER_ROLES, WEREWOLF_ROLES, WEB_IMMUNE_ROLES, getExpectedWerewolfCount, type RoleId } from "@/lib/roles";
 import { LanguageContext, coerceLanguage, getEffectLabel, getRoleLabel, getScripts, getTranslation, t, getToast, getValidation, getGameOver, format, type Language, type WinKind } from "@/lib/i18n";
 import { getActiveSeasonalRoleIds, resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
@@ -105,6 +112,7 @@ import illusionIcon from "@/assets/display/icons/illusion.webp";
 import immunityIcon from "@/assets/display/icons/immunity_full.webp";
 import villagerIcon from "@/assets/display/icons/villager.webp";
 import { ROLE_DRAG_ACTIONS as SHARED_ROLE_DRAG_ACTIONS } from "@/lib/roleActions";
+import { pickTravellerAlignment, pickTravellerRole, type TravellerAlignment, type TravellerState } from "@/lib/travellers";
 
 const JOIN_BASE_URL_STORAGE_KEY = "wotct_join_base_url";
 const GM_ADVANCED_STORAGE_PREFIX = "wotct_gm_advanced_";
@@ -139,6 +147,10 @@ type Player = {
   is_alive: boolean;
   is_ready?: boolean;
   last_seen_at?: string;
+  is_traveller: boolean;
+  traveller_state: TravellerState | null;
+  traveller_role: string | null;
+  traveller_alignment: TravellerAlignment | null;
 };
 
 type Room = {
@@ -486,6 +498,7 @@ const GMRoom = () => {
 
   // Reveal modals (Little Girl, Lamplighter, Werewolf Seer)
   const [qrPopupOpen, setQrPopupOpen] = useState(false);
+  const [travellerInviteOpen, setTravellerInviteOpen] = useState(false);
   const [littleGirlRevealOpen, setLittleGirlRevealOpen] = useState(false);
   const [littleGirlRevealCards, setLittleGirlRevealCards] = useState<RevealCard[]>([]);
   const [lamplighterRevealOpen, setLamplighterRevealOpen] = useState(false);
@@ -975,7 +988,7 @@ const GMRoom = () => {
     }
 
     const wwCount = Object.values(roleAssignments).filter((r) => WEREWOLF_ROLES.includes(r)).length;
-    const seatedCount = Object.keys(roleAssignments).length;
+    const seatedCount = players.filter((player) => !player.is_traveller && !!roleAssignments[player.id]).length;
     const expected = getExpectedWerewolfCount(seatedCount);
     if (wwCount < expected) {
       warnings.push(format(getValidation("fewWerewolves", lng), { n: wwCount, expected }));
@@ -1008,7 +1021,7 @@ const GMRoom = () => {
     }
 
     return warnings;
-  }, [effectiveRoleAssignments, roleAssignments, rolesAssigned, playerEffects, room?.language]);
+  }, [effectiveRoleAssignments, roleAssignments, rolesAssigned, playerEffects, players, room?.language]);
 
   const activeRoles = useMemo(() => new Set(Object.values(effectiveRoleAssignments)), [effectiveRoleAssignments]);
 
@@ -1575,12 +1588,14 @@ const GMRoom = () => {
       roomCode: room.code,
       language: room.language ?? "pt",
       status: room.status,
-      players: players.map(({ id, name, seat_position, character, is_alive }) => ({
+      players: players.map(({ id, name, seat_position, character, is_alive, is_traveller, traveller_role }) => ({
         id,
         name,
         seat_position,
         character,
         is_alive,
+        is_traveller,
+        traveller_role,
       })),
       phase: effectivePhase,
       phaseNumber: nightNumber,
@@ -1644,6 +1659,30 @@ const GMRoom = () => {
       return changed ? next : prev;
     });
     }, [abilityRoleAssignments, permanentlyDead, killSources]);
+
+  // Traveller alignment lives in the database row, so restore its mechanical
+  // effects after a GM reload. Travellers are always visible to the Spy.
+  useEffect(() => {
+    const spyInGame = Object.values(abilityRoleAssignments).includes("f02");
+    setPlayerEffects((previous) => {
+      let changed = false;
+      const next = { ...previous };
+      for (const player of players) {
+        if (!player.is_traveller || !player.character) continue;
+        const effects = new Set(next[player.id] || []);
+        if (player.traveller_alignment === "evil" && !effects.has("evil_being")) {
+          effects.add("evil_being");
+          changed = true;
+        }
+        if (spyInGame && !effects.has("spied_on")) {
+          effects.add("spied_on");
+          changed = true;
+        }
+        next[player.id] = effects;
+      }
+      return changed ? next : previous;
+    });
+  }, [abilityRoleAssignments, players]);
 
   // Auto-kill werewolves (or werewolf_turned players) marked Incendiado (instant red X, source = piromaníaco).
   // Balance: if the wolf is immune, the fire is shrugged off entirely: remove the burned effect.
@@ -1794,11 +1833,11 @@ const GMRoom = () => {
     const fetchPlayers = async () => {
       const { data } = await supabase
         .from("players")
-        .select("id, name, seat_position, character, is_alive, is_ready, last_seen_at")
+        .select("id, name, seat_position, character, is_alive, is_ready, last_seen_at, is_traveller, traveller_state, traveller_role, traveller_alignment")
         .eq("room_id", roomId)
         .order("created_at");
       if (data && active) {
-        setPlayers(data);
+        setPlayers(data as Player[]);
         if (room?.status === "playing" || data.some((p) => p.character)) {
           const assignments: Record<string, RoleId> = {};
           let fetchedActorCopy: RoleId | null = null;
@@ -1986,7 +2025,16 @@ const GMRoom = () => {
     const playerUpdates = players.map((player) =>
       supabase
         .from("players")
-        .update({ character: null, is_alive: true, is_ready: false, last_seen_at: new Date().toISOString() })
+        .update({
+          character: null,
+          is_alive: true,
+          is_ready: false,
+          is_traveller: false,
+          traveller_state: null,
+          traveller_role: null,
+          traveller_alignment: null,
+          last_seen_at: new Date().toISOString(),
+        })
         .eq("id", player.id)
     );
     const roomUpdate = supabase.from("rooms").update({
@@ -2006,7 +2054,16 @@ const GMRoom = () => {
     clearLocalGameState();
     clearGMSnapshot();
     setRoom((prev) => (prev ? { ...prev, status: "lobby", player_action_state: null } : prev));
-    setPlayers((prev) => prev.map((player) => ({ ...player, character: null, is_alive: true, is_ready: false })));
+    setPlayers((prev) => prev.map((player) => ({
+      ...player,
+      character: null,
+      is_alive: true,
+      is_ready: false,
+      is_traveller: false,
+      traveller_state: null,
+      traveller_role: null,
+      traveller_alignment: null,
+    })));
     toast.success(getToast("okRoomReset", lang));
   };
 
@@ -2047,6 +2104,7 @@ const GMRoom = () => {
       const role = objectiveRoleAssignments[player.id];
       if (!role) return [];
       const effects = new Set<StatusEffect>(playerEffects[player.id] || []);
+      if (player.traveller_alignment === "evil") effects.add("evil_being");
       const dogState = dogWolfStates[player.id];
       const ownerPlayerId = dogState?.ownerPlayerId;
       if (ownerPlayerId && !dogState.objectiveRoleOverride) {
@@ -2119,8 +2177,110 @@ const GMRoom = () => {
     setTieWinnerGroups(new Set());
   };
 
+  const broadcastPlayerSync = useCallback((playerIds?: string[]) => {
+    if (!roomId) return;
+    supabase.channel(`player-sync-${roomId}`).send({
+      type: "broadcast",
+      event: "sync",
+      payload: { playerIds },
+    });
+  }, [roomId]);
+
   const updateSeatPosition = async (playerId: string, position: number | null) => {
     await supabase.from("players").update({ seat_position: position }).eq("id", playerId);
+  };
+
+  const acceptTraveller = async (playerId: string) => {
+    const usedTravellerRoles = players
+      .map((player) => player.traveller_role as RoleId | null)
+      .filter((roleId): roleId is RoleId => !!roleId && TRAVELLER_ROLES.includes(roleId));
+    const travellerRole = pickTravellerRole(usedTravellerRoles);
+    const travellerAlignment = pickTravellerAlignment();
+    setPlayers((current) => current.map((player) => player.id === playerId ? {
+      ...player,
+      traveller_state: "assigning",
+      traveller_role: travellerRole,
+      traveller_alignment: travellerAlignment,
+    } : player));
+    await supabase.from("players").update({
+      traveller_state: "assigning",
+      traveller_role: travellerRole,
+      traveller_alignment: travellerAlignment,
+    }).eq("id", playerId);
+  };
+
+  const denyTraveller = async (playerId: string) => {
+    setPlayers((current) => current.map((player) => player.id === playerId
+      ? { ...player, traveller_state: "denied" }
+      : player));
+    await supabase.from("players").update({ traveller_state: "denied" }).eq("id", playerId);
+  };
+
+  const changeTravellerRole = async (playerId: string, roleId: RoleId) => {
+    if (!TRAVELLER_ROLES.includes(roleId)) return;
+    setPlayers((current) => current.map((player) => player.id === playerId
+      ? { ...player, traveller_role: roleId }
+      : player));
+    await supabase.from("players").update({ traveller_role: roleId }).eq("id", playerId);
+  };
+
+  const confirmTraveller = async (playerId: string) => {
+    const traveller = players.find((player) => player.id === playerId);
+    const roleId = traveller?.traveller_role as RoleId | null;
+    const alignment = traveller?.traveller_alignment;
+    if (!traveller || !roleId || !TRAVELLER_ROLES.includes(roleId) || !alignment) return;
+    const knownWerewolfPlayerIds = alignment === "evil"
+      ? players.filter((player) => player.seat_position !== null && (
+        WEREWOLF_ROLES.includes(objectiveRoleAssignments[player.id])
+        || playerEffects[player.id]?.has("werewolf_turned")
+      )).map((player) => player.id)
+      : [];
+    const objectiveEffects: ObjectiveEffectId[] = alignment === "evil" ? ["evil_being"] : [];
+    const character = encodePlayerCharacterMetadata(roleId, { objectiveEffects, knownWerewolfPlayerIds });
+    const spyPlayerId = Object.entries(abilityRoleAssignments).find(([, role]) => role === "f02")?.[0] ?? null;
+
+    setRoleAssignments((current) => ({ ...current, [playerId]: roleId }));
+    setPlayerEffects((current) => {
+      const effects = new Set(current[playerId] || []);
+      if (alignment === "evil") effects.add("evil_being");
+      if (spyPlayerId) effects.add("spied_on");
+      return { ...current, [playerId]: effects };
+    });
+    setPlayers((current) => current.map((player) => player.id === playerId ? {
+      ...player,
+      character,
+      traveller_state: "revealing",
+    } : player));
+    await supabase.from("players").update({ character, traveller_state: "revealing" }).eq("id", playerId);
+    broadcastPlayerSync([playerId]);
+  };
+
+  const acknowledgeTravellerReveal = async (playerId: string) => {
+    setPlayers((current) => current.map((player) => player.id === playerId
+      ? { ...player, traveller_state: "ready" }
+      : player));
+    await supabase.from("players").update({ traveller_state: "ready" }).eq("id", playerId);
+  };
+
+  const insertTravellerAfter = async (playerId: string, afterPosition: number) => {
+    const traveller = players.find((player) => player.id === playerId && player.traveller_state === "ready");
+    if (!traveller) return;
+    const insertPosition = afterPosition + 1;
+    const shiftedPlayers = players
+      .filter((player) => player.seat_position !== null && player.seat_position >= insertPosition)
+      .sort((left, right) => right.seat_position! - left.seat_position!);
+    await Promise.all(shiftedPlayers.map((player) => (
+      supabase.from("players").update({ seat_position: player.seat_position! + 1 }).eq("id", player.id)
+    )));
+    await supabase.from("players").update({ seat_position: insertPosition, traveller_state: "placed" }).eq("id", playerId);
+    setPlayers((current) => current.map((player) => {
+      if (player.id === playerId) return { ...player, seat_position: insertPosition, traveller_state: "placed" };
+      if (player.seat_position !== null && player.seat_position >= insertPosition) {
+        return { ...player, seat_position: player.seat_position + 1 };
+      }
+      return player;
+    }));
+    broadcastPlayerSync();
   };
 
   const addManualPlayer = async (name: string) => {
@@ -2254,15 +2414,6 @@ const GMRoom = () => {
     if (room?.status === "playing") setPendingChanges(true);
   };
 
-  const broadcastPlayerSync = useCallback((playerIds?: string[]) => {
-    if (!roomId) return;
-    supabase.channel(`player-sync-${roomId}`).send({
-      type: "broadcast",
-      event: "sync",
-      payload: { playerIds },
-    });
-  }, [roomId]);
-
   useEffect(() => {
     if (!rolesAssigned || room?.status !== "playing") return;
     const transformedPlayerIds = Object.entries(roleAssignments)
@@ -2348,13 +2499,25 @@ const GMRoom = () => {
       ?? (ownerPlayerId ? effectiveRoleAssignments[ownerPlayerId] ?? null : null);
     const copiedMimeCornerRole = playerId === mimePlayerId ? mimeCornerRole : null;
     const objectiveRole = objectiveRoleAssignments[playerId] ?? null;
+    const traveller = players.find((player) => player.id === playerId && player.is_traveller);
+    const knownWerewolfPlayerIds = traveller?.traveller_alignment === "evil"
+      ? players.filter((player) => player.seat_position !== null && (
+        WEREWOLF_ROLES.includes(objectiveRoleAssignments[player.id])
+        || playerEffects[player.id]?.has("werewolf_turned")
+      )).map((player) => player.id)
+      : undefined;
+    const objectiveEffects = getObjectiveEffectsForPlayer(playerId);
+    if (traveller?.traveller_alignment === "evil" && !objectiveEffects.includes("evil_being")) {
+      objectiveEffects.push("evil_being");
+    }
     return encodePlayerCharacterMetadata(identity, {
       ownerRole: copiedMimeCornerRole ?? ownerRole,
       ownerPlayerId,
       objectiveRole: ownerPlayerId || (objectiveRole && SOLO_OBJECTIVE_ROLES.includes(objectiveRole))
         ? objectiveRole
         : null,
-      objectiveEffects: getObjectiveEffectsForPlayer(playerId),
+      objectiveEffects,
+      knownWerewolfPlayerIds,
       mimeCopiedRole: playerId === mimePlayerId ? mimeCopiedRole : null,
       dogActorCopiedRole: getDogActorCopiedRoleForDisplay(
         dogWolfStates[playerId],
@@ -2366,7 +2529,7 @@ const GMRoom = () => {
         ? prophecyDeadAtNight[playerId] + 1
         : null,
     });
-  }, [actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveActorCopiedRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, mimeCopiedRole, mimeCornerRole, mimePlayerId, objectiveRoleAssignments, prophecyDeadAtNight]);
+  }, [actorPlayerId, dogWolfOwnerRoles, dogWolfStates, drunkardPlayerId, drunkardReplacementRole, effectiveActorCopiedRole, effectiveRoleAssignments, getObjectiveEffectsForPlayer, mimeCopiedRole, mimeCornerRole, mimePlayerId, objectiveRoleAssignments, playerEffects, players, prophecyDeadAtNight]);
 
   const syncActorCharacter = useCallback((copiedRole: RoleId | null) => {
     if (!actorPlayerId) return;
@@ -2653,6 +2816,9 @@ const GMRoom = () => {
         broadcastPlayerSync([playerId]);
       });
     } else if (newStatus === "alive") {
+      const revivingExiledTraveller = players.some((player) => (
+        player.id === playerId && player.is_traveller && player.traveller_state === "exiled"
+      ));
       setWerewolfDeathFlags((prev) => ({ ...prev, [playerId]: false }));
       if (sourcePlayerId) pendingGameActionLogSourcesRef.current.set(`resurrect:${playerId}`, sourcePlayerId);
       setPlayerStatuses((prev) => ({ ...prev, [playerId]: "alive" }));
@@ -2663,8 +2829,13 @@ const GMRoom = () => {
         return next;
       });
       setPermanentlyDead((prev) => { const next = new Set(prev); next.delete(playerId); return next; });
-      setPlayers((prev) => prev.map((player) => player.id === playerId ? { ...player, is_alive: true } : player));
-      void supabase.from("players").update({ is_alive: true }).eq("id", playerId).then(() => {
+      setPlayers((prev) => prev.map((player) => player.id === playerId
+        ? { ...player, is_alive: true, ...(revivingExiledTraveller ? { traveller_state: "placed" as const } : {}) }
+        : player));
+      void supabase.from("players").update({
+        is_alive: true,
+        ...(revivingExiledTraveller ? { traveller_state: "placed" } : {}),
+      }).eq("id", playerId).then(() => {
         broadcastPlayerSync([playerId]);
       });
 
@@ -2780,6 +2951,18 @@ const GMRoom = () => {
     }
     setListPopoverId(null);
   }, [abilityRoleAssignments, players, hasImmunity, isPlayerActingPoisoned, findClosestWerewolf, room?.language]);
+
+  const handleExile = useCallback((playerId: string) => {
+    const traveller = players.find((player) => player.id === playerId && player.is_traveller);
+    if (!traveller) return;
+    handlePlayerStatusChange(playerId, "dead", "exile");
+    setPlayers((current) => current.map((player) => player.id === playerId
+      ? { ...player, traveller_state: "exiled" }
+      : player));
+    void supabase.from("players").update({ traveller_state: "exiled" }).eq("id", playerId);
+    toast.info(format(getTranslation((room?.language as Language) || "pt").ui.travellers.infoExiled, { name: traveller.name }));
+    setListPopoverId(null);
+  }, [handlePlayerStatusChange, players, room?.language]);
 
   const handleSetIllusion = useCallback((playerId: string, sourcePlayerId?: string | null) => {
     const sourceKey = sourcePlayerId ?? "manual";
@@ -4749,7 +4932,7 @@ const GMRoom = () => {
   const phoneWorld = useMemo<PhoneWorld>(() => ({
     packBlocked: werewolfPackPoisoned,
     nightNumber,
-    players: players.map((player) => {
+    players: players.filter((player) => player.seat_position !== null).map((player) => {
       const effects = playerEffects[player.id] ?? new Set<StatusEffect>();
       const dead = permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead";
       return {
@@ -4769,7 +4952,7 @@ const GMRoom = () => {
         enemySourceIds: Object.entries(dogWolfStates)
           .filter(([, state]) => state.enemyPlayerIds?.includes(player.id))
           .map(([sourcePlayerId]) => sourcePlayerId),
-        werewolfTurned: effects.has("werewolf_turned"), evil: effects.has("evil_being"),
+        werewolfTurned: effects.has("werewolf_turned"), evil: effects.has("evil_being") || player.traveller_alignment === "evil",
         mime: player.id === mimePlayerId,
         canWake: (!dead || prophecyGhostPlayerIds.has(player.id)) && !effects.has("host") && !effects.has("burned")
           && !(abilityRoleAssignments[player.id] === "v06" && isPlayerActingPoisoned(player.id)),
@@ -5110,6 +5293,7 @@ const GMRoom = () => {
   };
 
   const getMimeCopyCandidates = useCallback((mimeId: string): MimeCopyCandidate[] => {
+    const travellerPlayerIds = new Set(players.filter((player) => player.is_traveller).map((player) => player.id));
     const hasRedX = Object.values(playerStatuses).some((status) => status === "dead-this-night");
     const hasWerewolfRedX = Object.entries(playerStatuses).some(([playerId, status]) => (
       status === "dead-this-night"
@@ -5138,7 +5322,7 @@ const GMRoom = () => {
       : drunkardReplacementCandidates[Math.floor(Math.random() * drunkardReplacementCandidates.length)] ?? null;
 
     return Object.entries(roleAssignments).flatMap(([playerId, role]) => {
-      if (playerId === mimeId) return [];
+      if (playerId === mimeId || travellerPlayerIds.has(playerId)) return [];
       if (illusionPlayerIds.has(playerId)) {
         return [{ displayRole: "a06" as RoleId, mechanicalRole: "a06" as RoleId, cornerRole: null }];
       }
@@ -5175,6 +5359,7 @@ const GMRoom = () => {
     permanentlyDead,
     playerEffects,
     playerStatuses,
+    players,
     poisonedPlayerIds,
     roleAssignments,
   ]);
@@ -5830,6 +6015,7 @@ const GMRoom = () => {
       const dogState = dogWolfStates[player.id];
       const ownerPlayerId = dogState?.ownerPlayerId;
       const effects = new Set<StatusEffect>(playerEffects[player.id] || []);
+      if (player.traveller_alignment === "evil") effects.add("evil_being");
       if (ownerPlayerId && !dogState.objectiveRoleOverride) {
         for (const effect of playerEffects[ownerPlayerId] || []) effects.add(effect);
       }
@@ -5874,6 +6060,12 @@ const GMRoom = () => {
 
   const unseatedPlayers = players.filter((p) => p.seat_position === null);
   const isPlaying = room.status === "playing";
+  const travellerRequests = players.filter((player) => player.is_traveller && player.traveller_state === "requested");
+  const assigningTravellers = players.filter((player) => player.is_traveller && player.traveller_state === "assigning");
+  const revealingTraveller = players.find((player) => player.is_traveller && player.traveller_state === "revealing") ?? null;
+  const readyTraveller = players.find((player) => player.is_traveller && player.traveller_state === "ready") ?? null;
+  const exiledTravellerIds = new Set(players.filter((player) => player.traveller_state === "exiled").map((player) => player.id));
+  const travellerJoinUrl = `${joinUrl}&traveller=1`;
   const pendingWinKind = manualWinKind ?? automaticWinKind;
   const scriptPowerlessPlayerIds = new Set(powerlessPlayerIds);
   // This night's resolved line can reopen the card, even after power loss.
@@ -5888,6 +6080,31 @@ const GMRoom = () => {
     <LanguageContext.Provider value={lang}>
     <OpaqueModalBackdropContext.Provider value={true}>
     <div className="min-h-screen p-4">
+      {travellerRequests[0] && !hideScreenMode && (
+        <TravellerRequestPanel
+          player={travellerRequests[0]}
+          language={lang}
+          onAccept={() => void acceptTraveller(travellerRequests[0].id)}
+          onDeny={() => void denyTraveller(travellerRequests[0].id)}
+        />
+      )}
+      <TravellerInviteModal open={travellerInviteOpen} onClose={() => setTravellerInviteOpen(false)} joinUrl={travellerJoinUrl} language={lang} />
+      {revealingTraveller?.traveller_role && revealingTraveller.traveller_alignment && !hideScreenMode && (
+        <TravellerAlignmentModal
+          open
+          language={lang}
+          alignment={revealingTraveller.traveller_alignment}
+          roleId={revealingTraveller.traveller_role as RoleId}
+          gmMirror
+          players={players.filter((player) => player.seat_position !== null).map((player) => ({
+            id: player.id,
+            name: player.name,
+            isAlive: !permanentlyDead.has(player.id),
+            isWerewolf: WEREWOLF_ROLES.includes(objectiveRoleAssignments[player.id]) || !!playerEffects[player.id]?.has("werewolf_turned"),
+          }))}
+          onAcknowledge={() => void acknowledgeTravellerReveal(revealingTraveller.id)}
+        />
+      )}
       {phone.session?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL && !hideScreenMode && (
         <MonkeyRevealModal key={phone.session.id}
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
@@ -6108,6 +6325,10 @@ const GMRoom = () => {
                   availableEffects={getAvailableEffects}
                   onToggleEffect={toggleEffect}
                   onExecute={handleExecute}
+                  onExile={handleExile}
+                  exiledPlayerIds={exiledTravellerIds}
+                  insertionPlayerId={readyTraveller?.id}
+                  onInsertPlayer={(playerId, afterPosition) => void insertTravellerAfter(playerId, afterPosition)}
                   onDragAction={handleDragAction}
                   judgeCharges={judgeCharges}
                   onJudgeChargeToggle={(idx) => { setJudgeCharges(prev => prev > idx ? idx : idx + 1); markScriptRoleAction("v13"); }}
@@ -6169,6 +6390,13 @@ const GMRoom = () => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
                   <p className="text-muted-foreground font-display text-lg">{tt("waitingForPlayers")}</p>
                 </motion.div>
+              )}
+              {readyTraveller?.traveller_role && (
+                <TravellerPlacementToken
+                  player={readyTraveller}
+                  roleId={readyTraveller.traveller_role as RoleId}
+                  language={lang}
+                />
               )}
             </div>
             {displayedPlayerActionRequest && (
@@ -6334,6 +6562,8 @@ const GMRoom = () => {
                     ref={dayPanelRef}
                     nightNumber={nightNumber}
                     alivePlayers={players.filter((p) => !permanentlyDead.has(p.id) && playerStatuses[p.id] !== "dead-this-night").length}
+                    travellerCount={players.filter((player) => player.is_traveller && player.seat_position !== null).length}
+                    totalPlayers={seatedPlayersCount}
                     onStartNight={startNextNight}
                     onStartTribunal={startTribunal}
                     gamePhase={dayPhase}
@@ -6698,7 +6928,12 @@ const GMRoom = () => {
                               ))}
                             </div>
                           )}
-                          <RoleSelector value={baseRoleId} onChange={(role) => changeRole(player.id, role)} advancedEnabled={advancedEnabled} />
+                          <RoleSelector
+                            value={baseRoleId}
+                            onChange={(role) => changeRole(player.id, role)}
+                            advancedEnabled={advancedEnabled}
+                            travellerOnly={player.is_traveller}
+                          />
                         </div>
                       );
 
@@ -6743,6 +6978,8 @@ const GMRoom = () => {
                           onSetExecuted={() => {
                             handleExecute(player.id);
                           }}
+                          isTraveller={player.is_traveller}
+                          onSetExiled={() => handleExile(player.id)}
                           onToggleEffect={(effect) => {
                             toggleEffect(player.id, effect);
                             setListPopoverId(null);
@@ -6753,6 +6990,22 @@ const GMRoom = () => {
                       );
                     })}
                 </div>
+
+                {assigningTravellers.map((traveller) => traveller.traveller_role && traveller.traveller_alignment ? (
+                  <TravellerAssignmentCard
+                    key={traveller.id}
+                    player={traveller}
+                    roleId={traveller.traveller_role as RoleId}
+                    alignment={traveller.traveller_alignment}
+                    language={lang}
+                    onRoleChange={(roleId) => void changeTravellerRole(traveller.id, roleId)}
+                    onConfirm={() => void confirmTraveller(traveller.id)}
+                  />
+                ) : null)}
+
+                <Button type="button" variant="outline" className="w-full border-gold/50 text-gold" onClick={() => setTravellerInviteOpen(true)}>
+                  {getTranslation(lang).ui.travellers.add}
+                </Button>
 
                 {pendingChanges && (
                   <Button
@@ -6792,6 +7045,7 @@ const GMRoom = () => {
                     actorCopiesDrunkard={effectiveActorCopiedRole === "a01"}
                     dogWolfOwnerRoles={dogWolfOwnerRoles}
                     dogWolfStates={dogWolfStates}
+                    allowSeatDrag={!rolesAssigned}
                   />
                 </div>
               ) : (

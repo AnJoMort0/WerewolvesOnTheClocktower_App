@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { parseScriptText } from "@/lib/nightScript";
-import { useT } from "@/lib/i18n";
+import { format, getTranslation, useLanguage, useT } from "@/lib/i18n";
 
 interface DayTribunalPanelProps {
   nightNumber: number;
   alivePlayers: number;
+  travellerCount?: number;
+  totalPlayers?: number;
   onStartNight: () => void;
   onStartTribunal: () => void;
   gamePhase: "day" | "tribunal";
@@ -34,6 +36,8 @@ export interface DayTribunalPanelHandle {
 export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPanelProps>(({
   nightNumber,
   alivePlayers,
+  travellerCount = 0,
+  totalPlayers = 0,
   onStartNight,
   onStartTribunal,
   gamePhase,
@@ -49,6 +53,7 @@ export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPa
   onLineCompletedChange,
 }, ref) => {
   const t = useT();
+  const language = useLanguage();
   const [dayDefault, setDayDefault] = useState(dayDefaultSeconds);
   const [tribunalDefault, setTribunalDefault] = useState(tribunalDefaultSeconds);
   const matchingInitialTimer = initialTimerState?.phase === gamePhase ? initialTimerState : null;
@@ -256,6 +261,11 @@ export const DayTribunalPanel = forwardRef<DayTribunalPanelHandle, DayTribunalPa
               {t("votesNeeded")} <span className="font-display text-primary text-lg">{votesNeeded}</span>
             </p>
             <p className="text-xs text-muted-foreground">({alivePlayers} {t("alivePlayers")})</p>
+            {travellerCount > 0 && (
+              <p className="mt-2 border-t border-border/30 pt-2 text-xs text-gold">
+                {format(getTranslation(language).ui.travellers.exileVotes, { n: Math.ceil(totalPlayers / 2) })}
+              </p>
+            )}
           </div>
 
           {/* Tribunal script lines */}

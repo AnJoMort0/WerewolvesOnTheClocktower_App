@@ -252,6 +252,37 @@ export interface GMRoomStrings {
   roomDisplay: string;
 }
 
+export interface TravellerUiStrings {
+  joinTitle: string;
+  joinDescription: string;
+  requestJoin: string;
+  requestPending: string;
+  requestDenied: string;
+  add: string;
+  qrTitle: string;
+  qrDescription: string;
+  requestTitle: string;
+  requestDescription: string;
+  accept: string;
+  deny: string;
+  setupTitle: string;
+  alignmentVillager: string;
+  alignmentEvil: string;
+  confirmAssignment: string;
+  revealVillagerTitle: string;
+  revealEvilTitle: string;
+  revealVillagerBody: string;
+  revealEvilBody: string;
+  revealWerewolves: string;
+  understood: string;
+  waitingPlacement: string;
+  placeInstruction: string;
+  publicRole: string;
+  exileVotes: string;
+  actionExile: string;
+  infoExiled: string;
+}
+
 /** Static translatable UI strings. */
 export interface UIStrings {
   monkeyReveal: { choose: string; confirm: string; close: string; reopen: string; noCard: string };
@@ -303,6 +334,7 @@ export interface UIStrings {
     selectionComplete: string;
     ignoredComplete: string;
   };
+  travellers: TravellerUiStrings;
   appTitle: string;
   appTagline: string;
   byline: string;

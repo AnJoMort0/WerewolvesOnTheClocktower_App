@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { assignRoles, canRandomlyAssignRole, EXTRA_DEATH_ROLES, INFO_ROLES, LIMITED_USE_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { assignRoles, canRandomlyAssignRole, EXTRA_DEATH_ROLES, INFO_ROLES, LIMITED_USE_ROLES, MIME_COPY_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES, TRAVELLER_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "s02"];
 const IMPLEMENTED_NEW_ROLES: RoleId[] = ["v24", "v25", "m06", "l05", "l06"];
@@ -105,7 +105,7 @@ describe("random assignment eligibility", () => {
       expect(roles).toContain("l01");
       for (const id of ["l02", "l05", "l06"] as const) expect(roles).toContain(id);
       for (const role of Object.values(ROLES)) {
-        if (role.category === "l" || WEREWOLF_ROLES.includes(role.id) || (!advanced && role.category === "a")) continue;
+        if (role.category === "l" || role.category === "t" || WEREWOLF_ROLES.includes(role.id) || (!advanced && role.category === "a")) continue;
         if (canRandomlyAssignRole(role.id, roles, 100)) expect(roles).toContain(role.id);
       }
     }
@@ -143,6 +143,13 @@ describe("random assignment eligibility", () => {
         expect(roles).toContain("e02");
       }
     }
+  });
+
+  it("reserves Traveller roles for late joining instead of the initial draft", () => {
+    for (const count of [8, 12, 24, 100]) {
+      expect(assignRoles(count, true).some((role) => ROLES[role].category === "t")).toBe(false);
+    }
+    expect(MIME_COPY_ROLES.filter((role) => TRAVELLER_ROLES.includes(role))).toEqual([]);
   });
 
   it("keeps every generated lot valid, including linked roles and families", () => {

@@ -4,6 +4,7 @@ import type { Translation } from "./types";
 
 export const pt: Translation = {
   roleLabels: {
+    t01: "Advogada", t02: "Apostador", t03: "Pistoleiro",
     e01: "Lobisomem",
     e02: "Bruxa Malvada",
     e03: "Chaman",
@@ -93,7 +94,7 @@ export const pt: Translation = {
       { text: "(Um Inimigo morreu) O {Cupido Malvado} acorda e escolhe um segundo Inimigo. O {Cupido Malvado} adormece e os Inimigos serão tocados e podem se conhecer. Se um Inimigo consegue condenar o outro a execução, o primeiro recebe imunidade na próxima tentativa de assassinato.", requires: ["m05"], conditionKey: "enemyDied", phoneMode: PHONE_MODE.EVIL_CUPID_REPLACE },
       { text: "O {Sonâmbulo} acorda e escolhe um jogador para visitar, uma vez a escolha feita, adormece na casa dessa pessoa. Essa pessoa vai ser tocada e sabe que mesmo se for chamada, não acordará.", requires: ["v16"], phoneMode: PHONE_MODE.SLEEPWALKER_VISIT },
       { text: "A {Bruxa Malvada} acorda e escolhe um jogador que irá envenenar esta noite.", requires: ["e02"], phoneMode: PHONE_MODE.EVIL_WITCH_POISON },
-      { text: "O {Vinicultor} acorda e escolhe um jogador que irá envenenar mas que receberá imunidade.", requires: ["v24"], phoneMode: PHONE_MODE.VINTNER_POISON },
+      { text: "O {Vinicultor} acorda e escolhe um jogador que irá envenenar mas que recebe imunidade.", requires: ["v24"], phoneMode: PHONE_MODE.VINTNER_POISON },
       { text: "A {Empregada} acorda e é-lhe revelada a distância até a pessoa envenenada.", requires: ["v20"], conditionKey: "houseMaidVisible" },
       { text: "O {Piromaníaco} acorda. São-lhe mostradas as pessoas inocentadas no último tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.", requires: ["v15"], conditionKey: "pyromaniacVisible", phoneMode: PHONE_MODE.PYROMANIAC_BURN },
       { text: "A {Cigana} acorda e indica 3 vizinhos. Se um deles estiver envenenado, ele perde o veneno e a {Cigana} passa a estar envenenada.", requires: ["v12"], conditionKey: "poisonedCharacterPresent", phoneMode: PHONE_MODE.GYPSY_POISON_CHECK },
@@ -146,6 +147,36 @@ export const pt: Translation = {
   },
 
   ui: {
+    travellers: {
+      joinTitle: "Entrar como Viajante?",
+      joinDescription: "Este jogo já começou. Podes pedir ao Narrador para entrar como Viajante.",
+      requestJoin: "Pedir para entrar como Viajante",
+      requestPending: "O pedido foi enviado. À espera do Narrador…",
+      requestDenied: "O Narrador recusou o teu pedido de Viajante.",
+      add: "Adicionar Viajante",
+      qrTitle: "Convidar um Viajante",
+      qrDescription: "O jogador que chegou atrasado pode ler este código para pedir entrada no jogo atual.",
+      requestTitle: "Pedido de Viajante",
+      requestDescription: "{name} quer entrar como Viajante.",
+      accept: "Aceitar",
+      deny: "Recusar",
+      setupTitle: "Atribuir Viajante",
+      alignmentVillager: "Aldeão",
+      alignmentEvil: "Criatura Malvada",
+      confirmAssignment: "Confirmar Viajante",
+      revealVillagerTitle: "És um Aldeão",
+      revealEvilTitle: "És uma Criatura Malvada",
+      revealVillagerBody: "Ajuda a aldeia a encontrar e eliminar todos os Lobisomens.",
+      revealEvilBody: "Ajuda as Criaturas Malvadas a matar todos os Aldeões. O teu papel de Viajante é público; este alinhamento é secreto.",
+      revealWerewolves: "Os Lobisomens estão assinalados abaixo.",
+      understood: "Compreendi",
+      waitingPlacement: "A tua personagem está pronta. O Narrador está a colocar-te no círculo…",
+      placeInstruction: "Arrasta este Viajante para o espaço entre dois jogadores.",
+      publicRole: "Papel público do Viajante",
+      exileVotes: "São necessários {n} votos para exilar um Viajante (metade de todos os jogadores, vivos ou mortos, arredondada para cima).",
+      actionExile: "Exilar",
+      infoExiled: "{name} foi exilado!",
+    },
     monkeyReveal: {
       choose: "Escolhe um jogador para ver a sua carta.",
       confirm: "Revelar carta",

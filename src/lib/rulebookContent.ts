@@ -5,7 +5,8 @@ import type { Language } from "@/lib/i18n";
 
   To add a playable character:
   1. Choose a unique id. Existing prefixes are e (essential), v (villager),
-     m (evil), s (solo), f (flexible), a (advanced), and l (lame/simple).
+     m (evil), s (solo), f (flexible), a (advanced), l (lame/simple), and
+     t (traveller).
   2. Add the card image as src/assets/roles/<id>.png.
   3. Run npm run assets:optimize to generate the display WebP copy. In
      src/lib/roles.ts, import src/assets/display/roles/<id>.webp and add one ROLE_DEFINITIONS entry.
@@ -60,9 +61,9 @@ import type { Language } from "@/lib/i18n";
 // CONTENT TYPES
 // ============================================================================
 
-export type RulebookCharacterId = RoleId | "x01" | "x02" | "x02.1" | "x03" | "x.v09" | "x.s01" | "x.as01b.1" | "x.as01b.2" | "x.m05";
-export type RulebookGroupId = "essential" | "villager" | "evil" | "solo" | "flexible" | "complex" | "lame" | "extra";
-export type RulebookTeam = "villagers" | "evilBeing" | "solo" | "flexible" | "villagersFlex" | "extra";
+export type RulebookCharacterId = RoleId | "x01" | "x02" | "x02.1" | "x.t" | "x03" | "x.v09" | "x.s01" | "x.as01b.1" | "x.as01b.2" | "x.m05";
+export type RulebookGroupId = "essential" | "villager" | "evil" | "solo" | "flexible" | "complex" | "traveller" | "lame" | "extra";
+export type RulebookTeam = "villagers" | "evilBeing" | "solo" | "flexible" | "villagersFlex" | "traveller" | "extra";
 export type LocalizedText = Record<Language, string>;
 export type RulebookSectionBlock = {
     type: "h2" | "h3" | "h4";
@@ -121,14 +122,15 @@ export const RULEBOOK_TEXT = {
     singleCardAllCharacters: { pt: `Ver todas as personagens`, fr: `Voir tous les personnages`, en: `View all characters` },
     backToIndex: { pt: `Voltar à lista`, fr: `Retour à la liste`, en: `Back to the list` },
     groups: [
-        { id: "essential", label: { pt: `Essenciais`, fr: `Essentiels`, en: `Essential` } },
+        { id: "essential", label: { pt: `Personagens Essenciais`, fr: `Personnages essentiels`, en: `Essential Characters` } },
         { id: "villager", label: { pt: `Aldeões`, fr: `Villageois`, en: `Villagers` } },
-        { id: "evil", label: { pt: `Personagens malvados`, fr: `Créatures Maléfiques`, en: `Evil characters` } },
-        { id: "solo", label: { pt: `Personagens independentes`, fr: `Personnages indépendants`, en: `Independent characters` } },
-        { id: "flexible", label: { pt: `Personagens flexíveis`, fr: `Personnages flexibles`, en: `Flexible characters` } },
-        { id: "complex", label: { pt: `Personagens complexos`, fr: `Personnages complexes`, en: `Complex characters` } },
-        { id: "lame", label: { pt: `Personagens forretas`, fr: `Personnages nuls`, en: `Lame characters` } },
-        { id: "extra", label: { pt: `Extras`, fr: `Extras`, en: `Extras` } }
+        { id: "evil", label: { pt: `Criaturas Malvadas`, fr: `Créatures Maléfiques`, en: `Evil Beings` } },
+        { id: "solo", label: { pt: `Personagens Independentes`, fr: `Personnages indépendants`, en: `Independent Characters` } },
+        { id: "flexible", label: { pt: `Personagens Flexíveis`, fr: `Personnages flexibles`, en: `Flexible Characters` } },
+        { id: "complex", label: { pt: `Personagens Complexos`, fr: `Personnages complexes`, en: `Complex Characters` } },
+        { id: "lame", label: { pt: `Personagens Forretas`, fr: `Personnages nuls`, en: `Lame Characters` } },
+        { id: "traveller", label: { pt: `Viajantes`, fr: `Voyageurs`, en: `Travellers` } },
+        { id: "extra", label: { pt: `Tipos de Personagem`, fr: `Types de Personnages`, en: `Character Types` } }
     ],
     teamLabels: {
         villagers: { pt: `Aldeões`, fr: `Villageois`, en: `Villagers` },
@@ -136,6 +138,7 @@ export const RULEBOOK_TEXT = {
         solo: { pt: `Solo`, fr: `Solo`, en: `Solo` },
         flexible: { pt: `Flexível`, fr: `Flexible`, en: `Flexible` },
         villagersFlex: { pt: `Aldeões / Flexível`, fr: `Villageois / Flexible`, en: `Villagers / Flexible` },
+        traveller: { pt: `Viajante`, fr: `Voyageur`, en: `Traveller` },
         extra: { pt: `Extra`, fr: `Extra`, en: `Extra` }
     },
     sections: {
@@ -155,7 +158,7 @@ export const RULEBOOK_TEXT = {
                 type: `p`,
                 text: `Lobisomens da Torre Sangrenta é uma versão personalizada do jogo de dedução social Os Lobisomens da Aldeia Velha, criado por Philippe des Pallières e Hervé Marly e adaptado aqui por AnJoMorto e L_PT_1463.
 
-Cada jogador recebe uma personagem secreta com um poder ou objetivo que influencia a forma como ajuda a sua equipa a ganhar. Os dias, tribunais e noites alternam enquanto a aldeia tenta identificar e eliminar os Lobisomens antes que estes eliminem os Aldeões.
+Cada jogador recebe uma personagem secreta com um poder ou objetivo que influencia a forma como ajuda a sua equipa a ganhar. Os dias, Tribunais e noites alternam enquanto a aldeia tenta identificar e eliminar os Lobisomens antes que estes eliminem os Aldeões.
 
 Esta versão amplia vários poderes conhecidos e introduz personagens originais. A morte não te retira do jogo: continuas a jogar como Fantasma.`
             },
@@ -166,7 +169,7 @@ Esta versão amplia vários poderes conhecidos e introduz personagens originais.
             },
             {
                 type: `lore`,
-                text: `Freeborough tem um grande problema: pessoas muito reservadas e, mais urgentemente, Criaturas Malvadas. Os Lobisomens e os seus Aliados infiltraram-se na população, trazendo caos, morte e destruição. Com os Lobisomens a matar todas as noites, os Aldeões têm de os encontrar e executar. Mas em quem podem confiar?
+                text: `Freeborough tem um grande problema: pessoas muito reservadas e, mais urgentemente, Criaturas Malvadas. Os Lobisomens e os seus Aliados infiltraram-se na população, trazendo caos, morte e destruição. Com os Lobisomens a assassinar todas as noites, os Aldeões têm de os encontrar e executar. Mas em quem podem confiar?
 
 Detalhe aleatório: a hidratação é muito valorizada em Freeborough. Todos deixam uma bebida junto à cama ou ao local de trabalho, pronta para a próxima vez que acordarem a meio da noite.`
             },
@@ -180,7 +183,7 @@ Detalhe aleatório: a hidratação é muito valorizada em Freeborough. Todos dei
                 ordered: true,
                 items: [
                     `Escolhe um Narrador e pelo menos oito jogadores. O Narrador orienta as ações noturnas e modera o Tribunal.`,
-                    `Senta os jogadores em círculo. Todos devem memorizar o seu lugar e regressar a ele em todas as noites e tribunais.`,
+                    `Senta os jogadores em círculo. Todos devem memorizar o seu lugar e regressar a ele em todas as noites e Tribunais.`,
                     `O Narrador atribui a cada jogador uma carta de personagem aleatória e secreta.`,
                     `Coloca duas cadeiras adicionais na parte de baixo do círculo: uma para o Procurador e outra para o Acusado.`,
                 ]
@@ -324,7 +327,7 @@ Os jogadores mortos tornam-se Fantasmas e mantêm o seu objetivo original. Podem
                 type: `p`,
                 text: `Loups-garous de la Tour Sanglante est une version personnalisée du jeu de déduction sociale Les Loups-garous de Thiercelieux, créé par Philippe des Pallières et Hervé Marly et adapté ici par AnJoMorto et L_PT_1463.
 
-Chaque joueur reçoit un personnage secret dont le pouvoir ou l'objectif détermine sa façon d'aider son équipe à gagner. Les journées, les tribunaux et les nuits se succèdent tandis que le village tente d'identifier et d'éliminer les Loups-garous avant qu'ils n'éliminent les Villageois.
+Chaque joueur reçoit un personnage secret dont le pouvoir ou l'objectif détermine sa façon d'aider son équipe à gagner. Les journées, les Tribunaux et les nuits se succèdent tandis que le village tente d'identifier et d'éliminer les Loups-garous avant qu'ils n'éliminent les Villageois.
 
 Cette version enrichit de nombreux pouvoirs connus et introduit des personnages originaux. La mort ne te retire pas du jeu : tu continues à jouer en tant que Fantôme.`
             },
@@ -335,7 +338,7 @@ Cette version enrichit de nombreux pouvoirs connus et introduit des personnages 
             },
             {
                 type: `lore`,
-                text: `Freeborough a un sérieux problème : des habitants très secrets et, plus urgent encore, des Créatures Maléfiques. Les Loups-garous et leurs Alliés se sont infiltrés parmi la population, semant le chaos, la mort et la destruction. Puisque les Loups-garous tuent chaque nuit, les Villageois doivent les trouver et les exécuter. Mais à qui peuvent-ils faire confiance ?
+                text: `Freeborough a un sérieux problème : des habitants très secrets et, plus urgent encore, des Créatures Maléfiques. Les Loups-garous et leurs Alliés se sont infiltrés parmi la population, semant le chaos, la mort et la destruction. Puisque les Loups-garous assassinent chaque nuit, les Villageois doivent les trouver et les exécuter. Mais à qui peuvent-ils faire confiance ?
 
 Détail aléatoire: l'hydratation est très appréciée à Freeborough. Chacun garde une boisson près de son lit ou de son poste de travail, prête pour son prochain réveil au milieu de la nuit.`
             },
@@ -504,7 +507,7 @@ This version expands many familiar abilities and introduces original characters.
             },
             {
                 type: `lore`,
-                text: `Freeborough has a rather large problem: very private people and, more pressingly, Evil Beings. Werewolves and their Allies have slipped into the population, bringing chaos, death, and destruction. With the Werewolves killing every night, the Villagers must find and execute them. But whom can they trust?
+                text: `Freeborough has a rather large problem: very private people and, more pressingly, Evil Beings. Werewolves and their Allies have slipped into the population, bringing chaos, death, and destruction. With the Werewolves assassinating someone every night, the Villagers must find and execute them. But whom can they trust?
 
 Random fact: Hydration is highly valued in Freeborough. Everyone keeps a drink by their bed or workstation, ready for the next time they wake in the middle of the night.`
             },
@@ -671,19 +674,19 @@ export const RULEBOOK_CHARACTERS = {
                 text: {
                     pt: `Os Lobisomens são um problema recorrente em Freeborough, mas os Aldeões ficam sempre surpreendidos quando aparecem. Seja como for, parece que voltaram.`,
                     fr: `Les Loups-garous sont un problème récurrent à Freeborough, mais les Villageois sont toujours surpris de les voir apparaître. Quoi qu'il en soit, les voilà de retour.`,
-                    en: `Werewolves are a recurring problem in Freeborough, yet the villagers are always surprised when they appear. In any case, it seems they are back again.`
+                    en: `Werewolves are a recurring problem in Freeborough, yet the Villagers are always surprised when they appear. In any case, it seems they are back again.`
                 },
             },
         ],
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, escolhe com os outros Lobisomens quem vão assassinar.`,
+                `<red>Cada noite</red>, o Lobisomem escolhe com os outros Lobisomens quem vão assassinar.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il choisit, avec les autres Loups-garous, qui ils assassineront.`,
+                `<red>Chaque nuit</red>, le Loup-garou choisit, avec les autres Loups-garous, qui ils assassineront.`,
             ],
             en: [
-                `<red>Each night</red>, chooses with the other Werewolves whom they will assassinate.`
+                `<red>Each night</red>, the Werewolf chooses with the other Werewolves whom they will assassinate.`
             ]
         },
         details: [
@@ -694,9 +697,9 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If any Werewolf is poisoned:`
                 },
                 description: {
-                    pt: `Não podem matar.`,
-                    fr: `Ils ne peuvent pas tuer.`,
-                    en: `They cannot kill.`
+                    pt: `Não podem assassinar.`,
+                    fr: `Ils ne peuvent pas assassiner.`,
+                    en: `They cannot assassinate.`
                 }
             }
         ],
@@ -740,18 +743,18 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
-                `<red>Cada noite</red>, a Bruxa pode envenenar um jogador.`,
-                `O jogador afetado terá problemas ao usar os seus poderes (receberá informações erradas).`,
+                `A Bruxa Malvada <red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
+                `<red>Cada noite</red>, a Bruxa Malvada pode envenenar um jogador.`,
+                `O jogador afetado terá problemas ao usar os seus poderes (recebe informações erradas).`,
             ],
             fr: [
-                `<red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
-                `<red>Chaque nuit</red>, la sorcière peut empoisonner un personnage.`,
-                `Le joueur affecté aura de la difficulté à contrôler ses pouvoirs (recevra de fausses informations).`,
+                `La Méchante Sorcière <red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
+                `<red>Chaque nuit</red>, la Méchante Sorcière peut empoisonner un joueur.`,
+                `Le joueur affecté aura de la difficulté à contrôler ses pouvoirs (reçoit de fausses informations).`,
             ],
             en: [
-                `<red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
-                `<red>Each night</red>, the Witch may poison one player.`,
+                `The Evil Witch <red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
+                `<red>Each night</red>, she may poison one player.`,
                 `The affected player will have trouble using their powers and will receive incorrect information.`
             ]
         },
@@ -759,13 +762,13 @@ export const RULEBOOK_CHARACTERS = {
             {
                 title: {
                     pt: `Se envenenada:`,
-                    fr: `Si empoisonné :`,
+                    fr: `Si empoisonnée :`,
                     en: `If poisoned:`
                 },
                 description: {
                     pt: `É imune a todos os ataques.`,
-                    fr: `Est immune à tout attaque.`,
-                    en: `Is immune to all attacks.`
+                    fr: `Elle est immunisée contre toutes les attaques.`,
+                    en: `She is immune to all attacks.`
                 }
             }
         ],
@@ -797,15 +800,15 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Cada noite</red> é avisado sobre os jogadores <red>assassinados</red> e pode escolher salvá-los.`,
+                `<red>Cada noite</red>, o Chaman é avisado sobre os jogadores <red>assassinados</red> e pode escolher salvá-los.`,
                 `O Chaman pode salvar (👍) <red>dois</red> jogadores <red>durante todo o jogo</red>.`,
             ],
             fr: [
-                `<red>Chaque nuit</red> est montré les joueurs  <red>assassinés</red> et peut choisir de les sauver.`,
+                `<red>Chaque nuit</red>, le Chaman voit les joueurs <red>assassinés</red> et peut choisir de les sauver.`,
                 `Le Chaman peut sauver (👍) <red>deux</red> joueurs <red>pendant tout le jeu</red>.`,
             ],
             en: [
-                `<red>Each night</red>, is shown the players who were <red>assassinated</red> and may choose to save them.`,
+                `<red>Each night</red>, the Shaman is shown the players who were <red>assassinated</red> and may choose to save them.`,
                 `The Shaman may save (👍) <red>two</red> players <red>during the entire game</red>.`
             ]
         },
@@ -818,8 +821,8 @@ export const RULEBOOK_CHARACTERS = {
                 },
                 description: {
                     pt: `Não salva o jogador.`,
-                    fr: `Ne sauve pas le joueur.`,
-                    en: `Does not save the player.`
+                    fr: `Il ne sauve pas le joueur.`,
+                    en: `He does not save the player.`
                 }
             }
         ],
@@ -857,19 +860,19 @@ export const RULEBOOK_CHARACTERS = {
                 `<red>Chaque fois qu’un joueur meurt</red>, la Voyante découvre son pouvoir <red>(elle sera informée la nuit suivante)</red>.`,
             ],
             en: [
-                `<red>Whenever a player dies</red>, the Fortune Teller learns what their power was <red>(the information is given the following night)</red>.`
+                `<red>Whenever a player dies</red>, the Fortune Teller learns what that player's power was <red>(the information is given the following night)</red>.`
             ]
         },
         details: [
             {
                 title: {
                     pt: `Se envenenada:`,
-                    fr: `Si empoisonné :`,
+                    fr: `Si empoisonnée :`,
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Não receberá a informação correta.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -904,34 +907,34 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Cada noite</red> é avisada sobre os jogadores <red>assassinados</red> e vê como eles morreram.`,
-                `O Narrador mostrará o papel cujo o poder assassinou a vítima.`,
+                `<red>Cada noite</red>, a Menina é avisada sobre os jogadores <red>assassinados</red> e vê como eles morreram.`,
+                `O Narrador mostrará o papel cujo poder assassinou a vítima.`,
                 `Se for um Namorado que se suicidou, é-lhe mostrado o papel do Cupido.`,
                 `Se o assassino era um Soldado, é-lhe mostrado o papel do Capitão.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, les joueurs  <red>assassinés</red> lui sont montrés et elle découvre comment ils sont morts.`,
-                `Le Meneur lui montrera le rôle dont le pouvoir l’a tué.`,
-                `S’il s'agit d’un Amoureux s’étant suicidé, le carte de Cupidon lui sera montrée.`,
+                `<red>Chaque nuit</red>, la Petite Fille voit les joueurs <red>assassinés</red> et découvre comment ils sont morts.`,
+                `Le Meneur lui montrera le rôle dont le pouvoir l’a assassiné.`,
+                `S’il s'agit d’un Amoureux s’étant suicidé, la carte de Cupidon lui sera montrée.`,
                 `Si l’assassin était un Soldat, la carte du Capitaine lui sera montrée.`,
             ],
             en: [
-                `<red>Each night</red>, is shown the players who were <red>assassinated</red> and learns how they died.`,
+                `<red>Each night</red>, the Little Girl is shown the players who were <red>assassinated</red> and learns how they died.`,
                 `The Narrator shows the role whose power assassinated the victim.`,
                 `If a Lover committed suicide, the Cupid card is shown.`,
-                `If the killer was a Soldier, the Captain card is shown.`
+                `If the assassin was a Soldier, the Captain card is shown.`
             ]
         },
         details: [
             {
                 title: {
-                    pt: `Se envenenado:`,
-                    fr: `Si empoisonné :`,
+                    pt: `Se envenenada:`,
+                    fr: `Si empoisonnée :`,
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -950,7 +953,7 @@ export const RULEBOOK_CHARACTERS = {
         team: "villagers",
         name: {
             pt: `Domador do Urso`,
-            fr: `Maître de l’Ours`,
+            fr: `Maître de l'Ours`,
             en: `Bear Tamer`
         },
         lore: [
@@ -964,13 +967,13 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, se um dos seus vizinhos for uma Criatura Malvada, o Urso rosna.`,
+                `<red>A cada noite</red>, se um dos vizinhos do Domador do Urso for uma Criatura Malvada, o Urso rosna.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, si un de ces voisins s’agit d’une Créature Maléfique, l’Ours grogne.`,
+                `<red>Chaque nuit</red>, si l'un des voisins du Maître de l'Ours est une Créature Maléfique, l'Ours grogne.`,
             ],
             en: [
-                `<red>Each night</red>, if one of the Bear Tamer’s neighbors is an Evil Being, the Bear growls.`
+                `<red>Each night</red>, if one of the Bear Tamer's neighbors is an Evil Being, the bear growls.`
             ]
         },
         details: [
@@ -981,8 +984,8 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -1015,13 +1018,13 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, é-lhe revelado silenciosamente quantas Criaturas Malvadas vivas estão em jogo.`,
+                `<red>A cada noite</red>, é revelado silenciosamente ao Domador do Corvo quantas Criaturas Malvadas vivas estão em jogo.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, le Meneur lui révèle silencieusement le nombre de Créatures Maléfiques vivantes en jeu.`,
+                `<red>Chaque nuit</red>, le Meneur révèle silencieusement au Maître du Corbeau le nombre de Créatures Maléfiques vivantes en jeu.`,
             ],
             en: [
-                `<red>Each night</red>, the Narrator silently reveals how many living Evil Beings are in play.`
+                `<red>Each night</red>, the Narrator silently reveals to the Raven Tamer how many living Evil Beings are in play.`
             ]
         },
         details: [
@@ -1032,8 +1035,8 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -1066,16 +1069,16 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, escolhe um jogador e o Narrador revela-lhe se entre ele e os 2 vizinhos há uma Criatura Malvada (👍) ou não (👎).`,
+                `<red>A cada noite</red>, o Domador da Raposa escolhe um jogador e o Narrador revela-lhe se entre ele e os 2 vizinhos há uma Criatura Malvada (👍) ou não (👎).`,
                 `<red>A partir da segunda noite</red>, se os três forem Aldeões, a Raposa foge e o Domador da Raposa perde o seu poder.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il choisit un joueur et le Meneur lui révèle si entre lui et ses voisins il y a une Créature Maléfique (👍) ou pas (👎).`,
+                `<red>Chaque nuit</red>, le Maître du Renard choisit un joueur et le Meneur lui révèle si ce joueur ou l'un de ses deux voisins est une Créature Maléfique (👍) ou non (👎).`,
                 `<red>Dès la deuxième nuit</red>, si tous les trois sont des Villageois, le Renard fuit et le Maître du Renard perd son pouvoir.`,
             ],
             en: [
-                `<red>Each night</red>, chooses a player, and the Narrator reveals whether that player or either of their two neighbors is an Evil Being (👍) or not (👎).`,
-                `<red>Starting on the second night</red>, if all three are Villagers, the Fox runs away and the Fox Tamer loses their power.`
+                `<red>Each night</red>, the Fox Tamer chooses a player, and the Narrator reveals whether that player or either of their two neighbors is an Evil Being (👍) or not (👎).`,
+                `<red>Starting on the second night</red>, if all three are Villagers, the Fox runs away and the Fox Tamer loses his power.`
             ]
         },
         details: [
@@ -1086,8 +1089,8 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -1120,13 +1123,13 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, se um dos vizinhos ou ele próprio foi atacado pelos Lobisomens ou envenenado pela Bruxa, os coelhos assustam-se.`,
+                `<red>A cada noite</red>, se o Domador dos Coelhos ou um dos seus vizinhos foi atacado pelos Lobisomens ou envenenado pela Bruxa Malvada, os coelhos assustam-se.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, si un de ces voisins ou soi-même est attaqué par les Loups-garous ou empoisonné par la Sorcière, les lapins auront peur.`,
+                `<red>Chaque nuit</red>, si le Maître des Lapins ou l'un de ses voisins a été attaqué par les Loups-garous ou empoisonné par la Méchante Sorcière, les lapins prennent peur.`,
             ],
             en: [
-                `<red>Each night</red>, if the Bunny Tamer or either neighbor was attacked by the Werewolves or poisoned by the Witch, the bunnies become frightened.`
+                `<red>Each night</red>, if the Bunny Tamer or either neighbor was attacked by the Werewolves or poisoned by the Evil Witch, his bunnies become frightened.`
             ]
         },
         details: [
@@ -1137,8 +1140,8 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -1162,20 +1165,20 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, acorda e vê uma carta à sua escolha. <red>A partir da segunda noite</red>, se a <red>personagem revelada for uma Criatura Malvada</red>, perde o seu poder.`
+                `<red>A cada noite</red>, o Domador do Macaco acorda e vê uma carta à sua escolha. <red>A partir da segunda noite</red>, se a <red>personagem revelada for uma Criatura Malvada</red>, perde o seu poder.`
             ],
             fr: [
-                `<red>Chaque nuit</red>, il se réveille et voit une carte de son choix. <red>Dès la deuxième nuit</red>, si le <red>personnage révélé est une Créature Maléfique</red>, il perd son pouvoir.`
+                `<red>Chaque nuit</red>, le Maître du Singe se réveille et voit une carte de son choix. <red>Dès la deuxième nuit</red>, si le <red>personnage révélé est une Créature Maléfique</red>, il perd son pouvoir.`
             ],
             en: [
-                `<red>Every night</red>, wakes up and sees a card of their choice. <red>From the second night</red>, if the <red>revealed character is an Evil Being</red>, loses their power.`
+                `<red>Every night</red>, the Monkey Tamer wakes up and sees a card of his choice. <red>From the second night</red>, if the <red>revealed character is an Evil Being</red>, he loses his power.`
             ]
         },
         details: [{
             title: { pt: `Se envenenado:`, fr: `Si empoisonné :`, en: `If poisoned:` },
             description: {
-                pt: `Receberá a informação errada.`,
-                fr: `Recevra de fausses informations.`,
+                pt: `Recebe a informação errada.`,
+                fr: `Reçoit de fausses informations.`,
                 en: `Receives incorrect information.`
             }
         }],
@@ -1207,15 +1210,15 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `Faz de conta que é um Lobisomem.`, `<red>Acorda ao mesmo tempo que os Lobisomens</red> e vota com eles.`,
+                `O Marionetista faz de conta que é um Lobisomem.`, `<red>Acorda ao mesmo tempo que os Lobisomens</red> e vota com eles.`,
             ],
             fr: [
-                `Il fait semblant d’être un Loup-garou.`,
+                `Le Marionnettiste fait semblant d’être un Loup-garou.`,
                 `<red>Il se réveille en même temps que les Loups-garous</red> et vote avec eux.`,
             ],
             en: [
-                `Pretends to be a Werewolf.`,
-                `<red>Wakes up at the same time as the Werewolves</red> and votes with them.`
+                `The Puppeteer pretends to be a Werewolf.`,
+                `<red>He wakes up at the same time as the Werewolves</red> and votes with them.`
             ]
         },
         details: [
@@ -1260,13 +1263,13 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Quando morre</red>, o Lobisomem mais próximo morrerá <red>durante o próximo dia</red>. A morte será anunciada no início do Tribunal.`,
+                `<red>Quando o Cavaleiro Enferrujado morre</red>, o Lobisomem mais próximo é assassinado <red>durante o próximo dia</red>. O assassinato é anunciado no início do Tribunal.`,
             ],
             fr: [
-                `<red>Une fois mort</red>, le Loup-garou le plus proche mourra durant la prochaine journée. Sa mort sera annoncée au début du Tribunal.`,
+                `<red>Une fois le Chevalier Rouillé mort</red>, le Loup-garou le plus proche est assassiné durant la journée suivante. L'assassinat est annoncé au début du Tribunal.`,
             ],
             en: [
-                `<red>When the Rusted Knight dies</red>, the nearest Werewolf dies <red>during the following day</red>. The death is announced at the start of the Tribunal.`
+                `<red>When the Rusted Knight dies</red>, the nearest Werewolf is assassinated <red>during the following day</red>. The assassination is announced at the start of the Tribunal.`
             ]
         },
         details: [
@@ -1316,16 +1319,16 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Uma vez morto</red>, será acordado na próxima noite para escolher <red>um</red> jogador que deverá assassinar.`,
+                `<red>Uma vez morto</red>, o Caçador será acordado na próxima noite para escolher <red>um</red> jogador que deverá assassinar.`,
                 `<red>Se o Capuchinho Vermelho foi executado</red>, será acordado na próxima noite para escolher <red>um</red> jogador que deverá ser assassinado (Poderá na mesma usar o seu poder quando morrer).`,
             ],
             fr: [
-                `<red>Une fois mort</red>, sera réveillé la prochaine nuit et choisira <red>un</red> joueur qui sera assassiné.`,
-                `<red>Si le Petit Chaperon Rouge est exécuté</red>, il sera réveillé la nuit suivante et choisira <red>un</red> joueur qui sera assassiné. (Pourra tout de même tuer un joueur quand il meurt).`,
+                `<red>Une fois mort</red>, le Chasseur se réveille la nuit suivante et choisit <red>un</red> joueur à assassiner.`,
+                `<red>Si le Petit Chaperon Rouge est exécuté</red>, il sera réveillé la nuit suivante et choisira <red>un</red> joueur à assassiner. Il pourra toujours assassiner un joueur lorsqu'il mourra.`,
             ],
             en: [
-                `<red>After dying</red>, wakes up the following night and chooses <red>one</red> player to assassinate.`,
-                `<red>If Little Red Riding Hood was executed</red>, wakes up the following night and chooses <red>one</red> player to assassinate. The Hunter may still use the normal death power later.`
+                `<red>After dying</red>, the Hunter wakes up the following night and chooses <red>one</red> player to assassinate.`,
+                `<red>If Little Red Riding Hood was executed</red>, he wakes up the following night and chooses <red>one</red> player to assassinate. The Hunter may still use his normal death power later.`
             ]
         },
         details: [
@@ -1362,8 +1365,8 @@ export const RULEBOOK_CHARACTERS = {
         lore: [
             {
                 text: {
-                    pt: `Como se lidar com uma avó loba não fosse suficiente, agora há avós lobisomens com que se preocupar. Pelo menos o Caçador continua por perto.`,
-                    fr: `Comme si une grand-mère louve ne suffisait pas, il faut maintenant se méfier des grands-mères loups-garous. Au moins, le Chasseur est toujours là.`,
+                    pt: `Como se lidar com uma avó loba não fosse suficiente, agora há avós Lobisomens com que se preocupar. Pelo menos o Caçador continua por perto.`,
+                    fr: `Comme si une grand-mère louve ne suffisait pas, il faut maintenant se méfier des grands-mères Loups-garous. Au moins, le Chasseur est toujours là.`,
                     en: `As if dealing with a wolf grandmother were not bad enough, now there are Werewolf grandmothers to worry about. At least the Hunter is still around.`
                 },
                 explanation: {
@@ -1375,23 +1378,23 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `É imune aos <red>assassinatos dos Lobisomens</red> enquanto o <red>Caçador estiver vivo</red>.`,
-                `Se for <red>executada enquanto o Caçador estiver vivo</red>, o Caçador pode matar alguém na próxima noite.`,
+                `O Capuchinho Vermelho é imune aos <red>assassinatos dos Lobisomens</red> enquanto o <red>Caçador estiver vivo</red>.`,
+                `Se for <red>executada enquanto o Caçador estiver vivo</red>, o Caçador pode assassinar alguém na próxima noite.`,
             ],
             fr: [
-                `Est immune aux <red>assassinats des Loups-garous</red> tant que le Chasseur soit en vie.`,
-                `Si <red>exécuté pendant que le Chasseur est vivant</red>, le Chasseur peut tuer quelqu’un la nuit suivante.`,
+                `Le Petit Chaperon Rouge est immunisé contre les <red>assassinats des Loups-garous</red> tant que le Chasseur est en vie.`,
+                `Si elle est <red>exécutée pendant que le Chasseur est vivant</red>, le Chasseur peut assassiner quelqu’un la nuit suivante.`,
             ],
             en: [
-                `Is immune to <red>Werewolf assassinations</red> while the <red>Hunter is alive</red>.`,
-                `If <red>executed while the Hunter is alive</red>, the Hunter may kill someone the following night.`
+                `Little Red Riding Hood is immune to <red>Werewolf assassinations</red> while the <red>Hunter is alive</red>.`,
+                `If she is <red>executed while the Hunter is alive</red>, the Hunter may assassinate someone the following night.`
             ]
         },
         details: [
             {
                 title: {
-                    pt: `Se envenenado:`,
-                    fr: `Si empoisonné :`,
+                    pt: `Se envenenada:`,
+                    fr: `Si empoisonnée :`,
                     en: `If poisoned:`
                 },
                 description: {
@@ -1429,16 +1432,16 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, escolhe um jogador que será um Soldado durante essa noite e dia. O Soldado será tocado pelo Narrador.`,
-                `Se o Soldado morrer, poderá matar alguém na noite seguinte.`,
+                `<red>Cada noite</red>, o Capitão escolhe um jogador que será um Soldado durante essa noite e dia. O Soldado será tocado pelo Narrador.`,
+                `Se o Soldado morrer, poderá assassinar alguém na noite seguinte.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, choisit un Soldat pour une nuit et un jour. Le Soldat sera touché par le Meneur.`,
-                `Si le Soldat meurt, il pourra tuer quelqu’un la nuit suivante.`,
+                `<red>Chaque nuit</red>, le Capitaine choisit un Soldat pour une nuit et un jour. Le Meneur touche le Soldat.`,
+                `Si le Soldat meurt, il pourra assassiner quelqu’un la nuit suivante.`,
             ],
             en: [
-                `<red>Each night</red>, chooses a player who will be a Soldier for that night and the following day. The Narrator touches the Soldier.`,
-                `If the Soldier dies, they may kill someone the following night.`
+                `<red>Each night</red>, the Captain chooses a player who will be a Soldier for that night and the following day. The Narrator touches the Soldier.`,
+                `If the Soldier dies, he may assassinate someone the following night.`
             ]
         },
         details: [
@@ -1474,13 +1477,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Se for assassinado pelos Lobisomens</red>, acorda e assassina <red>um</red> jogador que agiu essa noite.`,
+                `<red>Se o Colosso for assassinado pelos Lobisomens</red>, acorda e assassina <red>um</red> jogador que agiu essa noite.`,
             ],
             fr: [
-                `<red>S’il est assassiné par les Loups-garous</red>, se réveilleet assassine <red>un</red> joueur qui a agi cette nuit.`,
+                `<red>Si le Colosse est assassiné par les Loups-garous</red>, il se réveille et assassine <red>un</red> joueur qui a agi cette nuit.`,
             ],
             en: [
-                `<red>If assassinated by the Werewolves</red>, wakes up and assassinates <red>one</red> player who has acted that night.`
+                `<red>If the Colossus is assassinated by the Werewolves</red>, he wakes up and assassinates <red>one</red> player who has acted that night.`
             ]
         },
         details: [
@@ -1525,13 +1528,13 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Duas vezes</red> no jogo, <red>durante o dia</red>, pode dizer <red>discretamente</red> ao Narrador para <red>assassinar</red> uma pessoa cuja morte será anunciada no início do Tribunal.`,
+                `<red>Duas vezes</red> no jogo, <red>durante o dia</red>, o Paranoico pode dizer <red>discretamente</red> ao Narrador para <red>assassinar</red> uma pessoa cuja morte será anunciada no início do Tribunal.`,
             ],
             fr: [
-                `<red>Deux fois</red> dans le jeu, <red>pendant le jour</red>, il peut dire <red>discrètement</red> au Meneur un joueur qu’il veut <red>assassiner</red>, sa mort sera annoncée au Tribunal.`,
+                `<red>Deux fois</red> dans le jeu, <red>pendant le jour</red>, le Paranoïaque peut dire <red>discrètement</red> au Meneur un joueur qu’il veut <red>assassiner</red>, sa mort sera annoncée au Tribunal.`,
             ],
             en: [
-                `<red>Twice</red> per game, <red>during the day</red>, may <red>discreetly</red> tell the Narrator to <red>assassinate</red> a player. The death is announced at the start of the Tribunal.`
+                `<red>Twice</red> per game, <red>during the day</red>, the Paranoid may <red>discreetly</red> tell the Narrator to <red>assassinate</red> a player. The assassination is announced at the start of the Tribunal.`
             ]
         },
         details: [
@@ -1567,13 +1570,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, escolhe um jogador que terá automaticamente 2 votos a mais contra ele se for a Tribunal nesse dia.`,
+                `<red>A cada noite</red>, o Chefe da Aldeia escolhe um jogador que terá automaticamente 2 votos a mais contra ele se for a Tribunal nesse dia.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il choisit un joueur qui aura automatiquement deux votes contre lui s’il est accusé au Tribunal du jour suivant.`,
+                `<red>Chaque nuit</red>, l'Ancien du Village choisit un joueur qui aura automatiquement deux votes contre lui s’il est accusé au Tribunal du jour suivant.`,
             ],
             en: [
-                `<red>Each night</red>, chooses a player who automatically receives 2 additional votes against them if brought to the Tribunal that day.`
+                `<red>Each night</red>, the Village Elder chooses a player who automatically receives 2 additional votes against them if brought to the Tribunal that day.`
             ]
         },
         details: [
@@ -1609,28 +1612,28 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, escolhe um jogador e o Narrador revela-lhe se entre ele e os 2 vizinhos há um jogador envenenado.`,
+                `<red>A cada noite</red>, a Cigana escolhe um jogador e o Narrador revela-lhe se esse jogador ou um dos seus 2 vizinhos está envenenado.`,
                 `Se for o caso, ela será avisada (👍/👎), esse jogador perde o veneno e a Cigana fica envenenada.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, choisit un joueur et le Meneur révèlera si entre lui et ses voisins il y a quelqu’un empoisonné.`,
+                `<red>Chaque nuit</red>, la Gitane choisit un joueur et le Meneur lui révèle si ce joueur ou l'un de ses 2 voisins est empoisonné.`,
                 `Si c’est le cas, elle sera avertie (👍/👎), le joueur perd le poison et la Gitane devient empoisonnée.`,
             ],
             en: [
-                `<red>Each night</red>, chooses a player, and the Narrator reveals whether that player or either of their two neighbors is poisoned.`,
+                `<red>Each night</red>, the Gypsy chooses a player, and the Narrator reveals whether that player or either of their two neighbors is poisoned.`,
                 `If so, the Gypsy is notified (👍/👎), that player loses the poison, and the Gypsy becomes poisoned.`
             ]
         },
         details: [
             {
                 title: {
-                    pt: `Se envenenado :`,
-                    fr: `Si empoisonné :`,
+                    pt: `Se envenenada:`,
+                    fr: `Si empoisonnée :`,
                     en: `If poisoned:`
                 },
                 description: {
                     pt: `O voto dela conta a dobrar.`,
-                    fr: `Ses votes sont doublés.`,
+                    fr: `Son vote compte double.`,
                     en: `The Gypsy’s vote counts double.`
                 }
             }
@@ -1663,17 +1666,17 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Duas vezes durante todo o jogo</red>, pode-se revelar e anular uma execução durante o Tribunal.`,
+                `<red>Duas vezes durante todo o jogo</red>, o Juiz pode-se revelar e anular uma execução durante o Tribunal.`,
                 `Só pode usar este poder uma vez por dia.`,
                 `<red>Se assassinado</red>, o Fantasma <red>pode continuar a votar</red> e o seu voto conta o dobro.`,
             ],
             fr: [
-                `<red>Deux fois dans tous le jeu</red>, il peut se révéler et annuler une exécution au Tribunal.`,
+                `<red>Deux fois dans toute la partie</red>, le Juge peut se révéler et annuler une exécution au Tribunal.`,
                 `Il ne peut utiliser ce pouvoir qu'une fois par jour.`,
                 `<red>Si assassiné</red>, son Fantôme <red>peut continuer à voter</red> et son vote sera doublé.`,
             ],
             en: [
-                `<red>Twice during the entire game</red>, may reveal himself and cancel an execution during the Tribunal.`,
+                `<red>Twice during the entire game</red>, the Judge may reveal himself and cancel an execution during the Tribunal.`,
                 `This power may only be used once per day.`,
                 `<red>If assassinated</red>, the Ghost <red>may continue voting</red>, and his vote counts double.`
             ]
@@ -1711,15 +1714,15 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Duas vezes durante todo o jogo</red>, pode-se revelar e forçar uma execução durante o Tribunal.`,
+                `<red>Duas vezes durante todo o jogo</red>, o Acusador pode-se revelar e forçar uma execução durante o Tribunal.`,
                 `Só pode usar o poder uma vez por dia.`,
             ],
             fr: [
-                `<red>Deux fois dans tout le jeu</red>, il peut se révéler et forcer une exécution au Tribunal.`,
+                `<red>Deux fois dans tout le jeu</red>, l'Accusateur peut se révéler et forcer une exécution au Tribunal.`,
                 `Il ne peut utiliser ce pouvoir qu'une fois par jour.`,
             ],
             en: [
-                `<red>Twice during the entire game</red>, may reveal himself and force an execution during the Tribunal.`,
+                `<red>Twice during the entire game</red>, the Accuser may reveal himself and force an execution during the Tribunal.`,
                 `This power may only be used once per day.`
             ]
         },
@@ -1762,24 +1765,24 @@ export const RULEBOOK_CHARACTERS = {
                     en: `Therapy has done wonders for the Pyromaniac's murderous tendencies. These days, he limits himself to arson.`
                 },
                 explanation: {
-                    pt: `No jogo original, o Piromaníaco podia escolher um momento para matar todos os jogadores que ele tinha selecionado.`,
-                    fr: `Dans le jeu original, le Pyromane pouvait choisir un moment pour tuer tous les joueurs qu'il avait choisis.`,
-                    en: `In the original game, the Pyromaniac could choose a moment to kill all players he had chosen.`
+                    pt: `No jogo original, o Piromaníaco podia escolher um momento para assassinar todos os jogadores que tinha selecionado.`,
+                    fr: `Dans le jeu original, le Pyromane pouvait choisir un moment pour assassiner tous les joueurs qu'il avait choisis.`,
+                    en: `In the original game, the Pyromaniac could choose a moment to assassinate every player he had chosen.`
                 }
             },
         ],
         mainDescription: {
             pt: [
                 `Quando um jogador é chamado ao Tribunal, mas <red>não é executado</red>, o Piromaníaco <red>pode escolher</red> na <red>noite seguinte</red> incendiar a casa desse jogador (👍/👎).`,
-                `Esse jogador morre se for um Lobisomem, senão, perde os seus poderes permanentemente.`,
+                `Se esse jogador for um Lobisomem, o Piromaníaco assassina-o; caso contrário, o jogador perde os seus poderes permanentemente.`,
             ],
             fr: [
                 `Quand un joueur est accusé au Tribunal, mais <red>n’est pas exécuté</red>, le Pyromane <red>peut choisir</red> la <red>nuit suivante</red> d'incendier la maison de ce joueur (👍/👎).`,
-                `Ce joueur meurt s’il est un Loup-garou, sinon, perd ses pouvoirs de façon permanente.`,
+                `Si ce joueur est un Loup-garou, le Pyromane l'assassine ; sinon, le joueur perd définitivement ses pouvoirs.`,
             ],
             en: [
-                `When a player is brought to the Tribunal but <red>is not executed</red>, the Pyromaniac <red>may choose</red> on the <red>following night</red> to set that player’s house on fire (👍/👎).`,
-                `That player dies if they are a Werewolf; otherwise, they permanently lose their powers.`
+                `When a player is brought to the Tribunal but <red>is not executed</red>, the Pyromaniac <red>may choose</red> on the <red>following night</red> to set that player's house on fire (👍/👎).`,
+                `If that player is a Werewolf, the Pyromaniac assassinates the player; otherwise, the player permanently loses all powers.`
             ]
         },
         details: [
@@ -1824,17 +1827,17 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Cada início de noite</red> escolhe um jogador para visitar.`,
+                `<red>Cada início de noite</red>, o Sonâmbulo escolhe um jogador para visitar.`,
                 `Esse jogador será tocado e não será chamado essa noite.`,
                 `Se esse jogador for chamado na mesma (por ex. Lobisomens), não acorda.`,
             ],
             fr: [
-                `<red>Au début de chaque nuit</red>, il choisit un joueur qu’il visitera.`,
+                `<red>Au début de chaque nuit</red>, le Somnambule choisit un joueur qu’il visitera.`,
                 `Ce joueur sera touché et ne sera pas appelé cette nuit-là.`,
                 `Si ce joueur est tout de même appelé (par ex. Loup-garou), il ne se réveille pas.`,
             ],
             en: [
-                `<red>At the start of each night</red>, chooses a player to visit.`,
+                `<red>At the start of each night</red>, the Sleepwalker chooses a player to visit.`,
                 `That player is touched and will not be called during the night.`,
                 `If that player is called anyway, for example with the Werewolves, they do not wake up.`
             ]
@@ -1872,16 +1875,16 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, escolhe um jogador que será imune <red>durante essa noite</red>.`,
+                `<red>Cada noite</red>, o Salvador escolhe um jogador que será imune <red>durante essa noite</red>.`,
                 `Também se pode escolher a si próprio.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il choisit un joueur qui sera immune <red>pendant cette nuit</red>.`,
+                `<red>Chaque nuit</red>, le Sauveur choisit un joueur qui sera immunisé <red>pendant cette nuit</red>.`,
                 `Il peut aussi se choisir soi-même.`,
             ],
             en: [
-                `<red>Each night</red>, chooses a player who will be immune <red>during that night</red>.`,
-                `May also choose himself.`
+                `<red>Each night</red>, the Saviour chooses a player who will be immune <red>during that night</red>.`,
+                `He may also choose himself.`
             ]
         },
         details: [
@@ -1917,17 +1920,17 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Pode ressuscitar <red>dois</red> Fantasmas <red>durante todo o jogo</red>.`,
+                `O Anjo pode ressuscitar <red>dois</red> Fantasmas <red>durante todo o jogo</red>.`,
                 `Se o Fantasma tinha um poder com usos limitados, recupera todos os usos quando ressuscitado.`,
                 `(Pode pedir discretamente a qualquer momento ao Narrador; o jogador ressuscitará na próxima noite)`,
             ],
             fr: [
-                `Peut ressusciter <red>deux</red> Fantômes <red>durant tout le jeu</red>.`,
+                `L'Ange peut ressusciter <red>deux</red> Fantômes <red>durant tout le jeu</red>.`,
                 `Si le Fantôme avait un pouvoir avec des utilisations limitées, il les récupère.`,
                 `(Il peut demander discrètement d’utiliser son pouvoir à tout moment au Meneur ; le Fantôme sera ressuscité la nuit suivante.)`,
             ],
             en: [
-                `May resurrect <red>two</red> Ghosts <red>during the entire game</red>.`,
+                `The Angel may resurrect <red>two</red> Ghosts <red>during the entire game</red>.`,
                 `If the Ghost had a limited-use power, all uses are restored upon resurrection.`,
                 `(The Angel may discreetly ask the Narrator at any time; the player is resurrected the following night.)`
             ]
@@ -1984,7 +1987,7 @@ export const RULEBOOK_CHARACTERS = {
                 `Cela inclut notamment les rôles à pouvoirs limités.`,
             ],
             en: [
-                `<red>At the end of each night</red>, points at a player believed to have died during that night.`,
+                `<red>At the end of each night</red>, the Prophet points at a player believed to have died during that night.`,
                 `If the prophecy is correct (👍), that player is touched and keeps their powers as a Ghost during the following day and night.`,
                 `This also applies to characters with limited-use powers.`
             ]
@@ -2031,28 +2034,28 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, é-lhe revelada a distância até a pessoa envenenada`,
+                `<red>Cada noite</red>, é revelada à Empregada a distância até à pessoa envenenada.`,
                 `(Ex.: 3 = a terceira pessoa à esquerda ou à direita).`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, le Meneur lui révèle la distance de la personne empoisonné`,
+                `<red>Chaque nuit</red>, le Meneur révèle à la Domestique la distance qui la sépare de la personne empoisonnée.`,
                 `(Ex. : 3 = la troisième personne à droite ou à gauche).`,
             ],
             en: [
-                `<red>Each night</red>, the distance to the poisoned player is revealed.`,
+                `<red>Each night</red>, the Housemaid learns the distance to the poisoned player.`,
                 `(Example: 3 means the third player to the left or right.)`
             ]
         },
         details: [
             {
                 title: {
-                    pt: `Se envenenado:`,
-                    fr: `Si empoisonné :`,
+                    pt: `Se envenenada:`,
+                    fr: `Si empoisonnée :`,
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -2085,13 +2088,13 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, é-lhe mostrado um personagem em jogo com um poder com usos limitados e é informado de quantos usos esse personagem ainda tem.`,
+                `<red>Cada noite</red>, é mostrado ao Faroleiro um personagem em jogo com um poder com usos limitados e é-lhe revelado quantos usos esse personagem ainda tem.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il est montré un rôle en jeu qui a des utilisations limitées de son pouvoir et combien d’utilisations lui reste.`,
+                `<red>Chaque nuit</red>, le Falotier voit un rôle en jeu dont le pouvoir a des utilisations limitées et apprend combien d’utilisations il lui reste.`,
             ],
             en: [
-                `<red>Each night</red>, is shown a character in play with a limited-use power and learns how many uses that character has left.`
+                `<red>Each night</red>, the Lamplighter is shown a character in play with a limited-use power and learns how many uses that character has left.`
             ]
         },
         details: [
@@ -2102,8 +2105,8 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -2141,16 +2144,16 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `Cada vez que leva um jogador a Tribunal, é-lhe revelado na <red>noite seguinte</red> se esse jogador era um Lobisomem ou não.`,
+                `Cada vez que o Pedro leva um jogador a Tribunal, é-lhe revelado na <red>noite seguinte</red> se esse jogador era um Lobisomem ou não.`,
                 `<red>Nunca pode levar o mesmo jogador a Tribunal duas vezes</red>.`,
             ],
             fr: [
-                `Chaque fois qu’il accuse quelqu’un au Tribunal, il lui sera révélé la <red>nuit suivante</red> si ce joueur était un Loup-garou ou pas.`,
+                `Chaque fois que l'Enfant accuse quelqu’un au Tribunal, il lui sera révélé la <red>nuit suivante</red> si ce joueur était un Loup-garou ou pas.`,
                 `<red>Ne peut jamais amener le même joueur au Tribunal deux fois</red>.`,
             ],
             en: [
                 `Whenever the Boy brings a player to the Tribunal, the <red>following night</red> reveals whether that player was a Werewolf.`,
-                `<red>The Boy may never bring the same player to the Tribunal twice</red>.`
+                `<red>He may never bring the same player to the Tribunal twice</red>.`
             ]
         },
         details: [
@@ -2161,8 +2164,8 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -2181,27 +2184,27 @@ export const RULEBOOK_CHARACTERS = {
         team: "villagers",
         name: {
             pt: `Domador da Aranha`,
-            fr: `Maître de l’Araignée`,
+            fr: `Maître de l'Araignée`,
             en: `Spider Tamer`
         },
         mainDescription: {
             pt: [
-                `<red>Na primeira noite</red>, escolhe um jogador no qual tece uma teia de aranha.`,
+                `<red>Na primeira noite</red>, o Domador da Aranha escolhe um jogador no qual tece uma teia de aranha.`,
                 `<red>Cada noite depois da primeira</red>, o Domador da Aranha será mostrado as cartas que durante a noite apontaram o jogador com a teia.`,
                 `<red>Na noite seguinte à morte do jogador com a teia de aranha</red>, o Domador da Aranha é acordado para escolher um novo.`,
                 `<red>Uma vez</red> no jogo, <red>durante o dia</red>, pode dizer <red>discretamente</red> ao Narrador para mudar o jogador com a teia antes da morte dele.`,
             ],
             fr: [
-                `<red>La première nuit</red>, il choisit un joueur chez qui il fera une toile d’araignée.`,
-                `<red>Chaque nuit après la première</red>, le Meneur révèle au Maître de l’Araignée chaque carte qui a pointé le joueur avec la toile cette nuit-là.`,
-                `<red>La nuit suivant la mort du joueur avec la toile d’araignée</red>, le Maître de l’Araignée est réveillé et en choisit un nouveau.`,
+                `<red>La première nuit</red>, le Maître de l'Araignée choisit un joueur chez qui il fera une toile d’araignée.`,
+                `<red>Chaque nuit après la première</red>, le Meneur révèle au Maître de l'Araignée chaque carte qui a pointé le joueur avec la toile cette nuit-là.`,
+                `<red>La nuit suivant la mort du joueur avec la toile d'araignée</red>, le Maître de l'Araignée est réveillé et en choisit un nouveau.`,
                 `<red>Une fois</red> dans le jeu, <red>pendant le jour</red>, il peut dire <red>discrètement</red> au Meneur s’il souhaite changer le joueur avec la toile avant la mort de celui-ci.`,
             ],
             en: [
-                `<red>On the first night</red>, chooses a player on whom to weave a spiderweb.`,
+                `<red>On the first night</red>, the Spider Tamer chooses a player on whom to weave a spiderweb.`,
                 `<red>Each night after the first</red>, the Narrator shows the Spider Tamer every card that pointed at the webbed player during that night.`,
-                `<red>On the night after the webbed player dies</red>, the Spider Tamer wakes up and chooses a new player.`,
-                `<red>Once</red> per game, <red>during the day</red>, may <red>discreetly</red> ask the Narrator to move the web before the webbed player dies.`
+                `<red>On the night after the webbed player dies</red>, he wakes up and chooses a new player.`,
+                `<red>Once</red> per game, <red>during the day</red>, he may <red>discreetly</red> ask the Narrator to move the web before the webbed player dies.`
             ]
         },
         details: [
@@ -2212,8 +2215,8 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Receberá a informação errada.`,
-                    fr: `Recevra de fausses informations.`,
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
                     en: `Receives incorrect information.`
                 }
             }
@@ -2238,7 +2241,7 @@ export const RULEBOOK_CHARACTERS = {
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, o Vinicultor <red>escolhe se quer</red> envenenar um jogador durante um dia e uma noite, mas esse jogador também será imune.`,
-                `O jogador afetado terá problemas ao usar os seus poderes (receberá informações erradas).`,
+                `O jogador afetado terá problemas ao usar os seus poderes (recebe informações erradas).`,
             ],
             fr: [
                 `<red>Chaque nuit</red>, le Vigneron <red>choisit s’il souhaite</red> empoisonner un joueur pendant un jour et une nuit. Ce joueur sera également immune.`,
@@ -2246,7 +2249,7 @@ export const RULEBOOK_CHARACTERS = {
             ],
             en: [
                 `<red>Each night</red>, the Vintner <red>chooses whether</red> to poison a player for one day and one night. That player also becomes immune.`,
-                `The affected player will have trouble using their powers and will receive incorrect information.`
+                `The affected player will have trouble using their powers(will receive incorrect information).`
             ]
         },
         details: [
@@ -2291,7 +2294,7 @@ export const RULEBOOK_CHARACTERS = {
             ],
             en: [
                 `<red>Each night</red>, the Priest is called, and <red>any player, living or a Ghost</red>, may raise a hand to confess.`,
-                `The Priest chooses a player with a raised hand and may see that player’s role. In return, the chosen player wakes up and sees who the Priest is.`
+                `He chooses a player with a raised hand and may see that player's role. In return, the chosen player wakes up and sees who the Priest is.`
             ]
         },
         details: [
@@ -2343,16 +2346,16 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Duas vezes</red> por jogo, escolhe se quer se mascarar de Avózinha (👍/👎), dando-lhe imunidade durante um dia e uma noite.`,
+                `<red>Duas vezes</red> por jogo, o Lobisomem Mau escolhe se quer se mascarar de Avózinha (👍/👎), dando-lhe imunidade durante um dia e uma noite.`,
                 `<red>Mesmo imune</red>, pode ser <red>executado</red> se quem o levar a Tribunal for o Capuchinho Vermelho. E nesse caso, se o Caçador votar, o Lobisomem Mau é automaticamente executado.`,
             ],
             fr: [
-                `<red>Deux fois</red> par jeu, il choisit s’il veut se déguiser en Grand-maman (👍/👎), ce qui lui donne immunité pendant un jour et une nuit.`,
-                `<red>Même étant immune</red>, il peut être <red>exécuté</red> au Tribunal si accusé par le Petit Chaperon Rouge. Dans ce cas spécifiquement, si le Chasseur vote, le Méchant Loup-garou est exécuté automatiquement.`,
+                `<red>Deux fois</red> par jeu, le Méchant Loup-garou choisit s’il veut se déguiser en Grand-maman (👍/👎), ce qui lui donne immunité pendant un jour et une nuit.`,
+                `<red>Même immunisé</red>, il peut être <red>exécuté</red> au Tribunal s'il est accusé par le Petit Chaperon Rouge. Dans ce cas précis, si le Chasseur vote, le Méchant Loup-garou est exécuté automatiquement.`,
             ],
             en: [
-                `<red>Twice</red> per game, chooses whether to disguise themself as Grandmother (👍/👎), gaining immunity for one day and one night.`,
-                `<red>Even while immune</red>, may be <red>executed</red> if Little Red Riding Hood brings him to the Tribunal. In that specific case, if the Hunter votes, the Big Bad Werewolf is executed automatically.`
+                `<red>Twice</red> per game, the Big Bad Werewolf chooses whether to disguise himself as Grandmother (👍/👎), gaining immunity for one day and one night.`,
+                `<red>Even while immune</red>, he may be <red>executed</red> if Little Red Riding Hood brings him to the Tribunal. In that specific case, if the Hunter votes, the Big Bad Werewolf is executed automatically.`
             ]
         },
         details: [
@@ -2363,9 +2366,9 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If any Werewolf is poisoned:`
                 },
                 description: {
-                    pt: `Não podem matar.`,
-                    fr: `Ils ne peuvent pas tuer.`,
-                    en: `They cannot kill.`
+                    pt: `Não podem assassinar.`,
+                    fr: `Ils ne peuvent pas assassiner.`,
+                    en: `They cannot assassinate.`
                 }
             }
         ],
@@ -2383,7 +2386,7 @@ export const RULEBOOK_CHARACTERS = {
         team: "evilBeing",
         name: {
             pt: `Lobisomem Vidente`,
-            fr: `Loup-garou Voyante`,
+            fr: `Loup-garou Voyant`,
             en: `Werewolf Seer`
         },
         lore: [
@@ -2397,13 +2400,13 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `Após os Lobisomens terem escolhido a sua vítima, o Lobisomem Vidente pode <red>escolher</red> NÃO DEIXAR MATAR esse jogador, mas em vez disso, ver o seu papel.`,
+                `Após os Lobisomens escolherem a vítima, o Lobisomem Vidente pode <red>escolher</red> NÃO ASSASSINAR esse jogador e, em vez disso, ver a sua personagem.`,
             ],
             fr: [
-                `Après que les Loups-garous ont choisi leur victime, le Loup-garou Voyante peut <red>choisir</red> NE PAS TUER ce joueur mais, à la place, voir son pouvoir.`,
+                `Après que les Loups-garous ont choisi leur victime, le Loup-garou Voyant peut <red>choisir</red> de NE PAS ASSASSINER ce joueur et, à la place, voir son pouvoir.`,
             ],
             en: [
-                `After the Werewolves choose their victim, the Werewolf Seer may <red>choose</red> NOT TO KILL that player and instead see their role.`
+                `After the Werewolves choose their victim, the Werewolf Seer may <red>choose</red> NOT TO ASSASSINATE that player and instead see that player's role.`
             ]
         },
         details: [
@@ -2414,9 +2417,9 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If any Werewolf is poisoned:`
                 },
                 description: {
-                    pt: `Não podem matar.`,
-                    fr: `Ils ne peuvent pas tuer.`,
-                    en: `They cannot kill.`
+                    pt: `Não podem assassinar.`,
+                    fr: `Ils ne peuvent pas assassiner.`,
+                    en: `They cannot assassinate.`
                 }
             }
         ],
@@ -2439,17 +2442,17 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Uma só vez durante todo o jogo</red>, pode transformar a vítima dos Lobisomens em Lobisomem.`,
+                `<red>Uma só vez durante todo o jogo</red>, o Lobisomem Vampiro pode transformar a vítima dos Lobisomens em Lobisomem.`,
                 `A vítima será avisada e <red>guarda os seus poderes de Aldeão se quiser</red> (👍/👎) mas joga com o objetivo dos Lobisomens.`,
                 `Se a vítima tiver um poder com usos limitados, recupera todos os usos quando transformada.`,
             ],
             fr: [
-                `<red>Une seule fois dans tout le jeu</red>, il peut transformer la victime des Loups-garous en Loup-garou.`,
-                `La victime sera touchée. Elle <red>gardera ses pouvoirs de Villageois si elle le souhaite</red> (👍/👎) mais jouera avec l’objectif des Créatures Méchantes.`,
+                `<red>Une seule fois dans tout le jeu</red>, le Loup-garou Vampire peut transformer la victime des Loups-garous en Loup-garou.`,
+                `La victime est avertie. Elle <red>peut conserver ses pouvoirs de Villageois si elle le souhaite</red> (👍/👎), mais joue désormais avec l’objectif des Créatures Maléfiques.`,
                 `Si la victime avait un pouvoir avec des utilisations limitées, elle les récupère.`,
             ],
             en: [
-                `<red>Once during the entire game</red>, may turn the Werewolves’ victim into a Werewolf.`,
+                `<red>Once during the entire game</red>, the Vampire Werewolf may turn the Werewolves’ victim into a Werewolf.`,
                 `The victim is notified and <red>may keep their Villager powers if they wish</red> (👍/👎), but now plays toward the Werewolves’ objective.`,
                 `If the victim had a limited-use power, all uses are restored when they are turned.`
             ]
@@ -2462,9 +2465,9 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If any Werewolf is poisoned:`
                 },
                 description: {
-                    pt: `Não podem matar.`,
-                    fr: `Ils ne peuvent pas tuer.`,
-                    en: `They cannot kill.`
+                    pt: `Não podem assassinar.`,
+                    fr: `Ils ne peuvent pas assassiner.`,
+                    en: `They cannot assassinate.`
                 }
             }
         ],
@@ -2487,16 +2490,16 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
-                `Se morto por <red>execução</red>, o Fantasma pode continuar a votar e seu voto vale o dobro.`,
+                `O Ankou <red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
+                `Se for <red>executado</red>, o seu Fantasma pode continuar a votar e o seu voto vale o dobro.`,
             ],
             fr: [
-                `<red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
+                `L'Ankou <red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
                 `<red>Si exécuté</red>, son Fantôme <red>peut continuer à voter</red> et son vote sera doublé.`,
             ],
             en: [
-                `<red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
-                `If killed by <red>execution</red>, the Ghost may continue voting, and his vote counts double.`
+                `The Ankou <red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
+                `If <red>executed</red>, his Ghost may continue voting, and his vote counts double.`
             ]
         },
         details: [
@@ -2541,42 +2544,40 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
+                `O Cupido Malvado <red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
                 `<red>A cada vez que um dos Inimigos morre</red>, o Cupido Malvado é acordado para escolher um novo Inimigo para o sobrevivente.`,
             ],
             fr: [
-                `<red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
-                `**<red>La première nuit</red> est appelé pour choisir deux joueurs qui seront Ennemis :**`,
-                `Si un Ennemi arrive à amener l’autre à <red>exécution</red>, le premier reçoit immunité contre le prochain <red>assassinat</red>.`,
+                `Le Méchant Cupidon <red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
                 `<red>Après la mort de chaque Ennemi</red>, le Méchant Cupidon est réveillé pour choisir un nouvel Ennemi pour le survivant.`,
             ],
             en: [
-                `<red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
-                `<red>Whenever one Enemy dies</red>, Evil Cupid wakes up and chooses a new Enemy for the survivor.`
+                `Evil Cupid <red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
+                `<red>Whenever one Enemy dies</red>, he wakes up and chooses a new Enemy for the survivor.`
             ]
         },
         details: [
             {
                 title: {
                     pt: `Na primeira noite é chamado a escolher dois jogadores que serão Inimigos:`,
-                    fr: `Si empoisonné :`,
-                    en: `On the first night, chooses two players who become Enemies:`
+                    fr: `La première nuit, il choisit deux joueurs qui deviennent Ennemis :`,
+                    en: `On the first night, he chooses two players who become Enemies:`
                 },
                 description: {
                     pt: `Se um Inimigo conseguir condenar o outro a <red>execução</red>, o primeiro recebe imunidade contra a próxima tentativa de <red>assassinato</red>.`,
-                    fr: `Sans effet.`,
+                    fr: `Si un Ennemi parvient à faire <red>exécuter</red> l'autre, il gagne une immunité contre la prochaine tentative d'<red>assassinat</red>.`,
                     en: `If one Enemy manages to have the other <red>executed</red>, the first gains immunity from the next <red>assassination</red> attempt.`
                 }
             },
             {
                 title: {
                     pt: `Se envenenado:`,
-                    fr: `Se envenenado:`,
+                    fr: `Si empoisonné :`,
                     en: `If poisoned:`
                 },
                 description: {
                     pt: `Sem efeito.`,
-                    fr: `Sem efeito.`,
+                    fr: `Sans effet.`,
                     en: `No effect.`
                 }
             }
@@ -2600,13 +2601,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Age como um Lobisomem normal, mas é identificado como sendo um Aldeão e não uma Criatura Malvada por outros papéis (por exemplo o Domador do Urso).`,
+                `O Mestre do Lobo(isomem) age como um Lobisomem normal, mas os outros personagens (como o Mestre do Urso) o identificam como sendo um Aldeão e não uma Criatura Malvada.`,
             ],
             fr: [
-                `Il agit comme un Loup-garou normal, mais il est identifié comme étant un Villageois et non une Créature Maléfique par d’autres rôles (par exemple le Maître de l’Ours).`,
+                `Le Maître du Loup(-garou) agit comme un Loup-garou normal, mais les autres personnages (comme le Maître de l'Ours) l'identifient comme un Villageois plutôt que comme une Créature Maléfique.`,
             ],
             en: [
-                `Acts like a normal Werewolf, but other roles, such as the Bear Tamer, identify this character as a Villager rather than an Evil Being.`
+                `The (Were)wolf Tamer acts like a normal Werewolf, but other characters (such as the Bear Tamer) identify him as a Villager rather than an Evil Being.`
             ]
         },
         details: [
@@ -2617,9 +2618,9 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If any Werewolf is poisoned:`
                 },
                 description: {
-                    pt: `Não podem matar.`,
-                    fr: `Ils ne peuvent pas tuer.`,
-                    en: `They cannot kill.`
+                    pt: `Não podem assassinar.`,
+                    fr: `Ils ne peuvent pas assassiner.`,
+                    en: `They cannot assassinate.`
                 }
             }
         ],
@@ -2654,13 +2655,11 @@ export const RULEBOOK_CHARACTERS = {
         mainDescription: {
             pt: [
                 `<red>O objetivo dos Namorados é de serem os últimos sobreviventes</red>.`,
-                `<red>Duas vezes durante o jogo</red> pode escolher se quer dar imunidade aos Namorados durante aquela noite (👍).`,
+                `<red>Duas vezes durante o jogo</red>, o Cupido pode escolher se quer dar imunidade aos Namorados durante aquela noite (👍).`,
             ],
             fr: [
-                `**<red>La première nuit</red>, il est appelé pour choisir deux joueurs qui seront Amoureux :**`,
-                `Si un Amoureux meurt, l’autre se suicide.`,
-                `<red>L’objectif des Amoureux est qu'ils soient les derniers survivants</red>.`,
-                `<red>Deux fois pendant le jeu</red>, Cupidon peut choisir de donner immunité aux Amoureux pendant cette nuit-là (👍).`,
+                `<red>L'objectif des Amoureux est d'être les derniers survivants</red>.`,
+                `<red>Deux fois pendant la partie</red>, Cupidon peut choisir d'accorder l'immunité aux Amoureux pour cette nuit (👍).`,
             ],
             en: [
                 `<red>The Lovers’ objective is to be the last survivors</red>.`,
@@ -2671,24 +2670,24 @@ export const RULEBOOK_CHARACTERS = {
             {
                 title: {
                     pt: `Na primeira noite escolhe dois jogadores que serão Namorados:`,
-                    fr: `Si empoisonné :`,
-                    en: `On the first night, chooses two players who become Lovers:`
+                    fr: `La première nuit, il choisit deux joueurs qui deviennent Amoureux :`,
+                    en: `On the first night, he chooses two players who become Lovers:`
                 },
                 description: {
                     pt: `Se um Namorado morrer, o outro se suicida.`,
-                    fr: `La protection ne fonctionne pas.`,
+                    fr: `Si un Amoureux meurt, l'autre se suicide.`,
                     en: `If one Lover dies, the other commits suicide.`
                 }
             },
             {
                 title: {
                     pt: `Se envenenado:`,
-                    fr: `Se envenenado:`,
+                    fr: `Si empoisonné :`,
                     en: `If poisoned:`
                 },
                 description: {
                     pt: `A proteção não funciona.`,
-                    fr: `A proteção não funciona.`,
+                    fr: `La protection ne fonctionne pas.`,
                     en: `The protection does not work.`
                 }
             }
@@ -2712,16 +2711,16 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Acorda e age como um Lobisomem, mas <red>a cada três noites tem</red> também de assassinar um Lobisomem.`,
+                `O Lobisomem Branco acorda e age como um Lobisomem, mas <red>a cada três noites tem</red> também de assassinar um Lobisomem.`,
                 `<red>Se o Lobisomem Branco for o único Lobisomem vivo</red>, ele continua a ser chamado a cada três noites para assassinar um jogador a mais.`,
             ],
             fr: [
-                `Il se réveille et agit comme un Loup-garou, mais <red>à chaque trois nuits, il doit</red> aussi assassiner un Loup-garou.`,
+                `Le Loup-garou Blanc se réveille et agit comme un Loup-garou, mais <red>à chaque trois nuits, il doit</red> aussi assassiner un Loup-garou.`,
                 `<red>Si le Loup-garou Blanc est le seul Loup-garou restant</red>, il continue d’être appelé à chaque trois nuits, pour assassiner un joueur supplémentaire.`,
             ],
             en: [
-                `Wakes up and acts as a Werewolf, but <red>every three nights must</red> also assassinate a Werewolf.`,
-                `<red>If the White Werewolf is the only living Werewolf</red>, they continue waking every three nights to assassinate one additional player.`
+                `The White Werewolf wakes up and acts as a Werewolf, but <red>every three nights he must</red> also assassinate a Werewolf.`,
+                `<red>If the White Werewolf is the only living Werewolf</red>, he continues waking every three nights to assassinate one additional player.`
             ]
         },
         details: [
@@ -2732,9 +2731,9 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Pode matar um Lobisomem a mais.`,
-                    fr: `Peut tuer un Loup-garou de plus.`,
-                    en: `May kill one additional Werewolf.`
+                    pt: `Pode assassinar um Lobisomem adicional.`,
+                    fr: `Peut assassiner un Loup-garou supplémentaire.`,
+                    en: `He may assassinate one additional Werewolf.`
                 }
             }
         ],
@@ -2773,18 +2772,18 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, escolhe um jogador que não poderá votar no próximo Tribunal.`,
+                `<red>Cada noite</red>, o Ladrão escolhe um jogador que não poderá votar no próximo Tribunal.`,
                 `<red>Na segunda noite</red> deverá <red>escolher</red> se quer jogar do lado dos Aldeões (👍) ou do lado dos Lobisomens (👎).`,
                 `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il choisit un joueur qui n’aura pas de votes au prochain Tribunal.`,
+                `<red>Chaque nuit</red>, le Voleur choisit un joueur qui ne pourra pas voter au prochain Tribunal.`,
                 `<red>La deuxième nuit</red>, il devra <red>choisir</red> être du côté des Villageois (👍) ou des Loups-garous (👎).`,
                 `<red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
             ],
             en: [
-                `<red>Each night</red>, chooses a player who cannot vote at the next Tribunal.`,
-                `<red>On the second night</red>, must <red>choose</red> whether to play for the Villagers (👍) or the Werewolves (👎).`,
+                `<red>Each night</red>, the Thief chooses a player who cannot vote at the next Tribunal.`,
+                `<red>On the second night</red>, he must <red>choose</red> whether to play for the Villagers (👍) or the Werewolves (👎).`,
                 `<red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`
             ]
         },
@@ -2821,18 +2820,18 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Cada noite</red>, é chamado e é-lhe mostrada uma carta de um jogador em jogo. Nunca verá a carta de um mesmo jogador duas vezes.`,
+                `<red>Cada noite</red>, o Espião é chamado e é-lhe mostrada uma carta de um jogador em jogo. Nunca verá a carta de um mesmo jogador duas vezes.`,
                 `<red>Na segunda noite</red> deverá <red>escolher</red> se quer jogar do lado dos Aldeões (👍) ou do lado dos Lobisomens (👎).`,
                 `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il est appelé et voit la carte d’un rôle en jeu. Il ne verra jamais le rôle d’un même joueur deux fois.`,
+                `<red>Chaque nuit</red>, l'Espion est appelé et voit la carte d’un rôle en jeu. Il ne verra jamais le rôle d’un même joueur deux fois.`,
                 `<red>La deuxième nuit</red>, il devra <red>choisir</red> être du côté des Villageois (👍) ou des Loups-garous (👎).`,
                 `<red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
             ],
             en: [
-                `<red>Each night</red>, is called and shown the card of a role in play. The Spy never sees the same player’s card twice.`,
-                `<red>On the second night</red>, must <red>choose</red> whether to play for the Villagers (👍) or the Werewolves (👎).`,
+                `<red>Each night</red>, the Spy is called and shown the card of a character in play. The Spy never sees the same player's card twice.`,
+                `<red>On the second night</red>, he must <red>choose</red> whether to play for the Villagers (👍) or the Werewolves (👎).`,
                 `<red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`
             ]
         },
@@ -2876,13 +2875,13 @@ export const RULEBOOK_CHARACTERS = {
                 `Mas todas as informações que lhe são dadas são como se o personagem estivesse envenenado.`,
             ],
             fr: [
-                `<red>Ne sait pas qu’il est l'ivrogne</red>.`,
-                `<red>Remplace</red> la Voyante, le Maître de l’Ours, le Maître des Lapins, le Maître du Corbeau, le Maître du Renard, le Maître du Singe ou le Maître de l’Araignée (aléatoire à chaque jeu).`,
+                `<red>L'Ivrogne ne sait pas qu’il est l'Ivrogne</red>.`,
+                `<red>Remplace</red> la Voyante, le Maître de l'Ours, le Maître des Lapins, le Maître du Corbeau, le Maître du Renard, le Maître du Singe ou le Maître de l'Araignée (au hasard à chaque partie).`,
                 `Mais toutes les informations reçues sont comme si la carte était empoisonnée.`,
             ],
             en: [
-                `<red>Does not know they are the Drunkard</red>.`,
-                `<red>Replaces</red> the Fortune Teller, Bear Tamer, Bunny Tamer, Raven Tamer, Fox Tamer, the Monkey Tamer or Spider Tamer, chosen randomly each game.`,
+                `<red>The Drunkard does not know he is the Drunkard</red>.`,
+                `<red>Replaces</red> the Fortune Teller, Bear Tamer, Bunny Tamer, Raven Tamer, Fox Tamer, the Monkey Tamer, or the Spider Tamer, chosen randomly each game.`,
                 `All information received is given as though that character were poisoned.`
             ]
         },
@@ -2919,18 +2918,18 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Na segunda noite</red> pode <red>escolher</red> se quer ser um simples Lobisomem (👎) <red>ou</red> ser um Cão (👍) :`,
+                `<red>Na segunda noite</red>, o Cão-Lobo pode <red>escolher</red> se quer ser um simples Lobisomem (👎) <red>ou</red> ser um Cão (👍) :`,
                 `O Cão escolhe um dono e ganha os poderes do dono.`,
                 `<red>A cada noite</red> o cão acorda com o seu dono e nesse caso, cada um terá direito a fazer a sua ação independentemente.`,
             ],
             fr: [
-                `**<red>Le deuxième nuit</red>, il peut <red>choisir</red> entre être un simple Loup-garou (👎) <red>ou</red> être un Chien (👍) :**`,
+                `**<red>La deuxième nuit</red>, le Chien-Loup peut <red>choisir</red> entre être un simple Loup-garou (👎) <red>ou</red> être un Chien (👍) :**`,
                 `Le Chien choisit un maître copie ses pouvoirs.`,
                 `<red>Chaque nuit</red>, il se réveille avec son maître et peut ainsi agir indépendamment de ce dernier.`,
             ],
             en: [
-                `<red>On the second night</red>, may <red>choose</red> between becoming a normal Werewolf (👎) <red>or</red> becoming a Dog (👍):`,
-                `The Dog chooses an owner and copies that owner’s powers.`,
+                `<red>On the second night</red>, the Wolf-Dog may <red>choose</red> between becoming a normal Werewolf (👎) <red>or</red> becoming a Dog (👍):`,
+                `As a Dog, he chooses an owner and copies that owner's powers.`,
                 `<red>Each night</red>, the Dog wakes up with the owner, and each uses his action independently.`
             ]
         },
@@ -2967,17 +2966,17 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, é chamado e é-lhe mostrada uma carta de um jogador em jogo.`,
+                `<red>A cada noite</red>, o Mimo é chamado e é-lhe mostrada uma carta de um jogador em jogo.`,
                 `Mal a carta lhe é revelada, o Mimo indica a ação que quer fazer segundo o poder que lhe foi mostrado.`,
                 `Todas as interações entre o Narrador e o Mimo são silenciosas, independentemente do poder do personagem.`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il est appelé et voit la carte d’un rôle en jeu.`,
+                `<red>Chaque nuit</red>, le Mime est appelé et voit la carte d’un rôle en jeu.`,
                 `Aussitôt la carte révélée, le Mime indique l’action qu’il souhaite prendre selon le pouvoir.`,
                 `Toutes les interactions entre le Mime et le Meneur sont complètement silencieuses, indépendamment du rôle copié.`,
             ],
             en: [
-                `<red>Each night</red>, is called and shown the card of a role in play.`,
+                `<red>Each night</red>, the Mime is called and shown the card of a character in play.`,
                 `As soon as the card is revealed, the Mime indicates the action to perform using that role’s power.`,
                 `Every interaction between the Narrator and the Mime is silent, regardless of the copied role.`
             ]
@@ -3024,16 +3023,16 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `<red>Na primeira noite</red>, escolhe um jogador que será o seu Ídolo e que copiará se esse jogador morrer. O poder só lhe é revelado quando o Ídolo morrer.`,
+                `<red>Na primeira noite</red>, o Ator escolhe um jogador que será o seu Ídolo e que copiará se esse jogador morrer. O poder só lhe é revelado quando o Ídolo morrer.`,
                 `Pode trocar de Ídolo <red>duas vezes durante o jogo</red> (👈/👎).`,
             ],
             fr: [
-                `<red>La première nuit</red>, il choisit un joueur qui devient son Idole et dont il copiera les pouvoirs aussitôt que ce dernier meurt. Le rôle lui est seulement révélé après la mort de l’Idole.`,
+                `<red>La première nuit</red>, le Comédien choisit un joueur qui devient son Idole et dont il copiera les pouvoirs aussitôt que ce dernier meurt. Le rôle lui est seulement révélé après la mort de l’Idole.`,
                 `Il peut changer son Idole <red>deux fois par jeu</red> (👈/👎).`,
             ],
             en: [
-                `<red>On the first night</red>, chooses a player as an Idol and copies that player if the Idol dies. The copied power is only revealed after the Idol dies.`,
-                `May change Idols <red>twice during the game</red> (👈/👎).`
+                `<red>On the first night</red>, the Actor chooses a player as an Idol and copies that player if the Idol dies. The copied power is only revealed after the Idol dies.`,
+                `He may change Idols <red>twice during the game</red> (👈/👎).`
             ]
         },
         details: [
@@ -3051,7 +3050,7 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: {
-            pt: `Matar todos os Lobisomens. (flexivel)`,
+            pt: `Matar todos os Lobisomens. (flexível)`,
             fr: `Tuer tous les Loups-garous. (flexible)`,
             en: `Kill all Werewolves. (Flexible)`
         }
@@ -3069,25 +3068,25 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, é-lhe mostrado as vítimas.`,
+                `<red>A cada noite</red>, são mostradas ao Rouba-Túmulos as vítimas.`,
                 `Sem saber os seus poderes, o Rouba-Túmulos pode escolher trocar de papel com uma delas (👈/👎).`,
                 `Uma vez a vítima escolhida, o seu papel lhe será revelado.`,
-                `O Rouba-Túmulos usa permanentemente esses poderes em vez do seu. A vítima se torna Rouba-Túmulos.`,
+                `O Rouba-Túmulos usa permanentemente esses poderes em vez do seu. A vítima torna-se Rouba-Túmulos.`,
                 `O Rouba-Túmulos será chamado pelo nome do personagem que substituiu desde então.`,
             ],
             fr: [
-                `<red>Chaque nuit</red> est montré les joueurs  <red>assassinés</red>.`,
-                `Sans savoir leurs pouvoirs, le Pilleur de Tombe peut choisir changer de carte avec une des victimes (👈/👎).`,
+                `<red>Chaque nuit</red>, le Pilleur de Tombes voit les joueurs <red>assassinés</red>.`,
+                `Sans connaître leurs pouvoirs, le Pilleur de Tombes peut choisir d'échanger sa carte avec celle de l'une des victimes (👈/👎).`,
                 `Une fois choisi, le rôle lui sera révélé.`,
                 `Le Pilleur de Tombes devient permanemment le rôle volé. La victime devient Pilleur de Tombes.`,
                 `Le Pilleur de Tombes sera dorénavant appelé par le nom de son nouveau rôle.`,
             ],
             en: [
-                `<red>Each night</red>, is shown the victims.`,
+                `<red>Each night</red>, the Grave Robber is shown the victims.`,
                 `Without knowing their powers, the Grave Robber may choose to swap roles with one of them (👈/👎).`,
                 `After a victim is chosen, that role is revealed.`,
                 `The Grave Robber permanently uses the stolen powers instead of his own. The victim becomes the Grave Robber.`,
-                `From then on, the Grave Robber is called by the name of the character they replaced.`
+                `From then on, the Grave Robber is called by the name of the character he replaced.`
             ]
         },
         details: [
@@ -3105,7 +3104,7 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: {
-            pt: `Matar todos os Lobisomens. (flexivel)`,
+            pt: `Matar todos os Lobisomens. (flexível)`,
             fr: `Tuer tous les Loups-garous. (flexible)`,
             en: `Kill all Werewolves. (Flexible)`
         }
@@ -3123,27 +3122,27 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
+                `O Ilusionista <red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
                 `<red>Cada noite</red>, escolhe um jogador (pode ser a si próprio). Esse jogador estará escondido por uma Ilusão.`,
-                `Se a Vidente, Lobisomem-Vidente, Domador da Aranha, Faroleiro ou Espião virem uma Ilusão, verão o papel “Ilusionista”.`,
+                `Se a Vidente, o Lobisomem Vidente, o Domador da Aranha, o Faroleiro ou o Espião virem uma Ilusão, verão o papel “Ilusionista”.`,
                 `Se o Mimo copia uma Ilusão, ele copia o Ilusionista.`,
                 `Se o alvo de um dos Domadores de Animais for uma Ilusão, o animal ficará confuso. No caso do Domador da Aranha, se o jogador com a teia de aranha for uma Ilusão, a aranha estará confusa.`,
                 `Se o assassino da vítima escolhida pela Menina for uma Ilusão, a Menina verá o papel “Ilusionista”.`,
                 `Se o jogador acusado pelo Pedro for uma Ilusão, o Pedro recebe como informação que esse jogador não é Lobisomem, mesmo se for.`,
             ],
             fr: [
-                `<red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
+                `L'Illusionniste <red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
                 `<red>Chaque nuit</red>, il choisit un joueur (qui peut être soi-même). Celui-ci sera offusqué par une Illusion.`,
-                `Si la Voyante, Loup-garou Voyante, le Maître de l’Araignée, le Falotier ou l’Espion voient une Illusion, ils verront le rôle “Illusionniste”.`,
+                `Si la Voyante, le Loup-garou Voyant, le Maître de l'Araignée, le Falotier ou l’Espion voit une Illusion, ils verront le rôle “Illusionniste”.`,
                 `Si le Mime copie une Illusion, il copiera l'Illusionniste.`,
-                `Si l’une des cibles des Maîtres des Animaux est une Illusion, l’animal sera confus. Dans le cas du Maître de l’Araignée, si le joueur avec la toile d’araignée est une Illusion, l’araignée sera confuse.`,
-                `Si l’assassin de la victime choisi par la Petite Fille est une Illusion, la Petite Fille verra le rôle “Illusionniste”.`,
-                `Si le joueur accusé par l’Enfant est une Illusion, l’Enfant recevra l’information que le joueur n’était pas un Loup-garou, même s’il s’en agissait d’un.`,
+                `Si l'une des cibles des Maîtres des Animaux est une Illusion, l'animal sera confus. Dans le cas du Maître de l'Araignée, si le joueur pris dans la toile est une Illusion, l'araignée sera confuse.`,
+                `Si l’assassin de la victime choisie par la Petite Fille est une Illusion, la Petite Fille verra le rôle « Illusionniste ».`,
+                `Si le joueur accusé par l’Enfant est une Illusion, l’Enfant apprendra que ce joueur n’était pas un Loup-garou, même si c’était le cas.`,
             ],
             en: [
-                `<red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
-                `<red>Each night</red>, chooses a player, possibly themself. That player is hidden by an Illusion.`,
-                `If the Fortune Teller, Werewolf Seer, Spider Tamer, Lamplighter, or Spy sees an Illusion, they see the “Illusionist” role.`,
+                `The Illusionist <red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
+                `<red>Each night</red>, he chooses a player, possibly himself. That player is hidden by an Illusion.`,
+                `If the Fortune Teller, Werewolf Seer, Spider Tamer, Lamplighter, or Spy sees an Illusion, that character sees the “Illusionist” role.`,
                 `If the Mime copies an Illusion, the Mime copies the Illusionist.`,
                 `If a target of an Animal Tamer is an Illusion, the animal becomes confused. For the Spider Tamer, the spider becomes confused if the webbed player is an Illusion.`,
                 `If the killer of the victim selected by the Little Girl is an Illusion, the Little Girl sees the “Illusionist” role.`,
@@ -3183,19 +3182,19 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red> aponta para um jogador e o Narrador informa-lhe se é um dos <red>Namorado</red>s (👍) ou não (👎).`,
+                `<red>A cada noite</red>, o Amante Secreto aponta para um jogador e o Narrador informa-lhe se é um dos <red>Namorados</red> (👍) ou não (👎).`,
                 `Se o jogador for um dos Namorados, este será informado, e o Amante Secreto <red>substituirá o outro</red> Namorado sem que esse o saiba.`,
                 `Se o Traidor ou o Amante Secreto morrerem, o Traído não morre.`,
                 `A flecha de proteção do Cupido também protege a identidade dos Namorados (a resposta será 👎).`,
             ],
             fr: [
-                `<red>Chaque nuit</red>, il montre un joueur du doigt et le Meneur lui révèle s’il s’agit d’un des Amoureux (👍) ou pas (👎).`,
-                `Si le joueur est un des Amouruex, celui-ci sera informé, et l’Arnacoeur <red>remplacera l’autre Amoureux</red> sans que celui-ci le sache.`,
-                `Si le Traître ou l’Arnacoeur meurt, le Trahi ne mourra pas.`,
+                `<red>Chaque nuit</red>, l'Arnacœur montre un joueur du doigt et le Meneur lui révèle s’il s’agit d’un des Amoureux (👍) ou pas (👎).`,
+                `Si le joueur est un des Amoureux, celui-ci sera informé, et l’Arnacœur <red>remplacera l’autre Amoureux</red> sans que celui-ci le sache.`,
+                `Si le Traître ou l’Arnacœur meurt, le Trahi ne mourra pas.`,
                 `La flèche de protection de Cupidon protège également l'identité des Amoureux (la réponse sera 👎).`,
             ],
             en: [
-                `<red>Each night</red>, points at a player, and the Narrator reveals whether that player is one of the <red>Lovers</red> (👍) or not (👎).`,
+                `<red>Each night</red>, the Secret Lover points at a player, and the Narrator reveals whether that player is one of the <red>Lovers</red> (👍) or not (👎).`,
                 `If the player is a Lover, that Lover is informed, and the Secret Lover <red>replaces the other Lover</red> without the other player knowing.`,
                 `If the Traitor or the Secret Lover dies, the Betrayed player does not die.`,
                 `Cupid’s protective arrow also protects the Lovers’ identities, so the answer will be 👎.`
@@ -3217,8 +3216,100 @@ export const RULEBOOK_CHARACTERS = {
         ],
         objective: {
             pt: `O Amante Secreto e o Traidor serem os únicos sobreviventes.`,
-            fr: `Que l’Arnacoeur et le Traître soient les derniers survivants.`,
+            fr: `Que l’Arnacœur et le Traître soient les derniers survivants.`,
             en: `The Secret Lover and the Traitor must be the only survivors.`
+        }
+    },
+
+    // ---- TRAVELLERS ---------------------------------------------
+
+    // t01 | Lawyer
+    "t01": {
+        id: "t01",
+        group: "traveller",
+        team: "traveller",
+        name: {
+            pt: `Advogada`,
+            fr: `Avocate`,
+            en: `Lawyer`
+        },
+        mainDescription: {
+            pt: [`<red>Uma vez por jogo</red>, a Advogada pode anular ou escolher o resultado de uma nomeação, salvando o Acusado ou mandando-o executar.`],
+            fr: [`<red>Une fois par partie</red>, l'Avocate peut annuler ou choisir le résultat d'une nomination, en sauvant l'Accusé ou en le faisant exécuter.`],
+            en: [`<red>Once per game</red>, the Lawyer may override or choose the result of a nomination, saving the Accused or having them executed.`]
+        },
+        details: [{
+            title: { pt: `Se envenenada:`, fr: `Si empoisonnée :`, en: `If poisoned:` },
+            description: {
+                pt: `Acontece o efeito contrário.`,
+                fr: `L'effet inverse se produit.`,
+                en: `The opposite result occurs.`
+            }
+        }],
+        objective: {
+            pt: `Aleatório (50%).`,
+            fr: `Aléatoire (50 %).`,
+            en: `Random, (50%).`
+        }
+    },
+
+    // t02 | Gambler
+    "t02": {
+        id: "t02",
+        group: "traveller",
+        team: "traveller",
+        name: {
+            pt: `Apostador`,
+            fr: `Parieur`,
+            en: `Gambler`
+        },
+        mainDescription: {
+            pt: [`<red>A cada noite</red>, o Apostador PODE escolher um jogador e tentar adivinhar a sua personagem. Se errar, o Apostador é assassinado.`],
+            fr: [`<red>Chaque nuit</red>, le Parieur PEUT choisir un joueur et tenter de deviner son personnage. S'il se trompe, le Parieur est assassiné.`],
+            en: [`<red>Each night</red>, the Gambler MAY choose a player and try to guess that player's character. If his guess is wrong, the Gambler is assassinated.`]
+        },
+        details: [{
+            title: { pt: `Se envenenado:`, fr: `Si empoisonné :`, en: `If poisoned:` },
+            description: {
+                pt: `Recebe a informação errada.`,
+                fr: `Reçoit de fausses informations.`,
+                en: `Receives incorrect information.`
+            }
+        }],
+        objective: {
+            pt: `Aleatório (50%).`,
+            fr: `Aléatoire (50 %).`,
+            en: `Random, (50%).`
+        }
+    },
+
+    // t03 | Gunslinger
+    "t03": {
+        id: "t03",
+        group: "traveller",
+        team: "traveller",
+        name: {
+            pt: `Pistoleiro`,
+            fr: `Pistolero`,
+            en: `Gunslinger`
+        },
+        mainDescription: {
+            pt: [`<red>Uma vez por jogo</red>, logo após uma votação do Tribunal, o Pistoleiro pode assassinar um dos jogadores que votou.`],
+            fr: [`<red>Une fois par partie</red>, juste après un vote du Tribunal, le Pistolero peut assassiner l'un des joueurs ayant voté.`],
+            en: [`<red>Once per game</red>, immediately after a Tribunal vote, the Gunslinger may assassinate one of the players who voted.`]
+        },
+        details: [{
+            title: { pt: `Se envenenado:`, fr: `Si empoisonné :`, en: `If poisoned:` },
+            description: {
+                pt: `Assassina o jogador errado.`,
+                fr: `Assassine le mauvais joueur.`,
+                en: `Assassinates the wrong player.`
+            }
+        }],
+        objective: {
+            pt: `Aleatório (50%).`,
+            fr: `Aléatoire (50 %).`,
+            en: `Random, (50%).`
         }
     },
 
@@ -3245,13 +3336,13 @@ export const RULEBOOK_CHARACTERS = {
         ],
         mainDescription: {
             pt: [
-                `Sem poder especial.`,
+                `O Aldeão Triste não tem poder especial.`,
             ],
             fr: [
-                `Sans pouvoir spéciaux.`,
+                `Le Villageois Triste n'a aucun pouvoir spécial.`,
             ],
             en: [
-                `Has no special power.`
+                `The Ordinary Townsfolk has no special power.`
             ]
         },
         details: [],
@@ -3274,15 +3365,15 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Na segunda noite</red> escolhe um jogador como Pai Adotivo.`,
+                `<red>Na segunda noite</red>, a Criança Selvagem escolhe um jogador como Pai Adotivo.`,
                 `<red>Se o Pai Adotivo morrer</red>, a Criança Selvagem, se transforma em Lobisomem.`,
             ],
             fr: [
-                `<red>La deuxième nuit</red>, il choisit un joueur comme Père Adoptif.`,
+                `<red>La deuxième nuit</red>, l’Enfant Sauvage choisit un joueur comme Père Adoptif.`,
                 `<red>Si le Père Adoptif meurt</red>, l’Enfant Sauvage se transforme en Loup-garou.`,
             ],
             en: [
-                `<red>On the second night</red>, chooses a player as an Adoptive Parent.`,
+                `<red>On the second night</red>, the Wild Child chooses a player as an Adoptive Parent.`,
                 `<red>If the Adoptive Parent dies</red>, the Wild Child becomes a Werewolf.`
             ]
         },
@@ -3324,8 +3415,8 @@ export const RULEBOOK_CHARACTERS = {
                 `Ela acorda <red>SÓ UMA VEZ</red> com os Lobisomens na próxima noite, para que eles saibam que ela os vai ajudar durante o dia.`,
             ],
             fr: [
-                `Les Soeurs se connaissent.`,
-                `Si une soeur est <red>exécutée</red>, l’autre peut <red>choisir</red> de se venger, se transformant en Créature Maléfique.`,
+                `Les Sœurs se connaissent.`,
+                `Si une sœur est <red>exécutée</red>, l’autre peut <red>choisir</red> de se venger et devient une Créature Maléfique.`,
                 `Elle se réveille <red>UNE FOIS</red> avec les Loups-garous la nuit suivante pour qu’ils sachent qu’elle les aidera.`,
             ],
             en: [
@@ -3338,11 +3429,11 @@ export const RULEBOOK_CHARACTERS = {
             {
                 title: {
                     pt: `Se envenenada enquanto Criatura Malvada:`,
-                    fr: `Si empoisonnée en tant que Créature Maléfique :`,
+                    fr: `Si l'une des Sœurs est empoisonnée en tant que Créature Maléfique :`,
                     en: `If poisoned while an Evil Being:`
                 },
                 description: {
-                    pt: `Se torna num Lobisomem.`,
+                    pt: `Torna-se num Lobisomem.`,
                     fr: `Elle se transforme en Loup-garou.`,
                     en: `Becomes a Werewolf.`
                 }
@@ -3381,7 +3472,7 @@ export const RULEBOOK_CHARACTERS = {
             {
                 title: {
                     pt: `Se qualquer um estiver envenenado:`,
-                    fr: `Si  n’importe quel Frère empoisonné :`,
+                    fr: `Si n’importe quel Frère est empoisonné :`,
                     en: `If any Brother is poisoned:`
                 },
                 description: {
@@ -3452,29 +3543,29 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>Cada noite</red> é avisado sobre os jogadores <red>assassinados</red> e pode escolher salvar um deles.`,
+                `<red>Cada noite</red>, a Serva Devota é avisada sobre os jogadores <red>assassinados</red> e pode escolher salvar um deles.`,
                 `Ao fazer isso, a Serva Devota <red>suicida-se</red>.`,
             ],
             fr: [
-                `<red>Chaque nuit</red> est montré les joueurs <red>assassinés</red> et peut choisir de sauver l’un d’entre eux.`,
+                `<red>Chaque nuit</red>, la Servante Dévouée voit les joueurs <red>assassinés</red> et peut choisir de sauver l’un d’entre eux.`,
                 `Pour le faire, la Servante Dévouée <red>se suicide</red>.`,
             ],
             en: [
-                `<red>Each night</red>, is shown the players who were <red>assassinated</red> and may choose to save one of them.`,
+                `<red>Each night</red>, the Devout Servant is shown the players who were <red>assassinated</red> and may choose to save one of them.`,
                 `To do so, the Devout Servant <red>commits suicide</red>.`
             ]
         },
         details: [
             {
                 title: {
-                    pt: `Se envenenado:`,
-                    fr: `Si empoisonné :`,
+                    pt: `Se envenenada:`,
+                    fr: `Si empoisonnée :`,
                     en: `If poisoned:`
                 },
                 description: {
                     pt: `Não salva o jogador.`,
-                    fr: `Ne sauve pas le joueur.`,
-                    en: `Does not save the player.`
+                    fr: `Elle ne sauve pas le joueur.`,
+                    en: `She does not save the player.`
                 }
             }
         ],
@@ -3499,13 +3590,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Assustados e desconfiados, os Aldeões mentem, tentam encontrar em quem podem confiar e usam os seus poderes para matar e executar todos os Lobisomens e outras Criaturas Malvadas antes que esses consigam apoderar-se da Aldeia.`,
+                `Assustados e desconfiados, os Aldeões mentem, tentam encontrar em quem podem confiar e usam os seus poderes para assassinar ou executar todos os Lobisomens e outras Criaturas Malvadas antes que esses consigam apoderar-se da Aldeia.`,
             ],
             fr: [
-                `Effrayés et méfiants, les Villageois mentent, tentent de trouver des personnes dignes de confiance et utilisent leurs pouvoirs pour tuer et exécuter tous les Loups-garous et autres Créatures Maléfiques avant que ceux-ci ne s'emparent du village.`,
+                `Effrayés et méfiants, les Villageois mentent, cherchent les personnes dignes de confiance et utilisent leurs pouvoirs pour assassiner ou exécuter tous les Loups-garous et autres Créatures Maléfiques avant que ceux-ci ne s'emparent du Village.`,
             ],
             en: [
-                `Frightened and suspicious, the Villagers lie, try to determine whom they can trust, and use their powers to kill and execute every Werewolf and other Evil Being before those enemies take control of the Village.`
+                `Frightened and suspicious, the Villagers lie, try to determine whom they can trust, and use their powers to assassinate or execute every Werewolf and other Evil Being before those enemies take control of the Village.`
             ]
         },
         details: [],
@@ -3528,15 +3619,15 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Inclui todos os inimigos dos Aldeões, esses sendo Lobisomens ou outros personagens malvados.`,
+                `Inclui todos os inimigos dos Aldeões: os Lobisomens e as outras Criaturas Malvadas.`,
                 `O objetivo de todas as Criaturas Malvadas é o mesmo: matar todos os Aldeões, antes destes conseguirem encontrar todos os Lobisomens.`,
             ],
             fr: [
-                `Inclut tous les ennemis des Villageois, ceux-là étant les Loups-garous ou les autres personnages maléfiques.`,
+                `Inclut tous les ennemis des Villageois : les Loups-garous et les autres Créatures Maléfiques.`,
                 `L’objectif de toutes les Créatures Maléfiques est le même : tuer tous les Villageois, avant que ces derniers ne trouvent tous les Loups-garous.`,
             ],
             en: [
-                `Includes all enemies of the Villagers, whether they are Werewolves or other evil characters.`,
+                `Includes all enemies of the Villagers, whether they are Werewolves or other Evil Beings.`,
                 `All Evil Beings share the same objective: kill all Villagers before the Villagers find every Werewolf.`
             ]
         },
@@ -3565,7 +3656,7 @@ export const RULEBOOK_CHARACTERS = {
             ],
             fr: [
                 `C’est le groupe qui terrorise le plus les Villageois.`,
-                `Chacun doit choisir unanimement qui ils assassineront, dans le but de tuer les Villageois plus puissants en premier, avec l’aide des autres Créatures Maléfiques.`,
+                `Chaque nuit, ils doivent choisir à l’unanimité qui assassiner, en visant d’abord les Villageois les plus puissants avec l’aide des autres Créatures Maléfiques.`,
             ],
             en: [
                 `The group that terrifies the Villagers most.`,
@@ -3580,9 +3671,9 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If any Werewolf is poisoned:`
                 },
                 description: {
-                    pt: `Não podem matar.`,
-                    fr: `Ils ne peuvent pas tuer.`,
-                    en: `They cannot kill.`
+                    pt: `Não podem assassinar.`,
+                    fr: `Ils ne peuvent pas assassiner.`,
+                    en: `They cannot assassinate.`
                 }
             }
         ],
@@ -3593,13 +3684,51 @@ export const RULEBOOK_CHARACTERS = {
         }
     },
 
+    // x.t
+    "x.t": {
+        id: "x.t",
+        group: "extra",
+        team: "extra",
+        name: {
+            pt: `Viajantes`,
+            fr: `Voyageurs`,
+            en: `Travellers`
+        },
+        mainDescription: {
+            pt: [
+                `Personagens poderosas e simples, destinadas a jogadores que chegam atrasados ou entram na partida mais tarde. Toda a Aldeia conhece a personagem do Viajante, mas não o seu alinhamento: cada Viajante tem 50% de probabilidade de pertencer aos **Aldeões** ou às **Criaturas Malvadas**.`,
+                `Um Viajante alinhado com as Criaturas Malvadas descobre quem são os Lobisomens.`,
+                `Durante o Tribunal, qualquer jogador vivo ou Fantasma pode nomear um Viajante para exílio. Para o exilar, são necessários os votos de metade de todos os jogadores, vivos ou mortos, com o resultado arredondado para cima.`,
+                `Um Viajante exilado perde o poder e continua a jogar como **Fantasma**. O exílio não conta como assassinato nem como execução.`
+            ],
+            fr: [
+                `Personnages puissants et simples, destinés aux joueurs qui arrivent en retard ou rejoignent la partie plus tard. Tout le Village connaît le personnage du Voyageur, mais pas son alignement : chaque Voyageur a 50 % de chances de rejoindre les **Villageois** ou les **Créatures Maléfiques**.`,
+                `Un Voyageur aligné avec les Créatures Maléfiques découvre qui sont les Loups-garous.`,
+                `Pendant le Tribunal, tout joueur vivant ou Fantôme peut nommer un Voyageur pour l'exil. Pour l'exiler, il faut un nombre de voix égal à la moitié de tous les joueurs, vivants ou morts, arrondie à l'entier supérieur.`,
+                `Un Voyageur exilé perd son pouvoir et continue à jouer comme **Fantôme**. L'exil ne compte ni comme assassinat ni comme exécution.`
+            ],
+            en: [
+                `Powerful, simple characters designed for players who arrive late or join the game after it has begun. The entire Village knows the Traveller's character, but not the Traveller's alignment: each Traveller has a 50% chance of joining the **Villagers** or the **Evil Beings**.`,
+                `A Traveller aligned with the Evil Beings learns who the Werewolves are.`,
+                `During the Tribunal, any living player or Ghost may nominate a Traveller for exile. Exile requires votes from half of all players, living or dead, rounded up.`,
+                `An exiled Traveller loses the character's power and continues playing as a **Ghost**. Exile does not count as assassination or execution.`
+            ]
+        },
+        details: [],
+        objective: {
+            pt: `Aleatório (50%).`,
+            fr: `Aléatoire (50 %).`,
+            en: `Random, (50%).`
+        }
+    },
+
     // x03 | Ghosts
     "x03": {
         id: "x03",
         group: "extra",
         team: "extra",
         name: {
-            pt: `Fantasma`,
+            pt: `Fantasmas`,
             fr: `Fantômes`,
             en: `Ghosts`
         },
@@ -3607,14 +3736,14 @@ export const RULEBOOK_CHARACTERS = {
             pt: [
                 `Há dois tipos de morte: <red>EXECUÇÃO</red> (condenados pela aldeia) ou <red>ASSASSINATO</red> (mortos pelo poder de um personagem).`,
                 `Quando um jogador é morto durante a noite, só morre mesmo de manhã, ao acordar, assim durante aquela noite podem continuar a usar os seus poderes.`,
-                `Os jogadores mortos transformam-se em fantasmas, que podem continuar a comunicar com a aldeia durante o dia, mas não podem falar ou votar no Tribunal, e <red>perdem qualquer poder que tinham</red> (a não ser que esteja escrito o contrário na ficha de personagem.)`,
+                `Os jogadores mortos transformam-se em Fantasmas, que podem continuar a comunicar com a Aldeia durante o dia, mas não podem falar ou votar no Tribunal e <red>perdem todos os poderes que tinham</red>, salvo indicação em contrário na ficha de personagem.`,
                 `<red>Os Fantasmas TAMBÉM DORMEM À NOITE</red>.`,
             ],
             fr: [
                 `Il existe deux types de mort : <red>EXÉCUTION</red> (condamnés par le village) ou <red>ASSASSINAT</red> (tués par le pouvoir d'un personnage).`,
                 `Lorsqu'un joueur est tué pendant la nuit, il ne meurt réellement que le matin, au réveil, et peut donc continuer à utiliser ses pouvoirs pendant la nuit.`,
                 `Les joueurs morts se transforment en Fantômes, qui peuvent continuer à communiquer avec le village pendant la journée, mais ne peuvent ni parler ni voter au Tribunal, et <red>perdent tous les pouvoirs qu'ils avaient</red> (sauf indication contraire dans la fiche de personnage).`,
-                `<red>Les fantômes DORMENT ÉGALEMENT LA NUIT</red>.`,
+                `<red>Les Fantômes DORMENT ÉGALEMENT LA NUIT</red>.`,
             ],
             en: [
                 `There are two kinds of death: <red>EXECUTION</red> (condemned by the village) and <red>ASSASSINATION</red> (killed by a character’s power).`,
@@ -3643,16 +3772,16 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Criado pelo Capitão.`,
+                `O Soldado é criado pelo Capitão.`,
                 `<red>Uma vez morto</red>, será acordado na próxima noite para escolher <red>um</red> jogador que deverá assassinar.`,
             ],
             fr: [
-                `Créé par le Capitaine.`,
+                `Le Soldat est créé par le Capitaine.`,
                 `<red>Une fois mort</red>, il sera réveillé la prochaine nuit et choisira <red>un</red> joueur qui sera assassiné.`,
             ],
             en: [
-                `Created by the Captain.`,
-                `<red>After dying</red>, wakes up the following night and chooses <red>one</red> player to assassinate.`
+                `The Soldier is created by the Captain.`,
+                `<red>After dying</red>, he wakes up the following night and chooses <red>one</red> player to assassinate.`
             ]
         },
         details: [
@@ -3688,7 +3817,7 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Conhece a identidade do outro Namorado.`,
+                `O Namorado conhece a identidade do outro Namorado.`,
                 `Se um morrer, o outro suicida-se.`,
                 `Se a vítima for imune ou for salva, ninguém morre.`,
                 `Se o suicida for imune ou salvo, ele não morre.`,
@@ -3700,7 +3829,7 @@ export const RULEBOOK_CHARACTERS = {
                 `Si le suicidaire est immune ou sauvé, seul lui survivra.`,
             ],
             en: [
-                `Knows the identity of the other Lover.`,
+                `The Lover knows the identity of the other Lover.`,
                 `If one Lover dies, the other commits suicide.`,
                 `If the assassination victim is immune or saved, neither Lover dies.`,
                 `If the Lover who would commit suicide is immune or saved, that Lover survives.`
@@ -3726,19 +3855,19 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Conhece a identidade do Amante Secreto.`,
+                `O Traidor conhece a identidade do Amante Secreto.`,
                 `Se um morrer, o outro suicida-se.`,
                 `Se a vítima for imune ou for salva, ninguém morre.`,
                 `Se o suicida for imune ou salvo, ele não morre.`,
             ],
             fr: [
-                `Connaît l’Arnacoeur.`,
+                `Le Traître connaît l’Arnacœur.`,
                 `Si l’un meurt, l’autre se suicide.`,
                 `Si la victime de l’assassinat est immune ou sauvée, aucun des deux ne meurt.`,
                 `Si le suicidaire est immune ou sauvé, seul lui survivra.`,
             ],
             en: [
-                `Knows the identity of the Secret Lover.`,
+                `The Traitor knows the identity of the Secret Lover.`,
                 `If one dies, the other commits suicide.`,
                 `If the assassination victim is immune or saved, neither dies.`,
                 `If the player who would commit suicide is immune or saved, that player survives.`
@@ -3747,7 +3876,7 @@ export const RULEBOOK_CHARACTERS = {
         details: [],
         objective: {
             pt: `O Amante Secreto e o Traidor serem os únicos sobreviventes.`,
-            fr: `Que l’Arnacoeur et le Traître soient les derniers survivants..`,
+            fr: `Que l’Arnacœur et le Traître soient les derniers survivants..`,
             en: `The Secret Lover and the Traitor must be the only survivors.`
         }
     },
@@ -3764,15 +3893,15 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Não sabe que é o Traído, continua a agir como um Namorado até o descobrir.`,
+                `O Traído não sabe que é o Traído, continua a agir como um Namorado até o descobrir.`,
                 `Se o Traidor ou o Amante Secreto morrerem, o Traído não morre.`,
             ],
             fr: [
-                `Ne sait pas qu’il est Trahi, continue d’agir comme un Amoureux tant qu’il ne le découvre pas.`,
-                `Si le Traître ou l’Arnacoeur meurt, le Trahi ne meurt pas.`,
+                `Le Trahi ne sait pas qu’il est Trahi, continue d’agir comme un Amoureux tant qu’il ne le découvre pas.`,
+                `Si le Traître ou l’Arnacœur meurt, le Trahi ne meurt pas.`,
             ],
             en: [
-                `Does not know they are the Betrayed player and continues acting as a Lover until discovering the betrayal.`,
+                `The Betrayed player does not know he is the Betrayed player and continues acting as a Lover until he discovers the betrayal.`,
                 `If the Traitor or the Secret Lover dies, the Betrayed player does not die.`
             ]
         },
@@ -3800,7 +3929,7 @@ export const RULEBOOK_CHARACTERS = {
                 `<red>A cada vez que um dos Inimigos morre</red>, o Cupido Malvado é acordado para escolher um novo Inimigo para o sobrevivente.`,
             ],
             fr: [
-                `Si un Ennemis arrive à amener l’autre à <red>exécution</red>, le premier reçoit immunité contre le prochain <red>assassinat</red>.`,
+                `Si un Ennemi parvient à faire <red>exécuter</red> l’autre, il gagne une immunité contre la prochaine tentative d’<red>assassinat</red>.`,
                 `<red>Après la mort de chaque Ennemie</red>, le Méchant Cupidon est réveillé pour choisir un nouvel Ennemi pour le survivant.`,
             ],
             en: [
@@ -3876,9 +4005,13 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "l04",
     "l05",
     "l06",
+    "t01",
+    "t02",
+    "t03",
     "x01",
     "x02",
     "x02.1",
+    "x.t",
     "x03",
     "x.v09",
     "x.s01",
@@ -3953,7 +4086,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Ator acorda e escolhe um Ídolo cujo poder copiará quando o Ídolo morrer. Só lhe será revelado o poder do Ídolo, na noite a seguir à morte do Ídolo.`,
                 fr: `Le Comédien se réveille et choisit une Idole dont il copiera le pouvoir lorsque l’Idole mourra. Son nouveau rôle ne lui sera révélé que la nuit suivant la mort de l’Idole.`,
-                en: `The Actor wakes up and chooses an Idol whose power they will copy when the Idol dies. The new role is revealed only on the night after the Idol dies.`
+                en: `The Actor wakes up and chooses an Idol whose power he will copy when the Idol dies. His new role is revealed only on the night after the Idol dies.`
             }
         },
         {
@@ -3961,7 +4094,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             refs: ["v23"],
             text: {
                 pt: `O Domador da Aranha acorda e escolhe um jogador no qual tece uma teia de aranha. O Domador da Aranha, a cada noite, descobre quais personagens apontaram para esse jogador naquela noite.`,
-                fr: `Le Maître de l’Araignée se réveille et choisit un joueur sur lequel il tisse une toile d’araignée. Chaque nuit, le Maître de l’Araignée apprend quels personnages ont désigné ce joueur durant cette nuit.`,
+                fr: `Le Maître de l'Araignée se réveille et choisit un joueur sur lequel il tisse une toile d'araignée. Chaque nuit, le Maître de l'Araignée apprend quels personnages ont désigné ce joueur durant cette nuit.`,
                 en: `The Spider Tamer wakes up and chooses a player on whom to weave a spiderweb. Each night, the Spider Tamer learns which characters pointed at that player during the night.`
             }
         },
@@ -4015,7 +4148,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             refs: ["general"],
             text: {
                 pt: `No fim desta noite ouve-se um uivar. A Aldeia sabe então que os Lobisomens se revelaram e estão com fome. A Aldeia acorda desconfiada de toda a gente.`,
-                fr: `En fin de nuit, le village entend l’hurlement d’un loup. Les villageois savent que les Loups-garous sont en ville, et se réveillent méfiants.`,
+                fr: `À la fin de la nuit, le Village entend le hurlement d'un loup. Les Villageois savent que les Loups-garous sont en ville et se réveillent méfiants.`,
                 en: `At the end of the night, a howl is heard. The Village knows that the Werewolves have revealed themselves and are hungry, and everyone wakes up suspicious.`
             }
         }
@@ -4027,7 +4160,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             refs: ["f01"],
             text: {
                 pt: `O Ladrão acorda e escolhe com o polegar se quer jogar do lado dos Aldeões ou do lado dos Lobisomens.`,
-                fr: `Le Voleur se réveille et choisit du pouce s’il veut être du côté du village ou des loups-garous.`,
+                fr: `Le Voleur se réveille et indique du pouce s'il veut rejoindre les Villageois ou les Loups-garous.`,
                 en: `The Thief wakes up and uses a thumb signal to choose whether to play for the Villagers or the Werewolves.`
             }
         },
@@ -4036,7 +4169,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             refs: ["f02"],
             text: {
                 pt: `O Espião acorda e escolhe com o polegar se quer jogar do lado dos Aldeões ou do lado dos Lobisomens.`,
-                fr: `L’Espion se réveille et choisit du pouce s’il veut être du côté du village ou des loups-garous.`,
+                fr: `L'Espion se réveille et indique du pouce s'il veut rejoindre les Villageois ou les Loups-garous.`,
                 en: `The Spy wakes up and uses a thumb signal to choose whether to play for the Villagers or the Werewolves.`
             }
         },
@@ -4092,9 +4225,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-v07.1",
             refs: ["v07"],
             text: {
-                pt: `SOUVIENS-TOI (Se o Cavaleiro Enferrujado morreu durante o dia, matar o Lobisomem mais próximo durante o próximo dia).`,
-                fr: `SOUVIENS-TOI (Si le Chevalier Rouillé est mort le jour, tuer le Loup-garou le plus proche lors de la prochaine journée).`,
-                en: `REMEMBER: If the Rusted Knight died during the day, kill the nearest Werewolf during the following day.`
+                pt: `LEMBRE-SE: se o Cavaleiro Enferrujado morreu durante o dia, assassinar o Lobisomem mais próximo durante o dia seguinte.`,
+                fr: `SOUVIENS-TOI : si le Chevalier Rouillé est mort pendant la journée, assassiner le Loup-garou le plus proche pendant la journée suivante.`,
+                en: `REMEMBER: If the Rusted Knight died during the day, assassinate the nearest Werewolf during the following day.`
             }
         },
         {
@@ -4102,7 +4235,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             refs: ["v23"],
             text: {
                 pt: `(Se o jogador com a teia morreu) O Domador da Aranha acorda e escolhe um novo jogador no qual tece uma teia.`,
-                fr: `(Si le joueur pris dans la toile est mort) Le Maître de l’Araignée se réveille et choisit un nouveau joueur sur lequel il tisse sa toile.`,
+                fr: `Si le joueur pris dans la toile est mort, le Maître de l'Araignée se réveille et choisit un nouveau joueur sur lequel il tisse sa toile.`,
                 en: `If the webbed player died, the Spider Tamer wakes up and chooses a new player on whom to weave the web.`
             }
         },
@@ -4130,7 +4263,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `(Se o SOLDADO morreu) O Fantasma do Soldado acorda e escolhe quem quer assassinar.`,
                 fr: `(Si le SOLDAT est mort) Le Fantôme du Soldat se réveille et indique qui il veut assassiner.`,
-                en: `If the SOLDIER died, the Soldier’s Ghost wakes up and chooses whom to assassinate.`
+                en: `If the Soldier died, the Soldier's Ghost wakes up and chooses whom to assassinate.`
             }
         },
         {
@@ -4139,7 +4272,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Ator acorda. Se o seu Ídolo morreu, é-lhe mostrado o papel ao qual irá responder de agora em diante, senão o Ator indica ao apontar outra pessoa se quer trocar de Ídolo.`,
                 fr: `Le Comédien se réveille. Si son Idol est mort, le rôle lui est révélé et il répondra à celui-ci dès lors. Sinon il peut indiquer un joueur s’il souhaite changer d’Idol.`,
-                en: `The Actor wakes up. If the Idol died, the copied role is revealed and the Actor answers to that role from now on. Otherwise, the Actor points at another player to indicate whether they want to change Idols.`
+                en: `The Actor wakes up. If the Idol died, his copied role is revealed and he answers to that role from then on. Otherwise, he points at another player to indicate whether he wants to change Idols.`
             }
         },
         {
@@ -4173,8 +4306,8 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-v24",
             refs: ["v24"],
             text: {
-                pt: `O Vinicultor acorda e escolhe um jogador que irá envenenar mas que receberá imunidade.`,
-                fr: `Le Vigneron se réveille et indique quel joueur il souhaite empoisonner. Le joueur recevra également immunité.`,
+                pt: `O Vinicultor acorda e escolhe um jogador que irá envenenar mas que recebe imunidade.`,
+                fr: `Le Vigneron se réveille et indique quel joueur il souhaite empoisonner. Ce joueur bénéficiera également de l’immunité.`,
                 en: `The Vintner wakes up and chooses a player to poison. That player also receives immunity.`
             }
         },
@@ -4274,7 +4407,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Capitão acorda e escolhe um jogador que será um SOLDADO durante esta noite e o próximo dia.`,
                 fr: `Le Capitaine se réveille et indique le joueur qui sera un SOLDAT pendant un jour et une nuit.`,
-                en: `The Captain wakes up and chooses a player who will be a SOLDIER during this night and the following day.`
+                en: `The Captain wakes up and chooses a player who will be a Soldier during this night and the following day.`
             }
         },
         {
@@ -4300,7 +4433,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             refs: ["v17"],
             text: {
                 pt: `O Salvador acorda e indica quem será imune durante esta noite.`,
-                fr: `Le Sauveur se réveille et choisit qui sera immune durant cette nuit.`,
+                fr: `Le Sauveur se réveille et choisit qui sera immunisé durant cette nuit.`,
                 en: `The Saviour wakes up and chooses who will be immune during this night.`
             }
         },
@@ -4337,7 +4470,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Lobisomem Mau acorda e escolhe com o polegar se quer se mascarar de Avózinha esta noite e dia, ou não. Pode usar esse poder duas vezes durante todo o jogo.`,
                 fr: `Le Méchant Loup-garou se réveille et indique du pouce s’il veut ou non se déguiser en Grand-maman aujourd’hui. Il ne peut utiliser ce pouvoir que deux fois par jeu.`,
-                en: `The Big Bad Werewolf wakes up and uses a thumb signal to choose whether to disguise themself as Grandmother for this night and day. This power may be used twice during the game.`
+                en: `The Big Bad Werewolf wakes up and uses a thumb signal to choose whether to disguise himself as Grandmother for this night and day. He may use this power twice during the game.`
             }
         },
         {
@@ -4346,7 +4479,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Lobisomem Vidente acorda/não acorda se envenenado e decide com o polegar se quer salvar a vítima para ver o seu papel ou deixá-la morrer.`,
                 fr: `Le Loup-garou Voyant se réveille / ne se réveille pas si empoisonné. Il indique du pouce s’il veut sauver la victime pour savoir son rôle ou la laisser mourir.`,
-                en: `The Werewolf Seer wakes up / does not wake up if poisoned and uses a thumb signal to decide whether to save the victim and see their role, or let them die.`
+                en: `The Werewolf Seer wakes up / does not wake up if poisoned and uses a thumb signal to decide whether to save the victim and see the victim's role, or allow the assassination to proceed.`
             }
         },
         {
@@ -4362,18 +4495,18 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-s02",
             refs: ["s02"],
             text: {
-                pt: `(A cada 3 noites) O Lobisomem Branco acorda e escolhe o Lobisomem que quer matar. / O Lobisomem Branco acorda e escolhe mais um jogador que quer matar.`,
-                fr: `(Toutes les 3 nuits) Le Loup-garou Blanc se réveille et choisit le Loup-garou qu’il veut tuer. / Le Loup-garou Blanc choisit un joueur supplémentaire qu’il veut tuer.`,
-                en: `Every 3 nights, the White Werewolf wakes up and chooses a Werewolf to kill. If the White Werewolf is the only Werewolf, he chooses one additional player to kill.`
+                pt: `(A cada 3 noites) o Lobisomem Branco acorda e escolhe um Lobisomem para assassinar. Se for o único Lobisomem, escolhe outro jogador para assassinar.`,
+                fr: `(Toutes les 3 nuits) le Loup-garou Blanc se réveille et choisit un Loup-garou à assassiner. S'il est le seul Loup-garou, il choisit un autre joueur à assassiner.`,
+                en: `(Every 3 nights) the White Werewolf wakes up and chooses a Werewolf to assassinate. If he is the only Werewolf, he chooses one additional player to assassinate.`
             }
         },
         {
             id: "normal-v27",
             refs: ["v27"],
             text: {
-                pt: `(Morto pelos Lobisomens esta noite) O Colosso acorda e escolhe um jogador que agiu esta noite para assassinar.`,
-                fr: `(Tué par les Loups-garous cette nuit) Le Colosse se réveille et choisit un joueur qui a agi cette nuit pour l’assassiner.`,
-                en: `(Killed by the Werewolves tonight) The Colossus wakes up and chooses a player who has acted tonight to assassinate.`
+                pt: `(Assassinado pelos Lobisomens esta noite) O Colosso acorda, escolhe um jogador que agiu esta noite e assassina-o.`,
+                fr: `(Assassiné par les Loups-garous cette nuit) Le Colosse se réveille, choisit un joueur qui a agi cette nuit et l’assassine.`,
+                en: `(Assassinated by the Werewolves tonight) The Colossus wakes up, chooses a player who acted tonight, and assassinates them.`
             }
         },
         {
@@ -4408,7 +4541,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             refs: ["a03"],
             text: {
                 pt: `O Mimo acorda e é-lhe mostrado um papel em jogo. Ele age silenciosamente segundo esse papel ou recebe as informações que esse papel receberia.`,
-                fr: `Le Mîme se réveille et on lui montre un rôle en jeu. Il agit silencieusement selon ce rôle ou reçoit les informations que ce rôle recevrait.`,
+                fr: `Le Mime se réveille et voit un rôle en jeu. Il agit silencieusement selon ce rôle ou reçoit les informations que ce rôle recevrait.`,
                 en: `The Mime wakes up and is shown a role that is in play. The Mime silently performs that role’s action or receives the information that role would receive.`
             }
         },
@@ -4471,7 +4604,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             refs: ["v23"],
             text: {
                 pt: `O Domador da Aranha acorda/não acorda se não houver necessidade e é-lhe mostrado todos os papéis dos jogadores que foram apanhados pela teia esta noite.`,
-                fr: `Le Maître de l’Araignée se réveille / ne se réveille pas si ce n’est pas nécessaire. Les rôles de tous les joueurs pris dans la toile cette nuit lui sont révélés.`,
+                fr: `Le Maître de l'Araignée se réveille / ne se réveille pas si ce n'est pas nécessaire. Les rôles de tous les joueurs pris dans la toile cette nuit lui sont révélés.`,
                 en: `The Spider Tamer wakes up / does not wake up if unnecessary and is shown the roles of all players caught in the web tonight.`
             }
         },
@@ -4479,9 +4612,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-v07.2",
             refs: ["v07"],
             text: {
-                pt: `(Se o Cavaleiro Enferrujado morreu durante a noite, matar o Lobisomem mais próximo no ínicio do próximo Tribunal.)`,
-                fr: `(Si le Chevalier Rouillé est mort pendant la nuit, tuer le Loup-garou le plus proche au début du prochain Tribunal.)`,
-                en: `If the Rusted Knight died during the night, kill the nearest Werewolf at the start of the next Tribunal.`
+                pt: `(Se o Cavaleiro Enferrujado morreu durante a noite, assassinar o Lobisomem mais próximo no início do próximo Tribunal.)`,
+                fr: `(Si le Chevalier Rouillé est mort pendant la nuit, assassiner le Loup-garou le plus proche au début du prochain Tribunal.)`,
+                en: `(If the Rusted Knight died during the night, assassinate the nearest Werewolf at the start of the next Tribunal.)`
             }
         }
     ]

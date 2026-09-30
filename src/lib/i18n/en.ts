@@ -4,6 +4,7 @@ import type { Translation } from "./types";
 
 export const en: Translation = {
   roleLabels: {
+    t01: "Lawyer", t02: "Gambler", t03: "Gunslinger",
     e01: "Werewolf",
     e02: "Evil Witch",
     e03: "Shaman",
@@ -146,6 +147,36 @@ export const en: Translation = {
   },
 
   ui: {
+    travellers: {
+      joinTitle: "Join as a Traveller?",
+      joinDescription: "This game has already started. You can ask the Narrator to let you join as a Traveller.",
+      requestJoin: "Ask to join as a Traveller",
+      requestPending: "Your request was sent. Waiting for the Narrator…",
+      requestDenied: "The Narrator declined your Traveller request.",
+      add: "Add Traveller",
+      qrTitle: "Invite a Traveller",
+      qrDescription: "The late player can scan this code to request entry into the current game.",
+      requestTitle: "Traveller request",
+      requestDescription: "{name} wants to join as a Traveller.",
+      accept: "Accept",
+      deny: "Decline",
+      setupTitle: "Assign Traveller",
+      alignmentVillager: "Villager",
+      alignmentEvil: "Evil Being",
+      confirmAssignment: "Confirm Traveller",
+      revealVillagerTitle: "You are a Villager",
+      revealEvilTitle: "You are an Evil Being",
+      revealVillagerBody: "Help the village find and eliminate every Werewolf.",
+      revealEvilBody: "Help the Evil Beings kill every Villager. Your Traveller role remains public; this alignment is secret.",
+      revealWerewolves: "The Werewolves are marked below.",
+      understood: "I understand",
+      waitingPlacement: "Your role is ready. The Narrator is placing you in the circle…",
+      placeInstruction: "Drag this Traveller between two players to seat them.",
+      publicRole: "Public Traveller role",
+      exileVotes: "{n} votes are needed to exile a Traveller (half of every player, living or dead, rounded up).",
+      actionExile: "Exile",
+      infoExiled: "{name} was exiled!",
+    },
     monkeyReveal: {
       choose: "Choose a player.",
       confirm: "Reveal card",

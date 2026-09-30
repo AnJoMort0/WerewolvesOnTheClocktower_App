@@ -7,7 +7,7 @@ import { resolve, extname, sep } from "node:path";
 
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".webmanifest": "application/manifest+json", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".ico": "image/x-icon", ".woff2": "font/woff2", ".woff": "font/woff" };
 const ROOM_FIELDS = new Set(["code", "language", "status", "phase_state", "timer_state", "timer_defaults", "game_over_state", "player_action_state"]);
-const PLAYER_FIELDS = new Set(["name", "room_id", "seat_position", "character", "is_alive", "is_ready", "last_seen_at"]);
+const PLAYER_FIELDS = new Set(["name", "room_id", "seat_position", "character", "is_alive", "is_ready", "last_seen_at", "is_traveller", "traveller_state", "traveller_role", "traveller_alignment"]);
 const SNAPSHOT_KEY = /^wotct_(gm_snapshot_|phone_|runtime_)/;
 const ACTION_KINDS = new Set(["v10-assassinate", "v18-resurrect", "v23-web"]);
 const TOPICS = ["phone-", "player-action-modes-", "player-sync-", "fortune-teller-reveal-", "little-girl-reveal-", "lamplighter-reveal-", "werewolf-seer-reveal-", "spider-reveal-", "spy-reveal-", "mime-reveal-", "room-phase-", "room-timer-", "game-over-", "player-actions-"];
@@ -26,6 +26,13 @@ export function createLanServer({ distDir, dataDir, joinBaseUrl, pin = String(Ma
     if (state.version !== 1 || !Array.isArray(state.rooms) || !Array.isArray(state.players) || !state.snapshots || !state.broadcasts) {
       throw new Error(`Unrecognised LAN data in ${databaseFile}. Restore a backup; existing data was not overwritten.`);
     }
+    state.players = state.players.map(player => ({
+      is_traveller: false,
+      traveller_state: null,
+      traveller_role: null,
+      traveller_alignment: null,
+      ...player,
+    }));
   }
   const sessions = new Map();
   const streams = new Set();
@@ -116,6 +123,10 @@ export function createLanServer({ distDir, dataDir, joinBaseUrl, pin = String(Ma
     if ("name" in values && (typeof values.name !== "string" || !values.name.trim() || values.name.length > 100)) throw failure("Use a name between 1 and 100 characters.");
     if ("code" in values && !/^[A-Z0-9]{4,8}$/.test(values.code)) throw failure("Invalid room code.");
     for (const key of ["is_ready", "is_alive"]) if (key in values && typeof values[key] !== "boolean") throw failure(`Invalid ${key}`);
+    if ("is_traveller" in values && typeof values.is_traveller !== "boolean") throw failure("Invalid is_traveller");
+    if ("traveller_state" in values && values.traveller_state !== null && !["requested", "assigning", "revealing", "ready", "placed", "denied", "exiled"].includes(values.traveller_state)) throw failure("Invalid traveller_state");
+    if ("traveller_role" in values && values.traveller_role !== null && !["t01", "t02", "t03"].includes(values.traveller_role)) throw failure("Invalid traveller_role");
+    if ("traveller_alignment" in values && values.traveller_alignment !== null && !["villager", "evil"].includes(values.traveller_alignment)) throw failure("Invalid traveller_alignment");
   }
 
   // Merge a phone's additions into the latest state, so simultaneous day actions cannot overwrite each other.
@@ -162,7 +173,12 @@ export function createLanServer({ distDir, dataDir, joinBaseUrl, pin = String(Ma
           if (state.rooms.some(room => room.code === values.code) || entries.filter(entry => entry.code === values.code).length > 1) throw failure("Room code already exists.", "23505", 409);
         } else {
           const room = roomFor(values.room_id);
-          if (!session.host && (room.status !== "lobby" || Object.keys(values).some(key => !["name", "room_id"].includes(key)))) throw failure("Joining is only available in the lobby.", "FORBIDDEN", 403);
+          const travellerRequest = room.status === "playing"
+            && values.is_traveller === true
+            && values.traveller_state === "requested"
+            && Object.keys(values).every(key => ["name", "room_id", "is_traveller", "traveller_state"].includes(key));
+          const lobbyJoin = room.status === "lobby" && Object.keys(values).every(key => ["name", "room_id"].includes(key));
+          if (!session.host && !lobbyJoin && !travellerRequest) throw failure("Joining is unavailable for this room.", "FORBIDDEN", 403);
           if (state.players.filter(player => player.room_id === room.id).length + entries.length > 100) throw failure("A LAN room supports up to 100 players.");
         }
       }
@@ -170,7 +186,7 @@ export function createLanServer({ distDir, dataDir, joinBaseUrl, pin = String(Ma
         const now = new Date().toISOString();
         const row = table === "rooms"
           ? { id: randomUUID(), code: values.code, language: "pt", status: "lobby", gm_token: randomBytes(24).toString("hex"), created_at: now, last_activity_at: now, completed_at: null, phase_state: null, timer_state: null, game_over_state: null, player_action_state: null, timer_defaults: {}, ...values }
-          : { id: randomUUID(), player_token: randomBytes(24).toString("hex"), created_at: now, name: values.name.trim(), room_id: values.room_id, seat_position: null, character: null, is_alive: true, is_ready: false, last_seen_at: now, ...values };
+          : { id: randomUUID(), player_token: randomBytes(24).toString("hex"), created_at: now, name: values.name.trim(), room_id: values.room_id, seat_position: null, character: null, is_alive: true, is_ready: false, is_traveller: false, traveller_state: null, traveller_role: null, traveller_alignment: null, last_seen_at: now, ...values };
         state[table].push(row);
         session.rooms.add(table === "rooms" ? row.id : row.room_id);
         if (table === "players" && !session.host) session.players.add(row.id);
@@ -189,7 +205,12 @@ export function createLanServer({ distDir, dataDir, joinBaseUrl, pin = String(Ma
         let values = query.values;
         if (!session.host && operation === "update") {
           if (table === "players") {
-            if (!session.players.has(row.id) || Object.keys(values).some(key => !["is_ready", "last_seen_at"].includes(key))) throw failure("Only the GM can change another player's game state.", "FORBIDDEN", 403);
+            const acknowledgesTraveller = row.is_traveller
+              && row.traveller_state === "revealing"
+              && values.traveller_state === "ready"
+              && Object.keys(values).length === 1;
+            const heartbeat = Object.keys(values).every(key => ["is_ready", "last_seen_at"].includes(key));
+            if (!session.players.has(row.id) || (!heartbeat && !acknowledgesTraveller)) throw failure("Only the GM can change another player's game state.", "FORBIDDEN", 403);
           } else {
             if (Object.keys(values).length !== 1 || !("player_action_state" in values) || !session.rooms.has(row.id)) throw failure("Only the GM can change room state.", "FORBIDDEN", 403);
             values = { player_action_state: mergePlayerRequests(session, row, values.player_action_state) };

@@ -13,6 +13,7 @@ import poisonedIcon from "@/assets/display/icons/poisoned.webp";
 import illusionIcon from "@/assets/display/icons/illusion.webp";
 import immunityIcon from "@/assets/display/icons/immunity_full.webp";
 import immunityWerewolfIcon from "@/assets/display/icons/immunity_werewolf.webp";
+import ghostExiledIcon from "@/assets/display/icons/ghost_exiled.webp";
 import { toast } from "sonner";
 import type { ActorPowerState } from "@/lib/actor";
 import type { DogWolfStates } from "@/lib/dogWolf";
@@ -24,6 +25,8 @@ type Player = {
   seat_position: number | null;
   character: string | null;
   is_alive: boolean;
+  is_traveller?: boolean;
+  traveller_state?: string | null;
 };
 
 type DragActionMeta = {
@@ -47,6 +50,7 @@ interface PlayerCircleProps {
   onDropPlayer: (playerId: string, position: number | null) => void;
   isGM?: boolean;
   roleAssignments?: Record<string, RoleId>;
+  publicRoleAssignments?: Record<string, RoleId>;
   abilityRoleAssignments?: Record<string, RoleId>;
   colossusReadyPlayerIds?: Set<string>;
   baseRoleAssignments?: Record<string, RoleId>;
@@ -92,6 +96,11 @@ interface PlayerCircleProps {
   availableEffects?: (playerId: string) => StatusEffect[];
   onToggleEffect?: (playerId: string, effect: StatusEffect) => void;
   onExecute?: (playerId: string) => void;
+  onExile?: (playerId: string) => void;
+  exiledPlayerIds?: Set<string>;
+  allowSeatDrag?: boolean;
+  insertionPlayerId?: string | null;
+  onInsertPlayer?: (playerId: string, afterPosition: number) => void;
   onDragAction?: (action: string, targetPlayerId: string, sourcePlayerId?: string | null, meta?: DragActionMeta) => void;
   hideSensitiveInfo?: boolean;
   onPlayerClick?: (playerId: string) => void;
@@ -116,6 +125,7 @@ export const PlayerCircle = ({
   onDropPlayer,
   isGM,
   roleAssignments,
+  publicRoleAssignments = {},
   abilityRoleAssignments,
   colossusReadyPlayerIds = new Set(),
   baseRoleAssignments,
@@ -161,6 +171,11 @@ export const PlayerCircle = ({
   availableEffects: _availableEffects,
   onToggleEffect: _onToggleEffect,
   onExecute: _onExecute,
+  onExile: _onExile,
+  exiledPlayerIds = new Set(),
+  allowSeatDrag = false,
+  insertionPlayerId = null,
+  onInsertPlayer,
   onDragAction,
   hideSensitiveInfo = false,
   onPlayerClick,
@@ -245,6 +260,12 @@ export const PlayerCircle = ({
 
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
+  const handleInsertionDrop = (event: React.DragEvent, afterPosition: number) => {
+    event.preventDefault();
+    const playerId = event.dataTransfer.getData("playerId");
+    if (playerId && playerId === insertionPlayerId) onInsertPlayer?.(playerId, afterPosition);
+  };
+
   const handleUnseat = (playerId: string) => {
     if (!roleAssignments) onDropPlayer(playerId, null);
   };
@@ -309,6 +330,15 @@ export const PlayerCircle = ({
 
   const getDragProps = (playerId: string) => {
     if (hideSensitiveInfo) return {};
+    if (allowSeatDrag && !isPlaying) {
+      return {
+        draggable: true,
+        onDragStart: (event: React.DragEvent) => {
+          event.dataTransfer.setData("playerId", playerId);
+          event.dataTransfer.effectAllowed = "move";
+        },
+      };
+    }
     if (!isPlaying || !roleAssignments) return {};
     const role = abilityRoleAssignments?.[playerId] ?? roleAssignments[playerId];
     if (role === "v27" && !colossusReadyPlayerIds.has(playerId)) return {};
@@ -399,7 +429,8 @@ export const PlayerCircle = ({
         const y = radiusY * Math.sin(angle) + containerH / 2;
 
         const seated = seatedPlayers.find((p) => p.seat_position === i);
-        const role = seated && !hideSensitiveInfo && roleAssignments?.[seated.id];
+        const publicRole = seated ? publicRoleAssignments[seated.id] : undefined;
+        const role = seated ? (!hideSensitiveInfo ? roleAssignments?.[seated.id] : publicRole) : undefined;
         const mechanicalRole = seated && !hideSensitiveInfo
           ? abilityRoleAssignments?.[seated.id] ?? role
           : role;
@@ -547,7 +578,7 @@ export const PlayerCircle = ({
               <span className={`text-xs font-body max-w-[80px] truncate text-center mt-1 ${isThisPoisoned ? "text-green-400" : isThisIllusion ? "text-purple-400" : ""}`}>
                 {seated.name}
               </span>
-              {isGM && roleDef && (
+              {(isGM || !!publicRole) && roleDef && (
                 <span className={`text-[10px] font-display leading-tight ${isThisPoisoned ? "text-green-400" : isThisIllusion ? "text-purple-400" : "text-primary"}`}>
                   {role ? roleLabel(role) : ""}
                 </span>
@@ -772,6 +803,11 @@ export const PlayerCircle = ({
               _onExecute?.(seated.id);
               setOpenPopoverId(null);
             }}
+            isTraveller={!!seated.is_traveller}
+            onSetExiled={seated.is_traveller && _onExile ? () => {
+              _onExile?.(seated.id);
+              setOpenPopoverId(null);
+            } : undefined}
             onToggleEffect={(effect) => {
               _onToggleEffect?.(seated.id, effect);
               setOpenPopoverId(null);
@@ -793,8 +829,26 @@ export const PlayerCircle = ({
             onDragOver={handleDragOver}
           >
             {wrappedNode}
+            {seated && exiledPlayerIds.has(seated.id) && (
+              <img src={ghostExiledIcon} alt="" className="pointer-events-none absolute inset-0 m-auto h-10 w-10 drop-shadow-lg" />
+            )}
           </div>
         );
+      })}
+
+      {insertionPlayerId && totalSlots > 0 && Array.from({ length: totalSlots }).map((_, index) => {
+        const angle = (2 * Math.PI * (index + 0.5)) / totalSlots - Math.PI / 2;
+        const x = radiusX * Math.cos(angle) + containerW / 2;
+        const y = radiusY * Math.sin(angle) + containerH / 2;
+        return <div
+          key={`insert-${index}`}
+          aria-label={`Insert after seat ${index + 1}`}
+          className="absolute flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-dashed border-gold bg-background/90 text-lg font-bold text-gold shadow-lg"
+          style={{ left: x, top: y }}
+          onDrop={(event) => handleInsertionDrop(event, index)}
+          onDragEnter={handleDragOver}
+          onDragOver={handleDragOver}
+        >+</div>;
       })}
     </div>
   );

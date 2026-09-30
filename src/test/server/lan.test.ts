@@ -113,6 +113,22 @@ describe("offline LAN server", () => {
     expect(own.data).toEqual({ character: "v26", is_ready: true });
     await gm.query({ table: "rooms", operation: "update", filters: [["id", game.id]], values: { status: "playing" } });
     expect((await phone.query({ table: "players", operation: "insert", values: { room_id: game.id, name: "Late" } })).status).toBe(403);
+    const late = (await phone.query({
+      table: "players",
+      operation: "insert",
+      values: { room_id: game.id, name: "Late", is_traveller: true, traveller_state: "requested" },
+      cardinality: "single",
+    })).data;
+    expect(late).toMatchObject({ is_traveller: true, traveller_state: "requested", traveller_role: null });
+    expect((await phone.query({ table: "players", operation: "update", filters: [["id", late.id]], values: { traveller_state: "ready" } })).status).toBe(403);
+    await gm.query({
+      table: "players",
+      operation: "update",
+      filters: [["id", late.id]],
+      values: { traveller_state: "revealing", traveller_role: "t01", traveller_alignment: "villager", character: "t01" },
+    });
+    expect((await phone.query({ table: "players", operation: "update", filters: [["id", late.id]], values: { traveller_state: "ready" } })).error).toBeNull();
+    expect((await other.query({ table: "players", operation: "update", filters: [["id", late.id]], values: { traveller_state: "ready" } })).status).toBe(403);
     expect((await phone.query({ table: "players", operation: "select", filters: [["id", "missing"]], cardinality: "maybeSingle" })).data).toBeNull();
   });
 

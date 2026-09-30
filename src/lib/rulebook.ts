@@ -9,6 +9,7 @@ import {
 import x01Card from "@/assets/display/extras/x01_card.webp";
 import x02Card from "@/assets/display/extras/x02_card.webp";
 import x021Card from "@/assets/display/extras/x021_card.webp";
+import xtCard from "@/assets/display/extras/x.t_card.webp";
 import x03Card from "@/assets/display/extras/x03_card.webp";
 import xv09Card from "@/assets/display/extras/xv09_card.webp";
 import xs01Card from "@/assets/display/extras/xs01_card.webp";
@@ -39,6 +40,7 @@ const EXTRA_CARD_IMAGES: Partial<Record<RulebookCharacterId, string>> = {
   x01: x01Card,
   x02: x02Card,
   "x02.1": x021Card,
+  "x.t": xtCard,
   x03: x03Card,
   "x.v09": xv09Card,
   "x.s01": xs01Card,
@@ -53,6 +55,7 @@ const TEAM_FACTION_CLASS: Record<RulebookTeam, string> = {
   solo: "faction-independent",
   flexible: "faction-flex",
   villagersFlex: "faction-shifting",
+  traveller: "faction-traveller",
   extra: "faction-extra",
 };
 

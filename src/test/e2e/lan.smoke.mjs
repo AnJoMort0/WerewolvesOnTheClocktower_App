@@ -93,6 +93,51 @@ try {
   assert.ok(roster.filter(player => ["Monkey", "Wolf"].includes(player.name)).every(player => player.is_ready));
   console.log("Joined from isolated phone browsers; assigned and delivered roles; readiness updates reached the server.");
 
+  const travellerPhone = await cdp.page(`${base}/join/${game.code}`);
+  await cdp.wait(travellerPhone, "!!document.querySelector('input') && document.body.innerText.includes('Join as a Traveller?')");
+  await cdp.evaluate(travellerPhone, `(() => {
+    const input = document.querySelector('input');
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'Late Traveller');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  })()`);
+  await cdp.click(travellerPhone, "Ask to join as a Traveller");
+  await cdp.wait(gm, "document.body.innerText.includes('Late Traveller wants to join as a Traveller.')");
+  await cdp.click(gm, "Accept");
+  await cdp.click(gm, "Confirm Traveller");
+  await cdp.wait(travellerPhone, "document.body.innerText.includes('You are a Villager') || document.body.innerText.includes('You are an Evil Being')");
+  await cdp.click(travellerPhone, "I understand");
+  await cdp.wait(gm, "document.body.innerText.includes('Drag this Traveller between two players to seat them.')");
+  await cdp.evaluate(gm, `(() => {
+    const source = [...document.querySelectorAll('[draggable=true]')]
+      .find(element => element.title?.startsWith('Late Traveller'));
+    const target = document.querySelector('[aria-label="Insert after seat 1"]');
+    if (!source || !target) throw new Error('Traveller placement controls are missing');
+    const dataTransfer = new DataTransfer();
+    source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }));
+    target.dispatchEvent(new DragEvent('dragenter', { bubbles: true, dataTransfer }));
+    target.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer }));
+    target.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer }));
+  })()`);
+  let traveller;
+  await cdp.wait(gm, `
+    !document.querySelector('[draggable=true][title^="Late Traveller"]')
+      && !document.querySelector('[aria-label^="Insert after seat"]')
+  `);
+  const travellerDeadline = Date.now() + 5000;
+  do {
+    const currentRoster = await query({ table: "players", filters: [["room_id", roomId]] });
+    traveller = currentRoster.find(player => player.name === "Late Traveller");
+    if (traveller?.traveller_state === "placed") break;
+    await delay(100);
+  } while (Date.now() < travellerDeadline);
+  assert.equal(traveller?.traveller_state, "placed");
+  assert.equal(traveller?.seat_position, 1);
+  assert.ok(["t01", "t02", "t03"].includes(traveller?.traveller_role));
+  const travellerRoleNames = { t01: "Lawyer", t02: "Gambler", t03: "Gunslinger" };
+  await cdp.click(phones[1], "Hide Role");
+  await cdp.wait(phones[1], `document.body.innerText.includes(${JSON.stringify(travellerRoleNames[traveller.traveller_role])})`);
+  console.log("Late Traveller request, approval, secret alignment reveal, public role and circle placement worked through the real LAN transport.");
+
   await cdp.wait(gm, "!!document.querySelector('button[aria-label=\"Monkey Tamer\"]')");
   await cdp.evaluate(gm, "document.querySelector('button[aria-label=\"Monkey Tamer\"]').click()");
   await cdp.wait(phones[0], "!!document.querySelector('[data-testid=phone-action-map] button[aria-label=Wolf]')");

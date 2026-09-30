@@ -28,4 +28,23 @@ describe("PlayerStatusPopover", () => {
     expect(firstAction).not.toHaveFocus();
     expect(getByRole("dialog")).toHaveFocus();
   });
+
+  it("offers exile instead of execution for a Traveller", async () => {
+    const onSetExiled = vi.fn();
+    const { getByRole, queryByRole } = render(<PlayerStatusPopover
+      status="alive"
+      isTraveller
+      onSetPoisoned={vi.fn()}
+      onSetDead={vi.fn()}
+      onSetAlive={vi.fn()}
+      onSetExecuted={vi.fn()}
+      onSetExiled={onSetExiled}
+    ><button type="button">Traveller</button></PlayerStatusPopover>);
+
+    fireEvent.click(getByRole("button", { name: "Traveller" }));
+    const exile = await waitFor(() => getByRole("button", { name: "Exilar" }));
+    expect(queryByRole("button", { name: "Executar" })).toBeNull();
+    fireEvent.click(exile);
+    expect(onSetExiled).toHaveBeenCalledOnce();
+  });
 });

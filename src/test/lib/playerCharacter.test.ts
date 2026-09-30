@@ -7,6 +7,10 @@ import {
 import { parsePlayerCharacter } from "@/lib/actor";
 
 describe("private player character metadata", () => {
+  it("returns an empty known-werewolf list for an unannotated character", () => {
+    expect(parsePlayerCharacterMetadata("t02").knownWerewolfPlayerIds).toEqual([]);
+  });
+
   it("round-trips a Dog-Wolf owner role and objective effects", () => {
     const character = encodePlayerCharacterMetadata("a02", {
       ownerRole: "e02",
@@ -15,6 +19,7 @@ describe("private player character metadata", () => {
       objectiveEffects: ["evil_being", "lover"],
       dogActorCopiedRole: "v16",
       prophecyRetainedUntilNight: 4,
+      knownWerewolfPlayerIds: ["wolf-one", "wolf-two"],
     });
     expect(stripPlayerCharacterMetadata(character)).toBe("a02");
     expect(parsePlayerCharacterMetadata(character)).toEqual({
@@ -24,6 +29,7 @@ describe("private player character metadata", () => {
       objectiveEffects: ["evil_being", "lover"],
       dogActorCopiedRole: "v16",
       prophecyRetainedUntilNight: 4,
+      knownWerewolfPlayerIds: ["wolf-one", "wolf-two"],
     });
     expect(parsePlayerCharacter(character).baseRole).toBe("a02");
   });

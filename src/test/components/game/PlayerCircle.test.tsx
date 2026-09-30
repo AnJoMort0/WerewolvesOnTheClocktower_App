@@ -45,6 +45,27 @@ describe("PlayerCircle drag and power controls", () => {
     expect(container.querySelector("img")?.closest('[draggable="true"]')).toBeNull();
   });
 
+  it("makes lobby seats movable and lets an unplaced Traveller use a gap", () => {
+    const onInsertPlayer = vi.fn();
+    const { container, getByLabelText } = render(<PlayerCircle
+      isGM
+      totalSlots={2}
+      allowSeatDrag
+      insertionPlayerId="traveller"
+      onInsertPlayer={onInsertPlayer}
+      onDropPlayer={vi.fn()}
+      players={[
+        { id: "alice", name: "Alice", seat_position: 0, character: null, is_alive: true },
+        { id: "bob", name: "Bob", seat_position: 1, character: null, is_alive: true },
+      ]}
+    />);
+
+    expect(container.querySelectorAll('[draggable="true"]')).toHaveLength(2);
+    const dataTransfer = { getData: (key: string) => key === "playerId" ? "traveller" : "", setData: vi.fn(), effectAllowed: "" };
+    fireEvent.drop(getByLabelText("Insert after seat 1"), { dataTransfer });
+    expect(onInsertPlayer).toHaveBeenCalledWith("traveller", 0);
+  });
+
   it("allows restoring exhausted powers independently without changing player status", () => {
     const onMonkeyDisabledToggle = vi.fn(), onIndependentPowerStateChange = vi.fn(), onPlayerStatusChange = vi.fn();
     const { getAllByRole, rerender } = render(<PlayerCircle isGM isPlaying totalSlots={2}

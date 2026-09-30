@@ -25,7 +25,20 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] 
+* [x] Travellers (see description in rulebookContent):
+  * [x] Pick the idea (or mash them up or create your own) that seems the more intuitive for the current state of the game, knowing it's a game that is played in person anyway:
+    * [x] Add a button to the GM screen when the game is already on, under the player list to add a new traveller, when clicked a new QR code pops up full modal, for the new player to join in as said traveller.
+    * [x] When a player tries to join a game that is already being played with the normal QR code, they get the message that the game already started but they can potentially ask the GM to join as a traveller. The GM receives a notification that a new player wants to join as a traveller, accepts it (or denies it).
+  * [x] THEN When they join a random "t" role will then be assigned, the GM can change it like the GM does for the normal players joining the game. Once the GM confirms it, first a modal will be sent to the player's device (and mirror on the GM's screen) stating if they are a "Villager" or a "Evil Being", the "You are a Evil Being" modal also includes a player circle with all the werewolves clearly shown. The player can confirm they read it (or the GM can close the modal) and they get their normal role screen/hide role screen, like any other player. Then in the GM screen there's a circle with the player on the side of the player circle. The GM can then drag and drop that circle anywhere between two other players to add the new player there. Once the player has been placed down, it is fixed there and is added to the player list too.
+    * [x] By the way, add this functionnality of moving a player bubble between other players in the players joining screen too, so that players can be moved between other players, and when dragging a player on top of another one, the dragged takes its place, while the player that was there is removed from the circle. Just to make it simpler to organise players in an active room when joining in (and so you can reuse the same code for both normal players and travellers, just in different moments)
+  * [x] While there are still available unique travellers just assign a random new one. If all travellers are in use, you can reuse the same traveller multiple times
+  * [x] Everyone knows the traveller's role, so in the players device, when showing the player circle in hide role screen, the traveller's role is just there, in the player bubble. Clicking it will open the rulebook entry. The other players just don't know the characters alignement
+  * [x] A traveller acts like any other character for character's abilities, like for knowledge abilities
+  * [x] During the Tribunal, if there are travellers in game, add a line to say how many votes are needed to exile a traveller, which is half (rounded up) off players, alive or dead
+  * [x] A traveller can be affected by pretty much any status effect, execept they can't be executed so make sure that is removed from the pop-up menu, they are instead exiled so add that to the menu instead
+    * [x] an exiled traveller just becomes a ghost like any other executed player, they just don't count as executed for the abilities that have to do with that death type
+  * [x] If the spy is in game travellers automatically have the spy on effect since everyone knows who they are
+
   
 ## Future Plans
 
@@ -53,14 +66,11 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
   * [ ] Fraud (villager): At the beginning of the second night, appears as one of the Werewolf allies to the Werewolves
   * [ ] Cannibal (solo-advanced): Always take the role of the last executed player. Objective be the last player alive
 * [ ] Add a new class of characters: TRAVELLERS, akin to Blood on the Clocktower, everyone knows the role of the traveller but they have 50/50% chance of being evil or villager (if they are an evil being, they will know who the werewolves are). They participate in votes.They can be exiled at any time during day or tribunal, if the majority of the players, including ghosts, decide so. Exile doesn't count as execution nor assasination. They keep playing like a ghost after that. Their powers are powerful, mostly single use and very simple. The idea is to use the TRAVELLERS for players who arrive late and want to join the game:
-  * [ ] Gunslinger: Once per game, right after a Tribunal vote, the gunslinger can kill one of the players that voted.
   * [ ] Bone Collector: Once per game, during the day, can ask the Narrator to gain the role of the last dead player during a day and a night. The Bone Collector doesn't change alignement
   * [ ] Harlot: Once per game, during the night can choose one player, that player is awaken, if they are not from the same alignement as the Harlot, that player switches sides to join the Harlot alignement, keeping their role and abilities (probably too OP, needs to be changed, but I kinda wanted a traveller lady of the night in the game)
   * [ ] Bureaucrat: Two times during the game, can ask for the Tribunal votes to be private
   * [ ] Voudon: While alive and present, only the dead and himself can nominate and vote in the Tribunal
-  * [ ] Lawyer: Once per game, can overide or choose the result of a nomination.
   * [ ] Gangster: Once per game, at the beginning of court, can kill one of his neighbours, if the other neighbour publicly agrees.
-  * [ ] Gambler: Each night, can choose a player and try to guess their role, if they're wrong they die
   * [ ] Devil's Advocate: each night choose a player, if they are then voted to be executed they won't die. Can't choose the same player two nights in a row
 * [ ] Add character that requests anonymous votes (maybe solo, flexible or evil)
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)

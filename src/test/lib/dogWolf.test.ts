@@ -10,6 +10,8 @@ import {
   getDogWolfObjectiveRoleAssignments,
   getDogWolfPlayerIds,
 } from "@/lib/dogWolf";
+import { resolveKillerCard } from "@/components/game/RevealModal";
+import { ROLES } from "@/lib/roles";
 
 describe("Dog-Wolf role model", () => {
   it("tracks original and Actor Dog-Wolf instances independently", () => {
@@ -31,6 +33,13 @@ describe("Dog-Wolf role model", () => {
       owner: "e02",
     });
     expect(getDogWolfObjectiveRole("dog", { dog: "a02", owner: "e02" }, states)).toBe("e02");
+  });
+
+  it("shows Dog-Wolf to the Little Girl when the Dog assassinates with its owner's power", () => {
+    expect(resolveKillerCard("a02", { dog: "a02", owner: "v08" }, null, "en")).toMatchObject({
+      roleId: "a02",
+      image: ROLES.a02.image,
+    });
   });
 
   it("marks a Dog following an active Actor copy for the nested player card", () => {

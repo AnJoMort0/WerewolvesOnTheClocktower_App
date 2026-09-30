@@ -15,6 +15,10 @@ const backend = vi.hoisted(() => {
     phaseKind: "night" as "night" | "day" | "tribunal",
     character: "v01",
     alive: true,
+    traveller: false,
+    travellerState: null as string | null,
+    travellerRole: null as string | null,
+    travellerAlignment: null as string | null,
     pending: null as Promise<Result> | null,
   };
   return {
@@ -29,17 +33,22 @@ const backend = vi.hoisted(() => {
         maybeSingle: () => query,
         single: () => query,
         then: (resolve: (result: Result) => unknown, reject?: (error: unknown) => unknown) => {
-          if (table === "players" && columns === "name, character, is_alive, room_id") {
+          if (table === "players" && columns.startsWith("name, character, is_alive, seat_position, room_id")) {
             state.ownReads++;
             const result = state.pending ?? Promise.resolve({
-              data: state.failOwn || state.missing ? null : { name: "Human", character: state.character, is_alive: state.alive, room_id: "room" },
+              data: state.failOwn || state.missing ? null : {
+                name: "Human", character: state.character, is_alive: state.alive, seat_position: 0, room_id: "room",
+                is_traveller: state.traveller, traveller_state: state.travellerState,
+                traveller_role: state.travellerRole, traveller_alignment: state.travellerAlignment,
+              },
               error: state.failOwn ? { message: "Temporary network failure" } : null,
             });
             return result.then(resolve, reject);
           }
           const data = table === "rooms"
             ? { status: "playing", language: "en", player_action_state: null, phase_state: { phase: state.phaseKind, number: state.phase }, timer_state: null, game_over_state: null }
-            : [{ id: "player", name: "Human", seat_position: 0, is_alive: state.alive }];
+            : [{ id: "player", name: "Human", seat_position: 0, is_alive: state.alive,
+              is_traveller: state.traveller, traveller_state: state.travellerState, traveller_role: state.travellerRole }];
           return Promise.resolve({ data, error: null }).then(resolve, reject);
         },
       };
@@ -74,7 +83,8 @@ const loaded = () => waitFor(() => expect(screen.getAllByText("Human").length).t
 beforeEach(() => {
   window.localStorage.clear();
   Object.assign(backend.state, {
-    failOwn: false, missing: false, ownReads: 0, phase: 1, phaseKind: "night", character: "v01", alive: true, pending: null,
+    failOwn: false, missing: false, ownReads: 0, phase: 1, phaseKind: "night", character: "v01", alive: true,
+    traveller: false, travellerState: null, travellerRole: null, travellerAlignment: null, pending: null,
   });
 });
 afterEach(() => { cleanup(); backend.channels.clear(); vi.restoreAllMocks(); });
@@ -152,5 +162,21 @@ describe("player recovery and room isolation", () => {
     await screen.findByText(t("resurrectionMode", "en"));
     const selfTarget = screen.getByRole("button", { name: "Human" });
     expect(selfTarget).toBeEnabled();
+  });
+
+  it("reveals a late Traveller's secret alignment while keeping the Traveller role public", async () => {
+    backend.state.traveller = true;
+    backend.state.travellerState = "revealing";
+    backend.state.travellerRole = "t01";
+    backend.state.travellerAlignment = "evil";
+    backend.state.character = encodePlayerCharacterMetadata("t01", {
+      objectiveEffects: ["evil_being"],
+      knownWerewolfPlayerIds: ["player"],
+    });
+
+    showPlayer();
+    expect((await screen.findAllByText("You are an Evil Being")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Lawyer").length).toBeGreaterThan(0);
+    expect(screen.getByText("The Werewolves are marked below.")).toBeInTheDocument();
   });
 });

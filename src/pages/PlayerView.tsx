@@ -32,15 +32,32 @@ import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
+import { TravellerAlignmentModal } from "@/components/game/TravellerAlignmentModal";
 import { usePlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 import { normalizeGameLogSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
 import { isProphecyRetentionActive } from "@/lib/prophecy";
+import type { TravellerAlignment, TravellerState } from "@/lib/travellers";
 
 type RoomPlayer = {
   id: string;
   name: string;
   seat_position: number | null;
   is_alive: boolean;
+  is_traveller: boolean;
+  traveller_state: TravellerState | null;
+  traveller_role: string | null;
+};
+
+type CurrentPlayer = {
+  name: string;
+  character: string | null;
+  is_alive: boolean;
+  seat_position: number | null;
+  room_id?: string;
+  is_traveller: boolean;
+  traveller_state: TravellerState | null;
+  traveller_role: string | null;
+  traveller_alignment: TravellerAlignment | null;
 };
 
 const FAKE_PLAYER_ACTION_PENDING_MS = 10000;
@@ -50,12 +67,7 @@ const PlayerView = () => {
   const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
   const { skinPackId } = useSkinPack();
-  const [player, setPlayer] = useState<{
-    name: string;
-    character: string | null;
-    is_alive: boolean;
-    room_id?: string;
-  } | null>(null);
+  const [player, setPlayer] = useState<CurrentPlayer | null>(null);
   const [removed, setRemoved] = useState(false);
   const phone = usePlayerPhoneActions(player?.room_id, playerId);
   const [roomStatus, setRoomStatus] = useState<string>("lobby");
@@ -203,7 +215,7 @@ const PlayerView = () => {
     const refreshPlayerState = async () => {
       const { data, error } = await supabase
         .from("players")
-        .select("name, character, is_alive, room_id")
+        .select("name, character, is_alive, seat_position, room_id, is_traveller, traveller_state, traveller_role, traveller_alignment")
         .eq("id", playerId)
         .maybeSingle();
 
@@ -215,15 +227,15 @@ const PlayerView = () => {
 
       setPlayer((prev) => {
         if (prev?.character !== data.character) setCharacterKey((k) => k + 1);
-        return data;
+        return data as CurrentPlayer;
       });
 
       const { data: allPlayers } = await supabase
         .from("players")
-        .select("id, name, seat_position, is_alive")
+        .select("id, name, seat_position, is_alive, is_traveller, traveller_state, traveller_role")
         .eq("room_id", roomId)
         .order("created_at");
-      if (allPlayers) setRoomPlayers(allPlayers);
+      if (allPlayers) setRoomPlayers(allPlayers as RoomPlayer[]);
     };
 
     const syncChannel = supabase
@@ -251,7 +263,7 @@ const PlayerView = () => {
       try {
         const { data, error } = await supabase
           .from("players")
-          .select("name, character, is_alive, room_id")
+          .select("name, character, is_alive, seat_position, room_id, is_traveller, traveller_state, traveller_role, traveller_alignment")
           .eq("id", playerId)
           .maybeSingle();
 
@@ -262,7 +274,7 @@ const PlayerView = () => {
         }
         setPlayer((previous) => {
           if (previous && previous.character !== data.character) setCharacterKey((key) => key + 1);
-          return data;
+          return data as CurrentPlayer;
         });
 
         const { data: roomData } = await supabase
@@ -304,10 +316,10 @@ const PlayerView = () => {
 
         const { data: allPlayers } = await supabase
           .from("players")
-          .select("id, name, seat_position, is_alive")
+          .select("id, name, seat_position, is_alive, is_traveller, traveller_state, traveller_role")
           .eq("room_id", data.room_id)
           .order("created_at");
-        if (!cancelled && allPlayers) setRoomPlayers(allPlayers);
+        if (!cancelled && allPlayers) setRoomPlayers(allPlayers as RoomPlayer[]);
       } finally {
         refreshing = false;
       }
@@ -340,6 +352,11 @@ const PlayerView = () => {
               ...prev,
               character: payload.new.character,
               is_alive: payload.new.is_alive,
+              seat_position: payload.new.seat_position,
+              is_traveller: payload.new.is_traveller,
+              traveller_state: payload.new.traveller_state,
+              traveller_role: payload.new.traveller_role,
+              traveller_alignment: payload.new.traveller_alignment,
             };
           });
         }
@@ -406,10 +423,10 @@ const PlayerView = () => {
           async () => {
             const { data } = await supabase
               .from("players")
-              .select("id, name, seat_position, is_alive")
+              .select("id, name, seat_position, is_alive, is_traveller, traveller_state, traveller_role")
               .eq("room_id", roomId)
               .order("created_at");
-            if (data) setRoomPlayers(data);
+            if (data) setRoomPlayers(data as RoomPlayer[]);
           }
         )
         .subscribe();
@@ -934,6 +951,22 @@ const PlayerView = () => {
     );
   }
 
+  const travellerCopy = getTranslation(language).ui.travellers;
+  if (player.is_traveller && player.traveller_state === "denied") {
+    return (
+      <LanguageContext.Provider value={language}>
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <div className="max-w-sm space-y-4 text-center">
+            <X className="mx-auto h-14 w-14 text-muted-foreground" />
+            <h1 className="font-display text-2xl text-gold">{travellerCopy.joinTitle}</h1>
+            <p className="text-muted-foreground">{travellerCopy.requestDenied}</p>
+            <Button onClick={() => { clearPlayerSession(); navigate("/"); }} variant="secondary">{t("backHome", language)}</Button>
+          </div>
+        </div>
+      </LanguageContext.Provider>
+    );
+  }
+
   const isDead = playerIsDead;
   const seatedPlayers = roomPlayers.filter((p) => p.seat_position !== null).sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0));
   const totalSlots = seatedPlayers.length || roomPlayers.length;
@@ -1019,10 +1052,33 @@ const PlayerView = () => {
     setRulebookRoleId(roleId);
     setRulebookOpen(true);
   };
+  const acknowledgeTravellerAlignment = async () => {
+    if (!playerId) return;
+    setPlayer((current) => current ? { ...current, traveller_state: "ready" } : current);
+    await supabase.from("players").update({ traveller_state: "ready" }).eq("id", playerId);
+  };
+  const travellerRoleId = player.traveller_role && ROLES[player.traveller_role as RoleId]
+    ? player.traveller_role as RoleId
+    : null;
 
   return (
     <LanguageContext.Provider value={language}>
     <div className="flex min-h-screen items-center justify-center p-4">
+      {player.is_traveller && player.traveller_state === "revealing" && travellerRoleId && player.traveller_alignment && (
+        <TravellerAlignmentModal
+          open
+          language={language}
+          alignment={player.traveller_alignment}
+          roleId={travellerRoleId}
+          players={roomPlayers.filter((roomPlayer) => roomPlayer.seat_position !== null).map((roomPlayer) => ({
+            id: roomPlayer.id,
+            name: roomPlayer.name,
+            isAlive: roomPlayer.is_alive,
+            isWerewolf: characterMetadata.knownWerewolfPlayerIds.includes(roomPlayer.id),
+          }))}
+          onAcknowledge={() => void acknowledgeTravellerAlignment()}
+        />
+      )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1071,7 +1127,9 @@ const PlayerView = () => {
           >
             <Clock className="mx-auto h-10 w-10 text-muted-foreground animate-pulse" />
             <p className="text-muted-foreground text-lg">
-              {roomStatus === "lobby"
+              {player.is_traveller
+                ? travellerCopy.requestPending
+                : roomStatus === "lobby"
                 ? t("waitingGame", language)
                 : t("gmAssigning", language)}
             </p>
@@ -1247,6 +1305,16 @@ const PlayerView = () => {
                           <span className={`text-[10px] font-body truncate max-w-[60px] mt-0.5 ${pDead ? "text-muted-foreground/50" : ""}`}>
                             {p.name}
                           </span>
+                          {p.is_traveller && p.traveller_role && ROLES[p.traveller_role as RoleId] && (
+                            <button
+                              type="button"
+                              onClick={() => openRulebook(p.traveller_role as RoleId)}
+                              className="mt-0.5 flex items-center gap-1 rounded border border-gold/50 bg-gold/10 px-1 py-0.5 text-[8px] text-gold"
+                            >
+                              <img src={ROLES[p.traveller_role as RoleId].image} alt="" className="h-3.5 w-3.5 rounded-sm" />
+                              <span className="max-w-12 truncate">{getRoleLabel(p.traveller_role as RoleId, language)}</span>
+                            </button>
+                          )}
                         </div>
                       );
                     })}
@@ -1368,8 +1436,11 @@ const PlayerView = () => {
                     )}
                   </div>
                   <p className="text-muted-foreground text-sm">
-                    {t("keepSecret", language)}
+                    {player.is_traveller ? travellerCopy.publicRole : t("keepSecret", language)}
                   </p>
+                  {player.is_traveller && player.traveller_state === "ready" && player.seat_position == null && (
+                    <p className="rounded border border-gold/40 bg-gold/10 p-2 text-xs text-gold">{travellerCopy.waitingPlacement}</p>
+                  )}
                   {isParanoidPower && (
                     <div className="space-y-2">
                       <Button

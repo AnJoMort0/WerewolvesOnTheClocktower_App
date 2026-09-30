@@ -9,6 +9,7 @@ const OBJECTIVE_EFFECTS_KEY = "objectives";
 const DOG_ACTOR_COPY_KEY = "dogActorCopy";
 const MIME_COPY_KEY = "mimeCopy";
 const PROPHECY_UNTIL_KEY = "prophecyUntil";
+const KNOWN_WEREWOLVES_KEY = "knownWerewolves";
 
 export const OBJECTIVE_EFFECT_IDS = ["lover", "evil_being", "werewolf_turned"] as const;
 export type ObjectiveEffectId = typeof OBJECTIVE_EFFECT_IDS[number];
@@ -21,6 +22,7 @@ export type PlayerCharacterMetadata = {
   dogActorCopiedRole: RoleId | null;
   mimeCopiedRole?: RoleId | null;
   prophecyRetainedUntilNight?: number | null;
+  knownWerewolfPlayerIds: string[];
 };
 
 export function stripPlayerCharacterMetadata(character: string | null | undefined): string | null {
@@ -35,6 +37,7 @@ export function parsePlayerCharacterMetadata(character: string | null | undefine
     objectiveRole: null,
     objectiveEffects: [],
     dogActorCopiedRole: null,
+    knownWerewolfPlayerIds: [],
   };
   if (!character?.includes(METADATA_SEPARATOR)) return metadata;
   const rawMetadata = character.slice(character.indexOf(METADATA_SEPARATOR) + 1);
@@ -56,6 +59,7 @@ export function parsePlayerCharacterMetadata(character: string | null | undefine
   if (mimeCopiedRole && ROLES[mimeCopiedRole]) metadata.mimeCopiedRole = mimeCopiedRole;
   const prophecyUntil = Number(params.get(PROPHECY_UNTIL_KEY));
   if (Number.isInteger(prophecyUntil) && prophecyUntil >= 1) metadata.prophecyRetainedUntilNight = prophecyUntil;
+  metadata.knownWerewolfPlayerIds = params.get(KNOWN_WEREWOLVES_KEY)?.split(",").filter(Boolean) ?? [];
   return metadata;
 }
 
@@ -77,6 +81,9 @@ export function encodePlayerCharacterMetadata(
     (effect): effect is ObjectiveEffectId => OBJECTIVE_EFFECT_IDS.includes(effect),
   );
   if (objectiveEffects?.length) params.set(OBJECTIVE_EFFECTS_KEY, [...new Set(objectiveEffects)].join(","));
+  if (metadata.knownWerewolfPlayerIds?.length) {
+    params.set(KNOWN_WEREWOLVES_KEY, [...new Set(metadata.knownWerewolfPlayerIds)].join(","));
+  }
   const encoded = params.toString();
   return encoded ? `${identity}${METADATA_SEPARATOR}${encoded}` : identity;
 }

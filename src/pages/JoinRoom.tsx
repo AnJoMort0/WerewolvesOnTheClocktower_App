@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import villagerIcon from "@/assets/display/icons/villager.webp";
-import { t, getToast, type Language } from "@/lib/i18n";
+import { t, getToast, getTranslation, type Language } from "@/lib/i18n";
 import { getPlayerSession, savePlayerSession } from "@/lib/playerSession";
 
 const JoinRoom = () => {
@@ -20,6 +20,7 @@ const JoinRoom = () => {
   const [roomStatus, setRoomStatus] = useState<string>("lobby");
   const [error, setError] = useState<string | null>(null);
   const [lang, setLang] = useState<Language>("pt");
+  const travellerCopy = getTranslation(lang).ui.travellers;
 
   useEffect(() => {
     if (!code) return;
@@ -73,7 +74,7 @@ const JoinRoom = () => {
       return;
     }
 
-    if (roomStatus !== "lobby") {
+    if (roomStatus !== "lobby" && roomStatus !== "playing") {
       toast.error(t("gameAlreadyStarted", lang));
       setLoading(false);
       return;
@@ -81,7 +82,9 @@ const JoinRoom = () => {
 
     const { data, error: err } = await supabase
       .from("players")
-      .insert({ room_id: roomId, name: name.trim() })
+      .insert(roomStatus === "playing"
+        ? { room_id: roomId, name: name.trim(), is_traveller: true, traveller_state: "requested" }
+        : { room_id: roomId, name: name.trim() })
       .select()
       .single();
 
@@ -131,9 +134,15 @@ const JoinRoom = () => {
           <p className="text-muted-foreground">
             {t("roomLabel", lang)} <span className="font-display tracking-widest">{code?.toUpperCase()}</span>
           </p>
+          {roomStatus === "playing" && (
+            <div className="mt-4 rounded-lg border border-gold/40 bg-gold/10 p-4">
+              <h2 className="font-display text-lg text-gold">{travellerCopy.joinTitle}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{travellerCopy.joinDescription}</p>
+            </div>
+          )}
         </div>
 
-        <div className="space-y-4">
+        {(roomStatus === "lobby" || roomStatus === "playing") && <div className="space-y-4">
           <Input
             placeholder={t("yourName", lang)}
             value={name}
@@ -147,9 +156,14 @@ const JoinRoom = () => {
             disabled={!name.trim() || loading}
             className="w-full h-14 text-lg font-display tracking-wider bg-primary hover:bg-blood-glow glow-blood"
           >
-            {t("enter", lang)}
+            {roomStatus === "playing"
+              ? travellerCopy.requestJoin
+              : t("enter", lang)}
           </Button>
-        </div>
+        </div>}
+        {roomStatus !== "lobby" && roomStatus !== "playing" && (
+          <p className="text-destructive">{t("gameAlreadyStarted", lang)}</p>
+        )}
       </motion.div>
     </div>
   );

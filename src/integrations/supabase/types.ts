@@ -21,11 +21,15 @@ export type Database = {
           id: string
           is_alive: boolean
           is_ready: boolean
+          is_traveller: boolean
           last_seen_at: string
           name: string
           player_token: string
           room_id: string
           seat_position: number | null
+          traveller_alignment: string | null
+          traveller_role: string | null
+          traveller_state: string | null
         }
         Insert: {
           character?: string | null
@@ -33,11 +37,15 @@ export type Database = {
           id?: string
           is_alive?: boolean
           is_ready?: boolean
+          is_traveller?: boolean
           last_seen_at?: string
           name: string
           player_token?: string
           room_id: string
           seat_position?: number | null
+          traveller_alignment?: string | null
+          traveller_role?: string | null
+          traveller_state?: string | null
         }
         Update: {
           character?: string | null
@@ -45,11 +53,15 @@ export type Database = {
           id?: string
           is_alive?: boolean
           is_ready?: boolean
+          is_traveller?: boolean
           last_seen_at?: string
           name?: string
           player_token?: string
           room_id?: string
           seat_position?: number | null
+          traveller_alignment?: string | null
+          traveller_role?: string | null
+          traveller_state?: string | null
         }
         Relationships: [
           {

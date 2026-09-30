@@ -14,6 +14,14 @@ const commonProps = {
 };
 
 describe("DayTribunalPanel timer synchronization", () => {
+  it("shows the rounded-up all-player threshold for Traveller exile", () => {
+    const { getByText } = render(
+      <LanguageContext.Provider value="en">
+        <DayTribunalPanel {...commonProps} gamePhase="tribunal" travellerCount={1} totalPlayers={9} />
+      </LanguageContext.Provider>,
+    );
+    expect(getByText(/5 votes are needed to exile a Traveller/)).toBeInTheDocument();
+  });
   it("never publishes the old day duration as the tribunal timer", async () => {
     const onTimerSync = vi.fn();
     const initialDayTimer = { phase: "day" as const, timeLeft: 300, isRunning: false, timerDone: false };

@@ -285,6 +285,11 @@
     background: linear-gradient(135deg, #dcefd2 0%, #e7edbc 58%, #f7e8a7 100%);
   }
 
+  .rulebook-content .rulebook-index-link.faction-traveller {
+    border-color: #b88b2e;
+    background: #f2dfaa;
+  }
+
   .rulebook-content .rulebook-index-link.faction-extra {
     background: #eeeeee;
   }
@@ -393,6 +398,7 @@
   .rulebook-content .role-row.faction-independent { --role-accent: #7c4bb0; --role-background: #e3d0f6; }
   .rulebook-content .role-row.faction-flex { --role-accent: #b38b00; --role-background: #f7e8a7; }
   .rulebook-content .role-row.faction-shifting { --role-accent: #7f9f3e; --role-background: linear-gradient(135deg, #dcefd2 0%, #e7edbc 58%, #f7e8a7 100%); }
+  .rulebook-content .role-row.faction-traveller { --role-accent: #9d6f16; --role-background: #f2dfaa; }
   .rulebook-content .role-row.faction-extra { --role-accent: #777; --role-background: #eee; }
 
   .rulebook-content .role-image-cell {

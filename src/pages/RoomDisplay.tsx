@@ -13,6 +13,7 @@ import { LanguageContext, coerceLanguage, getTranslation } from "@/lib/i18n";
 import { getRoomDisplayStorageKey, readRoomDisplaySnapshot, type RoomDisplaySnapshot } from "@/lib/roomDisplay";
 import { normalizeStatusEffectSet } from "@/lib/effects";
 import type { StatusEffect } from "@/lib/effects";
+import type { RoleId } from "@/lib/roles";
 
 function formatTimer(seconds: number) {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -134,6 +135,11 @@ export default function RoomDisplay() {
               playerStatuses={snapshot.playerStatuses}
               permanentlyDead={permanentlyDead}
               playerEffects={playerEffects}
+              publicRoleAssignments={Object.fromEntries(snapshot.players.flatMap((player) => (
+                player.is_traveller && player.traveller_role
+                  ? [[player.id, player.traveller_role as RoleId]]
+                  : []
+              )))}
               hideSensitiveInfo
             />
           </section>

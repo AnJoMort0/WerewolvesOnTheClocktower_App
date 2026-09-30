@@ -1,6 +1,6 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useT, useLanguage, getEffectLabel } from "@/lib/i18n";
+import { useT, useLanguage, getEffectLabel, getTranslation } from "@/lib/i18n";
 import type { PlayerStatus, StatusEffect } from "@/lib/effects";
 import { STATUS_EFFECT_ICONS } from "@/lib/effectPresentation";
 import poisonedIcon from "@/assets/display/icons/poisoned.webp";
@@ -8,6 +8,7 @@ import ghostIcon from "@/assets/display/icons/ghost.webp";
 import illusionIcon from "@/assets/display/icons/illusion.webp";
 import ghostResurrectIcon from "@/assets/display/icons/ghost_resurrect.webp";
 import ghostExecutedIcon from "@/assets/display/icons/ghost_executed.webp";
+import ghostExiledIcon from "@/assets/display/icons/ghost_exiled.webp";
 
 interface PlayerStatusPopoverProps {
   children: React.ReactNode;
@@ -20,6 +21,8 @@ interface PlayerStatusPopoverProps {
   onSetPermaDead?: () => void;
   onSetIllusion?: () => void;
   onSetExecuted?: () => void;
+  isTraveller?: boolean;
+  onSetExiled?: () => void;
   onToggleEffect?: (effect: StatusEffect) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -43,6 +46,8 @@ export const PlayerStatusPopover = ({
   onSetPermaDead,
   onSetIllusion,
   onSetExecuted,
+  isTraveller = false,
+  onSetExiled,
   onToggleEffect,
   open,
   onOpenChange,
@@ -126,10 +131,16 @@ export const PlayerStatusPopover = ({
               <img src={ghostIcon} alt="" className="h-4 w-4" />
               {t("actionKill")}
             </Button>
-            {onSetExecuted && (
+            {onSetExecuted && !isTraveller && (
               <Button size="sm" variant="ghost" className="justify-start gap-2 text-orange-400 hover:text-orange-300" onClick={onSetExecuted}>
                 <img src={ghostExecutedIcon} alt="" className="h-4 w-4" />
                 {t("actionExecute")}
+              </Button>
+            )}
+            {isTraveller && onSetExiled && (
+              <Button size="sm" variant="ghost" className="justify-start gap-2 text-amber-300 hover:text-amber-200" onClick={onSetExiled}>
+                <img src={ghostExiledIcon} alt="" className="h-4 w-4" />
+                {getTranslation(lang).ui.travellers.actionExile}
               </Button>
             )}
             {showIllusion && onSetIllusion && !isIllusion && (
