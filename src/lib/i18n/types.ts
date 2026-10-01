@@ -340,7 +340,6 @@ export interface UIStrings {
     gamblerConfirmRole: string;
     gamblerYes: string;
     gamblerNo: string;
-    gamblerCorrect: string;
     gamblerWrong: string;
     gamblerLongPath: string;
   };

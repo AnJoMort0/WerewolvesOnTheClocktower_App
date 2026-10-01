@@ -3129,6 +3129,7 @@ export const RULEBOOK_CHARACTERS = {
                 `Se o alvo de um dos Domadores de Animais for uma Ilusão, o animal ficará confuso. No caso do Domador da Aranha, se o jogador com a teia de aranha for uma Ilusão, a aranha estará confusa.`,
                 `Se o assassino da vítima escolhida pela Menina for uma Ilusão, a Menina verá o papel “Ilusionista”.`,
                 `Se o jogador acusado pelo Pedro for uma Ilusão, o Pedro recebe como informação que esse jogador não é Lobisomem, mesmo se for.`,
+                `Se o Apostador apostar num papel escondido por uma Ilusão, o Apostador perde a aposta. Se apostar que um jogador é o Ilusionista, e um dos jogadores está sobre o efeito de uma Ilusão, o Apostador ganha a aposta.`,
             ],
             fr: [
                 `L'Illusionniste <red>NE</red> SE RÉVEILLE <red>PAS</red> AVEC LES LOUPS-GAROUS.`,
@@ -3138,6 +3139,7 @@ export const RULEBOOK_CHARACTERS = {
                 `Si l'une des cibles des Maîtres des Animaux est une Illusion, l'animal sera confus. Dans le cas du Maître de l'Araignée, si le joueur pris dans la toile est une Illusion, l'araignée sera confuse.`,
                 `Si l’assassin de la victime choisie par la Petite Fille est une Illusion, la Petite Fille verra le rôle « Illusionniste ».`,
                 `Si le joueur accusé par l’Enfant est une Illusion, l’Enfant apprendra que ce joueur n’était pas un Loup-garou, même si c’était le cas.`,
+                `Si le Parieur parie sur un rôle caché par une Illusion, il perd son pari. S’il parie qu’un joueur est l’Illusionniste, et qu’un des joueurs est sous l’effet d’une Illusion, le Parieur gagne son pari.`,
             ],
             en: [
                 `The Illusionist <red>DOES NOT</red> WAKE UP WITH THE WEREWOLVES.`,
@@ -3146,7 +3148,8 @@ export const RULEBOOK_CHARACTERS = {
                 `If the Mime copies an Illusion, the Mime copies the Illusionist.`,
                 `If a target of an Animal Tamer is an Illusion, the animal becomes confused. For the Spider Tamer, the spider becomes confused if the webbed player is an Illusion.`,
                 `If the killer of the victim selected by the Little Girl is an Illusion, the Little Girl sees the “Illusionist” role.`,
-                `If the player accused by the Boy is an Illusion, the Boy is told that the player was not a Werewolf, even when they were.`
+                `If the player accused by the Boy is an Illusion, the Boy is told that the player was not a Werewolf, even when they were.`,
+                `If the Player bet by the Gambler is an Illusion, the Gambler loses the bet. If the Gambler bets that a player is the Illusionist, and one of the players is under the effect of an Illusion, the Gambler wins the bet.`
             ]
         },
         details: [

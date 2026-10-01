@@ -145,6 +145,8 @@ export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participan
   gypsyReveal?: GypsyReveal;
   priestReveal?: PriestReveal;
   gamblerReveal?: GamblerReveal;
+  hasAdvancedRolesInGame?: boolean;
+  hasLameRolesInGame?: boolean;
   error?: "noSafeCard";
   pendingTargetPlayerId?: string;
   pendingTargetPlayerIds?: string[];
@@ -399,6 +401,8 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
       && ROLES[command.targetRoleId] && ROLES[command.targetRoleId].category !== "t") {
       const correct = session.pendingTargetPlayerIds.some((id) => {
         const player = world.players.find((candidate) => candidate.id === id);
+        // An Illusion replaces the hidden character's identity for information
+        // powers: its real role cannot satisfy the bet, but Illusionist can.
         const roleId = player?.illusion ? "a06" : player?.displayRole ?? player?.abilityRole;
         return roleId === command.targetRoleId;
       });
@@ -554,6 +558,16 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
         : { gamblerReveal: session.gamblerReveal }),
     } : {}),
     ...(session.mode === PHONE_MODE.PRIEST_CONFESSION ? { priestReveal: session.priestReveal } : {}),
+    ...(session.mode === PHONE_MODE.GAMBLER_GUESS ? {
+      hasAdvancedRolesInGame: world.players.some((player) => (
+        [player.displayRole, player.abilityRole, player.objectiveRole]
+          .some((roleId) => roleId && ROLES[roleId].category === "a")
+      )),
+      hasLameRolesInGame: world.players.some((player) => (
+        [player.displayRole, player.abilityRole, player.objectiveRole]
+          .some((roleId) => roleId && ROLES[roleId].category === "l")
+      )),
+    } : {}),
     players: world.players.map((p) => ({
       id: p.id,
       name: p.name,

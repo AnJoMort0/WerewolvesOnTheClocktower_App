@@ -2,6 +2,9 @@ import { fireEvent, render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
+import { getRoleLabel } from "@/lib/i18n";
+import { ROLES } from "@/lib/roles";
+import { resolveRoleImage } from "@/lib/skinPacks";
 
 describe("PlayerCircle drag and power controls", () => {
   it("drags Monkey and ready Colossus copies with their own source IDs", () => {
@@ -123,5 +126,21 @@ describe("PlayerCircle drag and power controls", () => {
       players={[{ id: "monkey", name: "Monkey", seat_position: 0, character: "v26", is_alive: true }]}
       roleAssignments={{ monkey: "v26" }} monkeyDisabled onMonkeyDisabledToggle={onMonkeyDisabledToggle} />);
     expect(document.querySelector('button[role="checkbox"]')).toBeNull();
+  });
+
+  it("shows Traveller alignment skins to the GM while keeping the public circle neutral", () => {
+    const player = { id: "traveller", name: "Traveller", seat_position: 0, character: "t01", is_alive: true };
+    const { getByAltText, rerender } = render(<PlayerCircle isGM isPlaying totalSlots={1}
+      onDropPlayer={vi.fn()} players={[player]} roleAssignments={{ traveller: "t01" }}
+      objectiveRoleAssignments={{ traveller: "t01" }} playerEffects={{ traveller: new Set(["evil_being"]) }} />);
+    const roleLabel = getRoleLabel("t01", "pt");
+    expect(getByAltText(roleLabel)).toHaveAttribute("src", resolveRoleImage("t01", {
+      flexible: { objectiveRoleId: "t01", effects: ["evil_being"] },
+    }).src);
+
+    rerender(<PlayerCircle totalSlots={1} onDropPlayer={vi.fn()} players={[player]}
+      roleAssignments={{ traveller: "t01" }} publicRoleAssignments={{ traveller: "t01" }}
+      playerEffects={{ traveller: new Set(["evil_being"]) }} hideSensitiveInfo />);
+    expect(getByAltText(roleLabel)).toHaveAttribute("src", ROLES.t01.image);
   });
 });

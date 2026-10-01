@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { TravellerAlignmentModal } from "@/components/game/TravellerAlignmentModal";
 import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
 import villagerIcon from "@/assets/display/icons/villager.webp";
+import { ROLES } from "@/lib/roles";
 
 const players = Array.from({ length: 16 }, (_, index) => ({
   id: `player-${index}`,
@@ -13,7 +14,7 @@ const players = Array.from({ length: 16 }, (_, index) => ({
 
 describe("TravellerAlignmentModal", () => {
   it("uses the alignment artwork and keeps the evil circle within the modal", () => {
-    const { getByAltText, getByText, rerender } = render(<TravellerAlignmentModal
+    const { getByAltText, getByText, getByTestId, rerender } = render(<TravellerAlignmentModal
       open
       language="en"
       alignment="evil"
@@ -26,6 +27,8 @@ describe("TravellerAlignmentModal", () => {
     const circle = getByText("The Werewolves are marked below.").nextElementSibling;
     expect(circle).toHaveClass("w-full", "max-w-[300px]", "overflow-hidden");
     expect(circle?.parentElement?.parentElement).toHaveClass("overflow-x-hidden");
+    const evilCard = getByTestId("traveller-role-card").getAttribute("src");
+    expect(evilCard).not.toBe(ROLES.t01.image);
 
     rerender(<TravellerAlignmentModal
       open
@@ -36,5 +39,7 @@ describe("TravellerAlignmentModal", () => {
       onAcknowledge={() => undefined}
     />);
     expect(getByAltText("Villager")).toHaveAttribute("src", villagerIcon);
+    expect(getByTestId("traveller-role-card")).not.toHaveAttribute("src", evilCard);
+    expect(getByTestId("traveller-role-card")).not.toHaveAttribute("src", ROLES.t01.image);
   });
 });

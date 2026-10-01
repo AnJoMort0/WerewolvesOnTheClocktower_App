@@ -6491,10 +6491,11 @@ const GMRoom = () => {
                   <p className="text-muted-foreground font-display text-lg">{tt("waitingForPlayers")}</p>
                 </motion.div>
               )}
-              {readyTraveller?.traveller_role && (
+              {readyTraveller?.traveller_role && readyTraveller.traveller_alignment && (
                 <TravellerPlacementToken
                   player={readyTraveller}
                   roleId={readyTraveller.traveller_role as RoleId}
+                  alignment={readyTraveller.traveller_alignment}
                   language={lang}
                 />
               )}

@@ -62,4 +62,23 @@ describe("Gambler guess modal", () => {
     expect(screen.getByRole("status")).toHaveTextContent("NO");
     expect(screen.getByRole("status")).toHaveTextContent("commits suicide");
   });
+
+  it("keeps its embedded character list scrollable and groups the available roles", () => {
+    const props = { embedded: true, language: "en" as const, onConfirmPlayers: vi.fn(), onConfirmRole: vi.fn() };
+    const { rerender } = render(<GamblerGuessModal {...props}
+      session={{ ...view, pendingTargetPlayerIds: ["b", "c"] }} />);
+
+    expect(screen.getByRole("region", { name: "Gambler" })).toHaveClass("max-h-[calc(100dvh-12rem)]");
+    expect(screen.getByRole("heading", { name: "Villagers" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Evil Beings" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Flexible" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Solo" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Actor" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ordinary Townsfolk" })).not.toBeInTheDocument();
+
+    rerender(<GamblerGuessModal {...props} session={{ ...view, pendingTargetPlayerIds: ["b", "c"],
+      hasAdvancedRolesInGame: true, hasLameRolesInGame: true }} />);
+    expect(screen.getByRole("button", { name: "Actor" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Ordinary Townsfolk" })).toBeVisible();
+  });
 });

@@ -93,11 +93,58 @@ describe("GM-controlled phone rules", () => {
     expect(wrong.action?.gamblerReveal).toMatchObject({ roleId: "v03", correct: false });
   });
 
+  it("treats an Illusion as the Illusionist instead of the hidden role for Gambler bets", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("gambler", "t02", { seat_position: 0 }),
+      phonePlayer("hiddenBear", "v02", { seat_position: 1, displayRole: "v02", illusion: true }),
+      phonePlayer("illusionist", "a06", { seat_position: 2, displayRole: "a06" }),
+    ] };
+    const session: PhoneSession = {
+      id: "gambler-illusion", lineKey: "gambler-line", mode: PHONE_MODE.GAMBLER_GUESS,
+      sourcePlayerId: "gambler", participantIds: ["gambler"], votes: {}, sequences: {},
+    };
+    const selected = applyPhoneCommand(session, "gambler", {
+      id: "group", sessionId: session.id, sequence: 1, type: "confirm", targetPlayerIds: ["hiddenBear"],
+    }, changed).session;
+
+    const hiddenRoleGuess = applyPhoneCommand(selected, "gambler", {
+      id: "hidden-role", sessionId: session.id, sequence: 2, type: "guess", targetRoleId: "v02",
+    }, changed);
+    expect(hiddenRoleGuess.action?.gamblerReveal).toMatchObject({ roleId: "v02", correct: false });
+
+    const illusionistGuess = applyPhoneCommand(selected, "gambler", {
+      id: "illusionist", sessionId: session.id, sequence: 3, type: "guess", targetRoleId: "a06",
+    }, changed);
+    expect(illusionistGuess.action?.gamblerReveal).toMatchObject({ roleId: "a06", correct: true });
+  });
+
   it("does not wake a poisoned Gambler", () => {
     const changed: PhoneWorld = { packBlocked: false, players: [
       phonePlayer("gambler", "t02", { actingPoisoned: true }),
     ] };
     expect(getPhoneParticipants(PHONE_MODE.GAMBLER_GUESS, "gambler", changed)).toEqual([]);
+  });
+
+  it("tells the Gambler whether Advanced and Lame role groups are present", () => {
+    const session: PhoneSession = {
+      id: "gambler", lineKey: "gambler-line", mode: PHONE_MODE.GAMBLER_GUESS,
+      sourcePlayerId: "gambler", participantIds: ["gambler"], votes: {}, sequences: {},
+    };
+    const regular = { packBlocked: false, players: [phonePlayer("gambler", "t02"), phonePlayer("bear", "v02")] };
+    expect(getPhoneView(session, "gambler", regular)).toMatchObject({
+      hasAdvancedRolesInGame: false,
+      hasLameRolesInGame: false,
+    });
+
+    const expanded = { packBlocked: false, players: [
+      ...regular.players,
+      phonePlayer("actor", "a04", { displayRole: "a04" }),
+      phonePlayer("townsfolk", "l01", { displayRole: "l01" }),
+    ] };
+    expect(getPhoneView(session, "gambler", expanded)).toMatchObject({
+      hasAdvancedRolesInGame: true,
+      hasLameRolesInGame: true,
+    });
   });
 
   it.each(["pt", "fr", "en"] as const)("registers every new role action on the intended script line in %s", (language) => {

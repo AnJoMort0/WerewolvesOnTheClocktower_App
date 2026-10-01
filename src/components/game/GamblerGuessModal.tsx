@@ -7,7 +7,7 @@ import { PHONE_ACTION_PRESENTATION } from "@/lib/phoneActionPresentation";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
 import type { PhoneView } from "@/lib/phoneActions";
 import { ROLES, TRAVELLER_ROLES, type RoleId } from "@/lib/roles";
-import { RULEBOOK_CHARACTER_ORDER } from "@/lib/rulebookContent";
+import { RULEBOOK_CHARACTERS, RULEBOOK_CHARACTER_ORDER, RULEBOOK_TEXT, type RulebookTeam } from "@/lib/rulebookContent";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { getGamblerPathPlayerIds } from "@/lib/gambler";
@@ -17,6 +17,13 @@ const MAP_RADIUS_PERCENT = 39;
 const GUESSABLE_ROLES = RULEBOOK_CHARACTER_ORDER.filter((id): id is RoleId => (
   id in ROLES && !TRAVELLER_ROLES.includes(id as RoleId)
 ));
+
+const ROLE_SECTIONS: Array<{ team: "villagers" | "evilBeing" | "flexible" | "solo"; teams: RulebookTeam[] }> = [
+  { team: "villagers", teams: ["villagers"] },
+  { team: "evilBeing", teams: ["evilBeing"] },
+  { team: "flexible", teams: ["flexible", "villagersFlex"] },
+  { team: "solo", teams: ["solo"] },
+];
 
 export function GamblerGuessModal({ session, language, pending = false, connected = true, embedded = false,
   onConfirmPlayers, onConfirmRole, onClose, onReopen }: {
@@ -53,6 +60,12 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
   const endpointSet = new Set(endpoints);
   const choosingRole = !!session.pendingTargetPlayerIds?.length && !session.gamblerReveal;
   const reveal = session.gamblerReveal;
+  const visibleRoles = GUESSABLE_ROLES.filter((roleId) => {
+    const group = RULEBOOK_CHARACTERS[roleId].group;
+    if (group === "complex") return session.hasAdvancedRolesInGame === true;
+    if (group === "lame") return session.hasLameRolesInGame === true;
+    return true;
+  });
 
   const toggleEndpoint = (playerId: string) => {
     if (!session.players.some((player) => player.id === playerId && player.selectable)) return;
@@ -124,20 +137,31 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
     </p>}
   </div>;
 
-  const roleGrid = <div data-testid="gambler-role-grid" className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-    {GUESSABLE_ROLES.map((roleId) => {
-      const selected = selectedRoleId === roleId || reveal?.roleId === roleId;
-      return <button key={roleId} type="button" disabled={!!reveal || pending || !connected}
-        aria-label={getRoleLabel(roleId, language)} aria-pressed={selected}
-        onClick={() => setSelectedRoleId(roleId)}
-        className={`min-w-0 rounded-md border p-2 text-center transition-colors ${selected
-          ? "border-violet-300 bg-violet-500/20 ring-1 ring-violet-300/40"
-          : "border-border bg-card/60 hover:border-violet-400/60"}`}>
-        <img src={resolveRoleImage(roleId, { skinPackId }).src} alt="" draggable={false}
-          className="mx-auto aspect-square w-full max-w-20 rounded object-cover" />
-        <span className="mt-1 block truncate text-[10px] text-muted-foreground">{roleId}</span>
-        <strong className="block text-xs leading-tight text-foreground">{getRoleLabel(roleId, language)}</strong>
-      </button>;
+  const roleGrid = <div data-testid="gambler-role-grid" className="space-y-5">
+    {ROLE_SECTIONS.map((section) => {
+      const roles = visibleRoles.filter((roleId) => section.teams.includes(RULEBOOK_CHARACTERS[roleId].team));
+      if (roles.length === 0) return null;
+      return <section key={section.team} className="space-y-2" aria-labelledby={`gambler-${section.team}`}>
+        <h3 id={`gambler-${section.team}`} className="sticky top-0 z-10 border-b border-violet-400/30 bg-card/95 py-1 font-display text-sm uppercase tracking-wider text-violet-200">
+          {RULEBOOK_TEXT.teamLabels[section.team][language]}
+        </h3>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {roles.map((roleId) => {
+            const selected = selectedRoleId === roleId || reveal?.roleId === roleId;
+            return <button key={roleId} type="button" disabled={!!reveal || pending || !connected}
+              aria-label={getRoleLabel(roleId, language)} aria-pressed={selected}
+              onClick={() => setSelectedRoleId(roleId)}
+              className={`min-w-0 rounded-md border p-2 text-center transition-colors ${selected
+                ? "border-violet-300 bg-violet-500/20 ring-1 ring-violet-300/40"
+                : "border-border bg-card/60 hover:border-violet-400/60"}`}>
+              <img src={resolveRoleImage(roleId, { skinPackId }).src} alt="" draggable={false}
+                className="mx-auto aspect-square w-full max-w-20 rounded object-cover" />
+              <span className="mt-1 block truncate text-[10px] text-muted-foreground">{roleId}</span>
+              <strong className="block text-xs leading-tight text-foreground">{getRoleLabel(roleId, language)}</strong>
+            </button>;
+          })}
+        </div>
+      </section>;
     })}
   </div>;
 
@@ -147,7 +171,7 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
       : "border-destructive/50 bg-destructive/10 text-red-200"}`}>
       {reveal.correct ? <ThumbsUp className="mx-auto mb-3 h-12 w-12" /> : <ThumbsDown className="mx-auto mb-3 h-12 w-12" />}
       <strong className="font-display text-2xl">{reveal.correct ? text.gamblerYes : text.gamblerNo}</strong>
-      <p className="mt-2 text-sm">{reveal.correct ? text.gamblerCorrect : text.gamblerWrong}</p>
+      <p className="mt-2 text-sm">{reveal.correct ? null : text.gamblerWrong}</p>
     </div>
     {roleGrid}
   </div> : choosingRole ? roleGrid : playerCircle;
@@ -168,7 +192,7 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
   const subtitle = reveal ? getRoleLabel(reveal.roleId, language)
     : choosingRole ? text.gamblerChooseRole : text.gamblerChoosePlayers;
   const title = getRoleLabel("t02", language);
-  const panelClass = `border-violet-400/40 ring-violet-400/10 ${PHONE_ACTION_PRESENTATION[PHONE_MODE.GAMBLER_GUESS].iconClass}`;
+  const panelClass = `max-h-[calc(100dvh-12rem)] border-violet-400/40 ring-violet-400/10 ${PHONE_ACTION_PRESENTATION[PHONE_MODE.GAMBLER_GUESS].iconClass}`;
   return embedded
     ? <GamePanel title={title} subtitle={subtitle} footer={footer} className={panelClass}>{content}</GamePanel>
     : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={text.close}

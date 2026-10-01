@@ -3,9 +3,11 @@ import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { GameModal } from "@/components/game/GameModal";
 import { RoleSelector } from "@/components/game/RoleSelector";
-import { ROLES, type RoleId } from "@/lib/roles";
+import type { RoleId } from "@/lib/roles";
 import { format, getRoleLabel, getTranslation, t, type Language } from "@/lib/i18n";
 import type { TravellerAlignment } from "@/lib/travellers";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 
 export type TravellerControlPlayer = {
   id: string;
@@ -62,9 +64,14 @@ export function TravellerAssignmentCard({ player, roleId, alignment, language, o
   onConfirm: () => void;
 }) {
   const copy = getTranslation(language).ui.travellers;
+  const { skinPackId } = useSkinPack();
+  const roleImage = resolveRoleImage(roleId, {
+    skinPackId,
+    flexible: { effects: alignment === "evil" ? ["evil_being"] : [] },
+  }).src;
   return <section className="space-y-3 rounded-lg border border-gold/50 bg-gold/5 p-3">
     <div className="flex items-center gap-3">
-      <img src={ROLES[roleId].image} alt="" className="h-12 w-12 rounded-md" />
+      <img src={roleImage} alt="" className="h-12 w-12 rounded-md" />
       <div className="min-w-0 flex-1">
         <h3 className="truncate font-display text-gold">{player.name}</h3>
         <p className={`text-xs font-semibold ${alignment === "evil" ? "text-destructive" : "text-emerald-300"}`}>
@@ -79,12 +86,18 @@ export function TravellerAssignmentCard({ player, roleId, alignment, language, o
   </section>;
 }
 
-export function TravellerPlacementToken({ player, roleId, language }: {
+export function TravellerPlacementToken({ player, roleId, alignment, language }: {
   player: TravellerControlPlayer;
   roleId: RoleId;
+  alignment: TravellerAlignment;
   language: Language;
 }) {
   const copy = getTranslation(language).ui.travellers;
+  const { skinPackId } = useSkinPack();
+  const roleImage = resolveRoleImage(roleId, {
+    skinPackId,
+    flexible: { effects: alignment === "evil" ? ["evil_being"] : [] },
+  }).src;
   return <div className="flex max-w-44 flex-col items-center gap-2 rounded-xl border border-dashed border-gold bg-card/95 p-3 text-center shadow-xl">
     <p className="text-[10px] text-muted-foreground">{copy.placeInstruction}</p>
     <div
@@ -96,7 +109,7 @@ export function TravellerPlacementToken({ player, roleId, language }: {
       className="cursor-grab rounded-full border-2 border-gold bg-gold/10 p-1 shadow-[0_0_16px_rgba(234,179,8,0.35)] active:cursor-grabbing"
       title={`${player.name} — ${getRoleLabel(roleId, language)}`}
     >
-      <img src={ROLES[roleId].image} alt="" className="h-14 w-14 rounded-full" />
+      <img src={roleImage} alt="" className="h-14 w-14 rounded-full" />
     </div>
     <p className="max-w-full truncate font-display text-sm text-gold">{player.name}</p>
     <Move className="h-4 w-4 text-gold" />

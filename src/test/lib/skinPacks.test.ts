@@ -55,6 +55,21 @@ describe("skin packs", () => {
     }).variant).toBe("solo");
   });
 
+  it.each(["t01", "t02", "t03"] as const)("keeps %s neutral publicly and resolves its private Traveller alignment", (roleId) => {
+    expect(resolveRoleImage(roleId, { skinPackId: "default" })).toEqual({
+      src: ROLES[roleId].image,
+      source: "default",
+    });
+    expect(resolveRoleImage(roleId, {
+      skinPackId: "default",
+      flexible: { effects: [] },
+    })).toMatchObject({ source: "dynamic", variant: "good" });
+    expect(resolveRoleImage(roleId, {
+      skinPackId: "default",
+      flexible: { effects: ["evil_being"] },
+    })).toMatchObject({ source: "dynamic", variant: "evil" });
+  });
+
   it.each(["a02", "f01", "f02"] as const)("keeps %s neutral before its side is chosen", (roleId) => {
     for (const objectiveRoleId of [null, roleId]) {
       expect(resolveRoleImage(roleId, { flexible: { objectiveRoleId, nightNumber: 1 } })).toEqual({

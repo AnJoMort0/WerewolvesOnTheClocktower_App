@@ -1,9 +1,11 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameModal } from "@/components/game/GameModal";
-import { ROLES, type RoleId } from "@/lib/roles";
+import type { RoleId } from "@/lib/roles";
 import { getRoleLabel, getTranslation, t, type Language } from "@/lib/i18n";
 import type { TravellerAlignment } from "@/lib/travellers";
+import { resolveRoleImage } from "@/lib/skinPacks";
+import { useSkinPack } from "@/lib/skinPackContext";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
 import villagerIcon from "@/assets/display/icons/villager.webp";
@@ -33,7 +35,12 @@ export function TravellerAlignmentModal({
   onAcknowledge: () => void;
 }) {
   const copy = getTranslation(language).ui.travellers;
+  const { skinPackId } = useSkinPack();
   const evil = alignment === "evil";
+  const roleImage = resolveRoleImage(roleId, {
+    skinPackId,
+    flexible: { effects: evil ? ["evil_being"] : [] },
+  }).src;
   const total = Math.max(players.length, 1);
 
   return <GameModal
@@ -59,7 +66,7 @@ export function TravellerAlignmentModal({
         />
       </div>
       <div className="flex items-center justify-center gap-3 rounded-lg border border-border/60 bg-background/40 p-3">
-        <img src={ROLES[roleId].image} alt="" className="h-12 w-12 rounded-md" />
+        <img data-testid="traveller-role-card" src={roleImage} alt="" className="h-12 w-12 rounded-md" />
         <div className="text-left">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">{copy.publicRole}</p>
           <p className="font-display text-lg">{getRoleLabel(roleId, language)}</p>

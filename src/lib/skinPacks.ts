@@ -1,4 +1,4 @@
-import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { EVIL_ROLES, ROLES, TRAVELLER_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { getTranslation, type Language } from "@/lib/i18n";
 import { normalizeStatusEffectSet } from "@/lib/effects";
 
@@ -230,6 +230,11 @@ function resolveFlexibleVariant(
   const isWerewolfObjective = !!objectiveRoleId && WEREWOLF_ROLES.includes(objectiveRoleId);
   const isEvilObjective = !!objectiveRoleId && EVIL_ROLES.includes(objectiveRoleId);
   const isEvil = isWerewolfObjective || isEvilObjective || effects.has("werewolf_turned") || effects.has("evil_being");
+
+  // Traveller alignment is private. A dynamic card is therefore returned only
+  // when the caller deliberately supplies private flexible-role context.
+  if (TRAVELLER_ROLES.includes(roleId)) return isEvil ? "evil" : "good";
+
   // These characters choose their side on night two. Their own role ID (or
   // missing phone metadata) does not mean they have already joined Villagers.
   const isPendingObjective = objectiveRoleId === "a02"
