@@ -2484,7 +2484,6 @@ export const RULEBOOK_CHARACTERS = {
                 `Enquanto estiver amaldiçoado, o jogador <red>não pode agir durante a noite</red>, mas continua a ser chamado pelo Narrador.`,
                 `O jogador amaldiçoado pode levantar a maldição ao acusar alguém durante o Tribunal.`,
                 `Quando o jogador amaldiçoado morre ou a maldição é levantada, a Mãe dos Lobisomens escolhe um novo jogador para amaldiçoar na noite seguinte.`,
-                `A Mãe dos Lobisomens <red>acorda todas as noites</red>, mesmo quando não pode escolher um novo alvo, para que ninguém saiba quando uma Maldição foi aplicada ou levantada.`,
                 `<red>Uma vez por jogo</red>, ao acordar durante a noite, a Mãe dos Lobisomens pode também mudar livremente o jogador amaldiçoado.`
             ],
             fr: [
@@ -2492,7 +2491,6 @@ export const RULEBOOK_CHARACTERS = {
                 `Tant qu'il est maudit, le joueur <red>ne peut pas agir pendant la nuit</red>, mais le Meneur continue de l'appeler.`,
                 `Le joueur maudit peut lever la malédiction en accusant quelqu'un pendant le Tribunal.`,
                 `Lorsque le joueur maudit meurt ou que la malédiction est levée, la Mère des Loups-garous choisit un nouveau joueur à maudire la nuit suivante.`,
-                `La Mère des Loups-garous <red>se réveille chaque nuit</red>, même lorsqu’elle ne peut pas choisir une nouvelle cible, afin que personne ne sache quand une Malédiction a été appliquée ou levée.`,
                 `<red>Une fois par partie</red>, lorsqu’elle se réveille pendant la nuit, la Mère des Loups-garous peut aussi changer librement le joueur maudit.`
             ],
             en: [
@@ -2500,7 +2498,6 @@ export const RULEBOOK_CHARACTERS = {
                 `While cursed, the player <red>cannot act at night</red>, but the Narrator still calls their character.`,
                 `The cursed player may lift the curse by accusing someone during the Tribunal.`,
                 `When the cursed player dies or the curse is lifted, the Mother of Werewolves chooses a new player to curse on the following night.`,
-                `The Mother of Werewolves <red>wakes every night</red>, even when she cannot choose a new target, so nobody learns when a Curse was applied or lifted.`,
                 `<red>Once per game</red>, when she wakes at night, the Mother of Werewolves may also freely change the cursed player.`
             ]
         },
