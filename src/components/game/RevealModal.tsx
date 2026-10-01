@@ -58,13 +58,10 @@ export function resolveKillerCard(
     const role = ROLES["v09"];
     return { image: role.image, label: t("littleGirlSoldier", lang), roleId: "v09" };
   }
-  if (source === "s01-suicide") {
-    const role = ROLES["s01"];
-    return { image: role.image, label: t("littleGirlSuicide", lang), roleId: "s01" };
-  }
-  if (source === "t02-suicide") {
-    const role = ROLES["t02"];
-    return { image: role.image, label: t("littleGirlSuicide", lang), roleId: "t02" };
+  if (source === "s01-suicide" || source === "t02-suicide") {
+    const roleId: RoleId = source === "t02-suicide" ? "t02" : "s01";
+    const role = ROLES[roleId];
+    return { image: role.image, label: t("littleGirlSuicide", lang), roleId };
   }
   if (source === "e01") {
     const role = ROLES["e01"];

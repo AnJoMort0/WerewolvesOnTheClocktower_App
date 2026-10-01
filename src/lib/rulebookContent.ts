@@ -3264,16 +3264,16 @@ export const RULEBOOK_CHARACTERS = {
             en: `Gambler`
         },
         mainDescription: {
-            pt: [`<red>A cada noite</red>, o Apostador PODE escolher um jogador e tentar adivinhar a sua personagem. Se errar, o Apostador é assassinado.`],
-            fr: [`<red>Chaque nuit</red>, le Parieur PEUT choisir un joueur et tenter de deviner son personnage. S'il se trompe, le Parieur est assassiné.`],
-            en: [`<red>Each night</red>, the Gambler MAY choose a player and try to guess that player's character. If his guess is wrong, the Gambler is assassinated.`]
+            pt: [`<red>A cada noite</red>, o Apostador PODE escolher um grupo de jogadores e tentar adivinhar se um deles tem uma personagem específica. Se errar, o Apostador morre.`],
+            fr: [`<red>Chaque nuit</red>, le Parieur PEUT choisir un groupe de joueurs et tenter de deviner si l'un d'eux possède un personnage précis. S'il se trompe, le Parieur meurt.`,],
+            en: [`<red>Each night</red>, the Gambler MAY choose a group of players and try to guess if one of them has a specific character. If his guess is wrong, the Gambler dies.`]
         },
         details: [{
             title: { pt: `Se envenenado:`, fr: `Si empoisonné :`, en: `If poisoned:` },
             description: {
-                pt: `Recebe a informação errada.`,
-                fr: `Reçoit de fausses informations.`,
-                en: `Receives incorrect information.`
+                pt: `Não acorda.`,
+                fr: `Ne se réveille pas.`,
+                en: `Does not wake up.`
             }
         }],
         objective: {
@@ -3696,7 +3696,7 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `Personagens poderosas e simples, destinadas a jogadores que chegam atrasados ou entram na partida mais tarde. Toda a Aldeia conhece a personagem do Viajante, mas não o seu alinhamento: cada Viajante tem 50% de probabilidade de pertencer aos **Aldeões** ou às **Criaturas Malvadas**.`,
+                `Personagens poderosas e simples, destinadas a jogadores que chegam atrasados ou entram na partida mais tarde. Toda a Aldeia conhece a personagem do Viajante, mas não o seu alinhamento: cada Viajante tem **50% de probabilidade** de pertencer aos **Aldeões** ou às **Criaturas Malvadas**.`,
                 `Um Viajante alinhado com as Criaturas Malvadas descobre quem são os Lobisomens.`,
                 `Durante o Tribunal, qualquer jogador vivo ou Fantasma pode nomear um Viajante para exílio. Para o exilar, são necessários os votos de metade de todos os jogadores, vivos ou mortos, com o resultado arredondado para cima.`,
                 `Um Viajante exilado perde o poder e continua a jogar como **Fantasma**. O exílio não conta como assassinato nem como execução.`
@@ -4048,9 +4048,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "first-t02",
             refs: ["t02"],
             text: {
-                pt: `O Apostador acorda, aponta para um jogador e pergunta discretamente ao Narrador se esse jogador tem uma personagem específica.`,
-                fr: `Le Parieur se réveille, désigne un joueur et demande discrètement au Meneur si ce joueur possède un personnage précis.`,
-                en: `The Gambler wakes up, points at a player, and discreetly asks the Narrator whether that player has a specific role.`
+                pt: `O Apostador acorda, aponta para um grupo de jogadores e pergunta discretamente ao Narrador se um deles tem uma personagem específica.`,
+                fr: `Le Parieur se réveille, désigne un groupe de joueurs et demande discrètement au Meneur si l'un d'eux possède un personnage précis.`,
+                en: `The Gambler wakes up, points at a group of players, and discreetly asks the Narrator whether one of them has a specific character.`
             }
         },
         {
@@ -4225,9 +4225,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-t02",
             refs: ["t02"],
             text: {
-                pt: `O Apostador acorda, aponta para um jogador e pergunta discretamente ao Narrador se esse jogador tem uma personagem específica.`,
-                fr: `Le Parieur se réveille, désigne un joueur et demande discrètement au Meneur si ce joueur possède un personnage précis.`,
-                en: `The Gambler wakes up, points at a player, and discreetly asks the Narrator whether that player has a specific role.`
+                pt: `O Apostador acorda, aponta para um grupo de jogadores e pergunta discretamente ao Narrador se um deles tem uma personagem específica.`,
+                fr: `Le Parieur se réveille, désigne un groupe de joueurs et demande discrètement au Meneur si l'un d'eux possède un personnage précis.`,
+                en: `The Gambler wakes up, points at a group of players, and discreetly asks the Narrator whether one of them has a specific character.`
             }
         },
         {

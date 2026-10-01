@@ -65,7 +65,7 @@ export const pt: Translation = {
   scripts: {
     firstNight: [
       { text: "Esta noite não terá mortos." },
-      { text: "O {Apostador} acorda, aponta para um jogador e pergunta discretamente ao Narrador se esse jogador tem uma personagem específica.", requires: ["t02"] },
+      { text: "O {Apostador} acorda, aponta para um grupo de jogadores e pergunta discretamente ao Narrador se um deles tem uma personagem específica.", requires: ["t02"], phoneMode: PHONE_MODE.GAMBLER_GUESS },
       { text: "O {Cupido} acorda e escolhe dois jogadores que serão Namorados. O {Cupido} adormece e os Namorados serão agora tocados e podem se conhecer. Se um Namorado morre, o outro se suicida. O objetivo dos Namorados e do {Cupido} é que os Namorados sejam os últimos sobreviventes. Enquanto os Namorados estiverem vivos, o jogo continua.", requires: ["s01"], phoneMode: PHONE_MODE.CUPID_PAIR },
       { text: "O {Cupido Malvado} acorda e escolhe dois jogadores que serão Inimigos. O {Cupido Malvado} adormece e os Inimigos serão tocados e podem se conhecer. Se um Inimigo consegue condenar o outro a execução, o primeiro recebe imunidade na próxima tentativa de assassinato.", requires: ["m05"], phoneMode: PHONE_MODE.EVIL_CUPID_PAIR },
       { text: "As {Irmãs} acordam para se conhecerem.", requires: ["l03"] },
@@ -87,7 +87,7 @@ export const pt: Translation = {
       { text: "Os Lobisomens acordam e são-lhe apresentados as Criaturas Malvadas.", phoneMode: PHONE_MODE.WEREWOLF_ALLIES },
     ],
     normalNight: [
-      { text: "O {Apostador} acorda, aponta para um jogador e pergunta discretamente ao Narrador se esse jogador tem uma personagem específica.", requires: ["t02"] },
+      { text: "O {Apostador} acorda, aponta para um grupo de jogadores e pergunta discretamente ao Narrador se um deles tem uma personagem específica.", requires: ["t02"], phoneMode: PHONE_MODE.GAMBLER_GUESS },
       { text: "O {Domador da Aranha} acorda e escolhe um novo jogador no qual tece uma teia.", requires: ["v23"], conditionKey: "spiderWebbedDied", phoneMode: PHONE_MODE.SPIDER_TAMER_WEB },
       { text: "(O {Caçador} morreu) O Fantasma do {Caçador} acorda e escolhe quem quer assassinar.", requires: ["v08"], conditionKey: "hunterDied", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
       { text: "(O {Capuchinho Vermelho} foi executado) O {Caçador} acorda furioso e escolhe quem quer assassinar.", requires: ["v08"], conditionKey: "redHoodExecuted", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
@@ -233,6 +233,15 @@ export const pt: Translation = {
       huntComplete: "Os Lobisomens escolheram assassinar {targets}.",
       selectionComplete: "{actor} escolheu {targets}.",
       ignoredComplete: "{actor} escolheu não usar esta ação.",
+      gamblerChoosePlayers: "Escolha um jogador, ou dois jogadores para selecionar todos os que estão no caminho entre eles.",
+      gamblerChooseRole: "Que personagem acha que está neste grupo?",
+      gamblerConfirmPlayers: "Confirmar grupo",
+      gamblerConfirmRole: "Confirmar aposta",
+      gamblerYes: "SIM",
+      gamblerNo: "NÃO",
+      gamblerCorrect: "SIM — um dos jogadores selecionados tem esta personagem.",
+      gamblerWrong: "NÃO — nenhum dos jogadores selecionados tem esta personagem. O Apostador suicida-se.",
+      gamblerLongPath: "O caminho mais longo está selecionado.",
     },
     appTitle: "Lobisomens da Torre Sangrenta",
     appTagline: "A aldeia adormece esta noite…",

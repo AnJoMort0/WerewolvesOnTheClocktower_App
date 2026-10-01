@@ -28,6 +28,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const monkeySessions = useRef<Record<string, PhoneSession>>({});
   const foxSessions = useRef<Record<string, PhoneSession>>({});
   const gypsySessions = useRef<Record<string, PhoneSession>>({});
+  const gamblerSessions = useRef<Record<string, PhoneSession>>({});
   const storageKey = roomId ? `wotct_phone_${roomId}` : null;
 
   const publish = useCallback((playerId?: string, force = false) => {
@@ -71,6 +72,12 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
       }
       gypsySessions.current[next.lineKey] = next;
     }
+    if (next?.mode === PHONE_MODE.GAMBLER_GUESS) {
+      for (const [key, entry] of Object.entries(gamblerSessions.current)) {
+        if (entry.sourcePlayerId === next.sourcePlayerId) delete gamblerSessions.current[key];
+      }
+      gamblerSessions.current[next.lineKey] = next;
+    }
     setSession(next);
     if (storageKey) {
       try {
@@ -80,6 +87,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
           monkeySessions: monkeySessions.current,
           foxSessions: foxSessions.current,
           gypsySessions: gypsySessions.current,
+          gamblerSessions: gamblerSessions.current,
         }));
       } catch { /* Gameplay still works when browser storage is unavailable. */ }
     }
@@ -91,6 +99,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     monkeySessions.current = {};
     foxSessions.current = {};
     gypsySessions.current = {};
+    gamblerSessions.current = {};
     if (storageKey && enabled) {
       try {
         const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? "null");
@@ -118,6 +127,15 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
             if (entry?.mode === PHONE_MODE.GYPSY_POISON_CHECK && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
               const valid = reconcilePhoneSession(entry, current.current.world);
               if (valid) gypsySessions.current[key] = valid;
+            }
+          }
+        }
+        if (stored?.contextKey === contextKey && stored.gamblerSessions && typeof stored.gamblerSessions === "object") {
+          for (const [key, value] of Object.entries(stored.gamblerSessions)) {
+            const entry = value as PhoneSession;
+            if (entry?.mode === PHONE_MODE.GAMBLER_GUESS && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
+              const valid = reconcilePhoneSession(entry, current.current.world);
+              if (valid) gamblerSessions.current[key] = valid;
             }
           }
         }
@@ -193,6 +211,12 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
       const cached = reconcilePhoneSession(saved ?? null, current.current.world);
       if (cached) { commit({ ...cached, lineKey, progressOrder, visible: true }); return true; }
     }
+    if (mode === PHONE_MODE.GAMBLER_GUESS) {
+      const saved = gamblerSessions.current[lineKey] ?? Object.values(gamblerSessions.current)
+        .find((entry) => entry.sourcePlayerId === sourcePlayerId);
+      const cached = reconcilePhoneSession(saved ?? null, current.current.world);
+      if (cached) { commit({ ...cached, lineKey, progressOrder, visible: true }); return true; }
+    }
     if (current.current.session?.lineKey === lineKey) { commit(null); return false; }
     const participantIds = getPhoneParticipants(mode, sourcePlayerId, current.current.world);
     if (participantIds.length === 0) return false;
@@ -221,7 +245,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   }, [commit]);
 
   const active = enabled ? reconcilePhoneSession(session, world) : null;
-  const sendGM = useCallback((type: PhoneCommand["type"], targetPlayerId?: string, targetPlayerIds?: string[]) => {
+  const sendGM = useCallback((type: PhoneCommand["type"], targetPlayerId?: string, targetPlayerIds?: string[], targetRoleId?: PhoneCommand["targetRoleId"]) => {
     const latest = reconcilePhoneSession(current.current.session, current.current.world);
     if (!current.current.enabled || !latest) return;
     if (latest.mode === PHONE_MODE.WEREWOLF_HUNT && type === "confirm") {
@@ -237,7 +261,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     if (!source) return;
     const result = applyPhoneCommand(latest, source, {
       id: createPlayerActionRequestId("gm", targetPlayerId ?? type), sessionId: latest.id,
-      sequence: Math.max(Date.now(), (latest.sequences[source] ?? 0) + 1), type, targetPlayerId, targetPlayerIds,
+      sequence: Math.max(Date.now(), (latest.sequences[source] ?? 0) + 1), type, targetPlayerId, targetPlayerIds, targetRoleId,
     }, current.current.world);
     // A GM selection is authoritative but is not a command from the phone.
     // Preserve its sequence so the next phone close/reopen is never discarded.
@@ -285,7 +309,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     current.current.onComplete?.(revealed);
   }, [commit]);
   const close = useCallback(() => commit(null), [commit]);
-  const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; gypsySessions.current = {}; commit(null); }, [commit]);
+  const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; gypsySessions.current = {}; gamblerSessions.current = {}; commit(null); }, [commit]);
   const monkeySourceIds = Object.values(monkeySessions.current)
     .filter((entry) => entry.monkeyReveal && entry.sourcePlayerId).map((entry) => entry.sourcePlayerId!);
   return { session: active, toggle, close, reset, confirmMonkey, confirmFox, confirmGypsy, sendGM, resolveColossus, resolvePriest, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
@@ -362,10 +386,10 @@ export function usePlayerPhoneActions(roomId?: string, playerId?: string) {
     };
   }, [roomId, playerId]);
 
-  const send = useCallback((type: PhoneCommand["type"], targetPlayerId?: string, targetPlayerIds?: string[]) => {
+  const send = useCallback((type: PhoneCommand["type"], targetPlayerId?: string, targetPlayerIds?: string[], targetRoleId?: PhoneCommand["targetRoleId"]) => {
     if (!session || !channelRef.current) return;
     sequence.current = Math.max(Date.now(), sequence.current + 1);
-    const command: PhoneCommand = { id: createPlayerActionRequestId(playerId ?? "phone", targetPlayerId ?? type), sessionId: session.id, sequence: sequence.current, type, targetPlayerId, targetPlayerIds };
+    const command: PhoneCommand = { id: createPlayerActionRequestId(playerId ?? "phone", targetPlayerId ?? targetRoleId ?? type), sessionId: session.id, sequence: sequence.current, type, targetPlayerId, targetPlayerIds, targetRoleId };
     pendingCommand.current = command;
     setPending(true);
     nextSyncAt.current = Date.now() + 2500;

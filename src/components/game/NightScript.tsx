@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useCallback, useRef, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Eye, Moon, Skull, Sun } from "lucide-react";
+import { Eye, Moon, Sun } from "lucide-react";
 import { getScriptPhoneMode } from "@/lib/phoneActions";
 import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
 import { PHONE_ACTION_PRESENTATION } from "@/lib/phoneActionPresentation";
@@ -74,7 +74,6 @@ interface NightScriptProps {
   onLamplighterReveal?: (sourcePlayerId?: string | null) => void;
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
   onMimeReveal?: (sourcePlayerId?: string | null) => void;
-  onGamblerSuicide?: (sourcePlayerId?: string | null) => void;
   // Inline checkbox state for roles with limited uses
   onPhoneToggle?: (mode: PhoneMode, lineKey: string, sourcePlayerId: string | null, progressOrder: number | null) => void;
   activePhoneLineKey?: string | null;
@@ -228,7 +227,6 @@ function ScriptLineDisplay({
   onWerewolfSeerReveal,
   onMimeReveal,
   onMonkeyReveal,
-  onGamblerSuicide,
   dynamicText,
   foxDisabled,
   onFoxDisabledToggle,
@@ -286,7 +284,6 @@ function ScriptLineDisplay({
   onWerewolfSeerReveal?: (sourcePlayerId?: string | null) => void;
   onMimeReveal?: (sourcePlayerId?: string | null) => void;
   onMonkeyReveal?: (sourcePlayerId?: string | null) => void;
-  onGamblerSuicide?: (sourcePlayerId?: string | null) => void;
   dynamicText?: string;
   foxDisabled?: boolean;
   onFoxDisabledToggle?: () => void;
@@ -385,7 +382,7 @@ function ScriptLineDisplay({
     || (isSpiderCaughtLine && !dynamicText && !!onSpiderReveal)
     || (isSpyLine && !!onSpyReveal)
   );
-  const hasActionControl = !!phoneControl || hasRevealAction || (isGamblerLine && !!onGamblerSuicide);
+  const hasActionControl = !!phoneControl || hasRevealAction;
   const revealButtonClass = "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-blue-400 transition-colors hover:bg-primary/20";
 
   const isShamanPoisoned = useMemo(() => {
@@ -492,17 +489,6 @@ function ScriptLineDisplay({
                 <Eye className="h-4 w-4" />
               </button>
             )}
-            {isGamblerLine && onGamblerSuicide && (
-              <button
-                type="button"
-                onClick={(event) => { event.stopPropagation(); onGamblerSuicide(sourcePlayerId); }}
-                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-destructive transition-colors hover:bg-destructive/15"
-                aria-label={t("actionKill", lang)}
-                title={t("actionKill", lang)}
-              >
-                <Skull className="h-4 w-4" />
-              </button>
-            )}
           </div>
         )}
         {drunkardLine && (
@@ -524,7 +510,7 @@ function ScriptLineDisplay({
         {isWerewolfLine && effectiveWerewolfLinePoisoned ? (
           <span className="line-through text-muted-foreground">{werewolvesAsleepText}</span>
         ) : (
-          <span className={(isStrikethrough || forceStrikethrough || a05Strike || lineCompleted) ? "line-through text-muted-foreground" : ""}>
+          <span className={(isStrikethrough || forceStrikethrough || a05Strike || lineCompleted || (isGamblerLine && isPoisonedLine)) ? "line-through text-muted-foreground" : ""}>
             {segments.map((seg, i) =>
               seg.isRole ? (
                 <span key={i} className={isPoisonedLine ? "font-bold text-green-400" : "font-bold text-blue-400"}>
@@ -655,7 +641,6 @@ export const NightScript = ({
   onLamplighterReveal,
   onWerewolfSeerReveal,
   onMimeReveal,
-  onGamblerSuicide,
   paranoidCharges,
   onParanoidChargeToggle,
   angelCharges,
@@ -1196,7 +1181,21 @@ export const NightScript = ({
         }
       }
 
-      if (!isActiveMimeRevealLine && predicate(line) && actorAllowsStandardLine && drunkardAllowsStandardLine) {
+      const isGamblerLine = line.requires?.length === 1 && line.requires[0] === "t02";
+      if (isGamblerLine && predicate(line)) {
+        Object.entries(baseRoleAssignments)
+          .filter(([, role]) => role === "t02")
+          .filter(([playerId]) => !effectivelyDead.has(playerId) || prophecyGhostPlayerIds.has(playerId))
+          .forEach(([sourcePlayerId]) => items.push({
+            line,
+            key: `${nightNumber}:${source}:${index}:gambler:${sourcePlayerId}`,
+            progressOrder,
+            sourcePlayerId,
+            actingPoisoned: isPlayerActingPoisoned(sourcePlayerId),
+          }));
+      }
+
+      if (!isGamblerLine && !isActiveMimeRevealLine && predicate(line) && actorAllowsStandardLine && drunkardAllowsStandardLine) {
         const standardSourcePlayerId = line.requires?.length === 1
           ? Object.entries(roleAssignments).find(([, role]) => role === line.requires?.[0])?.[0]
           : undefined;
@@ -1446,7 +1445,8 @@ export const NightScript = ({
                 : null);
               const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
               const configuredPhoneMode = item.actorNotice ? null : getScriptPhoneMode(item.line);
-              const phoneMode = configuredPhoneMode === PHONE_MODE.PRIEST_CONFESSION && sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)
+              const phoneMode = (configuredPhoneMode === PHONE_MODE.PRIEST_CONFESSION || configuredPhoneMode === PHONE_MODE.GAMBLER_GUESS)
+                && sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)
                 ? null : configuredPhoneMode;
               const phoneActive = activePhoneLineKey === item.key;
               const phoneLabel = getTranslation(lang).ui.phoneActions[phoneActive ? "close" : "open"];
@@ -1500,7 +1500,6 @@ export const NightScript = ({
                 onLamplighterReveal={onLamplighterReveal}
                 onWerewolfSeerReveal={onWerewolfSeerReveal}
                 onMimeReveal={onMimeReveal}
-                onGamblerSuicide={onGamblerSuicide}
                 onMonkeyReveal={(source) => onPhoneToggle?.(PHONE_MODE.MONKEY_TAMER_REVEAL, item.key, source ?? null, item.progressOrder)}
                 dynamicText={getDynamicText(item.line, sourcePlayerId, !!item.dogWolfLine, !!item.mimeLine)}
                 foxDisabled={usesIndependentPowerState ? powerState.foxDisabled : foxDisabled}

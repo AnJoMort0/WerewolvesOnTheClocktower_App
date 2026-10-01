@@ -36,6 +36,7 @@ export const PHONE_MODE = {
   SECRET_LOVER_CHECK: "secret-lover-check",
   WILD_CHILD_CHOOSE_PARENT: "wild-child-choose-parent",
   DEVOUT_SERVANT_SAVE: "devout-servant-save",
+  GAMBLER_GUESS: "gambler-guess",
 } as const;
 
 export type PhoneMode = typeof PHONE_MODE[keyof typeof PHONE_MODE];

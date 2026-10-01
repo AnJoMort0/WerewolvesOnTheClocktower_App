@@ -65,7 +65,7 @@ export const en: Translation = {
   scripts: {
     firstNight: [
       { text: "There will be no deaths tonight." },
-      { text: "The {Gambler} wakes up, points at a player, and discreetly asks the Narrator whether that player has a specific role.", requires: ["t02"] },
+      { text: "The {Gambler} wakes up, points at a group of players, and discreetly asks the Narrator whether one of them has a specific character.", requires: ["t02"], phoneMode: PHONE_MODE.GAMBLER_GUESS },
       { text: "{Cupid} wakes up and chooses two players who will become Lovers. {Cupid} goes back to sleep, and the Lovers are now touched so they can wake up and get to know each other. If one Lover dies, the other commits suicide. The goal of the Lovers and {Cupid} is for the Lovers to be the last survivors. The game continues for as long as both Lovers are alive.", requires: ["s01"], phoneMode: PHONE_MODE.CUPID_PAIR },
       { text: "{Evil Cupid} wakes up and chooses two players who will become Enemies. {Evil Cupid} goes back to sleep, and the Enemies are touched so they can wake up and get to know each other. If one Enemy manages to have the other condemned to execution, the first gains immunity from the next assassination attempt.", requires: ["m05"], phoneMode: PHONE_MODE.EVIL_CUPID_PAIR },
       { text: "The {Sisters} wake up to see each other.", requires: ["l03"] },
@@ -87,7 +87,7 @@ export const en: Translation = {
       { text: "The Werewolves wake up and are shown the Evil Beings.", phoneMode: PHONE_MODE.WEREWOLF_ALLIES },
     ],
     normalNight: [
-      { text: "The {Gambler} wakes up, points at a player, and discreetly asks the Narrator whether that player has a specific role.", requires: ["t02"] },
+      { text: "The {Gambler} wakes up, points at a group of players, and discreetly asks the Narrator whether one of them has a specific character.", requires: ["t02"], phoneMode: PHONE_MODE.GAMBLER_GUESS },
       { text: "The {Spider Tamer} wakes up and chooses a new player on whom to weave a web.", requires: ["v23"], conditionKey: "spiderWebbedDied", phoneMode: PHONE_MODE.SPIDER_TAMER_WEB },
       { text: "(The {Hunter} died) The {Hunter}'s Ghost wakes up and chooses whom to assassinate.", requires: ["v08"], conditionKey: "hunterDied", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
       { text: "({Little Red Riding Hood} was executed) The {Hunter} wakes up furious and chooses whom to assassinate.", requires: ["v08"], conditionKey: "redHoodExecuted", phoneMode: PHONE_MODE.HUNTER_ASSASSINATION },
@@ -233,6 +233,15 @@ export const en: Translation = {
       huntComplete: "The Werewolves chose to assassinate {targets}.",
       selectionComplete: "{actor} chose {targets}.",
       ignoredComplete: "{actor} chose not to use this action.",
+      gamblerChoosePlayers: "Choose one player, or two players to select everyone along the path between them.",
+      gamblerChooseRole: "Which character do you think is in this group?",
+      gamblerConfirmPlayers: "Confirm group",
+      gamblerConfirmRole: "Confirm guess",
+      gamblerYes: "YES",
+      gamblerNo: "NO",
+      gamblerCorrect: "YES — one of the selected players has this character.",
+      gamblerWrong: "NO — none of the selected players has this character. The Gambler commits suicide.",
+      gamblerLongPath: "The longer path is selected.",
     },
     appTitle: "Werewolves of the Clocktower",
     appTagline: "The village falls asleep tonight…",

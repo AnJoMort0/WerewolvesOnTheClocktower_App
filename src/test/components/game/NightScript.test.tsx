@@ -26,18 +26,44 @@ const baseProps = {
 const phoneModeSelector = (mode: string) => `[data-phone-mode="${mode}"]`;
 
 describe("NightScript phone controls", () => {
-  it("gives the Gambler a GM-only suicide action", () => {
-    const onGamblerSuicide = vi.fn();
-    const { getByRole } = render(<LanguageContext.Provider value="en"><NightScript
+  it("opens the Gambler guess and crosses out a poisoned Gambler without offering the action", () => {
+    const onPhoneToggle = vi.fn();
+    const props = { ...baseProps,
+      activeRoles: new Set(["t02" as const]),
+      roleAssignments: { gambler: "t02" as const },
+      baseRoleAssignments: { gambler: "t02" as const },
+      abilityRoleAssignments: { gambler: "t02" as const },
+      players: [{ id: "gambler", name: "Gambler", seat_position: 0 }], onPhoneToggle };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    const action = container.querySelector<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.GAMBLER_GUESS));
+    expect(action).toBeInTheDocument();
+    expect(action?.querySelector(".lucide-dices")).toBeInTheDocument();
+    expect(action?.closest(".relative.rounded-lg")?.querySelector("span.line-through")).toBeNull();
+    fireEvent.click(action!);
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.GAMBLER_GUESS, expect.any(String), "gambler", expect.any(Number));
+
+    rerender(<LanguageContext.Provider value="en"><NightScript
+      {...props} poisonedPlayerIds={new Set(["gambler"])}
+    /></LanguageContext.Provider>);
+    expect(container.querySelector(phoneModeSelector(PHONE_MODE.GAMBLER_GUESS))).not.toBeInTheDocument();
+    expect(container.querySelector("span.line-through")).toBeInTheDocument();
+  });
+
+  it("gives duplicate Gamblers independent action buttons", () => {
+    const onPhoneToggle = vi.fn();
+    const { container } = render(<LanguageContext.Provider value="en"><NightScript
       {...baseProps}
       activeRoles={new Set(["t02"])}
-      roleAssignments={{ gambler: "t02" }}
-      abilityRoleAssignments={{ gambler: "t02" }}
-      players={[{ id: "gambler", name: "Gambler", seat_position: 0 }]}
-      onGamblerSuicide={onGamblerSuicide}
+      roleAssignments={{ first: "t02", second: "t02" }}
+      baseRoleAssignments={{ first: "t02", second: "t02" }}
+      abilityRoleAssignments={{ first: "t02", second: "t02" }}
+      players={[{ id: "first", name: "First", seat_position: 0 }, { id: "second", name: "Second", seat_position: 1 }]}
+      onPhoneToggle={onPhoneToggle}
     /></LanguageContext.Provider>);
-    fireEvent.click(getByRole("button", { name: "Kill" }));
-    expect(onGamblerSuicide).toHaveBeenCalledWith("gambler");
+    const actions = container.querySelectorAll<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.GAMBLER_GUESS));
+    expect(actions).toHaveLength(2);
+    fireEvent.click(actions[1]);
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.GAMBLER_GUESS, expect.any(String), "second", expect.any(Number));
   });
 
   it("opens Sleepwalker and Priest actions, but not a poisoned Priest action", () => {

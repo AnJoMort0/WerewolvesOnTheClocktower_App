@@ -4,6 +4,7 @@ import {
   Bone,
   Church,
   Crosshair,
+  Dices,
   Eye,
   Flame,
   FlaskConical,
@@ -65,4 +66,5 @@ export const PHONE_ACTION_PRESENTATION: Record<PhoneMode, PhoneActionPresentatio
   [PHONE_MODE.SECRET_LOVER_CHECK]: { icon: Heart, iconClass: "text-pink-300" },
   [PHONE_MODE.WILD_CHILD_CHOOSE_PARENT]: { icon: Baby, iconClass: "text-lime-300" },
   [PHONE_MODE.DEVOUT_SERVANT_SAVE]: { icon: ShieldCheck, iconClass: "text-emerald-300" },
+  [PHONE_MODE.GAMBLER_GUESS]: { icon: Dices, iconClass: "text-violet-300" },
 };

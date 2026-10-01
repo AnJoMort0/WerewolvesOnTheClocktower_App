@@ -1,4 +1,4 @@
-import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { ScriptLine } from "@/lib/i18n/types";
 import { isColossusTarget } from "@/lib/colossus";
 import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
@@ -58,6 +58,7 @@ export type GypsyReveal = {
   poisoned: boolean;
 };
 export type PriestReveal = { targetPlayerId: string; roleId: RoleId };
+export type GamblerReveal = { playerIds: string[]; roleId: RoleId; correct: boolean };
 export function shouldExhaustMonkeyPower(reveal: MonkeyReveal, nightNumber: number): boolean {
   return nightNumber > 1 && reveal.evil;
 }
@@ -106,6 +107,7 @@ export type PhoneSession = {
   foxReveal?: FoxReveal;
   gypsyReveal?: GypsyReveal;
   priestReveal?: PriestReveal;
+  gamblerReveal?: GamblerReveal;
   error?: "noSafeCard";
   pendingTargetPlayerId?: string;
   pendingTargetPlayerIds?: string[];
@@ -120,9 +122,10 @@ export type PhoneCommand = {
   id: string;
   sessionId: string;
   sequence: number;
-  type: "select" | "confirm" | "ignore" | "close" | "reopen";
+  type: "select" | "confirm" | "guess" | "ignore" | "close" | "reopen";
   targetPlayerId?: string;
   targetPlayerIds?: string[];
+  targetRoleId?: RoleId;
 };
 export type PhoneAction = {
   action: "kill" | PhoneMode;
@@ -132,6 +135,7 @@ export type PhoneAction = {
   monkeyReveal?: MonkeyReveal;
   foxReveal?: FoxReveal;
   gypsyReveal?: GypsyReveal;
+  gamblerReveal?: GamblerReveal;
 };
 export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participantIds"> & {
   sourcePlayerId?: string | null;
@@ -140,6 +144,7 @@ export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participan
   foxReveal?: FoxReveal;
   gypsyReveal?: GypsyReveal;
   priestReveal?: PriestReveal;
+  gamblerReveal?: GamblerReveal;
   error?: "noSafeCard";
   pendingTargetPlayerId?: string;
   pendingTargetPlayerIds?: string[];
@@ -259,6 +264,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
       : mode === PHONE_MODE.GYPSY_POISON_CHECK ? player.abilityRole === "v12"
       : mode === PHONE_MODE.SPIDER_TAMER_WEB ? player.abilityRole === "v23"
       : mode === PHONE_MODE.PRIEST_CONFESSION ? player.abilityRole === "v25" && !player.actingPoisoned
+      : mode === PHONE_MODE.GAMBLER_GUESS ? player.abilityRole === "t02" && !player.actingPoisoned
       : mode === PHONE_MODE.SLEEPWALKER_VISIT ? player.abilityRole === "v16"
       : mode === PHONE_MODE.COLOSSUS_RETALIATION ? player.abilityRole === "v27" && !!player.colossusReady
       : mode === PHONE_MODE.WEREWOLF_HUNT && !!player.abilityRole && WEREWOLF_ROLES.includes(player.abilityRole);
@@ -298,6 +304,8 @@ export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boole
   if (session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL) return !session.monkeyReveal && !!(player.displayRole ?? player.abilityRole);
   if (session.mode === PHONE_MODE.FOX_TAMER_CHECK) return !session.foxReveal && !player.dead;
   if (session.mode === PHONE_MODE.GYPSY_POISON_CHECK) return !session.gypsyReveal && !player.dead;
+  // A Gambler may include Ghosts in the group; death does not reveal a card.
+  if (session.mode === PHONE_MODE.GAMBLER_GUESS) return !session.gamblerReveal && !!(player.displayRole ?? player.abilityRole);
   if (session.mode === PHONE_MODE.COLOSSUS_RETALIATION) return isColossusTarget(player);
   // Any other player may confess to the Priest, including a Ghost.
   if (session.mode === PHONE_MODE.PRIEST_CONFESSION) return player.id !== session.sourcePlayerId;
@@ -320,6 +328,9 @@ export function reconcilePhoneSession(session: PhoneSession | null, world: Phone
   }
   if (session.mode === PHONE_MODE.GYPSY_POISON_CHECK && session.gypsyReveal) {
     return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v12") ? session : null;
+  }
+  if (session.mode === PHONE_MODE.GAMBLER_GUESS && session.gamblerReveal) {
+    return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "t02") ? session : null;
   }
   if (session.mode === PHONE_MODE.PRIEST_CONFESSION && session.priestReveal) {
     return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v25") ? session : null;
@@ -365,16 +376,51 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if (!session || command.sessionId !== session.id || !session.participantIds.includes(actorId)
     || !Number.isFinite(command.sequence) || command.sequence <= (session.sequences[actorId] ?? 0)) return { session };
   const next = { ...session, sequences: { ...session.sequences, [actorId]: command.sequence } };
-  if (session.completed) return { session: next };
   if ((session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK
-      || session.mode === PHONE_MODE.GYPSY_POISON_CHECK)
+      || session.mode === PHONE_MODE.GYPSY_POISON_CHECK || session.mode === PHONE_MODE.GAMBLER_GUESS)
     && (command.type === "close" || command.type === "reopen")) {
     return { session: { ...next, visible: command.type === "reopen" } };
   }
+  if (session.completed) return { session: next };
   if (command.type === "ignore" && (session.mode === PHONE_MODE.SHAMAN_SAVE
     || isRoleActionPhoneMode(session.mode) && canIgnoreRoleActionPhoneMode(session.mode))) {
     const completed = { ...next, completed: true, ignored: true };
     return { session: completed, completedSession: completed };
+  }
+  if (session.mode === PHONE_MODE.GAMBLER_GUESS) {
+    if (command.type === "confirm" && !session.pendingTargetPlayerIds?.length) {
+      const playerIds = [...new Set(command.targetPlayerIds ?? [])];
+      if (playerIds.length === 0 || !playerIds.every((id) => world.players.some((player) => (
+        player.id === id && isPhoneTarget(session!, player)
+      )))) return { session: next };
+      return { session: { ...next, pendingTargetPlayerId: playerIds[0], pendingTargetPlayerIds: playerIds } };
+    }
+    if (command.type === "guess" && session.pendingTargetPlayerIds?.length && command.targetRoleId
+      && ROLES[command.targetRoleId] && ROLES[command.targetRoleId].category !== "t") {
+      const correct = session.pendingTargetPlayerIds.some((id) => {
+        const player = world.players.find((candidate) => candidate.id === id);
+        const roleId = player?.illusion ? "a06" : player?.displayRole ?? player?.abilityRole;
+        return roleId === command.targetRoleId;
+      });
+      const gamblerReveal: GamblerReveal = {
+        playerIds: session.pendingTargetPlayerIds,
+        roleId: command.targetRoleId,
+        correct,
+      };
+      const completed = { ...next, visible: true, gamblerReveal, completed: true };
+      return {
+        session: completed,
+        completedSession: completed,
+        action: {
+          action: PHONE_MODE.GAMBLER_GUESS,
+          targetPlayerId: session.pendingTargetPlayerIds[0],
+          targetPlayerIds: session.pendingTargetPlayerIds,
+          sourcePlayerId: actorId,
+          gamblerReveal,
+        },
+      };
+    }
+    return { session: next };
   }
   if (isRoleActionPhoneMode(session.mode) && command.type === "confirm") {
     const targetIds = [...new Set(command.targetPlayerIds?.length ? command.targetPlayerIds : command.targetPlayerId ? [command.targetPlayerId] : [])];
@@ -497,13 +543,15 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
     completed: session.completed,
     ignored: session.ignored,
     ...((session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK
-      || session.mode === PHONE_MODE.GYPSY_POISON_CHECK) ? {
+      || session.mode === PHONE_MODE.GYPSY_POISON_CHECK || session.mode === PHONE_MODE.GAMBLER_GUESS) ? {
       visible: session.visible !== false,
       ...(session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL
         ? { monkeyReveal: session.monkeyReveal, error: session.error }
         : session.mode === PHONE_MODE.FOX_TAMER_CHECK
         ? { foxReveal: session.foxReveal }
-        : { gypsyReveal: session.gypsyReveal }),
+        : session.mode === PHONE_MODE.GYPSY_POISON_CHECK
+        ? { gypsyReveal: session.gypsyReveal }
+        : { gamblerReveal: session.gamblerReveal }),
     } : {}),
     ...(session.mode === PHONE_MODE.PRIEST_CONFESSION ? { priestReveal: session.priestReveal } : {}),
     players: world.players.map((p) => ({

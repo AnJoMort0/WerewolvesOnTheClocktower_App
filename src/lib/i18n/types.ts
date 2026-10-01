@@ -334,6 +334,15 @@ export interface UIStrings {
     huntComplete: string;
     selectionComplete: string;
     ignoredComplete: string;
+    gamblerChoosePlayers: string;
+    gamblerChooseRole: string;
+    gamblerConfirmPlayers: string;
+    gamblerConfirmRole: string;
+    gamblerYes: string;
+    gamblerNo: string;
+    gamblerCorrect: string;
+    gamblerWrong: string;
+    gamblerLongPath: string;
   };
   travellers: TravellerUiStrings;
   appTitle: string;

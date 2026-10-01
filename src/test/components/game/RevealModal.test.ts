@@ -24,11 +24,12 @@ describe("resolveKillerCard", () => {
     });
   });
 
-  it("shows the Gambler card and Suicide label for a Gambler death", () => {
+  it("shows the Gambler card as a suicide to the Little Girl", () => {
     expect(resolveKillerCard("t02-suicide", {}, null, "en")).toMatchObject({
       image: ROLES.t02.image,
       label: "Suicide",
       roleId: "t02",
     });
   });
+
 });

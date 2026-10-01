@@ -57,6 +57,49 @@ describe("GM-controlled phone rules", () => {
     expect(scripts.find((line) => line.requires?.includes("v15"))?.phoneMode).toBe(PHONE_MODE.PYROMANIAC_BURN);
   });
 
+  it.each(["pt", "fr", "en"] as const)("registers the Gambler control on both scripts in %s", (language) => {
+    const scripts = getScripts(language);
+    expect(scripts.firstNight.find((line) => line.requires?.includes("t02"))?.phoneMode).toBe(PHONE_MODE.GAMBLER_GUESS);
+    expect(scripts.normalNight.find((line) => line.requires?.includes("t02"))?.phoneMode).toBe(PHONE_MODE.GAMBLER_GUESS);
+  });
+
+  it("resolves the Gambler guess only after both the group and character are confirmed", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("gambler", "t02", { seat_position: 0 }),
+      phonePlayer("bear", "v02", { seat_position: 1, displayRole: "v02" }),
+      phonePlayer("fox", "v04", { seat_position: 2, displayRole: "v04" }),
+    ] };
+    const session: PhoneSession = {
+      id: "gambler", lineKey: "gambler-line", mode: PHONE_MODE.GAMBLER_GUESS,
+      sourcePlayerId: "gambler", participantIds: ["gambler"], votes: {}, sequences: {},
+    };
+    const selected = applyPhoneCommand(session, "gambler", {
+      id: "group", sessionId: "gambler", sequence: 1, type: "confirm", targetPlayerIds: ["bear", "fox"],
+    }, changed);
+    expect(selected.action).toBeUndefined();
+    expect(selected.completedSession).toBeUndefined();
+    expect(selected.session?.pendingTargetPlayerIds).toEqual(["bear", "fox"]);
+
+    const correct = applyPhoneCommand(selected.session, "gambler", {
+      id: "guess", sessionId: "gambler", sequence: 2, type: "guess", targetRoleId: "v04",
+    }, changed);
+    expect(correct.session?.gamblerReveal).toEqual({ playerIds: ["bear", "fox"], roleId: "v04", correct: true });
+    expect(correct.action?.gamblerReveal?.correct).toBe(true);
+    expect(correct.completedSession?.completed).toBe(true);
+
+    const wrong = applyPhoneCommand(selected.session, "gambler", {
+      id: "wrong", sessionId: "gambler", sequence: 3, type: "guess", targetRoleId: "v03",
+    }, changed);
+    expect(wrong.action?.gamblerReveal).toMatchObject({ roleId: "v03", correct: false });
+  });
+
+  it("does not wake a poisoned Gambler", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("gambler", "t02", { actingPoisoned: true }),
+    ] };
+    expect(getPhoneParticipants(PHONE_MODE.GAMBLER_GUESS, "gambler", changed)).toEqual([]);
+  });
+
   it.each(["pt", "fr", "en"] as const)("registers every new role action on the intended script line in %s", (language) => {
     const scripts = getScripts(language);
     expect(scripts.firstNight.find((line) => line.requires?.includes("s01"))?.phoneMode).toBe(PHONE_MODE.CUPID_PAIR);

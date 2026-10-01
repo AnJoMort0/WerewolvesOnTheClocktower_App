@@ -25,19 +25,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [x] Travellers (see description in rulebookContent):
-  * [x] Pick the idea (or mash them up or create your own) that seems the more intuitive for the current state of the game, knowing it's a game that is played in person anyway:
-    * [x] Add a button to the GM screen when the game is already on, under the player list to add a new traveller, when clicked a new QR code pops up full modal, for the new player to join in as said traveller.
-    * [x] When a player tries to join a game that is already being played with the normal QR code, they get the message that the game already started but they can potentially ask the GM to join as a traveller. The GM receives a notification that a new player wants to join as a traveller, accepts it (or denies it).
-  * [x] THEN When they join a random "t" role will then be assigned, the GM can change it like the GM does for the normal players joining the game. Once the GM confirms it, first a modal will be sent to the player's device (and mirror on the GM's screen) stating if they are a "Villager" or a "Evil Being", the "You are a Evil Being" modal also includes a player circle with all the werewolves clearly shown. The player can confirm they read it (or the GM can close the modal) and they get their normal role screen/hide role screen, like any other player. Then in the GM screen there's a circle with the player on the side of the player circle. The GM can then drag and drop that circle anywhere between two other players to add the new player there. Once the player has been placed down, it is fixed there and is added to the player list too.
-    * [x] By the way, add this functionnality of moving a player bubble between other players in the players joining screen too, so that players can be moved between other players, and when dragging a player on top of another one, the dragged takes its place, while the player that was there is removed from the circle. Just to make it simpler to organise players in an active room when joining in (and so you can reuse the same code for both normal players and travellers, just in different moments)
-  * [x] While there are still available unique travellers just assign a random new one. If all travellers are in use, you can reuse the same traveller multiple times
-  * [x] Everyone knows the traveller's role, so in the players device, when showing the player circle in hide role screen, the traveller's role is just there, in the player bubble. Clicking it will open the rulebook entry. The other players just don't know the characters alignement
-  * [x] A traveller acts like any other character for character's abilities, like for knowledge abilities
-  * [x] During the Tribunal, if there are travellers in game, add a line to say how many votes are needed to exile a traveller, which is half (rounded up) off players, alive or dead
-  * [x] A traveller can be affected by pretty much any status effect, execept they can't be executed so make sure that is removed from the pop-up menu, they are instead exiled so add that to the menu instead
-    * [x] an exiled traveller just becomes a ghost like any other executed player, they just don't count as executed for the abilities that have to do with that death type
-  * [x] If the spy is in game travellers automatically have the spy on effect since everyone knows who they are
+* [ ] 
 
   
 ## Future Plans
@@ -55,6 +43,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
   * [ ] Stinky Werewolf: The nearest villager will always be poisoned (if same distance it's picked at random which one is affected) / OR / His neighbours are poisoned if they are villagers, otherwise, no effect on the neighbours
   * [ ] Martyr Werewolf: During the Werewolf hunt, can rise his hand. This will automatically kill himself and transform a random alive evil being into a e01.Werewolf
   * [ ] Werewolf Herald: When not every villager roles are in play, in the first night, receive a selection of not in play roles, for the number of evil beings in game.
+  * [ ] Gluttonous Werewolf: At the end of the hunt, when all Werewolves finish hunting can stay awake and wave his hand until he gets the Narrators attention. The Narrator will then not kill the victim tonight, but instead kill 3 victims next night: the saved victim, the new target and another completly random player
   * [ ] Evil Twin (evil - we could just use the sisters card here tbf): The first night, they are assigned a Good Twin (a random villager). They will wake up to see eachother. If the Good Twin is killed by execution, another random Villager will die as well. The Evil Twin will then receive a new Twin.
   * [ ] Slanderer (evil): Each night picks a player, that player will be shown as a random evil being to all role abilities
   * [ ] Teacher (villager): Twice per game, can pick a player, that player will act twice during that night if their ability permits it

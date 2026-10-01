@@ -19,6 +19,7 @@ import { useGMPlayerActionMirrors } from "@/hooks/usePlayerActionMirrors";
 import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
+import { GamblerGuessModal } from "@/components/game/GamblerGuessModal";
 import { GMPlayerActionApprovalPanel } from "@/components/game/GMPlayerActionApprovalPanel";
 import { TravellerAlignmentModal } from "@/components/game/TravellerAlignmentModal";
 import {
@@ -3792,15 +3793,6 @@ const GMRoom = () => {
     });
   }, []);
 
-  const handleGamblerSuicide = useCallback((sourcePlayerId?: string | null) => {
-    const gamblerPlayerId = sourcePlayerId ?? getRolePlayerId("t02");
-    if (!gamblerPlayerId
-      || permanentlyDead.has(gamblerPlayerId)
-      || playerStatuses[gamblerPlayerId] === "dead-this-night") return;
-    handlePlayerStatusChange(gamblerPlayerId, "dead-this-night", "t02-suicide", gamblerPlayerId);
-    markScriptRoleAction("t02", gamblerPlayerId, [gamblerPlayerId]);
-  }, [getRolePlayerId, handlePlayerStatusChange, markScriptRoleAction, permanentlyDead, playerStatuses]);
-
   useEffect(() => {
     const copiedRole = pendingActorCopyLogRef.current;
     if (!copiedRole || !effectiveActorCopiedRole || !actorPlayerId || !gmSnapshotLoaded || room?.status !== "playing") return;
@@ -5049,7 +5041,7 @@ const GMRoom = () => {
       };
     }),
   }), [actedTonightPlayerIds, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, effectiveRoleAssignments, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerIds, powerlessPlayerIds, prophecyGhostPlayerIds, sourcedEffectTargets, werewolfPackPoisoned]);
-  const applyPhoneAction = useCallback(({ action, targetPlayerId, targetPlayerIds, sourcePlayerId, monkeyReveal, foxReveal }: PhoneAction) => {
+  const applyPhoneAction = useCallback(({ action, targetPlayerId, targetPlayerIds, sourcePlayerId, monkeyReveal, foxReveal, gamblerReveal }: PhoneAction) => {
     if (action === PHONE_MODE.MONKEY_TAMER_REVEAL) {
       if (!sourcePlayerId || !monkeyReveal) return;
       // Revealed Evil Beings exhaust this source's power without killing them.
@@ -5079,6 +5071,13 @@ const GMRoom = () => {
       markScriptRoleAction("v12", sourcePlayerId);
       return;
     }
+    if (action === PHONE_MODE.GAMBLER_GUESS) {
+      if (!sourcePlayerId || !gamblerReveal) return;
+      if (!gamblerReveal.correct) {
+        handlePlayerStatusChange(sourcePlayerId, "dead-this-night", "t02-suicide", sourcePlayerId);
+      }
+      return;
+    }
     if (action === PHONE_MODE.PRIEST_CONFESSION) return;
     if (isRoleActionPhoneMode(action)) {
       const { dragAction } = getRoleActionPhoneConfig(action);
@@ -5093,7 +5092,7 @@ const GMRoom = () => {
       : action === PHONE_MODE.EVIL_WITCH_POISON ? "poison"
       : action === PHONE_MODE.SHAMAN_SAVE ? "shaman" : action;
     handleDragAction(dragAction, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
-  }, [handleDragAction, handleIndependentPowerStateChange, independentPowerStates, markScriptRoleAction, nightNumber]);
+  }, [handleDragAction, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, markScriptRoleAction, nightNumber]);
   const completePhoneLine = useCallback((session: PhoneSession) => {
     handleScriptLineCompleted(session.lineKey, true, session.progressOrder ?? null, session.participantIds);
   }, [handleScriptLineCompleted]);
@@ -6163,6 +6162,7 @@ const GMRoom = () => {
   const phoneView = phone.session && phone.session.mode !== PHONE_MODE.MONKEY_TAMER_REVEAL
     && phone.session.mode !== PHONE_MODE.FOX_TAMER_CHECK
     && phone.session.mode !== PHONE_MODE.GYPSY_POISON_CHECK
+    && phone.session.mode !== PHONE_MODE.GAMBLER_GUESS
     ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
   const playerActionModal: GMPlayerActionModalMode | null = completedPlayerActionMirror ?? actionMirrors.mode;
 
@@ -6210,6 +6210,14 @@ const GMRoom = () => {
         <GypsyRevealModal key={phone.session.id}
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
           language={lang} onConfirm={phone.confirmGypsy} onClose={phone.close} />
+      )}
+      {phone.session?.mode === PHONE_MODE.GAMBLER_GUESS && !hideScreenMode && (
+        <GamblerGuessModal key={phone.session.id}
+          session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
+          language={lang}
+          onConfirmPlayers={(playerIds) => phone.sendGM("confirm", playerIds[0], playerIds)}
+          onConfirmRole={(roleId) => phone.sendGM("guess", undefined, undefined, roleId)}
+          onClose={() => phone.sendGM("close")} onReopen={() => phone.sendGM("reopen")} />
       )}
       {phoneView && phone.session && !hideScreenMode && !displayedPlayerActionRequest && (
         <GMPhoneActionModal session={phone.session} view={phoneView} language={lang}
@@ -6593,7 +6601,6 @@ const GMRoom = () => {
                     onLamplighterReveal={handleLamplighterReveal}
                     onWerewolfSeerReveal={werewolfSeerVictim ? handleWerewolfSeerReveal : undefined}
                     onMimeReveal={handleMimeReveal}
-                    onGamblerSuicide={handleGamblerSuicide}
                     houseMaidDynamicText={houseMaidDynamicText}
                     playerStatuses={playerStatuses}
                     foxDisabled={foxDisabled}

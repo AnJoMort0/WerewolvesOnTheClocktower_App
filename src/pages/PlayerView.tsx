@@ -32,6 +32,7 @@ import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
+import { GamblerGuessModal } from "@/components/game/GamblerGuessModal";
 import { TravellerAlignmentModal } from "@/components/game/TravellerAlignmentModal";
 import { usePlayerActionMirror } from "@/hooks/usePlayerActionMirrors";
 import { normalizeGameLogSnapshot, type GameLogSnapshot } from "@/lib/gameLog";
@@ -1183,6 +1184,12 @@ const PlayerView = () => {
                 <GypsyRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} />
+              ) : phone.session?.mode === PHONE_MODE.GAMBLER_GUESS && roomStatus === "playing" ? (
+                <GamblerGuessModal key={phone.session.id} session={phone.session} language={language} embedded
+                  pending={phone.pending} connected={phone.connected}
+                  onConfirmPlayers={(playerIds) => phone.send("confirm", playerIds[0], playerIds)}
+                  onConfirmRole={(roleId) => phone.send("guess", undefined, undefined, roleId)}
+                  onClose={() => phone.send("close")} onReopen={() => phone.send("reopen")} />
               ) : phone.session && roomStatus === "playing" && playerId ? (
                 <PhoneActionScreen key={phone.session.id} session={phone.session} playerId={playerId}
                   language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send}
