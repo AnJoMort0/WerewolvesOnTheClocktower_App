@@ -60,7 +60,9 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   showPoisonConfirmation?: boolean;
   appearance?: { title: string; icon: LucideIcon; border: string; accent: string };
 }) {
-  const text = getTranslation(language).ui.phoneActions;
+  const ui = getTranslation(language).ui;
+  const text = ui.phoneActions;
+  const actions = ui.actions;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   useEffect(() => {
@@ -146,7 +148,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
       }`}>
         {session.approvalResult === "accepted" ? <Check className="h-12 w-12" /> : <X className="h-12 w-12" />}
         {resultTarget && <span className="text-sm text-foreground">{resultTarget.name}</span>}
-        <strong className="font-display text-xl">{session.approvalResult === "accepted" ? text.approved : text.denied}</strong>
+        <strong className="font-display text-xl">{session.approvalResult === "accepted" ? actions.yes : actions.no}</strong>
       </div> : session.priestReveal ? <div data-testid="priest-revealed-card">
         {target && <p className="mb-3 text-center font-display text-lg text-foreground">{target.name}</p>}
         <RevealCardGallery language={language} onRoleClick={onRoleClick} cards={[{
@@ -236,7 +238,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
           {(session.mode === PHONE_MODE.SHAMAN_SAVE
             || isRoleActionPhoneMode(session.mode) && canIgnoreRoleActionPhoneMode(session.mode)) && (
             <Button variant="secondary" disabled={pending || !connected} onClick={() => onSend("ignore")}>
-              <X className="mr-2 h-4 w-4" />{text.ignore}
+              <X className="mr-2 h-4 w-4" />{actions.ignore}
             </Button>
           )}
           <Button disabled={isRoleAction ? roleTargets.length < roleMinimumSelectionCount || roleTargets.length > roleSelectionCount || pending || !connected || !!session.pendingTargetPlayerId
@@ -245,7 +247,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
               ? roleTargets.length >= roleMinimumSelectionCount && roleTargets.length <= roleSelectionCount
                 && onSend("confirm", roleTargets[0].id, roleTargets.map((player) => player.id))
               : target && onSend("confirm", target.id)}>
-            <Check className="mr-2 h-4 w-4" />{confirmLabel ?? (session.mode === PHONE_MODE.SHAMAN_SAVE ? text.save : text.confirm)}
+            <Check className="mr-2 h-4 w-4" />{confirmLabel ?? (session.mode === PHONE_MODE.SHAMAN_SAVE ? actions.save : actions.confirm)}
           </Button>
         </div>
       )}

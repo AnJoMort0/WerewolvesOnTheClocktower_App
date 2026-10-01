@@ -22,7 +22,7 @@ describe("PhoneActionScreen", () => {
     render(<PhoneActionScreen session={baseView} playerId="gm" language="en" pending={false} connected gmControlled onSend={onSend} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
     expect(onSend).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
     expect(onSend).toHaveBeenCalledWith("confirm", "target");
   });
 
@@ -33,11 +33,11 @@ describe("PhoneActionScreen", () => {
     expect(screen.getByRole("button", { name: "Wolf" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Wolf" }).querySelector("span")).toHaveClass("grayscale", "opacity-30");
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
     expect(onSend).toHaveBeenCalledWith("confirm", "target");
     rerender(<PhoneActionScreen session={{ ...session, pendingTargetPlayerId: "target" }} playerId="wolf" language="en" pending={false} connected onSend={onSend} />);
     expect(screen.getByRole("button", { name: "Target" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).toBeDisabled();
+    expect(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.phoneActions.waiting);
   });
 
@@ -119,7 +119,7 @@ describe("PhoneActionScreen", () => {
     rerender(<PhoneActionScreen session={{ ...session, pendingTargetPlayerId: "target" }} playerId="wolf"
       language="en" pending={false} connected onSend={onSend} />);
     expect(screen.getByRole("status")).toHaveTextContent("Wolf selected Target.");
-    expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: getTranslation("en").ui.actions.confirm })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -139,7 +139,7 @@ describe("PhoneActionScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Other" }));
     expect(screen.getByRole("button", { name: "Target" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "Other" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
     expect(onSend).toHaveBeenCalledExactlyOnceWith("confirm", "other");
   });
 
@@ -159,7 +159,7 @@ describe("PhoneActionScreen", () => {
     render(<PhoneActionScreen session={{ ...baseView, mode: PHONE_MODE.PRIEST_CONFESSION, priestReveal: { targetPlayerId: "target", roleId: "v03" } }}
       playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} onRoleClick={onRoleClick} />);
     expect(screen.queryByTestId("phone-action-map")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: getTranslation("en").ui.actions.confirm })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Raven Tamer/i }));
     expect(onRoleClick).toHaveBeenCalledWith("v03");
   });
@@ -203,7 +203,7 @@ describe("PhoneActionScreen", () => {
       players: [...baseView.players, { id: "second", name: "Second", seat_position: 2, selectable: true, redX: false, dead: false, marker: null }],
     };
     render(<PhoneActionScreen session={session} playerId="wolf" language="en" pending={false} connected onSend={onSend} />);
-    const confirm = screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm });
+    const confirm = screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm });
     expect(confirm).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
     expect(confirm).toBeDisabled();
@@ -224,7 +224,7 @@ describe("PhoneActionScreen", () => {
     };
     render(<PhoneActionScreen session={session} playerId="wolf" language="en" pending={false} connected onSend={onSend} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    const confirm = screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.confirm });
+    const confirm = screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm });
     expect(confirm).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Second" }));
     fireEvent.click(confirm);
@@ -234,10 +234,10 @@ describe("PhoneActionScreen", () => {
   it("shows the Secret Lover result without asking for another confirmation", () => {
     render(<PhoneActionScreen session={{ ...baseView, mode: PHONE_MODE.SECRET_LOVER_CHECK, pendingTargetPlayerId: "target", approvalResult: "denied" }} playerId="wolf"
       language="en" pending={false} connected onSend={vi.fn()} />);
-    expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.phoneActions.denied);
+    expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.actions.no);
     expect(screen.getByRole("status")).toHaveTextContent("Target");
     expect(screen.queryByTestId("phone-action-map")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: getTranslation("en").ui.actions.confirm })).not.toBeInTheDocument();
   });
 
   it("keeps a completed assassination visible with its actor and target", () => {
@@ -252,14 +252,14 @@ describe("PhoneActionScreen", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Wolf chose to assassinate Target.");
     expect(screen.getByRole("status").querySelector(".lucide-crosshair")).toBeInTheDocument();
     expect(screen.queryByTestId("phone-action-map")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: getTranslation("en").ui.phoneActions.confirm })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: getTranslation("en").ui.actions.confirm })).not.toBeInTheDocument();
   });
 
   it("lets optional role actions be ignored", () => {
     const onSend = vi.fn();
     render(<PhoneActionScreen session={{ ...baseView, mode: PHONE_MODE.VINTNER_POISON }} playerId="wolf"
       language="en" pending={false} connected onSend={onSend} />);
-    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.phoneActions.ignore }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.ignore }));
     expect(onSend).toHaveBeenCalledWith("ignore");
   });
 });

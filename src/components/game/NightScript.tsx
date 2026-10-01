@@ -864,13 +864,14 @@ export const NightScript = ({
     const accusedPlayers = players.filter((player) => _playerEffects[player.id]?.has("accused_next"));
     if (accusedPlayers.length === 0) return undefined;
     const sourcePoisoned = isPlayerActingPoisoned(sourcePlayerId);
-    const labels = getTranslation(lang).ui.nightScript;
+    const ui = getTranslation(lang).ui;
+    const labels = ui.nightScript;
     const answers = accusedPlayers.map((player) => {
       if (illusionPlayerIds.has(player.id)) return `${player.name}: ${labels.boyIllusion}`;
       const effects = _playerEffects[player.id] ?? new Set<string>();
       const objectiveRole = objectiveRoleAssignments[player.id] ?? abilityRoleAssignments[player.id];
       const isWerewolf = effects.has("werewolf_turned") || WEREWOLF_ROLES.includes(objectiveRole);
-      return `${player.name}: ${(sourcePoisoned ? !isWerewolf : isWerewolf) ? labels.boyYes : labels.boyNo}`;
+      return `${player.name}: ${(sourcePoisoned ? !isWerewolf : isWerewolf) ? ui.actions.yes : ui.actions.no}`;
     });
     return `${line.text.replace(/\.$/, "")} (${answers.join(", ")})`;
   };
@@ -1449,7 +1450,7 @@ export const NightScript = ({
                 && sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)
                 ? null : configuredPhoneMode;
               const phoneActive = activePhoneLineKey === item.key;
-              const phoneLabel = getTranslation(lang).ui.phoneActions[phoneActive ? "close" : "open"];
+              const phoneLabel = getTranslation(lang).ui.actions[phoneActive ? "close" : "open"];
               const phonePresentation = phoneMode ? PHONE_ACTION_PRESENTATION[phoneMode] : null;
               const PhoneActionIcon = phonePresentation?.icon ?? Eye;
               const phoneIconClass = phonePresentation?.iconClass ?? "text-primary";

@@ -24,24 +24,24 @@ describe("Fox Tamer reveal modal", () => {
     const onConfirm = vi.fn(), onClose = vi.fn(), onReopen = vi.fn();
     const props = { language: "en" as const, onConfirm, onClose, onReopen };
     const { rerender } = render(<FoxRevealModal {...props} session={view} />);
-    const confirm = screen.getByRole("button", { name: getTranslation("en").ui.foxReveal.confirm });
+    const confirm = screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm });
     expect(confirm).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
     expect(screen.getByRole("button", { name: "Left" }).querySelector("span")).toHaveClass("border-amber-400");
     expect(screen.getByRole("button", { name: "Right" }).querySelector("span")).toHaveClass("border-amber-400");
-    fireEvent.click(screen.getByRole("button", { name: "Check these players: Target" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm: Target" }));
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith("target");
 
     const resolved: PhoneView = { ...view, foxReveal: {
       targetPlayerId: "target", playerIds: ["left", "target", "right"], result: "clear", foxRanAway: true,
     } };
     rerender(<FoxRevealModal {...props} session={resolved} />);
-    expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.foxReveal.clear);
+    expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.actions.no);
     expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.foxReveal.ranAway);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledOnce();
     rerender(<FoxRevealModal {...props} session={{ ...resolved, visible: false }} />);
-    fireEvent.click(screen.getByRole("button", { name: "Reopen result" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
     expect(onReopen).toHaveBeenCalledOnce();
   });
 

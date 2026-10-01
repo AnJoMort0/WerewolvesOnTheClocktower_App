@@ -990,7 +990,7 @@ const PlayerView = () => {
     ? t("resurrectPlayer", language)
     : actionMode === "v23"
     ? t("changeWeb", language)
-    : t("assassinationConfirm", language);
+    : getTranslation(language).ui.actions.confirm;
   const actionTargetId = actionMode === "v18"
     ? resurrectionTargetId
     : actionMode === "v23"
@@ -1189,7 +1189,7 @@ const PlayerView = () => {
                   pending={phone.pending} connected={phone.connected}
                   onConfirmPlayers={(playerIds) => phone.send("confirm", playerIds[0], playerIds)}
                   onConfirmRole={(roleId) => phone.send("guess", undefined, undefined, roleId)}
-                  onClose={() => phone.send("close")} onReopen={() => phone.send("reopen")} />
+                  onIgnore={() => phone.send("ignore")} onReopen={() => phone.send("reopen")} />
               ) : phone.session && roomStatus === "playing" && playerId ? (
                 <PhoneActionScreen key={phone.session.id} session={phone.session} playerId={playerId}
                   language={language} pending={phone.pending} connected={phone.connected} onSend={phone.send}
@@ -1257,7 +1257,7 @@ const PlayerView = () => {
                       onClick={closeActionMode}
                       className="font-display"
                     >
-                      {t("assassinationExit", language)}
+                      {getTranslation(language).ui.actions.exit}
                     </Button>
                     <Button
                       type="button"

@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameModal } from "@/components/game/GameModal";
 import type { RoleId } from "@/lib/roles";
-import { getRoleLabel, getTranslation, t, type Language } from "@/lib/i18n";
+import { getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import type { TravellerAlignment } from "@/lib/travellers";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
@@ -48,7 +48,7 @@ export function TravellerAlignmentModal({
     onClose={onAcknowledge}
     title={evil ? copy.revealEvilTitle : copy.revealVillagerTitle}
     subtitle={evil ? copy.revealEvilBody : copy.revealVillagerBody}
-    closeLabel={t("close", language)}
+    closeLabel={getTranslation(language).ui.actions.close}
     dismissible={false}
     showCloseButton={gmMirror}
     wide={evil}

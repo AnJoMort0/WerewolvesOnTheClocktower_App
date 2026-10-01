@@ -1,6 +1,12 @@
 import { WEREWOLF_ROLES } from "@/lib/roles";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
-import type { Translation } from "./types";
+import type { CommonActionStrings, Translation } from "./types";
+
+const actions = {
+  open: "Open", close: "Close", reopen: "Reopen", yes: "YES", no: "NO",
+  see: "See", choose: "Choose", confirm: "Confirm", accept: "Accept", deny: "Deny",
+  ignore: "Ignore", save: "Save", enter: "Enter", exit: "Exit",
+} satisfies CommonActionStrings;
 
 export const en: Translation = {
   roleLabels: {
@@ -149,6 +155,7 @@ export const en: Translation = {
   },
 
   ui: {
+    actions,
     travellers: {
       joinTitle: "Join as a Traveller?",
       joinDescription: "This game has already started. You can ask the Narrator to let you join as a Traveller.",
@@ -160,12 +167,9 @@ export const en: Translation = {
       qrDescription: "The late player can scan this code to request entry into the current game.",
       requestTitle: "Traveller request",
       requestDescription: "{name} wants to join as a Traveller.",
-      accept: "Accept",
-      deny: "Decline",
       setupTitle: "Assign Traveller",
       alignmentVillager: "Villager",
       alignmentEvil: "Evil Being",
-      confirmAssignment: "Confirm Traveller",
       revealVillagerTitle: "You are a Villager",
       revealEvilTitle: "You are an Evil Being",
       revealVillagerBody: "Help the village find and eliminate every Werewolf.",
@@ -180,36 +184,16 @@ export const en: Translation = {
       infoExiled: "{name} was exiled!",
     },
     monkeyReveal: {
-      choose: "Choose a player.",
-      confirm: "Reveal card",
-      close: "Close",
-      reopen: "Reopen card",
       noCard: "No card is available. Ask the Game Master.",
     },
     foxReveal: {
-      choose: "Choose a trio of players.",
-      confirm: "Check these players",
-      close: "Close",
-      reopen: "Reopen result",
-      evil: "Yes — one of them is an Evil Being.",
-      clear: "No — none of them is an Evil Being.",
       ranAway: "The Fox ran away. The Fox Tamer has lost their power.",
       confused: "The Fox is confused.",
-    },
-    gypsyReveal: {
-      choose: "Choose a trio of players.",
-      confirm: "Drink from these players",
-      close: "Close",
-      reopen: "Reopen result",
-      poisoned: "Yes — one of them is poisoned.",
-      clear: "No — none of them is poisoned.",
     },
     // GM phone controls and player night action screens.
     phoneActions: {
       colossusInstructions: "Assassinate",
       huntVotes: "Live hunt votes",
-      open: "Open on phones",
-      close: "Not gamble",
       hunt: "Group hunt",
       allies: "Allies",
       poison: "Poison",
@@ -218,12 +202,7 @@ export const en: Translation = {
       priest: "Confession",
       sleepwalker: "Visit",
       soldier: "Soldier",
-      approved: "Correct target",
-      denied: "Wrong target",
       poisonConfirm: "Poison {target}?",
-      save: "Save",
-      ignore: "Ignore",
-      confirm: "Confirm",
       waiting: "Waiting for the Game Master.",
       reconnecting: "Reconnecting...",
       huntRequest: "The Werewolves chose {target}. Accept the kill?",
@@ -235,10 +214,6 @@ export const en: Translation = {
       ignoredComplete: "{actor} chose not to use this action.",
       gamblerChoosePlayers: "Choose one player, or two players to select everyone along the path between them.",
       gamblerChooseRole: "Which character do you think is in this group?",
-      gamblerConfirmPlayers: "Confirm group",
-      gamblerConfirmRole: "Confirm guess",
-      gamblerYes: "YES",
-      gamblerNo: "NO",
       gamblerWrong: "The Gambler commits suicide out of shame.",
       gamblerLongPath: "The longer path is selected.",
     },
@@ -282,8 +257,6 @@ export const en: Translation = {
     assassinationChooseTarget: "Choose a victim in the circle.",
     resurrectionChooseTarget: "Choose a Ghost to resurrect.",
     webChooseTarget: "Choose a player to receive the web.",
-    assassinationConfirm: "Confirm",
-    assassinationExit: "Exit",
     assassinationRequestPending: "Wait for the Narrator to confirm.",
     assassinationRequestError: "The request could not be sent.",
     gmPlayerActionTitle: "Player action",
@@ -294,8 +267,6 @@ export const en: Translation = {
     gmV18ResurrectionComplete: "{actor} chose to resurrect {target}.",
     gmV23WebComplete: "{actor} chose to web {target}.",
     gmPlayerActionDenied: "{actor}'s action targeting {target} was denied.",
-    gmAcceptAction: "Accept",
-    gmDenyAction: "Deny",
     sessionEnded: "Session Ended",
     sessionEndedDesc: "You were removed from the room by the Narrator.",
     backHome: "Back to Home",
@@ -349,10 +320,8 @@ export const en: Translation = {
     shareCodeOrAdd: "Share the code or add players manually",
     allSeated: "All players seated",
     showQR: "Show QR code",
-    close: "Close",
     roomLabel: "Room",
     yourName: "Your name",
-    enter: "Enter",
     roomNotFound: "Room not found",
     gameAlreadyStarted: "This game has already started",
     copyJoinLink: "Copy join link",
@@ -502,7 +471,6 @@ export const en: Translation = {
       manualGameOver: "End Game Manually",
       selectWinCondition: "Choose the winning condition:",
       selectTieWinners: "Select the groups that tied (may be left empty):",
-      dismiss: "Close",
     },
     uses: "Uses:",
     powerExhausted: "Power exhausted",
@@ -570,7 +538,6 @@ export const en: Translation = {
       hideEvent: "Hide event",
       unknownPlayer: "Player",
       noRole: "No card",
-      close: "Close",
       permanentDeath: "Permanent death",
       gypsyPoisonStolen: "Poison stolen from {name}.",
       phaseLabels: {
@@ -602,7 +569,6 @@ export const en: Translation = {
       rulebook: "Rulebook",
       fullscreen: "Fullscreen",
       exitFullscreen: "Exit fullscreen",
-      close: "Close",
       night: "Night",
       day: "Day",
       tribunal: "Tribunal",
@@ -651,8 +617,6 @@ export const en: Translation = {
     // Night script helper lines created by the UI.
     nightScript: {
       dogArticle: "The",
-      boyYes: "YES",
-      boyNo: "NO",
       boyIllusion: "ILLUSION",
       dogHousemaidDistance: "The {Dog} wakes up and learns the distance to the poisoned player",
       mimeOnlyLines: {

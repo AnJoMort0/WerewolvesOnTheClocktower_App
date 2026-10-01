@@ -158,7 +158,7 @@ const JoinRoom = () => {
           >
             {roomStatus === "playing"
               ? travellerCopy.requestJoin
-              : t("enter", lang)}
+              : getTranslation(lang).ui.actions.enter}
           </Button>
         </div>}
         {roomStatus !== "lobby" && roomStatus !== "playing" && (

@@ -1,6 +1,12 @@
 import { WEREWOLF_ROLES } from "@/lib/roles";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
-import type { Translation } from "./types";
+import type { CommonActionStrings, Translation } from "./types";
+
+const actions = {
+  open: "Abrir", close: "Fechar", reopen: "Reabrir", yes: "SIM", no: "NÃO",
+  see: "Ver", choose: "Escolher", confirm: "Confirmar", accept: "Aceitar", deny: "Recusar",
+  ignore: "Ignorar", save: "Salvar", enter: "Entrar", exit: "Sair",
+} satisfies CommonActionStrings;
 
 export const pt: Translation = {
   roleLabels: {
@@ -149,6 +155,7 @@ export const pt: Translation = {
   },
 
   ui: {
+    actions,
     travellers: {
       joinTitle: "Entrar como Viajante?",
       joinDescription: "Este jogo já começou. Podes pedir ao Narrador para entrar como Viajante.",
@@ -160,12 +167,9 @@ export const pt: Translation = {
       qrDescription: "O jogador que chegou atrasado pode ler este código para pedir entrada no jogo atual.",
       requestTitle: "Pedido de Viajante",
       requestDescription: "{name} quer entrar como Viajante.",
-      accept: "Aceitar",
-      deny: "Recusar",
       setupTitle: "Atribuir Viajante",
       alignmentVillager: "Aldeão",
       alignmentEvil: "Criatura Malvada",
-      confirmAssignment: "Confirmar Viajante",
       revealVillagerTitle: "És um Aldeão",
       revealEvilTitle: "És uma Criatura Malvada",
       revealVillagerBody: "Ajuda a aldeia a encontrar e eliminar todos os Lobisomens.",
@@ -180,36 +184,16 @@ export const pt: Translation = {
       infoExiled: "{name} foi exilado!",
     },
     monkeyReveal: {
-      choose: "Escolhe um jogador para ver a sua carta.",
-      confirm: "Revelar carta",
-      close: "Fechar",
-      reopen: "Reabrir carta",
       noCard: "Não há uma carta disponível. Contacta o Narrador.",
     },
     foxReveal: {
-      choose: "Escolhe um trio de jogadores.",
-      confirm: "Verificar estes jogadores",
-      close: "Fechar",
-      reopen: "Reabrir resultado",
-      evil: "Sim — um deles é uma Criatura Malvada.",
-      clear: "Não — nenhum deles é uma Criatura Malvada.",
       ranAway: "A Raposa fugiu. O Domador da Raposa perdeu o seu poder.",
       confused: "A Raposa está confusa.",
-    },
-    gypsyReveal: {
-      choose: "Escolhe um trio de jogadores.",
-      confirm: "Beber destes jogadores",
-      close: "Fechar",
-      reopen: "Reabrir resultado",
-      poisoned: "Sim — um deles está envenenado.",
-      clear: "Não — nenhum deles está envenenado.",
     },
     // GM phone controls and player night action screens.
     phoneActions: {
       colossusInstructions: "Assassinar",
       huntVotes: "Votos da caça em direto",
-      open: "Abrir nos telemóveis",
-      close: "Não apostar",
       hunt: "Caça em grupo",
       allies: "Aliados",
       poison: "Envenenar",
@@ -218,12 +202,7 @@ export const pt: Translation = {
       priest: "Confissão",
       sleepwalker: "Visita",
       soldier: "Soldado",
-      approved: "Alvo correto",
-      denied: "Alvo errado",
       poisonConfirm: "Envenenar {target}?",
-      save: "Salvar",
-      ignore: "Ignorar",
-      confirm: "Confirmar",
       waiting: "A aguardar o Mestre de Jogo.",
       reconnecting: "A restabelecer a ligação...",
       huntRequest: "Os Lobisomens escolheram {target}. Aceitar o assassinato?",
@@ -235,10 +214,6 @@ export const pt: Translation = {
       ignoredComplete: "{actor} escolheu não usar esta ação.",
       gamblerChoosePlayers: "Escolha um jogador, ou dois jogadores para selecionar todos os que estão no caminho entre eles.",
       gamblerChooseRole: "Que personagem acha que está neste grupo?",
-      gamblerConfirmPlayers: "Confirmar grupo",
-      gamblerConfirmRole: "Confirmar aposta",
-      gamblerYes: "SIM",
-      gamblerNo: "NÃO",
       gamblerWrong: "O Apostador suicida-se por vergonha.",
       gamblerLongPath: "O caminho mais longo está selecionado.",
     },
@@ -282,8 +257,6 @@ export const pt: Translation = {
     assassinationChooseTarget: "Escolhe uma vítima no círculo.",
     resurrectionChooseTarget: "Escolhe um Fantasma para ressuscitar.",
     webChooseTarget: "Escolhe um jogador para receber a teia.",
-    assassinationConfirm: "Confirmar",
-    assassinationExit: "Sair",
     assassinationRequestPending: "Aguarda que o Mestre de Jogo confirme.",
     assassinationRequestError: "Não foi possível enviar o pedido.",
     gmPlayerActionTitle: "Ação de jogador",
@@ -294,8 +267,6 @@ export const pt: Translation = {
     gmV18ResurrectionComplete: "{actor} escolheu ressuscitar {target}.",
     gmV23WebComplete: "{actor} escolheu colocar a teia em {target}.",
     gmPlayerActionDenied: "A ação de {actor} sobre {target} foi recusada.",
-    gmAcceptAction: "Aceitar",
-    gmDenyAction: "Recusar",
     sessionEnded: "Sessão Terminada",
     sessionEndedDesc: "Foste removido da sala pelo Mestre de Jogo.",
     backHome: "Voltar ao Início",
@@ -349,10 +320,8 @@ export const pt: Translation = {
     shareCodeOrAdd: "Partilha o código ou adiciona jogadores manualmente",
     allSeated: "Todos os jogadores sentados",
     showQR: "Mostrar código QR",
-    close: "Fechar",
     roomLabel: "Sala",
     yourName: "O teu nome",
-    enter: "Entrar",
     roomNotFound: "Sala não encontrada",
     gameAlreadyStarted: "Este jogo já começou",
     copyJoinLink: "Copiar link de entrada",
@@ -502,7 +471,6 @@ export const pt: Translation = {
       manualGameOver: "Terminar Jogo Manualmente",
       selectWinCondition: "Escolhe a condição de vitória:",
       selectTieWinners: "Seleciona os grupos que empataram (pode ficar vazio):",
-      dismiss: "Fechar",
     },
     uses: "Usos:",
     powerExhausted: "Poder esgotado",
@@ -570,7 +538,6 @@ export const pt: Translation = {
       hideEvent: "Ocultar acontecimento",
       unknownPlayer: "Jogador",
       noRole: "Sem carta",
-      close: "Fechar",
       permanentDeath: "Morte permanente",
       gypsyPoisonStolen: "Veneno roubado de {name}.",
       phaseLabels: {
@@ -602,7 +569,6 @@ export const pt: Translation = {
       rulebook: "Regras",
       fullscreen: "Ecrã inteiro",
       exitFullscreen: "Sair do ecrã inteiro",
-      close: "Fechar",
       night: "Noite",
       day: "Dia",
       tribunal: "Tribunal",
@@ -651,8 +617,6 @@ export const pt: Translation = {
     // Linhas auxiliares do script da noite criadas pela UI.
     nightScript: {
       dogArticle: "O",
-      boyYes: "SIM",
-      boyNo: "NÃO",
       boyIllusion: "ILUSÃO",
       dogHousemaidDistance: "O {Cão} acorda e é-lhe revelada a distância até à pessoa envenenada",
       mimeOnlyLines: {

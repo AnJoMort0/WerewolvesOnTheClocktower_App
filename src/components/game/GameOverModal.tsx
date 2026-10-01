@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLanguage, getGameOver, getWinLabel, type WinKind } from "@/lib/i18n";
+import { useLanguage, getGameOver, getTranslation, getWinLabel, type WinKind } from "@/lib/i18n";
 import { useModalBackdrop } from "@/lib/modalBackdrop";
 
 interface GameOverModalProps {
@@ -38,7 +38,7 @@ export const GameOverModal = ({ open, kind, outcome, onDismiss }: GameOverModalP
               {getGameOver("winSubtitlePrefix", lang)}<strong>{getWinLabel(kind, lang)}</strong>
             </p>
             <Button variant="secondary" className="w-full font-display" onClick={onDismiss}>
-              <X className="h-4 w-4 mr-2" /> {getGameOver("dismiss", lang)}
+              <X className="h-4 w-4 mr-2" /> {getTranslation(lang).ui.actions.close}
             </Button>
           </motion.div>
         </motion.div>

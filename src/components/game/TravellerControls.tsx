@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { GameModal } from "@/components/game/GameModal";
 import { RoleSelector } from "@/components/game/RoleSelector";
 import type { RoleId } from "@/lib/roles";
-import { format, getRoleLabel, getTranslation, t, type Language } from "@/lib/i18n";
+import { format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import type { TravellerAlignment } from "@/lib/travellers";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
@@ -22,8 +22,9 @@ export function TravellerInviteModal({ open, onClose, joinUrl, language }: {
   joinUrl: string;
   language: Language;
 }) {
-  const copy = getTranslation(language).ui.travellers;
-  return <GameModal open={open} onClose={onClose} title={copy.qrTitle} subtitle={copy.qrDescription} closeLabel={t("close", language)}>
+  const ui = getTranslation(language).ui;
+  const copy = ui.travellers;
+  return <GameModal open={open} onClose={onClose} title={copy.qrTitle} subtitle={copy.qrDescription} closeLabel={ui.actions.close}>
     <div className="flex flex-col items-center gap-4 py-3">
       <div className="rounded-xl bg-parchment p-4 shadow-lg">
         <QRCodeSVG value={joinUrl} size={280} bgColor="hsl(40, 30%, 85%)" fgColor="hsl(30, 10%, 8%)" />
@@ -39,7 +40,8 @@ export function TravellerRequestPanel({ player, language, onAccept, onDeny }: {
   onAccept: () => void;
   onDeny: () => void;
 }) {
-  const copy = getTranslation(language).ui.travellers;
+  const ui = getTranslation(language).ui;
+  const copy = ui.travellers;
   return <aside className="fixed right-4 top-4 z-[70] w-[calc(100vw-2rem)] max-w-sm rounded-xl border border-gold/60 bg-card p-4 shadow-2xl paper-texture">
     <div className="flex items-start gap-3">
       <UserPlus className="mt-0.5 h-6 w-6 shrink-0 text-gold" />
@@ -49,8 +51,8 @@ export function TravellerRequestPanel({ player, language, onAccept, onDeny }: {
       </div>
     </div>
     <div className="mt-4 grid grid-cols-2 gap-2">
-      <Button type="button" variant="secondary" onClick={onDeny}><X className="mr-2 h-4 w-4" />{copy.deny}</Button>
-      <Button type="button" onClick={onAccept}><Check className="mr-2 h-4 w-4" />{copy.accept}</Button>
+      <Button type="button" variant="secondary" onClick={onDeny}><X className="mr-2 h-4 w-4" />{ui.actions.deny}</Button>
+      <Button type="button" onClick={onAccept}><Check className="mr-2 h-4 w-4" />{ui.actions.accept}</Button>
     </div>
   </aside>;
 }
@@ -63,7 +65,8 @@ export function TravellerAssignmentCard({ player, roleId, alignment, language, o
   onRoleChange: (roleId: RoleId) => void;
   onConfirm: () => void;
 }) {
-  const copy = getTranslation(language).ui.travellers;
+  const ui = getTranslation(language).ui;
+  const copy = ui.travellers;
   const { skinPackId } = useSkinPack();
   const roleImage = resolveRoleImage(roleId, {
     skinPackId,
@@ -81,7 +84,7 @@ export function TravellerAssignmentCard({ player, roleId, alignment, language, o
     </div>
     <RoleSelector value={roleId} onChange={onRoleChange} travellerOnly />
     <Button type="button" className="w-full font-display" onClick={onConfirm}>
-      {copy.confirmAssignment}
+      {ui.actions.confirm}
     </Button>
   </section>;
 }

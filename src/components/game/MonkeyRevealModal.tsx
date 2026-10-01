@@ -20,20 +20,22 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
   onRoleClick?: (roleId: RoleId) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const text = getTranslation(language).ui.monkeyReveal;
+  const ui = getTranslation(language).ui;
+  const text = ui.monkeyReveal;
+  const actions = ui.actions;
   const revealed = session.monkeyReveal;
   const target = session.players.find((p) => p.id === (revealed?.targetPlayerId ?? selected));
   if (session.visible === false) return onReopen ? (
     <Button variant="secondary" disabled={pending || !connected} onClick={onReopen}>
-      <Eye className="mr-2 h-4 w-4" />{text.reopen}
+      <Eye className="mr-2 h-4 w-4" />{actions.reopen}
     </Button>
   ) : null;
   const footer = <div className="flex flex-col gap-2">
     {!revealed && <Button disabled={!target?.selectable || pending || !connected} onClick={() => target && onConfirm(target.id)}>
-      <Eye className="mr-2 h-4 w-4" />{text.confirm}{target ? `: ${target.name}` : ""}
+      <Eye className="mr-2 h-4 w-4" />{actions.see}{target ? `: ${target.name}` : ""}
     </Button>}
     {onClose && <Button variant="secondary" onClick={onClose} disabled={pending || !connected}>
-      <X className="mr-2 h-4 w-4" />{text.close}
+      <X className="mr-2 h-4 w-4" />{actions.close}
     </Button>}
   </div>;
   const content = revealed ? (
@@ -49,9 +51,9 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
     {session.error && <p role="status" className="text-sm text-muted-foreground">{text.noCard}</p>}
   </>;
   const title = getRoleLabel("v26", language);
-  const subtitle = revealed ? target?.name : text.choose;
+  const subtitle = revealed ? target?.name : actions.choose;
   return embedded
     ? <GamePanel title={title} subtitle={subtitle} footer={footer}>{content}</GamePanel>
-    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={text.close}
+    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={actions.close}
       showCloseButton={false} dismissible={!!onClose && !pending && connected} footer={footer}>{content}</GameModal>;
 }

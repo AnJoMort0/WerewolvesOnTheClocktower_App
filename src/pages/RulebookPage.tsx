@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID, RULEBOOK_TOP_ID, isRulebookCharacterId } from "@/lib/rulebook";
-import { coerceLanguage, t, type Language } from "@/lib/i18n";
+import { coerceLanguage, getTranslation, t, type Language } from "@/lib/i18n";
 import { useSkinPack } from "@/lib/skinPackContext";
 import type { RulebookSkinPreviewValue } from "@/lib/skinPacks";
 import { handleRulebookSkinPreviewChange } from "@/lib/rulebookSkinPreview";
@@ -85,8 +85,8 @@ export default function RulebookPage({ standalone = false }: { standalone?: bool
         variant="secondary"
         className="fixed right-4 top-4 z-20 h-10 w-10 rounded-md shadow-md"
         onClick={leaveRulebook}
-        aria-label={t("close", language)}
-        title={t("close", language)}
+        aria-label={getTranslation(language).ui.actions.close}
+        title={getTranslation(language).ui.actions.close}
       >
         <X className="h-5 w-5" />
       </Button>}

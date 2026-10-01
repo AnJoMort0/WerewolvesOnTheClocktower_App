@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { t, type Language } from "@/lib/i18n";
+import { getTranslation, type Language } from "@/lib/i18n";
 import { RULEBOOK_TEXT } from "@/lib/rulebookContent";
 
 type LoreNote = { anchor: HTMLButtonElement; text: string; hover: boolean };
@@ -94,7 +94,7 @@ export function RulebookLoreNotes({ container, contentKey, language }: {
         onMouseEnter={cancelClose} onMouseLeave={closeHover}>
         {note.text}
         <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1 h-6 w-6" onClick={close}
-          aria-label={t("close", language)}><X className="h-3 w-3" /></Button>
+          aria-label={getTranslation(language).ui.actions.close}><X className="h-3 w-3" /></Button>
         <Popover.Arrow className="fill-[#403422]" width={12} height={6} />
       </Popover.Content>
     </Popover.Portal>

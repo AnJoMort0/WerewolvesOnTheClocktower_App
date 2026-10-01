@@ -17,24 +17,26 @@ export function FoxRevealModal({ session, language, pending = false, connected =
   onReopen?: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const text = getTranslation(language).ui.foxReveal;
+  const ui = getTranslation(language).ui;
+  const text = ui.foxReveal;
+  const actions = ui.actions;
   const revealed = session.foxReveal;
   const targetId = revealed?.targetPlayerId ?? selected;
   const target = session.players.find((player) => player.id === targetId);
   const ResultIcon = revealed?.result === "evil" ? ThumbsUp : revealed?.result === "clear" ? ThumbsDown : CircleHelp;
-  const resultText = revealed?.result === "evil" ? text.evil : revealed?.result === "clear" ? text.clear : text.confused;
+  const resultText = revealed?.result === "evil" ? actions.yes : revealed?.result === "clear" ? actions.no : text.confused;
 
   if (session.visible === false) return onReopen ? (
     <Button variant="secondary" disabled={pending || !connected} onClick={onReopen}>
-      <PawPrint className="mr-2 h-4 w-4" />{text.reopen}
+      <PawPrint className="mr-2 h-4 w-4" />{actions.reopen}
     </Button>
   ) : null;
   const footer = <div className="flex flex-col gap-2">
     {!revealed && <Button disabled={!target?.selectable || pending || !connected} onClick={() => target && onConfirm(target.id)}>
-      <PawPrint className="mr-2 h-4 w-4" />{text.confirm}{target ? `: ${target.name}` : ""}
+      <PawPrint className="mr-2 h-4 w-4" />{actions.confirm}{target ? `: ${target.name}` : ""}
     </Button>}
     {onClose && <Button variant="secondary" onClick={onClose} disabled={pending || !connected}>
-      <X className="mr-2 h-4 w-4" />{text.close}
+      <X className="mr-2 h-4 w-4" />{actions.close}
     </Button>}
   </div>;
   const content = <div className="space-y-4">
@@ -52,9 +54,9 @@ export function FoxRevealModal({ session, language, pending = false, connected =
     </div>}
   </div>;
   const title = getRoleLabel("v04", language);
-  const subtitle = revealed ? target?.name : text.choose;
+  const subtitle = revealed ? target?.name : actions.choose;
   return embedded
     ? <GamePanel title={title} subtitle={subtitle} footer={footer}>{content}</GamePanel>
-    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={text.close}
+    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={actions.close}
       showCloseButton={false} dismissible={!!onClose && !pending && connected} footer={footer}>{content}</GameModal>;
 }

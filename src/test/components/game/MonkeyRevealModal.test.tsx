@@ -18,12 +18,12 @@ describe("Monkey reveal modal", () => {
     const onConfirm = vi.fn(), onClose = vi.fn(), onReopen = vi.fn(), onRoleClick = vi.fn();
     const props = { language: "en" as const, onConfirm, onClose, onReopen, onRoleClick };
     const { rerender } = render(<MonkeyRevealModal {...props} session={view} />);
-    expect(screen.getByRole("button", { name: "Reveal card" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Reveal card" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "See" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "See" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Close" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Wolf" }));
     expect(onConfirm).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Reveal card: Wolf" }));
+    fireEvent.click(screen.getByRole("button", { name: "See: Wolf" }));
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith("wolf");
     const resolved = { ...view, monkeyReveal: { targetPlayerId: "wolf", roleId: "e01" as const, evil: true } };
     rerender(<MonkeyRevealModal {...props} session={resolved} />);
@@ -36,7 +36,7 @@ describe("Monkey reveal modal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledOnce();
     rerender(<MonkeyRevealModal {...props} session={{ ...resolved, visible: false }} />);
-    fireEvent.click(screen.getByRole("button", { name: "Reopen card" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
     expect(onReopen).toHaveBeenCalledOnce();
     rerender(<MonkeyRevealModal {...props} session={{ ...resolved, visible: true }} />);
     expect(screen.getByRole("img", { name: "Werewolf" })).toBeInTheDocument();

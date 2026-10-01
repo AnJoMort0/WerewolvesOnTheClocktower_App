@@ -3,7 +3,7 @@ import QrScanner from "qr-scanner";
 import { ImagePlus, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameModal } from "@/components/game/GameModal";
-import { t, type Language } from "@/lib/i18n";
+import { getTranslation, t, type Language } from "@/lib/i18n";
 import { parseRoomQrDestination, type RoomQrDestination } from "@/lib/roomQr";
 
 export function RoomQrScannerModal({ open, language, onClose, onScanned }: {
@@ -62,7 +62,7 @@ export function RoomQrScannerModal({ open, language, onClose, onScanned }: {
   };
 
   return <GameModal open={open} onClose={onClose} title={t("qrScannerTitle", language)}
-    subtitle={t("qrScannerInstructions", language)} closeLabel={t("close", language)}>
+    subtitle={t("qrScannerInstructions", language)} closeLabel={getTranslation(language).ui.actions.close}>
     <div className="space-y-4">
       <div className="relative aspect-square overflow-hidden rounded-lg border border-primary/40 bg-black">
         <video ref={videoRef} muted playsInline className="h-full w-full object-cover" />

@@ -32,7 +32,7 @@ describe("Gambler guess modal", () => {
     fireEvent.click(screen.getByRole("button", { name: "D" }));
     expect(screen.getByRole("button", { name: "B" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "F" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Confirm group" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     expect(onConfirmPlayers).toHaveBeenCalledWith(["a", "f", "e", "d"]);
   });
 
@@ -54,7 +54,7 @@ describe("Gambler guess modal", () => {
     expect(screen.getByTestId("gambler-role-grid")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Gambler" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Bear Tamer" }));
-    fireEvent.click(screen.getByRole("button", { name: "Confirm guess" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     expect(onConfirmRole).toHaveBeenCalledWith("v02");
 
     rerender(<GamblerGuessModal {...props} session={{ ...view, pendingTargetPlayerIds: ["b", "c"], completed: true,
@@ -80,5 +80,21 @@ describe("Gambler guess modal", () => {
       hasAdvancedRolesInGame: true, hasLameRolesInGame: true }} />);
     expect(screen.getByRole("button", { name: "Actor" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Ordinary Townsfolk" })).toBeVisible();
+  });
+
+  it("lets the player ignore only before confirming a group and leaves later closing to the GM", () => {
+    const onIgnore = vi.fn();
+    const props = { embedded: true, language: "en" as const, onConfirmPlayers: vi.fn(), onConfirmRole: vi.fn(), onIgnore };
+    const { rerender } = render(<GamblerGuessModal {...props} session={view} />);
+    fireEvent.click(screen.getByRole("button", { name: "Ignore" }));
+    expect(onIgnore).toHaveBeenCalledOnce();
+
+    rerender(<GamblerGuessModal {...props} session={{ ...view, pendingTargetPlayerIds: ["b", "c"] }} />);
+    expect(screen.queryByRole("button", { name: "Ignore" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
+
+    rerender(<GamblerGuessModal {...props} session={{ ...view, completed: true, ignored: true }} />);
+    expect(screen.getByRole("status")).toHaveTextContent("chose not to use this action");
+    expect(screen.queryByRole("button", { name: "Ignore" })).not.toBeInTheDocument();
   });
 });

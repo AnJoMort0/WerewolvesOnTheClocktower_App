@@ -1,6 +1,12 @@
 import { WEREWOLF_ROLES } from "@/lib/roles";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
-import type { Translation } from "./types";
+import type { CommonActionStrings, Translation } from "./types";
+
+const actions = {
+  open: "Ouvrir", close: "Fermer", reopen: "Rouvrir", yes: "OUI", no: "NON",
+  see: "Voir", choose: "Choisir", confirm: "Confirmer", accept: "Accepter", deny: "Refuser",
+  ignore: "Ignorer", save: "Sauver", enter: "Entrer", exit: "Quitter",
+} satisfies CommonActionStrings;
 
 export const fr: Translation = {
   roleLabels: {
@@ -149,6 +155,7 @@ export const fr: Translation = {
   },
 
   ui: {
+    actions,
     travellers: {
       joinTitle: "Rejoindre comme Voyageur ?",
       joinDescription: "Cette partie a déjà commencé. Tu peux demander au Meneur de te laisser rejoindre comme Voyageur.",
@@ -160,12 +167,9 @@ export const fr: Translation = {
       qrDescription: "Le joueur arrivé en retard peut scanner ce code pour demander à rejoindre la partie en cours.",
       requestTitle: "Demande de Voyageur",
       requestDescription: "{name} souhaite rejoindre comme Voyageur.",
-      accept: "Accepter",
-      deny: "Refuser",
       setupTitle: "Attribuer le Voyageur",
       alignmentVillager: "Villageois",
       alignmentEvil: "Créature Maléfique",
-      confirmAssignment: "Confirmer le Voyageur",
       revealVillagerTitle: "Tu es Villageois",
       revealEvilTitle: "Tu es une Créature Maléfique",
       revealVillagerBody: "Aide le village à trouver et éliminer tous les Loups-garous.",
@@ -180,36 +184,16 @@ export const fr: Translation = {
       infoExiled: "{name} a été exilé !",
     },
     monkeyReveal: {
-      choose: "Choisis un joueur.",
-      confirm: "Révèler la carte",
-      close: "Fermer",
-      reopen: "Revoir la carte",
       noCard: "Aucune carte disponible. Contacte le Meneur.",
     },
     foxReveal: {
-      choose: "Choisis un trio de joueurs.",
-      confirm: "Vérifier ces joueurs",
-      close: "Fermer",
-      reopen: "Revoir le résultat",
-      evil: "Oui — l’un d’eux est une Créature Maléfique.",
-      clear: "Non — aucun d’eux n’est une Créature Maléfique.",
       ranAway: "Le Renard s’est enfui. Le Maître du Renard a perdu son pouvoir.",
       confused: "Le Renard est confus.",
-    },
-    gypsyReveal: {
-      choose: "Choisissez un trio.",
-      confirm: "Boire de ces joueurs",
-      close: "Fermer",
-      reopen: "Rouvrir le résultat",
-      poisoned: "Oui — l'un d'eux est empoisonné.",
-      clear: "Non — aucun d'eux n'est empoisonné.",
     },
     // GM phone controls and player night action screens.
     phoneActions: {
       colossusInstructions: "Assassiner",
       huntVotes: "Votes de chasse en direct",
-      open: "Ouvrir sur les téléphones",
-      close: "Ne pas parier",
       hunt: "Chasse en groupe",
       allies: "Alliés",
       poison: "Empoisonner",
@@ -218,12 +202,7 @@ export const fr: Translation = {
       priest: "Confession",
       sleepwalker: "Visite",
       soldier: "Soldat",
-      approved: "Bonne cible",
-      denied: "Mauvaise cible",
       poisonConfirm: "Empoisonner {target} ?",
-      save: "Sauver",
-      ignore: "Ignorer",
-      confirm: "Confirmer",
       waiting: "En attente du Maître du Jeu.",
       reconnecting: "Reconnexion...",
       huntRequest: "Les Loups-garous ont choisi {target}. Accepter le meurtre ?",
@@ -235,10 +214,6 @@ export const fr: Translation = {
       ignoredComplete: "{actor} a choisi de ne pas utiliser cette action.",
       gamblerChoosePlayers: "Choisissez un joueur, ou deux joueurs pour sélectionner tous ceux qui se trouvent sur le chemin entre eux.",
       gamblerChooseRole: "Quel personnage pensez-vous trouver dans ce groupe ?",
-      gamblerConfirmPlayers: "Confirmer le groupe",
-      gamblerConfirmRole: "Confirmer le pari",
-      gamblerYes: "OUI",
-      gamblerNo: "NON",
       gamblerWrong: "Le Parieur se suicide de honte.",
       gamblerLongPath: "Le chemin le plus long est sélectionné.",
     },
@@ -282,8 +257,6 @@ export const fr: Translation = {
     assassinationChooseTarget: "Choisis une victime dans le cercle.",
     resurrectionChooseTarget: "Choisis un Fantôme à ressusciter.",
     webChooseTarget: "Choisis un joueur sur lequel placer la toile.",
-    assassinationConfirm: "Confirmer",
-    assassinationExit: "Quitter",
     assassinationRequestPending: "Attends que le Maître du Jeu confirme.",
     assassinationRequestError: "Impossible d'envoyer la demande.",
     gmPlayerActionTitle: "Action de joueur",
@@ -294,8 +267,6 @@ export const fr: Translation = {
     gmV18ResurrectionComplete: "{actor} a choisi de ressusciter {target}.",
     gmV23WebComplete: "{actor} a choisi de placer sa toile sur {target}.",
     gmPlayerActionDenied: "L’action de {actor} visant {target} a été refusée.",
-    gmAcceptAction: "Accepter",
-    gmDenyAction: "Refuser",
     sessionEnded: "Session Terminée",
     sessionEndedDesc: "Tu as été retiré de la salle par le Maître du Jeu.",
     backHome: "Retour à l'Accueil",
@@ -349,10 +320,8 @@ export const fr: Translation = {
     shareCodeOrAdd: "Partage le code ou ajoute des joueurs manuellement",
     allSeated: "Tous les joueurs sont assis",
     showQR: "Afficher le code QR",
-    close: "Fermer",
     roomLabel: "Salle",
     yourName: "Ton nom",
-    enter: "Entrer",
     roomNotFound: "Salle introuvable",
     gameAlreadyStarted: "Cette partie a déjà commencé",
     copyJoinLink: "Copier le lien d'entrée",
@@ -502,7 +471,6 @@ export const fr: Translation = {
       manualGameOver: "Terminer la Partie Manuellement",
       selectWinCondition: "Choisis la condition de victoire :",
       selectTieWinners: "Sélectionne les groupes à égalité (peut rester vide) :",
-      dismiss: "Fermer",
     },
     uses: "Utilisations :",
     powerExhausted: "Pouvoir épuisé",
@@ -570,7 +538,6 @@ export const fr: Translation = {
       hideEvent: "Masquer l’événement",
       unknownPlayer: "Joueur",
       noRole: "Sans carte",
-      close: "Fermer",
       permanentDeath: "Mort permanente",
       gypsyPoisonStolen: "Poison volé à {name}.",
       phaseLabels: {
@@ -602,7 +569,6 @@ export const fr: Translation = {
       rulebook: "Règles",
       fullscreen: "Plein écran",
       exitFullscreen: "Quitter le plein écran",
-      close: "Fermer",
       night: "Nuit",
       day: "Jour",
       tribunal: "Tribunal",
@@ -651,8 +617,6 @@ export const fr: Translation = {
     // Lignes auxiliaires du script de nuit créées par l'UI.
     nightScript: {
       dogArticle: "Le",
-      boyYes: "OUI",
-      boyNo: "NON",
       boyIllusion: "ILLUSION",
       dogHousemaidDistance: "Le {Chien} se réveille et la distance jusqu'à la personne empoisonnée lui est révélée",
       mimeOnlyLines: {

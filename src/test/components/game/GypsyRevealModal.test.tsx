@@ -15,7 +15,7 @@ const view: PhoneView = { id: "gypsy", mode: PHONE_MODE.GYPSY_POISON_CHECK, part
 describe("Gypsy reveal modal", () => {
   it("selects a trio, confirms separately, and keeps the answer visible", () => {
     const onConfirm = vi.fn();
-    const confirmLabel = getTranslation("en").ui.gypsyReveal.confirm;
+    const confirmLabel = getTranslation("en").ui.actions.confirm;
     const { rerender } = render(<GypsyRevealModal embedded language="en" session={view} onConfirm={onConfirm} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
     expect(screen.getByRole("button", { name: "Left" }).querySelector("span")).toHaveClass("border-amber-400");
@@ -25,7 +25,7 @@ describe("Gypsy reveal modal", () => {
     rerender(<GypsyRevealModal embedded language="en" session={{ ...view, gypsyReveal: {
       targetPlayerId: "target", playerIds: ["left", "target", "right"], poisoned: true,
     } }} onConfirm={onConfirm} />);
-    expect(screen.getByRole("status")).toHaveTextContent("one of them is poisoned");
+    expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.actions.yes);
     expect(screen.queryByRole("button", { name: new RegExp(confirmLabel) })).not.toBeInTheDocument();
   });
 });

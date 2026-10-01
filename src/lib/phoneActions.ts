@@ -385,6 +385,7 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   }
   if (session.completed) return { session: next };
   if (command.type === "ignore" && (session.mode === PHONE_MODE.SHAMAN_SAVE
+    || session.mode === PHONE_MODE.GAMBLER_GUESS && !session.pendingTargetPlayerIds?.length
     || isRoleActionPhoneMode(session.mode) && canIgnoreRoleActionPhoneMode(session.mode))) {
     const completed = { ...next, completed: true, ignored: true };
     return { session: completed, completedSession: completed };

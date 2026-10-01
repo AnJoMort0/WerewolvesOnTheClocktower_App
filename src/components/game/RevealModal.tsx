@@ -1,5 +1,5 @@
 import { ROLES, type RoleId } from "@/lib/roles";
-import { getRoleLabel, t, type Language } from "@/lib/i18n";
+import { getRoleLabel, getTranslation, t, type Language } from "@/lib/i18n";
 import ghostExecutedIcon from "@/assets/display/icons/ghost_executed.webp";
 import villagerIcon from "@/assets/display/icons/villager.webp";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ interface RevealModalProps {
 
 export const RevealModal = ({ open, onClose, title, subtitle, cards, language = "pt", dismissible = true, actionLabel, onRoleClick }: RevealModalProps) => (
   <GameModal open={open} onClose={onClose} title={title} subtitle={subtitle}
-    closeLabel={t("close", language)} dismissible={dismissible} wide={cards.length > 1}
+    closeLabel={getTranslation(language).ui.actions.close} dismissible={dismissible} wide={cards.length > 1}
     footer={actionLabel ? <Button type="button" onClick={onClose} className="w-full font-display tracking-wider">
       {actionLabel}
     </Button> : undefined}>

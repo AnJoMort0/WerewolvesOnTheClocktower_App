@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useLanguage, getGameOver, getWinLabel, format, type WinKind } from "@/lib/i18n";
+import { useLanguage, getGameOver, getTranslation, getWinLabel, format, type WinKind } from "@/lib/i18n";
 import type { AutomaticWinKind } from "@/lib/victory";
 import { useModalBackdrop } from "@/lib/modalBackdrop";
 
@@ -108,7 +108,7 @@ export const WinPickerModal = ({ open, onPick, onClose }: WinPickerModalProps) =
           >
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-gradient-blood">{getGameOver("manualGameOver", lang)}</h2>
-              <Button type="button" size="icon" variant="ghost" onClick={onClose} aria-label={getGameOver("dismiss", lang)} title={getGameOver("dismiss", lang)}>
+              <Button type="button" size="icon" variant="ghost" onClick={onClose} aria-label={getTranslation(lang).ui.actions.close} title={getTranslation(lang).ui.actions.close}>
                 <X className="h-5 w-5" />
               </Button>
             </div>

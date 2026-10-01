@@ -52,10 +52,10 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
     else onResolveHunt(session.id, proposal, accepted);
   };
   return <GameModal open onClose={onClose} title={title} subtitle={subtitle}
-    closeLabel={text.close} dismissible={false} showCloseButton
+    closeLabel={translation.ui.actions.close} dismissible={false} showCloseButton
     footer={proposal && requiresApproval && !session.completed && !session.approvalResult ? <div className="flex flex-wrap justify-end gap-2">
-      <Button variant="secondary" onClick={() => resolve(false)}>{translation.ui.gmDenyAction}</Button>
-      <Button variant="destructive" onClick={() => resolve(true)}>{translation.ui.gmAcceptAction}</Button>
+      <Button variant="secondary" onClick={() => resolve(false)}>{translation.ui.actions.deny}</Button>
+      <Button variant="destructive" onClick={() => resolve(true)}>{translation.ui.actions.accept}</Button>
     </div> : undefined}>
     <PhoneActionScreen key={session.id} session={view} playerId="gm" language={language}
       pending={false} connected gmControlled showHeader={false} showSelectionStatus={false} unframed onSend={onSend} onRoleClick={onRoleClick} />

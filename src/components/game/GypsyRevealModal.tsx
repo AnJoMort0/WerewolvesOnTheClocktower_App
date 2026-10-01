@@ -17,23 +17,23 @@ export function GypsyRevealModal({ session, language, pending = false, connected
   onReopen?: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const text = getTranslation(language).ui.gypsyReveal;
+  const actions = getTranslation(language).ui.actions;
   const revealed = session.gypsyReveal;
   const targetId = revealed?.targetPlayerId ?? selected;
   const target = session.players.find((player) => player.id === targetId);
 
   if (session.visible === false) return onReopen ? (
     <Button variant="secondary" disabled={pending || !connected} onClick={onReopen}>
-      <SearchCheck className="mr-2 h-4 w-4" />{text.reopen}
+      <SearchCheck className="mr-2 h-4 w-4" />{actions.reopen}
     </Button>
   ) : null;
 
   const footer = <div className="flex flex-col gap-2">
     {!revealed && <Button disabled={!target?.selectable || pending || !connected} onClick={() => target && onConfirm(target.id)}>
-      <SearchCheck className="mr-2 h-4 w-4" />{text.confirm}{target ? `: ${target.name}` : ""}
+      <SearchCheck className="mr-2 h-4 w-4" />{actions.confirm}{target ? `: ${target.name}` : ""}
     </Button>}
     {onClose && <Button variant="secondary" onClick={onClose} disabled={pending || !connected}>
-      <X className="mr-2 h-4 w-4" />{text.close}
+      <X className="mr-2 h-4 w-4" />{actions.close}
     </Button>}
   </div>;
   const content = <div className="space-y-4">
@@ -46,13 +46,13 @@ export function GypsyRevealModal({ session, language, pending = false, connected
       {revealed.poisoned
         ? <CheckCircle2 className="mx-auto mb-2 h-9 w-9" />
         : <XCircle className="mx-auto mb-2 h-9 w-9" />}
-      <p className="font-display text-lg font-semibold">{revealed.poisoned ? text.poisoned : text.clear}</p>
+      <p className="font-display text-lg font-semibold">{revealed.poisoned ? actions.yes : actions.no}</p>
     </div>}
   </div>;
   const title = getRoleLabel("v12", language);
-  const subtitle = revealed ? target?.name : text.choose;
+  const subtitle = revealed ? target?.name : actions.choose;
   return embedded
     ? <GamePanel title={title} subtitle={subtitle} footer={footer}>{content}</GamePanel>
-    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={text.close}
+    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={actions.close}
       showCloseButton={false} dismissible={!!onClose && !pending && connected} footer={footer}>{content}</GameModal>;
 }

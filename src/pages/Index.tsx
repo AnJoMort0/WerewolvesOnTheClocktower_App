@@ -8,7 +8,7 @@ import { Users, Crown, BookOpen, Download, QrCode } from "lucide-react";
 import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorButton";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import villagerIcon from "@/assets/display/icons/villager.webp";
-import { SUPPORTED_LANGUAGES, coerceLanguage, getToast, t, type Language } from "@/lib/i18n";
+import { SUPPORTED_LANGUAGES, coerceLanguage, getToast, getTranslation, t, type Language } from "@/lib/i18n";
 import { toast } from "sonner";
 import { cleanupObsoleteGameStorage } from "@/lib/playerSession";
 import { usePwaInstallPrompt } from "@/lib/pwaInstall";
@@ -219,8 +219,8 @@ const Index = () => {
               disabled={joinCode.trim().length < 4}
               variant="secondary"
               className="h-14 px-6"
-              aria-label={t("enter", language)}
-              title={t("enter", language)}
+              aria-label={getTranslation(language).ui.actions.enter}
+              title={getTranslation(language).ui.actions.enter}
             >
               <Users className="h-5 w-5" />
             </Button>

@@ -54,7 +54,9 @@ export default function RoomDisplay() {
   };
 
   const language = coerceLanguage(snapshot?.language);
-  const copy = getTranslation(language).ui.roomDisplay;
+  const ui = getTranslation(language).ui;
+  const copy = ui.roomDisplay;
+  const actions = ui.actions;
   const permanentlyDead = useMemo(() => new Set(snapshot?.permanentlyDead ?? []), [snapshot?.permanentlyDead]);
   const playerEffects = useMemo(() => Object.fromEntries(
     Object.entries(snapshot?.playerEffects ?? {}).map(([playerId, effects]) => [playerId, normalizeStatusEffectSet(effects)]),
@@ -97,7 +99,7 @@ export default function RoomDisplay() {
               <Button type="button" size="icon" variant="secondary" onClick={toggleFullscreen} title={isFullscreen ? copy.exitFullscreen : copy.fullscreen} aria-label={isFullscreen ? copy.exitFullscreen : copy.fullscreen}>
                 {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
               </Button>
-              <Button type="button" size="icon" variant="secondary" onClick={() => window.close()} title={copy.close} aria-label={copy.close}>
+              <Button type="button" size="icon" variant="secondary" onClick={() => window.close()} title={actions.close} aria-label={actions.close}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -196,7 +198,7 @@ export default function RoomDisplay() {
                   {snapshot.roomCode}
                 </div>
                 <button type="button" onClick={() => setQrPopupOpen(false)} className="font-display text-sm uppercase tracking-widest text-muted-foreground hover:text-foreground">
-                  {copy.close}
+                  {actions.close}
                 </button>
               </motion.div>
             </motion.div>

@@ -6504,9 +6504,9 @@ const GMRoom = () => {
               <GMPlayerActionApprovalPanel
                 title={tt("gmPlayerActionTitle")}
                 description={pendingPlayerActionDescription}
-                acceptLabel={tt("gmAcceptAction")}
-                denyLabel={tt("gmDenyAction")}
-                closeLabel={tt("close")}
+                acceptLabel={getTranslation(lang).ui.actions.accept}
+                denyLabel={getTranslation(lang).ui.actions.deny}
+                closeLabel={getTranslation(lang).ui.actions.close}
                 resolved={!!resolvedPlayerActionNotice}
                 onClose={() => setResolvedPlayerActionNotice(null)}
                 onDeny={() => {
@@ -7488,7 +7488,7 @@ const GMRoom = () => {
               <button
                 onClick={() => setQrPopupOpen(false)}
                 className="text-muted-foreground hover:text-foreground font-display text-sm tracking-widest uppercase"
-              >{tt("close")}</button>
+              >{getTranslation(lang).ui.actions.close}</button>
             </motion.div>
           </motion.div>
         )}

@@ -130,7 +130,6 @@ export interface GameOverStrings {
   manualGameOver: string;
   selectWinCondition: string;
   selectTieWinners: string;
-  dismiss: string;
 }
 
 export interface CharacterGeneratorStrings {
@@ -191,7 +190,6 @@ export interface GameLogStrings {
   hideEvent: string;
   unknownPlayer: string;
   noRole: string;
-  close: string;
   permanentDeath: string;
   gypsyPoisonStolen: string;      // Supports {name}
   phaseLabels: Record<GameLogPhaseKey, string>;
@@ -205,7 +203,6 @@ export interface RoomDisplayStrings {
   rulebook: string;
   fullscreen: string;
   exitFullscreen: string;
-  close: string;
   night: string;
   day: string;
   tribunal: string;
@@ -242,8 +239,6 @@ export interface RulebookUiStrings {
 export interface NightScriptUiStrings {
   dogArticle: string;
   dogHousemaidDistance: string;
-  boyYes: string;
-  boyNo: string;
   boyIllusion: string;
   mimeOnlyLines: Partial<Record<RoleId, ScriptLine>>;
 }
@@ -264,12 +259,9 @@ export interface TravellerUiStrings {
   qrDescription: string;
   requestTitle: string;
   requestDescription: string;
-  accept: string;
-  deny: string;
   setupTitle: string;
   alignmentVillager: string;
   alignmentEvil: string;
-  confirmAssignment: string;
   revealVillagerTitle: string;
   revealEvilTitle: string;
   revealVillagerBody: string;
@@ -284,33 +276,36 @@ export interface TravellerUiStrings {
   infoExiled: string;
 }
 
+/** Short reusable labels for buttons and binary results. */
+export interface CommonActionStrings {
+  open: string;
+  close: string;
+  reopen: string;
+  yes: string;
+  no: string;
+  see: string;
+  choose: string;
+  confirm: string;
+  accept: string;
+  deny: string;
+  ignore: string;
+  save: string;
+  enter: string;
+  exit: string;
+}
+
 /** Static translatable UI strings. */
 export interface UIStrings {
-  monkeyReveal: { choose: string; confirm: string; close: string; reopen: string; noCard: string };
+  actions: CommonActionStrings;
+  monkeyReveal: { noCard: string };
   foxReveal: {
-    choose: string;
-    confirm: string;
-    close: string;
-    reopen: string;
-    evil: string;
-    clear: string;
     ranAway: string;
     confused: string;
-  };
-  gypsyReveal: {
-    choose: string;
-    confirm: string;
-    close: string;
-    reopen: string;
-    poisoned: string;
-    clear: string;
   };
   // GM script phone controls, player night modes, and hunt approval dialog.
   phoneActions: {
     colossusInstructions: string;
     huntVotes: string;
-    open: string;
-    close: string;
     hunt: string;
     allies: string;
     poison: string;
@@ -319,12 +314,7 @@ export interface UIStrings {
     priest: string;
     sleepwalker: string;
     soldier: string;
-    approved: string;
-    denied: string;
     poisonConfirm: string;
-    save: string;
-    ignore: string;
-    confirm: string;
     waiting: string;
     reconnecting: string;
     huntRequest: string;
@@ -336,10 +326,6 @@ export interface UIStrings {
     ignoredComplete: string;
     gamblerChoosePlayers: string;
     gamblerChooseRole: string;
-    gamblerConfirmPlayers: string;
-    gamblerConfirmRole: string;
-    gamblerYes: string;
-    gamblerNo: string;
     gamblerWrong: string;
     gamblerLongPath: string;
   };
@@ -384,8 +370,6 @@ export interface UIStrings {
   assassinationChooseTarget: string;
   resurrectionChooseTarget: string;
   webChooseTarget: string;
-  assassinationConfirm: string;
-  assassinationExit: string;
   assassinationRequestPending: string;
   assassinationRequestError: string;
   gmPlayerActionTitle: string;
@@ -396,8 +380,6 @@ export interface UIStrings {
   gmV18ResurrectionComplete: string;
   gmV23WebComplete: string;
   gmPlayerActionDenied: string;
-  gmAcceptAction: string;
-  gmDenyAction: string;
   sessionEnded: string;
   sessionEndedDesc: string;
   backHome: string;
@@ -451,10 +433,8 @@ export interface UIStrings {
   shareCodeOrAdd: string;
   allSeated: string;
   showQR: string;
-  close: string;
   roomLabel: string;
   yourName: string;
-  enter: string;
   roomNotFound: string;
   gameAlreadyStarted: string;
   copyJoinLink: string;

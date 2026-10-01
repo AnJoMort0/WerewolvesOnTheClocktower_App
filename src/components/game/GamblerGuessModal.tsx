@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, Dices, Route, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameModal, GamePanel } from "./GameModal";
-import { getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
+import { format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import { PHONE_ACTION_PRESENTATION } from "@/lib/phoneActionPresentation";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
 import type { PhoneView } from "@/lib/phoneActions";
@@ -26,7 +26,7 @@ const ROLE_SECTIONS: Array<{ team: "villagers" | "evilBeing" | "flexible" | "sol
 ];
 
 export function GamblerGuessModal({ session, language, pending = false, connected = true, embedded = false,
-  onConfirmPlayers, onConfirmRole, onClose, onReopen }: {
+  onConfirmPlayers, onConfirmRole, onIgnore, onClose, onReopen }: {
   session: PhoneView;
   language: Language;
   pending?: boolean;
@@ -34,10 +34,13 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
   embedded?: boolean;
   onConfirmPlayers: (playerIds: string[]) => void;
   onConfirmRole: (roleId: RoleId) => void;
+  onIgnore?: () => void;
   onClose?: () => void;
   onReopen?: () => void;
 }) {
-  const text = getTranslation(language).ui.phoneActions;
+  const ui = getTranslation(language).ui;
+  const text = ui.phoneActions;
+  const actions = ui.actions;
   const { skinPackId } = useSkinPack();
   const [endpoints, setEndpoints] = useState<string[]>([]);
   const [longerPath, setLongerPath] = useState(false);
@@ -60,6 +63,7 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
   const endpointSet = new Set(endpoints);
   const choosingRole = !!session.pendingTargetPlayerIds?.length && !session.gamblerReveal;
   const reveal = session.gamblerReveal;
+  const ignored = session.ignored === true;
   const visibleRoles = GUESSABLE_ROLES.filter((roleId) => {
     const group = RULEBOOK_CHARACTERS[roleId].group;
     if (group === "complex") return session.hasAdvancedRolesInGame === true;
@@ -103,7 +107,7 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
 
   if (session.visible === false) return onReopen ? (
     <Button variant="secondary" disabled={pending || !connected} onClick={onReopen}>
-      <Dices className="mr-2 h-4 w-4" />{text.open}
+      <Dices className="mr-2 h-4 w-4" />{actions.open}
     </Button>
   ) : null;
 
@@ -165,36 +169,44 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
     })}
   </div>;
 
-  const content = reveal ? <div className="space-y-4">
+  const content = ignored ? <div role="status" className="rounded-lg border border-muted-foreground/30 bg-muted/20 p-6 text-center text-muted-foreground">
+    {format(text.ignoredComplete, {
+      actor: session.players.find((player) => session.participantIds.includes(player.id))?.name ?? getRoleLabel("t02", language),
+    })}
+  </div> : reveal ? <div className="space-y-4">
     <div role="status" className={`rounded-lg border p-6 text-center ${reveal.correct
       ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-200"
       : "border-destructive/50 bg-destructive/10 text-red-200"}`}>
       {reveal.correct ? <ThumbsUp className="mx-auto mb-3 h-12 w-12" /> : <ThumbsDown className="mx-auto mb-3 h-12 w-12" />}
-      <strong className="font-display text-2xl">{reveal.correct ? text.gamblerYes : text.gamblerNo}</strong>
+      <strong className="font-display text-2xl">{reveal.correct ? actions.yes : actions.no}</strong>
       <p className="mt-2 text-sm">{reveal.correct ? null : text.gamblerWrong}</p>
     </div>
     {roleGrid}
   </div> : choosingRole ? roleGrid : playerCircle;
 
   const footer = <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-    {!choosingRole && !reveal && <Button disabled={selectedPlayerIds.length === 0 || pending || !connected}
+    {!session.completed && !choosingRole && !reveal && <Button disabled={selectedPlayerIds.length === 0 || pending || !connected}
       onClick={() => onConfirmPlayers(selectedPlayerIds)}>
-      <Check className="mr-2 h-4 w-4" />{text.gamblerConfirmPlayers}
+      <Check className="mr-2 h-4 w-4" />{actions.confirm}
     </Button>}
-    {choosingRole && <Button disabled={!selectedRoleId || pending || !connected}
+    {!session.completed && choosingRole && <Button disabled={!selectedRoleId || pending || !connected}
       onClick={() => selectedRoleId && onConfirmRole(selectedRoleId)}>
-      <Dices className="mr-2 h-4 w-4" />{text.gamblerConfirmRole}
+      <Dices className="mr-2 h-4 w-4" />{actions.confirm}
+    </Button>}
+    {onIgnore && !session.completed && !choosingRole && !reveal && <Button variant="secondary" onClick={onIgnore}
+      disabled={pending || !connected}>
+      <X className="mr-2 h-4 w-4" />{actions.ignore}
     </Button>}
     {onClose && <Button variant="secondary" onClick={onClose} disabled={pending || !connected}>
-      <X className="mr-2 h-4 w-4" />{text.close}
+      <X className="mr-2 h-4 w-4" />{actions.close}
     </Button>}
   </div>;
-  const subtitle = reveal ? getRoleLabel(reveal.roleId, language)
+  const subtitle = ignored ? undefined : reveal ? getRoleLabel(reveal.roleId, language)
     : choosingRole ? text.gamblerChooseRole : text.gamblerChoosePlayers;
   const title = getRoleLabel("t02", language);
   const panelClass = `max-h-[calc(100dvh-12rem)] border-violet-400/40 ring-violet-400/10 ${PHONE_ACTION_PRESENTATION[PHONE_MODE.GAMBLER_GUESS].iconClass}`;
   return embedded
     ? <GamePanel title={title} subtitle={subtitle} footer={footer} className={panelClass}>{content}</GamePanel>
-    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={text.close}
+    : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={actions.close}
       showCloseButton={false} dismissible={!!onClose && !pending && connected} footer={footer} wide>{content}</GameModal>;
 }

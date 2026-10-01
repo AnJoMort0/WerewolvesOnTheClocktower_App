@@ -125,6 +125,30 @@ describe("GM-controlled phone rules", () => {
     expect(getPhoneParticipants(PHONE_MODE.GAMBLER_GUESS, "gambler", changed)).toEqual([]);
   });
 
+  it("lets the Gambler ignore before confirming players but not after", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("gambler", "t02"), phonePlayer("bear", "v02"),
+    ] };
+    const session: PhoneSession = {
+      id: "gambler-ignore", lineKey: "gambler-line", mode: PHONE_MODE.GAMBLER_GUESS,
+      sourcePlayerId: "gambler", participantIds: ["gambler"], votes: {}, sequences: {},
+    };
+    const ignored = applyPhoneCommand(session, "gambler", {
+      id: "ignore", sessionId: session.id, sequence: 1, type: "ignore",
+    }, changed);
+    expect(ignored.session).toMatchObject({ completed: true, ignored: true });
+    expect(ignored.completedSession).toMatchObject({ completed: true, ignored: true });
+
+    const selected = applyPhoneCommand(session, "gambler", {
+      id: "select", sessionId: session.id, sequence: 1, type: "confirm", targetPlayerIds: ["bear"],
+    }, changed).session;
+    const lateIgnore = applyPhoneCommand(selected, "gambler", {
+      id: "late-ignore", sessionId: session.id, sequence: 2, type: "ignore",
+    }, changed);
+    expect(lateIgnore.session?.completed).not.toBe(true);
+    expect(lateIgnore.session?.ignored).not.toBe(true);
+  });
+
   it("tells the Gambler whether Advanced and Lame role groups are present", () => {
     const session: PhoneSession = {
       id: "gambler", lineKey: "gambler-line", mode: PHONE_MODE.GAMBLER_GUESS,
