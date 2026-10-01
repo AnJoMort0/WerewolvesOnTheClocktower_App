@@ -42,6 +42,7 @@ import m03Img from "@/assets/display/roles/m03.webp";
 import m04Img from "@/assets/display/roles/m04.webp";
 import m05Img from "@/assets/display/roles/m05.webp";
 import m06Img from "@/assets/display/roles/m06.webp";
+import m07Img from "@/assets/display/roles/m07.webp";
 import s01Img from "@/assets/display/roles/s01.webp";
 import s02Img from "@/assets/display/roles/s02.webp";
 import f01Img from "@/assets/display/roles/f01.webp";
@@ -107,6 +108,7 @@ const ROLE_DEFINITIONS = {
   m04: { id: "m04", label: "Ankou", image: m04Img, category: "m" },
   m05: { id: "m05", label: "Evil Cupid", image: m05Img, category: "m" },
   m06: { id: "m06", label: "(Were)wolf Tamer", image: m06Img, category: "m" },
+  m07: { id: "m07", label: "Mother of Werewolves", image: m07Img, category: "m" },
   s01: { id: "s01", label: "Cupid", image: s01Img, category: "s" },
   s02: { id: "s02", label: "White Werewolf", image: s02Img, category: "s" },
   f01: { id: "f01", label: "Thief", image: f01Img, category: "f" },
@@ -151,9 +153,9 @@ export function isUniqueRole(id: RoleId): boolean {
   return id !== "e01" && id !== "l01" && !TRAVELLER_ROLES.includes(id);
 }
 
-export const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05"];
+export const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05", "m07"];
 
-export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "m06", "s02"];
+export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "m06", "m07", "s02"];
 
 export const HIDDEN_WEREWOLF_ROLES: RoleId[] = ["m06"];
 
@@ -172,14 +174,14 @@ export function isDetectableWerewolfRole(roleId: RoleId): boolean {
 export const WEB_IMMUNE_ROLES: RoleId[] = ["v10", "v18", "v22"];
 
 export const MIME_COPY_ROLES: RoleId[] = [
-  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03",  "v04",  "v05", "v26",  "v08",  "v09", "v27",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06",  "l06"
+  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03",  "v04",  "v05", "v26",  "v08",  "v09", "v27",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02", "m07",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06",  "l06"
 ];
 
 /** Information characters — randomizer tries to include at least one of these. */
 export const INFO_ROLES: RoleId[] = ["v02", "v03", "v04", "v05", "v26", "v06", "v22", "v23", "v25"];
 
 const ESSENTIAL_SINGLES: RoleId[] = ["e02", "e03", "e04"];
-const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "s02"];
+const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "s02"];
 const VILLAGER_UNIQUE: RoleId[] = [
   "v01", "v02", "v03", "v04", "v05", "v26", "v06", "v07", "v08", "v08b", "v09", "v27", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25"
 ];
@@ -193,7 +195,7 @@ const LAME_SINGLES: RoleId[] = ["l02", "l05", "l06"];
 export const EXTRA_DEATH_ROLES: RoleId[] = ["v07", "v08", "v09", "v27", "v10", "s01", "s02", "l06"];
 
 /** Keep this shared with the Lamplighter reveal: these powers have finite uses. */
-export const LIMITED_USE_ROLES: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "m03", "v13", "v14", "v23"];
+export const LIMITED_USE_ROLES: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "m03", "m07", "v13", "v14", "v23"];
 
 /** Roles with no unconditional recurring night line. First-night introductions
  * do not expose them throughout the game; conditional wakeups remain hidden. */

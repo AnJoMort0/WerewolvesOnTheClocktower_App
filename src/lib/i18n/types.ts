@@ -311,6 +311,7 @@ export interface UIStrings {
     poison: string;
     shaman: string;
     web: string;
+    curse: string;
     priest: string;
     sleepwalker: string;
     soldier: string;
@@ -328,6 +329,7 @@ export interface UIStrings {
     gamblerChooseRole: string;
     gamblerWrong: string;
     gamblerLongPath: string;
+    cursedNotice: string;
   };
   travellers: TravellerUiStrings;
   appTitle: string;
@@ -364,6 +366,7 @@ export interface UIStrings {
   assassinate: string;
   resurrectPlayer: string;
   changeWeb: string;
+  motherCurseChangeUsed: string;
   assassinationMode: string;
   resurrectionMode: string;
   webMode: string;
@@ -502,7 +505,7 @@ export interface ScriptDynamicStrings {
   bunnyHeard: string;
   bunnyNothing: string;
   bunnyConfused: string;
-  werewolvesAsleep: string;
+  werewolvesAttackFails: string;
   whiteWolfSoloKill: string;
   priestAsleep: string;
 }

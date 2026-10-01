@@ -13,6 +13,7 @@ export const PHONE_MODE = {
   GYPSY_POISON_CHECK: "gypsy-poison-check",
   PYROMANIAC_BURN: "pyromaniac-burn",
   SPIDER_TAMER_WEB: "spider-tamer-web",
+  MOTHER_OF_WEREWOLVES_CURSE: "mother-of-werewolves-curse",
   PRIEST_CONFESSION: "priest-confession",
   SLEEPWALKER_VISIT: "sleepwalker-visit",
   COLOSSUS_RETALIATION: "colossus-retaliation",

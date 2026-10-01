@@ -11,12 +11,13 @@ import {
   parseScriptText,
   type ScriptLine,
 } from "@/lib/nightScript";
-import { useLanguage, getScripts, getDynamic, getRoleLabel, getTranslation, t, getToast, type Language } from "@/lib/i18n";
+import { useLanguage, getScripts, getDynamic, getEffectLabel, getRoleLabel, getTranslation, t, getToast, type Language } from "@/lib/i18n";
 import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
 import { getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
 import poisonedIcon from "@/assets/display/icons/poisoned.webp";
+import cursedIcon from "@/assets/display/icons/cursed.webp";
 import { toast } from "sonner";
 import type { PlayerStatus } from "@/lib/effects";
 import { EMPTY_ACTOR_POWER_STATE, type ActorPowerState } from "@/lib/actor";
@@ -92,6 +93,9 @@ interface NightScriptProps {
   accuserCharges?: number;
   onAccuserChargeToggle?: (idx: number) => void;
   onSpiderReveal?: (sourcePlayerId?: string | null) => void;
+  motherCurseChangeUsed?: boolean;
+  onMotherCurseChangeToggle?: () => void;
+  motherCurseActionSourcePlayerIds?: Set<string>;
   onSpyReveal?: (sourcePlayerId?: string | null) => void;
   onScriptRolesVisible?: (roles: RoleId[]) => void;
   completedLineKeys?: Set<string>;
@@ -134,6 +138,7 @@ type ScriptRenderItem = {
   dogWolfActingPoisoned?: boolean;
   mimeLine?: boolean;
   actingPoisoned?: boolean;
+  actingCursed?: boolean;
   sourcePlayerId?: string | null;
 };
 
@@ -250,8 +255,10 @@ function ScriptLineDisplay({
   accuserCharges,
   onAccuserChargeToggle,
   onSpiderReveal,
+  motherCurseChangeUsed = false,
+  onMotherCurseChangeToggle,
   onSpyReveal,
-  werewolvesAsleepText,
+  werewolvesAttackFailsText,
   lineCompleted,
   onLineCompletedChange,
   actorLine,
@@ -268,6 +275,7 @@ function ScriptLineDisplay({
   dogWolfActingPoisoned,
   mimeLine,
   actingPoisoned,
+  actingCursed = false,
   phoneControl,
 }: {
   line: ScriptLine;
@@ -307,8 +315,10 @@ function ScriptLineDisplay({
   accuserCharges?: number;
   onAccuserChargeToggle?: (idx: number) => void;
   onSpiderReveal?: (sourcePlayerId?: string | null) => void;
+  motherCurseChangeUsed?: boolean;
+  onMotherCurseChangeToggle?: () => void;
   onSpyReveal?: (sourcePlayerId?: string | null) => void;
-  werewolvesAsleepText: string;
+  werewolvesAttackFailsText: string;
   lineCompleted: boolean;
   onLineCompletedChange: (completed: boolean) => void;
   actorLine?: boolean;
@@ -325,6 +335,7 @@ function ScriptLineDisplay({
   dogWolfActingPoisoned?: boolean;
   mimeLine?: boolean;
   actingPoisoned?: boolean;
+  actingCursed?: boolean;
   phoneControl?: ReactNode;
 }) {
   const lang = useLanguage();
@@ -349,7 +360,7 @@ function ScriptLineDisplay({
     : actingPoisoned !== undefined
     ? actingPoisoned
     : line.requires?.some((r) => poisonedRoles.has(r));
-  const candidateDragAction = disableDrag ? null : getRawLineDragAction(line);
+  const candidateDragAction = disableDrag || actingCursed ? null : getRawLineDragAction(line);
   const isWerewolfLine = line.requires?.includes("e01" as RoleId) && line.requires?.includes("m01" as RoleId);
   const isShamanLine = line.requires?.length === 1 && line.requires[0] === ("e03" as RoleId);
   const isFortuneTellerLine = line.requires?.length === 1 && line.requires[0] === ("e04" as RoleId);
@@ -368,11 +379,12 @@ function ScriptLineDisplay({
   const isJudgeLine = line.requires?.length === 1 && line.requires[0] === ("v13" as RoleId);
   const isAccuserLine = line.requires?.length === 1 && line.requires[0] === ("v14" as RoleId);
   const isSpiderCaughtLine = line.requires?.length === 1 && line.requires[0] === ("v23" as RoleId) && line.conditionKey === "spiderHasCaught";
+  const isMotherLine = line.requires?.length === 1 && line.requires[0] === ("m07" as RoleId);
   const isSpyLine = line.requires?.length === 1 && line.requires[0] === ("f02" as RoleId) && line.conditionKey === "spyHasUnseen";
   const isA05Line = line.requires?.length === 1 && line.requires[0] === ("a05" as RoleId);
   const isA05Poisoned = sourcePlayerId ? isPoisonedLine : !!poisonedPlayerId && roleAssignments[poisonedPlayerId] === "a05";
   const a05Strike = isA05Line && isA05Poisoned;
-  const hasRevealAction = (
+  const hasRevealAction = !actingCursed && (
     (isFortuneTellerLine && lastNightDeadPlayerIds.length > 0 && !!onFortuneTellerReveal)
     || (isLittleGirlLine && !!onLittleGirlReveal)
     || (isLamplighterLine && !!onLamplighterReveal)
@@ -391,25 +403,14 @@ function ScriptLineDisplay({
     return roleAssignments[poisonedPlayerId] === "e03";
   }, [isShamanLine, isPoisonedLine, poisonedPlayerId, roleAssignments, sourcePlayerId]);
 
-  const isWerewolfPoisoned = useMemo(() => {
-    if (sourcePlayerId) return isWerewolfLine && isPoisonedLine;
-    if (!poisonedPlayerId) return false;
-    const r = roleAssignments[poisonedPlayerId];
-    return (["e01", "m01", "m02", "m03"] as RoleId[]).includes(r);
-  }, [isPoisonedLine, isWerewolfLine, poisonedPlayerId, roleAssignments, sourcePlayerId]);
   const effectiveWerewolfLinePoisoned = mimeLine ? false : isWerewolfLinePoisoned;
-  const dragAction = isWerewolfLine && (isWerewolfPoisoned || effectiveWerewolfLinePoisoned) ? null : candidateDragAction;
+  const dragAction = candidateDragAction;
 
   const handleNativeDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (dragAction) {
       if (dragAction === "shaman" && isShamanPoisoned) {
         e.preventDefault();
         toast.warning(getToast("warnShamanPoisoned", lang));
-        return;
-      }
-      if (dragAction === "kill" && (isWerewolfPoisoned || effectiveWerewolfLinePoisoned)) {
-        e.preventDefault();
-        toast.warning(getToast("warnWolvesPoisoned", lang));
         return;
       }
       e.dataTransfer.setData("action", dragAction);
@@ -438,7 +439,9 @@ function ScriptLineDisplay({
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         className={`relative rounded-lg py-2 pl-3 ${hasActionControl ? "pr-[4.75rem]" : "pr-10"} text-sm font-body leading-relaxed ${
-          isPoisonedLine
+          actingCursed
+            ? "bg-fuchsia-950/35 border border-fuchsia-500/50 text-fuchsia-200"
+            : isPoisonedLine
             ? "bg-green-900/30 border border-green-500/40 text-green-300"
             : "bg-card/50 border border-border/30"
         } ${dragAction ? "cursor-grab active:cursor-grabbing hover:border-primary/50" : ""}`}
@@ -507,8 +510,12 @@ function ScriptLineDisplay({
             className="mb-1 mr-2 inline-block h-7 w-7 rounded border border-cyan-300 object-cover align-middle shadow"
           />
         )}
+        {actingCursed && (
+          <img src={cursedIcon} alt={getEffectLabel("cursed", lang)} title={getEffectLabel("cursed", lang)}
+            className="mb-1 mr-2 inline-block h-6 w-6 object-contain align-middle" />
+        )}
         {isWerewolfLine && effectiveWerewolfLinePoisoned ? (
-          <span className="line-through text-muted-foreground">{werewolvesAsleepText}</span>
+          <span className="font-medium text-amber-300">{werewolvesAttackFailsText}</span>
         ) : (
           <span className={(isStrikethrough || forceStrikethrough || a05Strike || lineCompleted || (isGamblerLine && isPoisonedLine)) ? "line-through text-muted-foreground" : ""}>
             {segments.map((seg, i) =>
@@ -523,6 +530,7 @@ function ScriptLineDisplay({
           </span>
         )}
 
+        {!actingCursed && <>
         {/* Shaman power boxes */}
         {isShamanLine && !mimeLine && (
           <div className="flex items-center gap-2 mt-2">
@@ -602,6 +610,15 @@ function ScriptLineDisplay({
             ))}
           </div>
         )}
+        {isMotherLine && onMotherCurseChangeToggle != null && (
+          <div className="mt-2 flex items-center gap-2">
+            <Checkbox checked={motherCurseChangeUsed} onCheckedChange={onMotherCurseChangeToggle}
+              aria-label={t("motherCurseChangeUsed", lang)}
+              className="h-5 w-5 border-fuchsia-400 data-[state=checked]:border-fuchsia-500 data-[state=checked]:bg-fuchsia-500" />
+            <span className="text-xs text-muted-foreground">{t("motherCurseChangeUsed", lang)}</span>
+          </div>
+        )}
+        </>}
 
       </motion.div>
     </div>
@@ -656,6 +673,9 @@ export const NightScript = ({
   accuserCharges,
   onAccuserChargeToggle,
   onSpiderReveal,
+  motherCurseChangeUsed = false,
+  onMotherCurseChangeToggle,
+  motherCurseActionSourcePlayerIds = new Set(),
   onSpyReveal,
   onScriptRolesVisible,
   completedLineKeys = EMPTY_COMPLETED_LINE_KEYS,
@@ -727,13 +747,12 @@ export const NightScript = ({
   }, [abilityRoleAssignments, isPlayerActingPoisoned]);
 
   const isWerewolfLinePoisoned = useMemo(() => {
-    if (conditionKeys.astronomerBlocksWerewolvesTonight) return true;
     return Object.entries(abilityRoleAssignments).some(([playerId, role]) => {
       if (dogWolfPlayerIds.includes(playerId) || !isPlayerActingPoisoned(playerId)) return false;
       const effects = _playerEffects[playerId] || new Set<string>();
       return WEREWOLF_ROLES.includes(role) || effects.has("werewolf_turned");
     });
-  }, [abilityRoleAssignments, conditionKeys.astronomerBlocksWerewolvesTonight, dogWolfPlayerIds, isPlayerActingPoisoned, _playerEffects]);
+  }, [abilityRoleAssignments, dogWolfPlayerIds, isPlayerActingPoisoned, _playerEffects]);
 
   const shouldShowFortuneTellerLine = lastNightDeadPlayerIds.length > 0;
 
@@ -1363,12 +1382,14 @@ export const NightScript = ({
     const sourcePlayerId = item.sourcePlayerId ?? (item.actorLine || item.actorNotice ? actorPlayerId : item.mimeLine ? mimePlayerId : null);
     if (sourcePlayerId && !(item.line.requires?.some((role) => role === "l03" || role === "l04")
       && !item.actorLine && !item.mimeLine && !item.dogWolfLine && !item.drunkardLine)) {
+      if (_playerEffects[sourcePlayerId]?.has("cursed")) return [];
       return item.actorJoins && actorPlayerId ? Array.from(new Set([sourcePlayerId, actorPlayerId])) : [sourcePlayerId];
     }
     const packLine = (item.line.requires?.length ?? 0) > 1 && item.line.requires?.includes("e01");
     return players.filter((player) => {
       const effects = _playerEffects[player.id];
-      if ((_permanentlyDeadPlayerIds.has(player.id) && !prophecyGhostPlayerIds.has(player.id)) || effects?.has("host") || effects?.has("burned")) return false;
+      if ((_permanentlyDeadPlayerIds.has(player.id) && !prophecyGhostPlayerIds.has(player.id))
+        || effects?.has("host") || effects?.has("burned") || effects?.has("cursed")) return false;
       const role = abilityRoleAssignments[player.id];
       return packLine ? player.id !== mimePlayerId && (effects?.has("werewolf_turned") || WEREWOLF_ROLES.includes(role) || WEREWOLF_ROLES.includes(objectiveRoleAssignments[player.id]) || (role === "v06" && !isPlayerActingPoisoned(player.id)))
         : !!role && !!item.line.requires?.includes(role);
@@ -1446,7 +1467,10 @@ export const NightScript = ({
                 : null);
               const independentPowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
               const configuredPhoneMode = item.actorNotice ? null : getScriptPhoneMode(item.line);
-              const phoneMode = (configuredPhoneMode === PHONE_MODE.PRIEST_CONFESSION || configuredPhoneMode === PHONE_MODE.GAMBLER_GUESS)
+              const sourceCursed = !!sourcePlayerId && !!_playerEffects[sourcePlayerId]?.has("cursed");
+              const motherActionUnavailable = configuredPhoneMode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE
+                && (!sourcePlayerId || !motherCurseActionSourcePlayerIds.has(sourcePlayerId));
+              const phoneMode = sourceCursed || motherActionUnavailable ? null : (configuredPhoneMode === PHONE_MODE.PRIEST_CONFESSION || configuredPhoneMode === PHONE_MODE.GAMBLER_GUESS)
                 && sourcePlayerId && isPlayerActingPoisoned(sourcePlayerId)
                 ? null : configuredPhoneMode;
               const phoneActive = activePhoneLineKey === item.key;
@@ -1510,7 +1534,8 @@ export const NightScript = ({
                 showFoxCheckbox={nightNumber > 1}
                 forceStrikethrough={item.dogWolfLine && sourcePlayerId
                   ? !!(_playerEffects[sourcePlayerId]?.has("host") || _playerEffects[sourcePlayerId]?.has("burned"))
-                  : isLineForcedStrikethrough(item.line)}
+                  : (item.line.phoneMode === PHONE_MODE.WEREWOLF_HUNT && conditionKeys.astronomerBlocksWerewolvesTonight)
+                    || isLineForcedStrikethrough(item.line)}
                 paranoidCharges={usesIndependentPowerState ? powerState.paranoidCharges : paranoidCharges}
                 onParanoidChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("paranoidCharges", idx) : onParanoidChargeToggle}
                 angelCharges={usesIndependentPowerState ? powerState.angelCharges : angelCharges}
@@ -1527,15 +1552,17 @@ export const NightScript = ({
                 accuserCharges={usesIndependentPowerState ? powerState.accuserCharges : accuserCharges}
                 onAccuserChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("accuserCharges", idx) : onAccuserChargeToggle}
                 onSpiderReveal={onSpiderReveal}
+                motherCurseChangeUsed={usesIndependentPowerState ? powerState.motherCurseChangeUsed : motherCurseChangeUsed}
+                onMotherCurseChangeToggle={usesIndependentPowerState ? () => toggleBoolean("motherCurseChangeUsed") : onMotherCurseChangeToggle}
                 onSpyReveal={onSpyReveal}
-                werewolvesAsleepText={dyn.werewolvesAsleep}
+                werewolvesAttackFailsText={dyn.werewolvesAttackFails}
                 lineCompleted={completedLineKeys.has(item.key)}
                 onLineCompletedChange={(completed) => onLineCompletedChange?.(item.key, completed, item.progressOrder, getItemParticipants(item))}
                 actorLine={item.actorLine}
                 replaceAllRoleTokens={item.replaceAllRoleTokens}
                 actorCopiedRole={actorCopiedRole}
                 sourcePlayerId={sourcePlayerId}
-                disableDrag={item.actorNotice || (!!item.dogWolfLine && !!sourcePlayerId && (
+                disableDrag={item.actorNotice || (configuredPhoneMode === PHONE_MODE.WEREWOLF_HUNT && getItemParticipants(item).length === 0) || (!!item.dogWolfLine && !!sourcePlayerId && (
                   abilityRoleAssignments[sourcePlayerId] === "s01"
                   || (abilityRoleAssignments[sourcePlayerId] === "a04" && (
                     (dogWolfStates[sourcePlayerId]?.actorIdolUses ?? 0) >= 2
@@ -1551,6 +1578,7 @@ export const NightScript = ({
                 dogWolfActingPoisoned={item.dogWolfActingPoisoned}
                 mimeLine={item.mimeLine}
                 actingPoisoned={item.actingPoisoned}
+                actingCursed={sourceCursed}
               />
               );
             })}

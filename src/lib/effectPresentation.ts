@@ -3,6 +3,7 @@ import dogAdoptiveDadIcon from "@/assets/display/icons/adoptive_dad_dog.webp";
 import asleepIcon from "@/assets/display/icons/asleep.webp";
 import burnedIcon from "@/assets/display/icons/burned.webp";
 import caughtIcon from "@/assets/display/icons/caught.webp";
+import cursedIcon from "@/assets/display/icons/cursed.webp";
 import dogDugUpIcon from "@/assets/display/icons/dug_up_dog.webp";
 import dugUpIcon from "@/assets/display/icons/dug_up.webp";
 import mimeDugUpIcon from "@/assets/display/icons/dug_up_mime.webp";
@@ -55,6 +56,7 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   tetanus: tetanusIcon,
   webbed: webbedIcon,
   caught: caughtIcon,
+  cursed: cursedIcon,
   spied_on: spiedOnIcon,
   dug_up: dugUpIcon,
   idol: idolIcon,

@@ -105,6 +105,56 @@ export type RulebookCharacter = {
     }>;
     objective?: LocalizedText;
 };
+
+const WEREWOLF_POISON_DETAIL: RulebookCharacter["details"][number] = {
+    title: {
+        pt: `Se qualquer Lobisomem estiver envenenado:`,
+        fr: `Si n’importe quel Loup-garou est empoisonné :`,
+        en: `If any Werewolf is poisoned:`
+    },
+    description: {
+        pt: `Não podem assassinar.`,
+        fr: `Ils ne peuvent pas assassiner.`,
+        en: `They cannot assassinate.`
+    }
+};
+
+const VILLAGER_OBJECTIVE: RulebookCharacter["objective"] = {
+    pt: `Matar todos os Lobisomens.`,
+    fr: `Tuer tous les Loups-garous.`,
+    en: `Kill all the Werewolves.`
+};
+
+const EVIL_BEING_OBJECTIVE: RulebookCharacter["objective"] = {
+    pt: `Matar todos os Aldeões.`,
+    fr: `Tuer tous les Villageois.`,
+    en: `Kill all the Villagers.`
+};
+
+const CHOICE_OBJECTIVE: RulebookCharacter["objective"] = {
+    pt: `à escolha.`,
+    fr: `À choix.`,
+    en: `Player’s choice.`
+};
+
+const VILLAGER_FLEX_OBJECTIVE: RulebookCharacter["objective"] = {
+    pt: `Matar todos os Lobisomens. (flexível)`,
+    fr: `Tuer tous les Loups-garous. (flexible)`,
+    en: `Kill all Werewolves. (Flexible)`
+};
+
+const TRAVELLER_OBJECTIVE: RulebookCharacter["objective"] = {
+    pt: `Aleatório (50%).`,
+    fr: `Aléatoire (50 %).`,
+    en: `Random (50%).`
+};
+
+const SOLO_OBJECTIVE: RulebookCharacter["objective"] = {
+    pt: `Ser o último sobrevivente.`,
+    fr: `Être le dernier survivant.`,
+    en: `Be the last survivor.`
+};
+
 // ============================================================================
 // GENERAL RULES AND NAVIGATION TEXT — edit the language sections below
 // ============================================================================
@@ -121,6 +171,10 @@ export const RULEBOOK_TEXT = {
     nightScriptJump: { pt: `Ir para os guiões da noite`, fr: `Aller aux scripts de nuit`, en: `Go to the night scripts` },
     singleCardAllCharacters: { pt: `Ver todas as personagens`, fr: `Voir tous les personnages`, en: `View all characters` },
     backToIndex: { pt: `Voltar à lista`, fr: `Retour à la liste`, en: `Back to the list` },
+    evilSubgroups: {
+        werewolves: { pt: `Lobisomens`, fr: `Loups-garous`, en: `Werewolves` },
+        allies: { pt: `Aliados`, fr: `Alliés`, en: `Allies` }
+    },
     groups: [
         { id: "essential", label: { pt: `Personagens Essenciais`, fr: `Personnages essentiels`, en: `Essential Characters` } },
         { id: "villager", label: { pt: `Aldeões`, fr: `Villageois`, en: `Villagers` } },
@@ -689,25 +743,8 @@ export const RULEBOOK_CHARACTERS = {
                 `<red>Each night</red>, the Werewolf chooses with the other Werewolves whom they will assassinate.`
             ]
         },
-        details: [
-            {
-                title: {
-                    pt: `Se qualquer Lobisomem estiver envenenado:`,
-                    fr: `Si n’importe quel Loup-garou est empoisonné :`,
-                    en: `If any Werewolf is poisoned:`
-                },
-                description: {
-                    pt: `Não podem assassinar.`,
-                    fr: `Ils ne peuvent pas assassiner.`,
-                    en: `They cannot assassinate.`
-                }
-            }
-        ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        details: [WEREWOLF_POISON_DETAIL],
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // e02 | Evil Witch
@@ -772,11 +809,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // e03 | Shaman
@@ -826,11 +859,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // e04 | Fortune Teller
@@ -877,11 +906,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // ---- VILLAGER CHARACTERS -----------------------------------------
@@ -939,11 +964,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v02 | Bear Tamer
@@ -990,11 +1011,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v03 | Raven Tamer
@@ -1041,11 +1058,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v04 | Fox Tamer
@@ -1095,11 +1108,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v05 | Bunny Tamer
@@ -1146,11 +1155,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v26 | Monkey Tamer
@@ -1182,11 +1187,7 @@ export const RULEBOOK_CHARACTERS = {
                 en: `Receives incorrect information.`
             }
         }],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v06 | Puppeteer
@@ -1235,11 +1236,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v07 | Rusted Knight
@@ -1286,11 +1283,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v08 | Hunter
@@ -1345,11 +1338,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v08b | Little Red Riding Hood
@@ -1404,11 +1393,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v09 | Captain
@@ -1458,11 +1443,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v27 | Colossus
@@ -1500,11 +1481,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             },
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v10 | Paranoid
@@ -1551,11 +1528,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v11 | Village Elder
@@ -1593,11 +1566,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v12 | Gypsy
@@ -1638,11 +1607,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v13 | Judge
@@ -1695,11 +1660,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v14 | Accuser
@@ -1740,11 +1701,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v15 | Pyromaniac
@@ -1799,11 +1756,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v16 | Sleepwalker
@@ -1856,11 +1809,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v17 | Saviour
@@ -1901,11 +1850,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v18 | Angel
@@ -1949,11 +1894,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v19 | Prophet
@@ -2006,11 +1947,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v20 | Housemaid
@@ -2060,11 +1997,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v21 | Lamplighter
@@ -2111,11 +2044,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v22 | Boy
@@ -2170,11 +2099,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v23 | Spider Tamer
@@ -2221,11 +2146,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v24 | Vintner
@@ -2266,11 +2187,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // v25 | Priest
@@ -2311,11 +2228,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // ---- EVIL CHARACTERS -----------------------------------------
@@ -2358,25 +2271,8 @@ export const RULEBOOK_CHARACTERS = {
                 `<red>Even while immune</red>, he may be <red>executed</red> if Little Red Riding Hood brings him to the Tribunal. In that specific case, if the Hunter votes, the Big Bad Werewolf is executed automatically.`
             ]
         },
-        details: [
-            {
-                title: {
-                    pt: `Se qualquer Lobisomem estiver envenenado:`,
-                    fr: `Si n’importe quel Loup-garou est empoisonné :`,
-                    en: `If any Werewolf is poisoned:`
-                },
-                description: {
-                    pt: `Não podem assassinar.`,
-                    fr: `Ils ne peuvent pas assassiner.`,
-                    en: `They cannot assassinate.`
-                }
-            }
-        ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        details: [WEREWOLF_POISON_DETAIL],
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // m02 | Werewolf Seer
@@ -2409,25 +2305,8 @@ export const RULEBOOK_CHARACTERS = {
                 `After the Werewolves choose their victim, the Werewolf Seer may <red>choose</red> NOT TO ASSASSINATE that player and instead see that player's role.`
             ]
         },
-        details: [
-            {
-                title: {
-                    pt: `Se qualquer Lobisomem estiver envenenado:`,
-                    fr: `Si n’importe quel Loup-garou est empoisonné :`,
-                    en: `If any Werewolf is poisoned:`
-                },
-                description: {
-                    pt: `Não podem assassinar.`,
-                    fr: `Ils ne peuvent pas assassiner.`,
-                    en: `They cannot assassinate.`
-                }
-            }
-        ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        details: [WEREWOLF_POISON_DETAIL],
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // m03 | Vampire Werewolf
@@ -2457,25 +2336,8 @@ export const RULEBOOK_CHARACTERS = {
                 `If the victim had a limited-use power, all uses are restored when they are turned.`
             ]
         },
-        details: [
-            {
-                title: {
-                    pt: `Se qualquer Lobisomem estiver envenenado:`,
-                    fr: `Si n’importe quel Loup-garou est empoisonné :`,
-                    en: `If any Werewolf is poisoned:`
-                },
-                description: {
-                    pt: `Não podem assassinar.`,
-                    fr: `Ils ne peuvent pas assassiner.`,
-                    en: `They cannot assassinate.`
-                }
-            }
-        ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        details: [WEREWOLF_POISON_DETAIL],
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // m04 | Ankou
@@ -2516,11 +2378,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // m05 | Evil Cupid
@@ -2582,11 +2440,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // m06 | (Were)wolf Tamer
@@ -2610,25 +2464,48 @@ export const RULEBOOK_CHARACTERS = {
                 `The (Were)wolf Tamer acts like a normal Werewolf, but other characters (such as the Bear Tamer) identify him as a Villager rather than an Evil Being.`
             ]
         },
-        details: [
-            {
-                title: {
-                    pt: `Se qualquer Lobisomem estiver envenenado:`,
-                    fr: `Si n’importe quel Loup-garou est empoisonné :`,
-                    en: `If any Werewolf is poisoned:`
-                },
-                description: {
-                    pt: `Não podem assassinar.`,
-                    fr: `Ils ne peuvent pas assassiner.`,
-                    en: `They cannot assassinate.`
-                }
-            }
-        ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        details: [WEREWOLF_POISON_DETAIL],
+        objective: EVIL_BEING_OBJECTIVE
+    },
+
+    // m07 | Mother of Werewolves
+    "m07": {
+        id: "m07",
+        group: "evil",
+        team: "evilBeing",
+        name: {
+            pt: `Mãe dos Lobisomens`,
+            fr: `Mère des Loups-garous`,
+            en: `Mother of Werewolves`
+        },
+        mainDescription: {
+            pt: [
+                `<red>Na primeira noite</red>, a Mãe dos Lobisomens escolhe um jogador para amaldiçoar. Ela volta a dormir e o jogador amaldiçoado acorda para descobrir que está amaldiçoado.`,
+                `Enquanto estiver amaldiçoado, o jogador <red>não pode agir durante a noite</red>, mas continua a ser chamado pelo Narrador.`,
+                `O jogador amaldiçoado pode levantar a maldição ao acusar alguém durante o Tribunal.`,
+                `Quando o jogador amaldiçoado morre ou a maldição é levantada, a Mãe dos Lobisomens escolhe um novo jogador para amaldiçoar na noite seguinte.`,
+                `A Mãe dos Lobisomens <red>acorda todas as noites</red>, mesmo quando não pode escolher um novo alvo, para que ninguém saiba quando uma Maldição foi aplicada ou levantada.`,
+                `<red>Uma vez por jogo</red>, ao acordar durante a noite, a Mãe dos Lobisomens pode também mudar livremente o jogador amaldiçoado.`
+            ],
+            fr: [
+                `<red>La première nuit</red>, la Mère des Loups-garous choisit un joueur à maudire. Elle se rendort et le joueur maudit se réveille pour apprendre qu'il est maudit.`,
+                `Tant qu'il est maudit, le joueur <red>ne peut pas agir pendant la nuit</red>, mais le Meneur continue de l'appeler.`,
+                `Le joueur maudit peut lever la malédiction en accusant quelqu'un pendant le Tribunal.`,
+                `Lorsque le joueur maudit meurt ou que la malédiction est levée, la Mère des Loups-garous choisit un nouveau joueur à maudire la nuit suivante.`,
+                `La Mère des Loups-garous <red>se réveille chaque nuit</red>, même lorsqu’elle ne peut pas choisir une nouvelle cible, afin que personne ne sache quand une Malédiction a été appliquée ou levée.`,
+                `<red>Une fois par partie</red>, lorsqu’elle se réveille pendant la nuit, la Mère des Loups-garous peut aussi changer librement le joueur maudit.`
+            ],
+            en: [
+                `<red>On the first night</red>, the Mother of Werewolves chooses a player to curse. She goes back to sleep, and the cursed player wakes up to learn that they are cursed.`,
+                `While cursed, the player <red>cannot act at night</red>, but the Narrator still calls their character.`,
+                `The cursed player may lift the curse by accusing someone during the Tribunal.`,
+                `When the cursed player dies or the curse is lifted, the Mother of Werewolves chooses a new player to curse on the following night.`,
+                `The Mother of Werewolves <red>wakes every night</red>, even when she cannot choose a new target, so nobody learns when a Curse was applied or lifted.`,
+                `<red>Once per game</red>, when she wakes at night, the Mother of Werewolves may also freely change the cursed player.`
+            ]
+        },
+        details: [WEREWOLF_POISON_DETAIL],
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // ---- SOLO CHARACTERS -----------------------------------------
@@ -2737,11 +2614,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Ser o último sobrevivente.`,
-            fr: `Être le dernier survivant.`,
-            en: `Be the last survivor.`
-        }
+        objective: SOLO_OBJECTIVE
     },
 
     // ---- FLEXIBLE CHARACTERS -----------------------------------------
@@ -2801,11 +2674,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `à escolha.`,
-            fr: `À choix.`,
-            en: `Player’s choice.`
-        }
+        objective: CHOICE_OBJECTIVE
     },
 
     // f02 | Spy
@@ -2849,11 +2718,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `à escolha.`,
-            fr: `À choix.`,
-            en: `Player’s choice.`
-        }
+        objective: CHOICE_OBJECTIVE
     },
 
     // ---- COMPLEX CHARACTERS -----------------------------------------
@@ -2899,11 +2764,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // a02 | Wolf-Dog
@@ -2995,11 +2856,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // a04 | Actor
@@ -3049,11 +2906,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens. (flexível)`,
-            fr: `Tuer tous les Loups-garous. (flexible)`,
-            en: `Kill all Werewolves. (Flexible)`
-        }
+        objective: VILLAGER_FLEX_OBJECTIVE
     },
 
     // a05 | Grave Robber
@@ -3103,11 +2956,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens. (flexível)`,
-            fr: `Tuer tous les Loups-garous. (flexible)`,
-            en: `Kill all Werewolves. (Flexible)`
-        }
+        objective: VILLAGER_FLEX_OBJECTIVE
     },
 
     // a06 | Illusionist
@@ -3166,11 +3015,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // as01b | Secret Lover
@@ -3249,11 +3094,7 @@ export const RULEBOOK_CHARACTERS = {
                 en: `The opposite result occurs.`
             }
         }],
-        objective: {
-            pt: `Aleatório (50%).`,
-            fr: `Aléatoire (50 %).`,
-            en: `Random (50%).`
-        }
+        objective: TRAVELLER_OBJECTIVE
     },
 
     // t02 | Gambler
@@ -3279,11 +3120,7 @@ export const RULEBOOK_CHARACTERS = {
                 en: `Does not wake up.`
             }
         }],
-        objective: {
-            pt: `Aleatório (50%).`,
-            fr: `Aléatoire (50 %).`,
-            en: `Random (50%).`
-        }
+        objective: TRAVELLER_OBJECTIVE
     },
 
     // t03 | Gunslinger
@@ -3309,11 +3146,7 @@ export const RULEBOOK_CHARACTERS = {
                 en: `Assassinates the wrong player.`
             }
         }],
-        objective: {
-            pt: `Aleatório (50%).`,
-            fr: `Aléatoire (50 %).`,
-            en: `Random (50%).`
-        }
+        objective: TRAVELLER_OBJECTIVE
     },
 
     // ---- LAME CHARACTERS -----------------------------------------
@@ -3349,11 +3182,7 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // l02 | Wild Child
@@ -3394,11 +3223,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens. (flexível)`,
-            fr: `Tuer tous les Loups-garous. (flexible)`,
-            en: `Kill all Werewolves. (Flexible)`
-        }
+        objective: VILLAGER_FLEX_OBJECTIVE
     },
 
     // l03 | Sisters
@@ -3442,11 +3267,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens. (flexível)`,
-            fr: `Tuer tous les Loups-garous. (flexible)`,
-            en: `Kill all Werewolves. (Flexible)`
-        }
+        objective: VILLAGER_FLEX_OBJECTIVE
     },
 
     // l04 | Brothers
@@ -3485,11 +3306,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // l05 | Astronomer
@@ -3527,11 +3344,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // l06 | Devout Servant
@@ -3572,11 +3385,7 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // ---- EXTRA CHARACTERS -----------------------------------------
@@ -3603,11 +3412,7 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [],
-        objective: {
-            pt: `Matar todos os Lobisomens.`,
-            fr: `Tuer tous les Loups-garous.`,
-            en: `Kill all Werewolves.`
-        }
+        objective: VILLAGER_OBJECTIVE
     },
 
     // x02 | Evil Beings
@@ -3635,11 +3440,7 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // x02.1 | Werewolves
@@ -3666,25 +3467,8 @@ export const RULEBOOK_CHARACTERS = {
                 `Each night, they must unanimously choose whom to assassinate, trying to eliminate the most powerful Villagers first with help from the other Evil Beings.`
             ]
         },
-        details: [
-            {
-                title: {
-                    pt: `Se qualquer Lobisomem estiver envenenado:`,
-                    fr: `Si n’importe quel Loup-garou est empoisonné :`,
-                    en: `If any Werewolf is poisoned:`
-                },
-                description: {
-                    pt: `Não podem assassinar.`,
-                    fr: `Ils ne peuvent pas assassiner.`,
-                    en: `They cannot assassinate.`
-                }
-            }
-        ],
-        objective: {
-            pt: `Matar todos os Aldeões.`,
-            fr: `Tuer tous les Villageois.`,
-            en: `Kill all Villagers.`
-        }
+        details: [WEREWOLF_POISON_DETAIL],
+        objective: EVIL_BEING_OBJECTIVE
     },
 
     // x.t
@@ -3718,11 +3502,7 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [],
-        objective: {
-            pt: `Aleatório (50%).`,
-            fr: `Aléatoire (50 %).`,
-            en: `Random (50%).`
-        }
+        objective: TRAVELLER_OBJECTIVE
     },
 
     // x03 | Ghosts
@@ -3989,6 +3769,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "m02",
     "m03",
     "m06",
+    "m07",
     "m04",
     "m05",
     "s01",
@@ -4108,6 +3889,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `O Domador da Aranha acorda e escolhe um jogador no qual tece uma teia de aranha. O Domador da Aranha, a cada noite, descobre quais personagens apontaram para esse jogador naquela noite.`,
                 fr: `Le Maître de l'Araignée se réveille et choisit un joueur sur lequel il tisse une toile d'araignée. Chaque nuit, le Maître de l'Araignée apprend quels personnages ont désigné ce joueur durant cette nuit.`,
                 en: `The Spider Tamer wakes up and chooses a player on whom to weave a spiderweb. Each night, the Spider Tamer learns which characters pointed at that player during the night.`
+            }
+        },
+        {
+            id: "first-m07",
+            refs: ["m07"],
+            text: {
+                pt: `A Mãe dos Lobisomens acorda e escolhe um jogador para amaldiçoar. Ela volta a dormir, depois o jogador amaldiçoado acorda e descobre que está amaldiçoado. O jogador amaldiçoado continuará a ser chamado, mas não poderá usar o seu poder. Para quebrar a Maldição, o jogador terá de nominar alguém no Tribunal.`,
+                fr: `La Mère des Loups-garous se réveille et choisit un joueur à maudire. Elle se rendort, puis le joueur maudit se réveille et apprend qu'il est maudit. Le joueur maudit continuera à être appelé, mais ne pourra pas utiliser son pouvoir. Pour briser la Malédiction, le joueur devra nommer quelqu'un au Tribunal.`,
+                en: `The Mother of Werewolves wakes up and chooses a player to curse. She goes back to sleep, then the cursed player wakes up and learns that they are cursed. The cursed player will continue to be called, but cannot use their power. To break the Curse, the player must nominate someone at the Tribunal.`
             }
         },
         {
@@ -4315,6 +4105,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             }
         },
         {
+            id: "normal-m07.1",
+            refs: ["m07"],
+            text: {
+                pt: `A Mãe dos Lobisomens acorda. Se ninguém estiver amaldiçoado, escolhe um jogador para amaldiçoar. Se alguém já estiver amaldiçoado e ela ainda não tiver mudado de alvo, pode escolher outro jogador. O jogador amaldiçoado acorda e descobre que está amaldiçoado.`,
+                fr: `La Mère des Loups-garous se réveille. Si personne n’est maudit, elle choisit un joueur à maudire. Si quelqu’un est déjà maudit et qu’elle n’a encore jamais changé de cible, elle peut choisir un nouveau joueur à la place. Le joueur maudit se réveille et apprend qu’il est maudit.`,
+                en: `The Mother of Werewolves wakes up. If nobody is cursed, she chooses a player to curse. If somebody is already cursed and she has not changed her target before, she may choose a new player instead. The cursed player wakes up and learns that they are cursed.`
+            }
+        },
+        {
             id: "normal-e02",
             refs: ["e02"],
             text: {
@@ -4450,6 +4249,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             }
         },
         {
+            id: "normal-as01b.2",
+            refs: ["as01b"],
+            text: {
+                pt: `Um dos Namorados foi traído pelo outro com o Amante Secreto.`,
+                fr: `L’un des Amoureux a été trahi par l’autre avec l’Arnaœur.`,
+                en: `One of the Lovers was betrayed by the other with the Secret Lover.`
+            }
+        },
+        {
             id: "normal-v17",
             refs: ["v17"],
             text: {
@@ -4480,9 +4288,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "normal-e01",
             refs: WEREWOLF_ROLES,
             text: {
-                pt: `Os Lobisomens acordam/não acordam se envenenados (não acordam se o Astrônomo morreu na última noite) e escolhem em conjunto uma vítima que irão assassinar esta noite.`,
-                fr: `Les Loups-garous se réveillent / ne se réveillent pas si empoisonnés. (Ils ne se réveillent pas si l'Astronome est mort la nuit précédente) Ils choisissent ensemble leur victime pour cette nuit.`,
-                en: `The Werewolves wake up / do not wake up if poisoned. They also do not wake up if the Astronomer died the previous night. Otherwise, they jointly choose a victim to assassinate tonight.`
+                pt: `Os Lobisomens acordam e escolhem em conjunto uma vítima que irão tentar assassinar esta noite. / Se qualquer Lobisomem estiver envenenado, a caça acontece normalmente, mas o ataque não assassina a vítima. / Se o Astrónomo morreu na noite anterior, os Lobisomens não acordam.`,
+                fr: `Les Loups-garous se réveillent et choisissent ensemble une victime qu’ils tenteront d’assassiner cette nuit. / Si un Loup-garou est empoisonné, la chasse se déroule normalement, mais l’attaque n’assassine pas la victime. / Si l’Astronome est mort la nuit précédente, les Loups-garous ne se réveillent pas.`,
+                en: `The Werewolves wake up and jointly choose a victim they will attempt to assassinate tonight. / If any Werewolf is poisoned, the hunt proceeds normally, but the attack does not assassinate the victim. / If the Astronomer died the previous night, the Werewolves do not wake up.`
             }
         },
         {

@@ -7,7 +7,8 @@ const kinds = new Set<PlayerActionKind>(["v10-assassinate", "v18-resurrect", "v2
 type Channel = ReturnType<typeof supabase.channel>;
 
 /** Announce an open selection screen independently of submitting its action.
- * Heartbeats recover missed opens and GM reloads; closing never spends a use. */
+ * A GM subscription asks active screens to announce themselves once, so recovery
+ * does not need a room-wide heartbeat; closing never spends a use. */
 export function usePlayerActionMirror(roomId: string | undefined, actorPlayerId: string | undefined,
   kind: PlayerActionKind | null, onClose: () => void) {
   const channel = useRef<Channel | null>(null);
@@ -30,11 +31,11 @@ export function usePlayerActionMirror(roomId: string | undefined, actorPlayerId:
       mode.current = null;
       publish(null, previous?.id);
       closeCallback.current();
+    }).on("broadcast", { event: "player-action-mode-sync-request" }, () => {
+      if (mode.current) publish(mode.current);
     }).subscribe((status) => { if (status === "SUBSCRIBED" && mode.current) publish(mode.current); });
-    const heartbeat = window.setInterval(() => { if (mode.current) publish(mode.current); }, 2500);
     return () => {
       if (mode.current) publish(null, mode.current.id);
-      window.clearInterval(heartbeat);
       channel.current = null;
       void supabase.removeChannel(active);
     };
@@ -77,7 +78,10 @@ export function useGMPlayerActionMirrors(roomId: string | undefined, enabled: bo
       const mode = payload as PlayerActionMirror;
       if (!current.current.canOpen(mode)) return;
       setModes((previous) => previous[mode.actorPlayerId]?.id === mode.id ? previous : { ...previous, [mode.actorPlayerId]: mode });
-    }).subscribe();
+    }).subscribe((status) => {
+      if (status !== "SUBSCRIBED") return;
+      void active.send({ type: "broadcast", event: "player-action-mode-sync-request", payload: {} });
+    });
     return () => { channel.current = null; void supabase.removeChannel(active); };
   }, [roomId]);
   const close = useCallback((mode: PlayerActionMirror) => {

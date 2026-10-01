@@ -20,6 +20,7 @@ export const STATUS_EFFECTS = [
   "immunity_werewolf",
   "tetanus",
   "webbed",
+  "cursed",
   "caught",
   "spied_on",
   "dug_up",

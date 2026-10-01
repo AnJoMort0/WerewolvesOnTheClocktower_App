@@ -122,6 +122,23 @@ describe("PhoneActionScreen", () => {
     expect(screen.queryByRole("button", { name: getTranslation("en").ui.actions.confirm })).not.toBeInTheDocument();
   });
 
+  it("privately tells the cursed target without revealing the Mother", () => {
+    render(<PhoneActionScreen session={{
+      ...baseView,
+      mode: PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE,
+      sourcePlayerId: "mother",
+      participantIds: ["mother", "target"],
+      pendingTargetPlayerId: "target",
+      pendingTargetPlayerIds: ["target"],
+      completed: true,
+    }} playerId="target" language="en" pending={false} connected onSend={vi.fn()} />);
+
+    expect(screen.getByRole("region", { name: getTranslation("en").ui.phoneActions.curse })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(getTranslation("en").ui.phoneActions.cursedNotice);
+    expect(screen.queryByText(getTranslation("en").roleLabels.m07)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: getTranslation("en").ui.actions.confirm })).not.toBeInTheDocument();
+  });
+
   it.each([
     PHONE_MODE.SLEEPWALKER_VISIT,
     PHONE_MODE.PRIEST_CONFESSION,

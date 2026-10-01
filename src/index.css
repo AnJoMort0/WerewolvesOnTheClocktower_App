@@ -210,6 +210,21 @@
     color: hsl(var(--gold));
   }
 
+  .rulebook-content .rulebook-evil-subgroup h4,
+  .rulebook-content .rulebook-evil-subgroup-heading {
+    margin: 1rem 0 0.55rem;
+    color: hsl(var(--gold));
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .rulebook-content .rulebook-evil-subgroup-heading {
+    max-width: calc(150px + 72ch + 1.7rem + 7px);
+    margin-inline: auto;
+  }
+
   .rulebook-content .rulebook-index-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

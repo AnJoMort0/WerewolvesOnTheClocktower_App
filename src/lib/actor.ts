@@ -18,6 +18,7 @@ export type ActorPowerState = {
   judgeCharges: number;
   accuserCharges: number;
   spiderDayChangeUsed: boolean;
+  motherCurseChangeUsed: boolean;
   saviourLastTarget: string | null;
   villageElderLastTarget: string | null;
 };
@@ -35,6 +36,7 @@ export const EMPTY_ACTOR_POWER_STATE: ActorPowerState = {
   judgeCharges: 0,
   accuserCharges: 0,
   spiderDayChangeUsed: false,
+  motherCurseChangeUsed: false,
   saviourLastTarget: null,
   villageElderLastTarget: null,
 };

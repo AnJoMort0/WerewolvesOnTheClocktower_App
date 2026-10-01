@@ -99,10 +99,14 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const angles = getEllipseAngles(players.length, MAP_MAX_WIDTH * MAP_HORIZONTAL_RADIUS, verticalRadius);
   const presentation = PHONE_ACTION_PRESENTATION[session.mode];
   const Icon = appearance?.icon ?? presentation.icon;
-  const title = appearance?.title ?? (session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? getTranslation(language).roleLabels.v26
+  const viewingCurseNotice = session.mode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE
+    && playerId !== "gm" && playerId !== session.sourcePlayerId;
+  const title = appearance?.title ?? (viewingCurseNotice ? text.curse
+    : session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? getTranslation(language).roleLabels.v26
     : session.mode === PHONE_MODE.FOX_TAMER_CHECK ? getTranslation(language).roleLabels.v04
     : session.mode === PHONE_MODE.GYPSY_POISON_CHECK ? getTranslation(language).roleLabels.v12
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB ? getTranslation(language).roleLabels.v23
+    : session.mode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE ? getTranslation(language).roleLabels.m07
     : session.mode === PHONE_MODE.PRIEST_CONFESSION ? getTranslation(language).roleLabels.v25
     : session.mode === PHONE_MODE.SLEEPWALKER_VISIT ? getTranslation(language).roleLabels.v16
     : session.mode === PHONE_MODE.COLOSSUS_RETALIATION ? getTranslation(language).roleLabels.v27
@@ -121,6 +125,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     ? { border: "border-purple-500/50 ring-purple-500/10", accent: "text-purple-300" }
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB
     ? { border: "border-cyan-500/50 ring-cyan-500/10", accent: "text-cyan-300" }
+    : session.mode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE
+    ? { border: "border-fuchsia-500/50 ring-fuchsia-500/10", accent: "text-fuchsia-300" }
     : session.mode === PHONE_MODE.PRIEST_CONFESSION
     ? { border: "border-amber-300/50 ring-amber-300/10", accent: "text-amber-200" }
     : session.mode === PHONE_MODE.SLEEPWALKER_VISIT
@@ -158,7 +164,11 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
         }]} />
       </div> : session.completed ? <div role="status" className="flex flex-col items-center gap-3 rounded-lg border border-primary/40 bg-primary/10 p-6 text-center">
         <Icon className={`h-12 w-12 ${appearance?.accent ?? presentation.iconClass}`} />
-        <strong className="font-display text-lg text-foreground">{completedText}</strong>
+        <strong className="font-display text-lg text-foreground">{
+          viewingCurseNotice
+            ? text.cursedNotice
+            : completedText
+        }</strong>
       </div> : <div className="min-w-0 overflow-hidden pb-1">
         <div
           data-testid="phone-action-map"

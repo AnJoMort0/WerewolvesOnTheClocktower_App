@@ -64,7 +64,6 @@ interface PlayerCircleProps {
   poisonedPlayerId?: string | null;
   poisonedPlayerIds?: Set<string>;
   actingPoisonedPlayerIds?: Set<string>;
-  werewolfPackPoisoned?: boolean;
   illusionPlayerId?: string | null;
   illusionPlayerIds?: Set<string>;
   onSetIllusion?: (playerId: string) => void;
@@ -90,6 +89,8 @@ interface PlayerCircleProps {
   showCupidCheckboxes?: boolean;
   spiderDayChangeUsed?: boolean;
   onSpiderDayChangeToggle?: () => void;
+  motherCurseChangeUsed?: boolean;
+  onMotherCurseChangeToggle?: () => void;
   vampireWolfUsed?: boolean;
   onVampireWolfToggle?: () => void;
   vampireVictimKeepsPower?: boolean;
@@ -119,6 +120,7 @@ interface PlayerCircleProps {
   onDogActorIdolUseToggle?: (playerId: string, index: number) => void;
   allowFlexibleRoleSkins?: boolean;
   nightNumber?: number;
+  gameCyclePhase?: "night" | "day" | "tribunal";
 }
 
 export const PlayerCircle = ({
@@ -141,7 +143,6 @@ export const PlayerCircle = ({
   poisonedPlayerId,
   poisonedPlayerIds = poisonedPlayerId ? new Set([poisonedPlayerId]) : new Set(),
   actingPoisonedPlayerIds = poisonedPlayerIds,
-  werewolfPackPoisoned = false,
   illusionPlayerId,
   illusionPlayerIds = illusionPlayerId ? new Set([illusionPlayerId]) : new Set(),
   onSetIllusion,
@@ -167,6 +168,8 @@ export const PlayerCircle = ({
   showCupidCheckboxes = true,
   spiderDayChangeUsed = false,
   onSpiderDayChangeToggle,
+  motherCurseChangeUsed = false,
+  onMotherCurseChangeToggle,
   vampireWolfUsed = false,
   onVampireWolfToggle,
   vampireVictimKeepsPower = true,
@@ -196,6 +199,7 @@ export const PlayerCircle = ({
   onDogActorIdolUseToggle,
   allowFlexibleRoleSkins = true,
   nightNumber = 1,
+  gameCyclePhase = "night",
 }: PlayerCircleProps) => {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const roleLabel = useRoleLabel();
@@ -350,9 +354,9 @@ export const PlayerCircle = ({
     if (role === "v27" && !colossusReadyPlayerIds.has(playerId)) return {};
     if (role === "t03" && (usedTravellerPowerIds.has(playerId) || playerStatuses[playerId] === "dead-this-night")) return {};
     const isActor = baseRoleAssignments?.[playerId] === "a04";
-    const isMime = baseRoleAssignments?.[playerId] === "a03";
     const dogState = dogWolfStates[playerId];
     const isPDead = permanentlyDead.has(playerId);
+    if (gameCyclePhase === "night" && _playerEffects[playerId]?.has("cursed")) return {};
 
     // Role-based drag actions
     const dragActions: Record<string, { action: string; check?: () => string | null }> = {};
@@ -360,10 +364,7 @@ export const PlayerCircle = ({
     if (role === POISON_DRAG_ROLE && !isPDead) {
       dragActions.poison = { action: "poison" };
     }
-    const werewolfActionBlocked = dogState || isMime
-      ? actingPoisonedPlayerIds.has(playerId)
-      : werewolfPackPoisoned;
-    if (role === KILL_DRAG_ROLE && !werewolfActionBlocked) {
+    if (role === KILL_DRAG_ROLE) {
       dragActions.kill = {
         action: "kill",
       };
@@ -704,6 +705,18 @@ export const PlayerCircle = ({
                       else onSpiderDayChangeToggle();
                     }}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
+                  />
+                </div>
+              )}
+              {isGM && mechanicalRole === ("m07" as RoleId) && !isPermanentlyDead && onMotherCurseChangeToggle && (
+                <div className="mt-0.5 flex gap-1" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={independentPowerState?.motherCurseChangeUsed ?? motherCurseChangeUsed}
+                    onCheckedChange={() => {
+                      if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, motherCurseChangeUsed: !independentPowerState.motherCurseChangeUsed });
+                      else onMotherCurseChangeToggle();
+                    }}
+                    className="h-4 w-4 border-fuchsia-400 data-[state=checked]:bg-fuchsia-500"
                   />
                 </div>
               )}

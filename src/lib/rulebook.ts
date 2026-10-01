@@ -1,4 +1,4 @@
-import { ROLES, type RoleId } from "@/lib/roles";
+import { ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { getTranslation, type Language } from "@/lib/i18n";
 import {
   getRulebookSkinOptions,
@@ -175,7 +175,7 @@ function renderCharacterIndex(lang: Language, options: RulebookRenderOptions = {
       const characterIds = characterIdsForGroup(group.id);
       if (characterIds.length === 0) return "";
 
-      const links = characterIds
+      const renderLinks = (ids: RulebookCharacterId[]) => ids
         .map((characterId) => {
           const character = RULEBOOK_CHARACTERS[characterId];
           const image = roleImage(characterId, options);
@@ -193,10 +193,22 @@ function renderCharacterIndex(lang: Language, options: RulebookRenderOptions = {
         })
         .join("");
 
+      const links = group.id === "evil"
+        ? ([
+            ["werewolves", characterIds.filter((id) => id in ROLES && WEREWOLF_ROLES.includes(id as RoleId))],
+            ["allies", characterIds.filter((id) => !(id in ROLES && WEREWOLF_ROLES.includes(id as RoleId)))],
+          ] as const).map(([subgroup, ids]) => ids.length > 0 ? `
+            <div class="rulebook-evil-subgroup">
+              <h4>${renderInline(RULEBOOK_TEXT.evilSubgroups[subgroup][lang])}</h4>
+              <div class="rulebook-index-grid">${renderLinks([...ids])}</div>
+            </div>
+          ` : "").join("")
+        : `<div class="rulebook-index-grid">${renderLinks(characterIds)}</div>`;
+
       return `
         <section class="rulebook-index-group">
           <h3>${renderInline(group.label[lang])}</h3>
-          <div class="rulebook-index-grid">${links}</div>
+          ${links}
         </section>
       `;
     })
@@ -222,10 +234,20 @@ function renderCharacterTables(lang: Language, options: RulebookRenderOptions = 
       const characters = characterIdsForGroup(group.id).map((characterId) => RULEBOOK_CHARACTERS[characterId]);
       if (characters.length === 0) return "";
 
+      const rows = group.id === "evil"
+        ? ([
+            ["werewolves", characters.filter((character) => character.id in ROLES && WEREWOLF_ROLES.includes(character.id as RoleId))],
+            ["allies", characters.filter((character) => !(character.id in ROLES && WEREWOLF_ROLES.includes(character.id as RoleId)))],
+          ] as const).map(([subgroup, subgroupCharacters]) => subgroupCharacters.length > 0 ? `
+            <h3 class="rulebook-evil-subgroup-heading">${renderInline(RULEBOOK_TEXT.evilSubgroups[subgroup][lang])}</h3>
+            <div class="character-table">${subgroupCharacters.map((character) => renderCharacterRow(character, lang, options)).join("")}</div>
+          ` : "").join("")
+        : `<div class="character-table">${characters.map((character) => renderCharacterRow(character, lang, options)).join("")}</div>`;
+
       return `
         <section class="rulebook-character-group">
           <h2 class="rulebook-group-heading">${renderInline(group.label[lang])}</h2>
-          <div class="character-table">${characters.map((character) => renderCharacterRow(character, lang, options)).join("")}</div>
+          ${rows}
         </section>
       `;
     })

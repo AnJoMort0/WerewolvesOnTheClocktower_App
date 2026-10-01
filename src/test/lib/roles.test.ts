@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { assignRoles, canRandomlyAssignRole, EXTRA_DEATH_ROLES, INFO_ROLES, LIMITED_USE_ROLES, MIME_COPY_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES, TRAVELLER_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 
-const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "s02"];
-const IMPLEMENTED_NEW_ROLES: RoleId[] = ["v24", "v25", "m06", "l05", "l06"];
+const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "s02"];
+const IMPLEMENTED_NEW_ROLES: RoleId[] = ["v24", "v25", "m06", "m07", "l05", "l06"];
 
 function wolfRolesFor(playerCount: number) {
   return assignRoles(playerCount, true).filter((role) => WEREWOLF_ROLES.includes(role));
@@ -15,6 +15,8 @@ describe("assignRoles werewolf balance", () => {
     }
 
     expect(WEREWOLF_ROLES).toContain("m06");
+    expect(WEREWOLF_ROLES).toContain("m07");
+    expect(NO_UNCONDITIONAL_SCRIPT_ROLES).not.toContain("m07");
   });
 
   it("allows implemented new rulebook roles in automatic assignment", () => {
@@ -128,11 +130,11 @@ describe("random assignment eligibility", () => {
   });
 
   it("keeps extra Evil Beings out of drafts below twelve players", () => {
-    const extraEvilRoles = ["m01", "m02", "m03", "m04", "m05", "s02", "a06"] as const;
+    const extraEvilRoles = ["m01", "m02", "m03", "m04", "m05", "m07", "s02", "a06"] as const;
     for (const role of extraEvilRoles) {
       expect(canRandomlyAssignRole(role, [], 11)).toBe(false);
     }
-    for (const role of ["m01", "m02", "m03", "m04", "m05", "a06"] as const) {
+    for (const role of ["m01", "m02", "m03", "m04", "m05", "m07", "a06"] as const) {
       expect(canRandomlyAssignRole(role, [], 12)).toBe(true);
     }
 
@@ -150,6 +152,7 @@ describe("random assignment eligibility", () => {
       expect(assignRoles(count, true).some((role) => ROLES[role].category === "t")).toBe(false);
     }
     expect(MIME_COPY_ROLES.filter((role) => TRAVELLER_ROLES.includes(role))).toEqual([]);
+    expect(MIME_COPY_ROLES).toContain("m07");
     expect(LIMITED_USE_ROLES).not.toContain("t01");
     expect(LIMITED_USE_ROLES).not.toContain("t03");
   });

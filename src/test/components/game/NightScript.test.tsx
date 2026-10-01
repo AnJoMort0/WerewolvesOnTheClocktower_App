@@ -2,7 +2,7 @@ import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NightScript } from "@/components/game/NightScript";
-import { getRoleLabel, LanguageContext } from "@/lib/i18n";
+import { getRoleLabel, getTranslation, LanguageContext } from "@/lib/i18n";
 import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
 import { createDogWolfState } from "@/lib/dogWolf";
 
@@ -116,6 +116,54 @@ describe("NightScript phone controls", () => {
     expect(replacementControls).toHaveLength(1);
     fireEvent.click(replacementControls[0]);
     expect(onPhoneToggle).toHaveBeenLastCalledWith(PHONE_MODE.SPIDER_TAMER_WEB, expect.any(String), "mime", expect.any(Number));
+  });
+
+  it("opens the Mother's curse action and visibly calls a cursed Mother without letting her act", () => {
+    const onPhoneToggle = vi.fn();
+    const props = { ...baseProps, nightNumber: 1,
+      activeRoles: new Set(["m07" as const]),
+      roleAssignments: { mother: "m07" as const },
+      baseRoleAssignments: { mother: "m07" as const },
+      abilityRoleAssignments: { mother: "m07" as const },
+      players: [{ id: "mother", name: "Mother", seat_position: 0 }],
+      onPhoneToggle, onMotherCurseChangeToggle: vi.fn(),
+      motherCurseActionSourcePlayerIds: new Set(["mother"]) };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    const curse = container.querySelector<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE));
+    expect(curse).toBeInTheDocument();
+    expect(curse?.querySelector(".lucide-skull")).toBeInTheDocument();
+    fireEvent.click(curse!);
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE, expect.any(String), "mother", null);
+
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props}
+      playerEffects={{ mother: new Set(["cursed"]) }}
+    /></LanguageContext.Provider>);
+    expect(container.querySelector(phoneModeSelector(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE))).not.toBeInTheDocument();
+    expect(container.querySelector('img[alt="Cursed"]')).toBeInTheDocument();
+    expect(container.textContent).toContain("Mother of Werewolves");
+    expect(container.textContent).not.toContain(getTranslation("en").ui.motherCurseChangeUsed);
+  });
+
+  it("calls every Mother but only offers the action to an eligible copy", () => {
+    const onPhoneToggle = vi.fn();
+    const { container } = render(<LanguageContext.Provider value="en"><NightScript
+      {...baseProps}
+      nightNumber={3}
+      activeRoles={new Set(["m07", "a03"])}
+      roleAssignments={{ mother: "m07", mime: "a03" }}
+      baseRoleAssignments={{ mother: "m07", mime: "a03" }}
+      abilityRoleAssignments={{ mother: "m07", mime: "m07" }}
+      players={[{ id: "mother", name: "Mother", seat_position: 0 }, { id: "mime", name: "Mime", seat_position: 1 }]}
+      mimePlayerId="mime"
+      mimeMechanicalRole="m07"
+      motherCurseActionSourcePlayerIds={new Set(["mime"])}
+      onPhoneToggle={onPhoneToggle}
+    /></LanguageContext.Provider>);
+
+    const controls = container.querySelectorAll<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE));
+    expect(controls).toHaveLength(1);
+    fireEvent.click(controls[0]);
+    expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE, expect.any(String), "mime", expect.any(Number));
   });
 
   it("only renders Colossus retaliation sources attacked by Werewolves", () => {
@@ -537,7 +585,8 @@ describe("NightScript conditional behavior", () => {
       </LanguageContext.Provider>,
     );
 
-    const draggableLine = container.querySelector('[draggable="true"]') as HTMLElement;
+    const draggableLine = Array.from(container.querySelectorAll<HTMLElement>('[draggable="true"]'))
+      .find((line) => line.querySelector('img[alt="Mimo"]'))!;
     expect(draggableLine).toBeTruthy();
     fireEvent.dragStart(draggableLine, { dataTransfer });
     expect(dataTransfer.setData).toHaveBeenCalledWith("action", "kill");
@@ -1252,7 +1301,7 @@ describe("NightScript Dog-Wolf copy", () => {
     expect(container.textContent).toContain("precisa de escolher um \u00cddolo");
   });
 
-  it("does not expose a draggable werewolf line when the pack is poisoned", () => {
+  it("keeps the Werewolf hunt draggable and explains that a poisoned attack fails", () => {
     const { container } = render(
       <LanguageContext.Provider value="pt">
         <NightScript
@@ -1270,7 +1319,8 @@ describe("NightScript Dog-Wolf copy", () => {
     );
 
     const draggableWerewolfLine = Array.from(container.querySelectorAll('[draggable="true"]'))
-      .find((line) => line.textContent?.includes("escolhem em conjunto"));
-    expect(draggableWerewolfLine).toBeUndefined();
+      .find((line) => line.textContent?.includes("continuam a acordar e a caçar"));
+    expect(draggableWerewolfLine).toBeDefined();
+    expect(draggableWerewolfLine).toHaveTextContent("o ataque não pode assassinar");
   });
 });

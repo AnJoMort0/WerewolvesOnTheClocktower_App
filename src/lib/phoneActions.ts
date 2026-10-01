@@ -26,6 +26,7 @@ const ROLE_ACTION_PHONE_MODES = {
   [PHONE_MODE.SECRET_LOVER_CHECK]: { roleId: "as01b", dragAction: "role-as01b" },
   [PHONE_MODE.WILD_CHILD_CHOOSE_PARENT]: { roleId: "l02", dragAction: ROLE_DRAG_ACTIONS.l02 },
   [PHONE_MODE.DEVOUT_SERVANT_SAVE]: { roleId: "l06", dragAction: ROLE_DRAG_ACTIONS.l06, canIgnore: true },
+  [PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE]: { roleId: "m07", dragAction: "role-m07" },
 } as const satisfies Partial<Record<PhoneMode, { roleId: RoleId; dragAction: string; canIgnore?: boolean }>>;
 export type RoleActionPhoneMode = keyof typeof ROLE_ACTION_PHONE_MODES;
 export function isRoleActionPhoneMode(mode: string): mode is RoleActionPhoneMode {
@@ -43,6 +44,7 @@ const PHONE_MODES_THAT_CANNOT_TARGET_SELF = new Set<PhoneMode>([
   PHONE_MODE.ACTOR_CHOOSE_IDOL,
   PHONE_MODE.SECRET_LOVER_CHECK,
   PHONE_MODE.WILD_CHILD_CHOOSE_PARENT,
+  PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE,
 ]);
 
 export type MonkeyReveal = { targetPlayerId: string; roleId: RoleId; evil: boolean };
@@ -254,6 +256,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
       const config = getRoleActionPhoneConfig(mode);
       const deathAction = mode === PHONE_MODE.HUNTER_ASSASSINATION || mode === PHONE_MODE.SOLDIER_ASSASSINATION;
       if (!deathAction && !player.canWake) return [];
+      if (mode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE && player.actingPoisoned) return [];
       if (mode === PHONE_MODE.GRAVE_ROBBER_SWAP && player.actingPoisoned) return [];
       const matches = mode === PHONE_MODE.SOLDIER_ASSASSINATION ? !!player.soldier : player.abilityRole === config.roleId;
       return matches ? [sourcePlayerId] : [];
@@ -454,6 +457,9 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
       ...next,
       pendingTargetPlayerId: targetIds[0],
       pendingTargetPlayerIds: targetIds,
+      participantIds: session.mode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE
+        ? [...new Set([...next.participantIds, targetIds[0]])]
+        : next.participantIds,
       completed: true,
     };
     return {

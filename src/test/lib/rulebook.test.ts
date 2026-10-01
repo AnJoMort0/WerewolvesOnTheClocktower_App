@@ -57,6 +57,20 @@ describe("in-app rulebook rendering", () => {
     expect(mismatches).toEqual([]);
   });
 
+  it("separates Werewolves from their Allies in both character lists", () => {
+    const root = document.createElement("main");
+    root.innerHTML = getRulebookHtml("en");
+
+    expect(Array.from(root.querySelectorAll(".rulebook-evil-subgroup > h4"), (heading) => heading.textContent)).toEqual([
+      "Werewolves",
+      "Allies",
+    ]);
+    expect(Array.from(root.querySelectorAll(".rulebook-evil-subgroup-heading"), (heading) => heading.textContent)).toEqual([
+      "Werewolves",
+      "Allies",
+    ]);
+  });
+
   it("states that living players and Ghosts may confess to the Priest", () => {
     expect(getRulebookHtml("en", "v25")).toContain("any player, living or a Ghost");
   });

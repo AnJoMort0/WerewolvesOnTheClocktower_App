@@ -128,9 +128,14 @@ describe("phone synchronization across GM and player devices", () => {
     const mode = gm.result.current.mode!;
     expect(device.result.current("v10-assassinate")).toBe(mode.id);
     gm.unmount();
+    bus.sent.length = 0;
     const restored = renderHook(() => useGMPlayerActionMirrors("room", true, () => true));
-    act(() => vi.advanceTimersByTime(2500));
     expect(restored.result.current.mode?.id).toBe(mode.id);
+    expect(bus.sent.filter((message) => message.event === "player-action-mode-sync-request")).toHaveLength(1);
+    expect(bus.sent.filter((message) => message.event === "player-action-mode")).toHaveLength(1);
+    bus.sent.length = 0;
+    act(() => vi.advanceTimersByTime(10000));
+    expect(bus.sent).toHaveLength(0);
     act(() => restored.result.current.close(mode));
     expect(onClose).toHaveBeenCalledOnce();
     device.rerender({ kind: null });

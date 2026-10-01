@@ -21,11 +21,12 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Balance Changes
 
-* [ ] 
+* [x] If any Werewolf is poisoned, they still wake up and hunt, but the victim does not die, their attack attempt still wakes up the Bunny Tamer
 
 ## Additions
 
-* [ ] 
+* [x] m07. Mother of Werewolves / Mãe dos Lobisomens / Mère des Loups-garous:
+  * [x] On the first night, chooses a player to curse. The Mother wakes every night so the script does not reveal whether a Curse is active. When no player is cursed, she chooses a new target. Once per game, she can use the same nightly action to change an active Curse; doing so automatically ticks her use checkbox. The cursed player still gets called but cannot act at night, learns that they are cursed, and can lift the Curse by nominating someone during the Tribunal (removed manually by the GM).
 
   
 ## Future Plans
@@ -34,11 +35,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
   * [x] Singe Savant
   * [ ] Marionnettiste
   * [x] Colosse
-  * [ ] Puissante Mère des Loups:
-    * [ ] Mother of the Werewolves:
-      * [ ] The second night she can pick a player to curse. The player under the Mother's Curse will still be called but will be notified they were cursed. The curse prevents the player to use their powers completly. The curse only disappears once the player nominates another player in Tribunal
-      * [ ] The Mother can then pick a new target after this
-      * [ ] The Mother can change the cursed player twice per game during the night as she will be called every night to make sure nobody can't track when the curse passes to next player
+  * [x] Puissante Mère des Loups
 * [ ] New characters:
   * [ ] Stinky Werewolf: The nearest villager will always be poisoned (if same distance it's picked at random which one is affected) / OR / His neighbours are poisoned if they are villagers, otherwise, no effect on the neighbours
   * [ ] Martyr Werewolf: During the Werewolf hunt, can rise his hand. This will automatically kill himself and transform a random alive evil being into a e01.Werewolf

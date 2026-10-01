@@ -45,6 +45,44 @@ describe("GM-controlled phone rules", () => {
     expect(scripts.normalNight.find((line) => line.conditionKey === "spiderWebbedDied")?.phoneMode).toBe(PHONE_MODE.SPIDER_TAMER_WEB);
   });
 
+  it.each(["pt", "fr", "en"] as const)("registers Mother of Werewolves controls every night in %s", (language) => {
+    const scripts = getScripts(language);
+    expect(scripts.firstNight.find((line) => line.requires?.includes("m07"))?.phoneMode).toBe(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE);
+    const normalLine = scripts.normalNight.find((line) => line.requires?.includes("m07"));
+    expect(normalLine?.conditionKey).toBeUndefined();
+    expect(normalLine?.phoneMode).toBe(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE);
+  });
+
+  it("lets the Mother or a copy curse another player and privately notifies the target", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("mime", "m07", { objectiveRole: "a03", mime: true }),
+      phonePlayer("target", "v02"),
+    ] };
+    expect(getPhoneParticipants(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE, "mime", changed)).toEqual(["mime"]);
+    const session: PhoneSession = {
+      id: "curse", lineKey: "mother-line", mode: PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE,
+      sourcePlayerId: "mime", participantIds: ["mime"], votes: {}, sequences: {},
+    };
+    expect(applyPhoneCommand(session, "mime", {
+      id: "self", sessionId: session.id, sequence: 1, type: "confirm", targetPlayerId: "mime",
+    }, changed).action).toBeUndefined();
+    const result = applyPhoneCommand(session, "mime", {
+      id: "target", sessionId: session.id, sequence: 2, type: "confirm", targetPlayerId: "target",
+    }, changed);
+    expect(result.action).toMatchObject({
+      action: PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE, sourcePlayerId: "mime", targetPlayerId: "target",
+    });
+    expect(result.session).toMatchObject({ completed: true, participantIds: ["mime", "target"] });
+    expect(getPhoneView(result.session, "target", changed)).not.toBeNull();
+  });
+
+  it("does not offer the Mother's curse while she is poisoned", () => {
+    const changed: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("mother", "m07", { actingPoisoned: true }),
+    ] };
+    expect(getPhoneParticipants(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE, "mother", changed)).toEqual([]);
+  });
+
   it.each(["pt", "fr", "en"] as const)("registers Priest and Sleepwalker controls in %s", (language) => {
     const scripts = getScripts(language).normalNight;
     expect(scripts.find((line) => line.requires?.includes("v25"))?.phoneMode).toBe(PHONE_MODE.PRIEST_CONFESSION);
@@ -454,8 +492,18 @@ describe("GM-controlled phone rules", () => {
     expect(getPhoneView(solo, "mime", changed)?.players.every((p) => p.marker === null)).toBe(true);
   });
 
-  it("does not let the Puppeteer hunt alone or a blocked pack act", () => {
-    expect(getPhoneParticipants(PHONE_MODE.WEREWOLF_HUNT, null, { ...world, packBlocked: true })).toEqual([]);
+  it("still lets a poisoned pack hunt, but does not let the Puppeteer hunt alone", () => {
+    const poisonedWorld = { ...world, players: world.players.map((player) => (
+      player.id === "wolf" ? { ...player, actingPoisoned: true } : player
+    )) };
+    expect(getPhoneParticipants(PHONE_MODE.WEREWOLF_HUNT, null, poisonedWorld)).toEqual(["wolf", "hiddenWolf", "puppeteer"]);
+    let session = hunt();
+    for (const id of session.participantIds) {
+      session = applyPhoneCommand(session, id, {
+        id: `poisoned-${id}`, sessionId: session.id, sequence: 1, type: "select", targetPlayerId: "villager",
+      }, poisonedWorld).session!;
+    }
+    expect(getHuntConsensus(session)).toBe("villager");
     expect(getPhoneParticipants(PHONE_MODE.WEREWOLF_HUNT, null, { ...world, players: [phonePlayer("puppeteer", "v06")] })).toEqual([]);
   });
 
