@@ -91,6 +91,7 @@ interface PlayerCircleProps {
   onSpiderDayChangeToggle?: () => void;
   motherCurseChangeUsed?: boolean;
   onMotherCurseChangeToggle?: () => void;
+  motherCurseActionSourcePlayerIds?: Set<string>;
   vampireWolfUsed?: boolean;
   onVampireWolfToggle?: () => void;
   vampireVictimKeepsPower?: boolean;
@@ -170,6 +171,7 @@ export const PlayerCircle = ({
   onSpiderDayChangeToggle,
   motherCurseChangeUsed = false,
   onMotherCurseChangeToggle,
+  motherCurseActionSourcePlayerIds,
   vampireWolfUsed = false,
   onVampireWolfToggle,
   vampireVictimKeepsPower = true,
@@ -384,6 +386,8 @@ export const PlayerCircle = ({
       && (dogState.actorIdolUses >= 2 || !!dogState.independentRole);
     const dogCupidCannotChooseLovers = !!dogState && role === "s01";
     if (ROLE_DRAG_ACTIONS[role] && !isPDead
+      && (role !== "m07" || (gameCyclePhase === "night"
+        && (!motherCurseActionSourcePlayerIds || motherCurseActionSourcePlayerIds.has(playerId))))
       && !(isActor && !dogState && !actorCopyActive && actorIdolUses >= 2)
       && !dogActorUnavailable
       && !dogCupidCannotChooseLovers) {

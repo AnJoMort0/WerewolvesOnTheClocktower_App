@@ -1562,7 +1562,7 @@ export const NightScript = ({
                 replaceAllRoleTokens={item.replaceAllRoleTokens}
                 actorCopiedRole={actorCopiedRole}
                 sourcePlayerId={sourcePlayerId}
-                disableDrag={item.actorNotice || (configuredPhoneMode === PHONE_MODE.WEREWOLF_HUNT && getItemParticipants(item).length === 0) || (!!item.dogWolfLine && !!sourcePlayerId && (
+                disableDrag={item.actorNotice || motherActionUnavailable || (configuredPhoneMode === PHONE_MODE.WEREWOLF_HUNT && getItemParticipants(item).length === 0) || (!!item.dogWolfLine && !!sourcePlayerId && (
                   abilityRoleAssignments[sourcePlayerId] === "s01"
                   || (abilityRoleAssignments[sourcePlayerId] === "a04" && (
                     (dogWolfStates[sourcePlayerId]?.actorIdolUses ?? 0) >= 2

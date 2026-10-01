@@ -26,7 +26,7 @@ const ROLE_ACTION_PHONE_MODES = {
   [PHONE_MODE.SECRET_LOVER_CHECK]: { roleId: "as01b", dragAction: "role-as01b" },
   [PHONE_MODE.WILD_CHILD_CHOOSE_PARENT]: { roleId: "l02", dragAction: ROLE_DRAG_ACTIONS.l02 },
   [PHONE_MODE.DEVOUT_SERVANT_SAVE]: { roleId: "l06", dragAction: ROLE_DRAG_ACTIONS.l06, canIgnore: true },
-  [PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE]: { roleId: "m07", dragAction: "role-m07" },
+  [PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE]: { roleId: "m07", dragAction: ROLE_DRAG_ACTIONS.m07 },
 } as const satisfies Partial<Record<PhoneMode, { roleId: RoleId; dragAction: string; canIgnore?: boolean }>>;
 export type RoleActionPhoneMode = keyof typeof ROLE_ACTION_PHONE_MODES;
 export function isRoleActionPhoneMode(mode: string): mode is RoleActionPhoneMode {

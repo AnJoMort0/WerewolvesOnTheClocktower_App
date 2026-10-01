@@ -132,6 +132,11 @@ describe("NightScript phone controls", () => {
     const curse = container.querySelector<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE));
     expect(curse).toBeInTheDocument();
     expect(curse?.querySelector(".lucide-skull")).toBeInTheDocument();
+    const draggableLine = curse?.closest<HTMLElement>('[draggable="true"]');
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    fireEvent.dragStart(draggableLine!, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-m07");
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "mother");
     fireEvent.click(curse!);
     expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE, expect.any(String), "mother", null);
 
@@ -139,6 +144,7 @@ describe("NightScript phone controls", () => {
       playerEffects={{ mother: new Set(["cursed"]) }}
     /></LanguageContext.Provider>);
     expect(container.querySelector(phoneModeSelector(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE))).not.toBeInTheDocument();
+    expect(container.querySelector('[draggable="true"]')).toBeNull();
     expect(container.querySelector('img[alt="Cursed"]')).toBeInTheDocument();
     expect(container.textContent).toContain("Mother of Werewolves");
     expect(container.textContent).not.toContain(getTranslation("en").ui.motherCurseChangeUsed);
@@ -162,6 +168,7 @@ describe("NightScript phone controls", () => {
 
     const controls = container.querySelectorAll<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE));
     expect(controls).toHaveLength(1);
+    expect(controls[0].closest('[draggable="true"]')).not.toBeNull();
     fireEvent.click(controls[0]);
     expect(onPhoneToggle).toHaveBeenCalledWith(PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE, expect.any(String), "mime", expect.any(Number));
   });

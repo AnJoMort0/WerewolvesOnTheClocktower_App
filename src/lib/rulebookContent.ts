@@ -4114,6 +4114,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             }
         },
         {
+            id: "normal-v15",
+            refs: ["v15"],
+            text: {
+                pt: `O Piromaníaco acorda/não acorda. São-lhe mostradas as pessoas inocentadas no último Tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.`,
+                fr: `Le Pyromane se réveille / ne se réveille pas. Les personnes innocentées au dernier Tribunal lui sont montrées. Il décide, en pointant ou par un pouce vers le bas, s’il veut brûler la maison d’un d’entre eux.`,
+                en: `The Pyromaniac wakes up / does not wake up. The players acquitted at the previous Tribunal are shown. By pointing at one of them or showing a thumbs-down, the Pyromaniac decides whether to set one of their homes on fire.`
+            }
+        },
+        {
             id: "normal-e02",
             refs: ["e02"],
             text: {
@@ -4264,15 +4273,6 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `O Salvador acorda e indica quem será imune durante esta noite.`,
                 fr: `Le Sauveur se réveille et choisit qui sera immunisé durant cette nuit.`,
                 en: `The Saviour wakes up and chooses who will be immune during this night.`
-            }
-        },
-        {
-            id: "normal-v15",
-            refs: ["v15"],
-            text: {
-                pt: `O Piromaníaco acorda/não acorda. São-lhe mostradas as pessoas inocentadas no último Tribunal. Ele decide, ao indicar ou mostrar o polegar para baixo, se quer ou não incendiar a casa de uma delas.`,
-                fr: `Le Pyromane se réveille / ne se réveille pas. Les personnes innocentées au dernier Tribunal lui sont montrées. Il décide, en pointant ou par un pouce vers le bas, s’il veut brûler la maison d’un d’entre eux.`,
-                en: `The Pyromaniac wakes up / does not wake up. The players acquitted at the previous Tribunal are shown. By pointing at one of them or showing a thumbs-down, the Pyromaniac decides whether to set one of their homes on fire.`
             }
         },
         {

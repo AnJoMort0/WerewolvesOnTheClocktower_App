@@ -48,6 +48,28 @@ describe("PlayerCircle drag and power controls", () => {
     expect(container.querySelector("img")?.closest('[draggable="true"]')).toBeNull();
   });
 
+  it("drags an eligible Mother to apply her Curse and disables dragging when she cannot act", () => {
+    const props = {
+      isGM: true, isPlaying: true, totalSlots: 2, onDropPlayer: vi.fn(),
+      players: [
+        { id: "mother", name: "Mother", seat_position: 0, character: "m07", is_alive: true },
+        { id: "target", name: "Target", seat_position: 1, character: "v01", is_alive: true },
+      ],
+      roleAssignments: { mother: "m07" as const, target: "v01" as const },
+      abilityRoleAssignments: { mother: "m07" as const, target: "v01" as const },
+    };
+    const { container, rerender } = render(<PlayerCircle {...props}
+      motherCurseActionSourcePlayerIds={new Set(["mother"])} />);
+    const draggable = container.querySelector<HTMLElement>('[draggable="true"]')!;
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    fireEvent.dragStart(draggable, { dataTransfer });
+    expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-m07");
+    expect(dataTransfer.setData).toHaveBeenCalledWith("sourcePlayerId", "mother");
+
+    rerender(<PlayerCircle {...props} motherCurseActionSourcePlayerIds={new Set()} />);
+    expect(container.querySelector('[draggable="true"]')).toBeNull();
+  });
+
   it("makes lobby seats movable and lets an unplaced Traveller use a gap", () => {
     const onInsertPlayer = vi.fn();
     const { container, getByLabelText } = render(<PlayerCircle

@@ -4574,7 +4574,7 @@ const GMRoom = () => {
     const nextDogEnemyCount = livingDogEnemyIds.includes(targetPlayerId)
       ? livingDogEnemyIds.length - 1
       : livingDogEnemyIds.length + 1;
-    if (!meta.fromPhone && actionRole && actionRole !== "v12" && (!dogEvilCupidState || nextDogEnemyCount >= 2)) {
+      if (!meta.fromPhone && actionRole && actionRole !== "v12" && actionRole !== "m07" && (!dogEvilCupidState || nextDogEnemyCount >= 2)) {
       markScriptRoleAction(actionRole, sourcePlayerId);
     }
     applyCaughtIfWebbed();
@@ -5019,6 +5019,7 @@ const GMRoom = () => {
         applySourcedEffect(spiderSourcePlayerId ?? sourcePlayerId, targetPlayerId, "webbed");
       }
       else if (roleSource === "m07") {
+        if (gameCyclePhase !== "night") return;
         const motherId = sourcePlayerId && abilityRoleAssignments[sourcePlayerId] === "m07"
           ? sourcePlayerId
           : getRolePlayerId("m07");
@@ -5058,6 +5059,7 @@ const GMRoom = () => {
           });
         }
         applySourcedEffect(motherId, targetPlayerId, "cursed");
+        if (!meta.fromPhone) markScriptRoleAction("m07", motherId);
       }
       else if (roleSource === "a05") {
         // Rouba-Túmulos: marks a red-X victim. The actual swap happens if that
@@ -5305,6 +5307,7 @@ const GMRoom = () => {
     const dogState = dogWolfStates[playerId];
     const roleAction = ROLE_DRAG_ACTIONS[role];
     if (roleAction && (!permanentlyDead.has(playerId) || prophecyPowerPlayerIds.has(playerId))) {
+      if (role === "m07" && (gameCyclePhase !== "night" || !motherCurseActionSourcePlayerIds.includes(playerId))) return {};
       // a05 disabled when poisoned
       if (role === "a05" && isPlayerActingPoisoned(playerId)) return {};
       if (dogState && role === "s01") return {};
@@ -6542,6 +6545,7 @@ const GMRoom = () => {
                   onSpiderDayChangeToggle={() => { setSpiderDayChangeUsed((value) => !value); markScriptRoleAction("v23"); }}
                   motherCurseChangeUsed={motherCurseChangeUsed}
                   onMotherCurseChangeToggle={() => { setMotherCurseChangeUsed((value) => !value); markScriptRoleAction("m07"); }}
+                  motherCurseActionSourcePlayerIds={new Set(motherCurseActionSourcePlayerIds)}
                   vampireWolfUsed={vampireWolfUsed}
                   onVampireWolfToggle={() => {
                     markScriptRoleAction("m03");
