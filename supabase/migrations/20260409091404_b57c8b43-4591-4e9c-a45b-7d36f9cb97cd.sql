@@ -1,1 +1,0 @@
-CREATE POLICY "Anyone can delete players" ON public.players FOR DELETE USING (true);
