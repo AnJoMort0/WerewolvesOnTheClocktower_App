@@ -31,6 +31,8 @@ export const ROLE_DRAG_ACTIONS = {
   l02: "role-l02",
   l06: "role-l06",
   t03: "role-t03",
+  t04: "role-t04",
+  t05: "role-t05",
 } as const satisfies Partial<Record<RoleId, string>>;
 
 export type SharedRoleDragRole = keyof typeof ROLE_DRAG_ACTIONS;

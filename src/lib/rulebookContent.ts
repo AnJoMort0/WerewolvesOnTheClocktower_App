@@ -2251,9 +2251,9 @@ export const RULEBOOK_CHARACTERS = {
                     en: `No one would ever suspect a poor old grandmother. Well, no one except those rowdy children.`
                 },
                 explanation: {
-                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
-                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
-                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
+                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho". O design da carta é inspirado na aparência do Lobo Mau do filme "Shrek".`,
+                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge". Le design de la carte est inspiré de l'apparence du Grand Méchant Loup dans le film "Shrek".`,
+                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood. The card design is inspired by the appearance of the Big Bad Wolf in the movie "Shrek".`
                 }
             },
         ],
@@ -2847,7 +2847,7 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Efeito do personagem que está a substituir.`,
+                    pt: `Efeito do personagem que está a copiar.`,
                     fr: `Effet du personnage qu’il copie.`,
                     en: `Uses the poisoned effect of the copied character.`
                 }
@@ -2897,7 +2897,7 @@ export const RULEBOOK_CHARACTERS = {
                     en: `If poisoned:`
                 },
                 description: {
-                    pt: `Efeito do personagem que está a substituir.`,
+                    pt: `Efeito do personagem que está a copiar.`,
                     fr: `Effet du personnage qu’il copie.`,
                     en: `Uses the poisoned effect of the copied character.`
                 }
@@ -3141,6 +3141,87 @@ export const RULEBOOK_CHARACTERS = {
                 pt: `Assassina o jogador errado.`,
                 fr: `Assassine le mauvais joueur.`,
                 en: `Assassinates the wrong player.`
+            }
+        }],
+        objective: TRAVELLER_OBJECTIVE
+    },
+
+    // t04 | Devil's Advocate
+    "t04": {
+        id: "t04",
+        group: "traveller",
+        team: "traveller",
+        name: {
+            pt: `Advogado do Diabo`,
+            fr: `Avocat du Diable`,
+            en: `Devil's Advocate`
+        },
+        mainDescription: {
+            pt: [
+                `O Advogado do Diabo escolhe um jogador. Durante o <red>dia seguinte</red>, esse jogador fica imune a execução.`,
+                `O Advogado do Diabo <red>não pode escolher o mesmo jogador duas vezes</red>.`
+            ],
+            fr: [
+                `L'Avocat du Diable choisit un joueur. Pendant la <red>journée suivante</red>, ce joueur est immunisé contre l'exécution.`,
+                `L'Avocat du Diable <red>ne peut pas choisir le même joueur deux fois</red>.`
+            ],
+            en: [
+                `The Devil's Advocate chooses a player. During the <red>next day</red>, that player is immune to execution.`,
+                `The Devil's Advocate <red>cannot choose the same player twice</red>.`
+            ]
+        },
+        details: [{
+            title: {
+                pt: `Se envenenado:`,
+                fr: `Si empoisonné :`,
+                en: `If poisoned:`
+            },
+            description: {
+                pt: `Se o jogador escolhido for nomeado, é executado imediatamente.`,
+                fr: `Si le joueur choisi est nommé, il est immédiatement exécuté.`,
+                en: `If the chosen player is nominated, they are immediately executed.`
+            }
+        }],
+        objective: TRAVELLER_OBJECTIVE
+    },
+
+    // t05 | Bone Collector
+    "t05": {
+        id: "t05",
+        group: "traveller",
+        team: "traveller",
+        name: {
+            pt: `Colecionador de Ossos`,
+            fr: `Collecteur d'Os`,
+            en: `Bone Collector`
+        },
+        mainDescription: {
+            pt: [
+                `<red>Uma vez por jogo</red>, durante o dia, o Colecionador de Ossos pode pedir ao Narrador para ganhar temporariamente o poder de um dos jogadores que morreu mais recentemente, sem saber o papel.`,
+                `O poder copiado dura <red>um dia e uma noite</red>.`,
+                `O seu objetivo não muda.`,
+            ],
+            fr: [
+                `<red>Une fois par partie</red>, pendant la journée, le Collecteur d'Os peut demander au Meneur de gagner temporairement le pouvoir de l'un des joueurs morts le plus récemment, sans savoir le rôle.`,
+                `Le pouvoir copié dure <red>une journée et une nuit</red>.`,
+                `Son objectif ne change pas.`,
+            ],
+            en: [
+                `<red>Once per game</red>, during the day, the Bone Collector may ask the Narrator to temporarily gain the power of one of the most recently deceased players, without knowing their role.`,
+                `The copied power lasts for <red>one day and one night</red>.`,
+                `His objective does not change.`
+            ]
+        },
+        details: [{
+            title: {
+                pt: `Se envenenado:`,
+                fr: `Si empoisonné :`,
+                en: `If poisoned:`
+            },
+            description: {
+                pt: `Efeito do personagem que está a copiar.`,
+                fr: `Effet du personnage qu’il copie.`,
+                en: `Uses the poisoned effect of the copied character.`
             }
         }],
         objective: TRAVELLER_OBJECTIVE
@@ -3789,6 +3870,8 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "t01",
     "t02",
     "t03",
+    "t04",
+    "t05",
     "x01",
     "x02",
     "x02.1",
@@ -3940,6 +4023,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `O Chefe da Aldeia acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.`,
                 fr: `L’Ancien du Village se réveille et choisit un joueur qui aura automatiquement deux votes contre lui au prochain Tribunal.`,
                 en: `The Village Elder wakes up and chooses a player who will automatically have 2 votes against them at the next Tribunal.`
+            }
+        },
+        {
+            id: "first-t04",
+            refs: ["t04"],
+            text: {
+                pt: `O Advogado do Diabo acorda e escolhe um jogador. Esse jogador fica imune a execução durante o próximo dia. O Advogado do Diabo não pode escolher o mesmo jogador duas vezes durante o jogo.`,
+                fr: `L'Avocat du Diable se réveille et choisit un joueur. Ce joueur est immunisé contre l'exécution pendant la journée suivante. L'Avocat du Diable ne peut pas choisir le même joueur deux fois pendant la partie.`,
+                en: `The Devil's Advocate wakes up and chooses a player. That player is immune to execution during the next day. The Devil's Advocate cannot choose the same player twice during the game.`
             }
         },
         {
@@ -4216,6 +4308,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `O Chefe da Aldeia acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.`,
                 fr: `L’Ancien du Village se réveille et choisit un joueur qui aura automatiquement deux votes contre lui au prochain Tribunal.`,
                 en: `The Village Elder wakes up and chooses a player who will automatically have 2 votes against them at the next Tribunal.`
+            }
+        },
+        {
+            id: "normal-t04",
+            refs: ["t04"],
+            text: {
+                pt: `O Advogado do Diabo acorda e escolhe um jogador que ainda não tenha escolhido. Esse jogador fica imune a execução durante o próximo dia.`,
+                fr: `L'Avocat du Diable se réveille et choisit un joueur qu'il n'a pas encore choisi. Ce joueur est immunisé contre l'exécution pendant la journée suivante.`,
+                en: `The Devil's Advocate wakes up and chooses a player they have not previously chosen. That player is immune to execution during the next day.`
             }
         },
         {

@@ -10,7 +10,7 @@ const actions = {
 
 export const en: Translation = {
   roleLabels: {
-    t01: "Lawyer", t02: "Gambler", t03: "Gunslinger",
+    t01: "Lawyer", t02: "Gambler", t03: "Gunslinger", t04: "Devil's Advocate", t05: "Bone Collector",
     e01: "Werewolf",
     e02: "Evil Witch",
     e03: "Shaman",
@@ -85,6 +85,7 @@ export const en: Translation = {
       { text: "The {Bear} growls / does not growl.", requires: ["v02"] },
       { text: "The {Monkey Tamer} wakes up and chooses a player whose card will be revealed.", requires: ["v26"] },
       { text: "The {Village Elder} wakes up and chooses a player who will automatically have 2 votes against them at the next Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
+      { text: "The {Devil's Advocate} wakes up and chooses a player. That player is immune to execution during the next day. The {Devil's Advocate} cannot choose the same player twice during the game.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "At the end of the night, a howl is heard. The Village now knows that the Werewolves have revealed themselves and are hungry. The Village wakes up suspicious of everyone." },
     ],
     secondNight: [
@@ -116,6 +117,7 @@ export const en: Translation = {
       { text: "The {Fox Tamer} wakes up and indicates three neighboring players. A thumb signal reveals whether at least one of those three players is an Evil Being (or the {Fox} is confused).", requires: ["v04"], phoneMode: PHONE_MODE.FOX_TAMER_CHECK },
       { text: "The {Bear} growls / does not growl (/ is confused).", requires: ["v02"] },
       { text: "The {Village Elder} wakes up and chooses a player who will automatically have 2 votes against them at the next Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
+      { text: "The {Devil's Advocate} wakes up and chooses a player they have not previously chosen. That player is immune to execution during the next day.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "The {Thief} wakes up and indicates whose vote will be removed at the next Tribunal.", requires: ["f01"], phoneMode: PHONE_MODE.THIEF_REVOKE_VOTE },
       { text: "The {Captain} wakes up and chooses a player who will be a SOLDIER during this night and the following day.", requires: ["v09"], phoneMode: PHONE_MODE.CAPTAIN_APPOINT_SOLDIER },
       { text: "{Cupid} wakes up and uses a thumb signal to decide whether to spend one of their two protective arrows to grant the Lovers immunity tonight.", requires: ["s01"], conditionKey: "cupidHasCharges" },
@@ -256,6 +258,8 @@ export const en: Translation = {
     assassinate: "Assassinate",
     resurrectPlayer: "Resurrect",
     changeWeb: "Move Web",
+    copyLastDeadPlayer: "Copy last dead player",
+    stopCopying: "Stop copying",
     motherCurseChangeUsed: "Curse changed",
     assassinationMode: "Assassination Mode",
     resurrectionMode: "Resurrection Mode",
@@ -376,6 +380,9 @@ export const en: Translation = {
       cursed: "Cursed",
       caught: "Caught",
       spied_on: "Spied On",
+      immunity_execution: "Execution Immune",
+      devil_advocate_execution: "Executed if Nominated",
+      devil_advocate_used: "Devil's Advocate Used",
       dug_up: "Dug Up",
       idol: "Idol",
       idol_dog: "Dog's Idol",
@@ -384,6 +391,10 @@ export const en: Translation = {
       dug_up_dog: "Dug Up by the Dog",
       dug_up_mime: "Dug Up by the Mime",
       owner: "Owner",
+      webbed_dog: "Dog's Web",
+      caught_dog: "Caught by the Dog's Web",
+      spied_on_dog: "Spied On by the Dog",
+      devil_advocate_used_dog: "Dog's Devil's Advocate Used",
     },
     toasts: {
       errAddPlayer: "Error adding player",

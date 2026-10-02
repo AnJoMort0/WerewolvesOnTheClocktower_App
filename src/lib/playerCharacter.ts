@@ -8,6 +8,7 @@ const OBJECTIVE_ROLE_KEY = "objectiveRole";
 const OBJECTIVE_EFFECTS_KEY = "objectives";
 const DOG_ACTOR_COPY_KEY = "dogActorCopy";
 const MIME_COPY_KEY = "mimeCopy";
+const BONE_COLLECTOR_COPY_KEY = "boneCollectorCopy";
 const PROPHECY_UNTIL_KEY = "prophecyUntil";
 const KNOWN_WEREWOLVES_KEY = "knownWerewolves";
 
@@ -21,6 +22,7 @@ export type PlayerCharacterMetadata = {
   objectiveEffects: ObjectiveEffectId[];
   dogActorCopiedRole: RoleId | null;
   mimeCopiedRole?: RoleId | null;
+  boneCollectorCopiedRole?: RoleId | null;
   prophecyRetainedUntilNight?: number | null;
   knownWerewolfPlayerIds: string[];
 };
@@ -57,6 +59,8 @@ export function parsePlayerCharacterMetadata(character: string | null | undefine
   if (dogActorCopiedRole && ROLES[dogActorCopiedRole]) metadata.dogActorCopiedRole = dogActorCopiedRole;
   const mimeCopiedRole = params.get(MIME_COPY_KEY) as RoleId | null;
   if (mimeCopiedRole && ROLES[mimeCopiedRole]) metadata.mimeCopiedRole = mimeCopiedRole;
+  const boneCollectorCopiedRole = params.get(BONE_COLLECTOR_COPY_KEY) as RoleId | null;
+  if (boneCollectorCopiedRole && ROLES[boneCollectorCopiedRole]) metadata.boneCollectorCopiedRole = boneCollectorCopiedRole;
   const prophecyUntil = Number(params.get(PROPHECY_UNTIL_KEY));
   if (Number.isInteger(prophecyUntil) && prophecyUntil >= 1) metadata.prophecyRetainedUntilNight = prophecyUntil;
   metadata.knownWerewolfPlayerIds = params.get(KNOWN_WEREWOLVES_KEY)?.split(",").filter(Boolean) ?? [];
@@ -73,6 +77,7 @@ export function encodePlayerCharacterMetadata(
   if (metadata.objectiveRole) params.set(OBJECTIVE_ROLE_KEY, metadata.objectiveRole);
   if (metadata.dogActorCopiedRole) params.set(DOG_ACTOR_COPY_KEY, metadata.dogActorCopiedRole);
   if (metadata.mimeCopiedRole) params.set(MIME_COPY_KEY, metadata.mimeCopiedRole);
+  if (metadata.boneCollectorCopiedRole) params.set(BONE_COLLECTOR_COPY_KEY, metadata.boneCollectorCopiedRole);
   const prophecyUntil = metadata.prophecyRetainedUntilNight;
   if (typeof prophecyUntil === "number" && Number.isInteger(prophecyUntil) && prophecyUntil >= 1) {
     params.set(PROPHECY_UNTIL_KEY, String(prophecyUntil));

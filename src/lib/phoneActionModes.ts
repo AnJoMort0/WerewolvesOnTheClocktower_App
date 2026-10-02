@@ -38,6 +38,7 @@ export const PHONE_MODE = {
   WILD_CHILD_CHOOSE_PARENT: "wild-child-choose-parent",
   DEVOUT_SERVANT_SAVE: "devout-servant-save",
   GAMBLER_GUESS: "gambler-guess",
+  DEVIL_ADVOCATE_PROTECT: "devil-advocate-protect",
 } as const;
 
 export type PhoneMode = typeof PHONE_MODE[keyof typeof PHONE_MODE];

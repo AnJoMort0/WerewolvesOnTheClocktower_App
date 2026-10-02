@@ -2,12 +2,13 @@ import type { RoleId } from "@/lib/roles";
 
 export const PLAYER_ACTION_STATE_VERSION = 1;
 
-export type PlayerActionKind = "v10-assassinate" | "v18-resurrect" | "v23-web";
+export type PlayerActionKind = "v10-assassinate" | "v18-resurrect" | "v23-web" | "t05-copy";
 
 const PLAYER_ACTION_KINDS = new Set<PlayerActionKind>([
   "v10-assassinate",
   "v18-resurrect",
   "v23-web",
+  "t05-copy",
 ]);
 
 export type PlayerActionRequest = {

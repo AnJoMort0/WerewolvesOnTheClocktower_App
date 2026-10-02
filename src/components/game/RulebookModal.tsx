@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { ArrowUp, List } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowUp, List, X } from "lucide-react";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SkinPackSelectButton } from "@/components/game/SkinPackSelector";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID, RULEBOOK_TOP_ID } from "@/lib/rulebook";
-import { t, type Language } from "@/lib/i18n";
+import { getTranslation, t, type Language } from "@/lib/i18n";
 import type { RoleId } from "@/lib/roles";
 import { useSkinPack } from "@/lib/skinPackContext";
 import type { RulebookSkinPreviewValue } from "@/lib/skinPacks";
@@ -124,7 +124,16 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="flex h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden border-border bg-background p-0 sm:rounded-lg md:h-[calc(100dvh-3rem)] md:w-[calc(100vw-3rem)]">
+      <DialogContent showCloseButton={false} aria-describedby={undefined} className="flex h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-none flex-col gap-0 overflow-hidden border-border bg-background p-0 sm:rounded-lg md:h-[calc(100dvh-3rem)] md:w-[calc(100vw-3rem)]">
+        <DialogClose
+          type="button"
+          className="absolute right-4 top-4 z-20 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          onClick={() => onOpenChange(false)}
+          aria-label={getTranslation(language).ui.actions.close}
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">{getTranslation(language).ui.actions.close}</span>
+        </DialogClose>
         <DialogHeader className="border-b border-border px-4 py-3 sm:px-6">
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 pr-9 sm:flex">
             <DialogTitle className="min-w-0 flex-1 truncate font-display text-xl text-gradient-blood">

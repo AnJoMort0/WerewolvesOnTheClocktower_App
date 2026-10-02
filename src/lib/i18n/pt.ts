@@ -10,7 +10,7 @@ const actions = {
 
 export const pt: Translation = {
   roleLabels: {
-    t01: "Advogada", t02: "Apostador", t03: "Pistoleiro",
+    t01: "Advogada", t02: "Apostador", t03: "Pistoleiro", t04: "Advogado do Diabo", t05: "Colecionador de Ossos",
     e01: "Lobisomem",
     e02: "Bruxa Malvada",
     e03: "Chaman",
@@ -85,6 +85,7 @@ export const pt: Translation = {
       { text: "O {Urso} rosna/não rosna.", requires: ["v02"] },
       { text: "O {Domador do Macaco} acorda e escolhe um jogador cuja carta lhe será revelada.", requires: ["v26"] },
       { text: "O {Chefe da Aldeia} acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
+      { text: "O {Advogado do Diabo} acorda e escolhe um jogador. Esse jogador fica imune a execução durante o próximo dia. O {Advogado do Diabo} não pode escolher o mesmo jogador duas vezes durante o jogo.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "No fim desta noite ouve-se um uivar. A Aldeia sabe então que os Lobisomens se revelaram e estão com fome. A Aldeia acorda desconfiada de toda a gente." },
     ],
     secondNight: [
@@ -116,6 +117,7 @@ export const pt: Translation = {
       { text: "O {Domador da Raposa} acorda e indica três vizinhos. Será-lhe revelado, com o polegar, se um desses três jogadores é uma Criatura Malvada (ou se a {Raposa} está confusa).", requires: ["v04"], phoneMode: PHONE_MODE.FOX_TAMER_CHECK },
       { text: "O {Urso} rosna/não rosna (/está confuso).", requires: ["v02"] },
       { text: "O {Chefe da Aldeia} acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
+      { text: "O {Advogado do Diabo} acorda e escolhe um jogador que ainda não tenha escolhido. Esse jogador fica imune a execução durante o próximo dia.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "O {Ladrão} acorda e indica a quem quer retirar o voto no próximo Tribunal.", requires: ["f01"], phoneMode: PHONE_MODE.THIEF_REVOKE_VOTE },
       { text: "O {Capitão} acorda e escolhe um jogador que será um SOLDADO durante esta noite e o próximo dia.", requires: ["v09"], phoneMode: PHONE_MODE.CAPTAIN_APPOINT_SOLDIER },
       { text: "O {Cupido} acorda e decide com o polegar se quer usar uma das suas duas flechas de proteção para dar imunidade aos Namorados esta noite.", requires: ["s01"], conditionKey: "cupidHasCharges" },
@@ -256,6 +258,8 @@ export const pt: Translation = {
     assassinate: "Assassinar",
     resurrectPlayer: "Ressuscitar",
     changeWeb: "Mudar Teia",
+    copyLastDeadPlayer: "Copiar último morto",
+    stopCopying: "Parar de copiar",
     motherCurseChangeUsed: "Maldição mudada",
     assassinationMode: "Modo de Assassinato",
     resurrectionMode: "Modo de Ressurreição",
@@ -376,6 +380,9 @@ export const pt: Translation = {
       cursed: "Amaldiçoado",
       caught: "Apanhado",
       spied_on: "Espiado",
+      immunity_execution: "Imune a Execução",
+      devil_advocate_execution: "Executado se for nomeado",
+      devil_advocate_used: "Escolhido pelo Advogado do Diabo",
       dug_up: "Desenterrado",
       idol: "Ídolo",
       idol_dog: "Ídolo do Cão",
@@ -384,6 +391,10 @@ export const pt: Translation = {
       dug_up_dog: "Desenterrado pelo Cão",
       dug_up_mime: "Desenterrado pelo Mimo",
       owner: "Dono",
+      webbed_dog: "Teia do Cão",
+      caught_dog: "Apanhado na Teia do Cão",
+      spied_on_dog: "Espiado pelo Cão",
+      devil_advocate_used_dog: "Escolhido pelo Advogado do Diabo do Cão",
     },
     toasts: {
       errAddPlayer: "Erro ao adicionar jogador",

@@ -2,7 +2,7 @@ import { fireEvent, render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { EMPTY_ACTOR_POWER_STATE } from "@/lib/actor";
-import { getRoleLabel } from "@/lib/i18n";
+import { getEffectLabel, getRoleLabel } from "@/lib/i18n";
 import { ROLES } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 
@@ -125,6 +125,19 @@ describe("PlayerCircle drag and power controls", () => {
     rerender(<PlayerCircle {...props} usedTravellerPowerIds={new Set(["gunslinger"])} />);
     expect(container.querySelector('[draggable="true"]')).toBeNull();
     expect(getByRole("checkbox", { name: "Ação usada" })).toBeChecked();
+  });
+
+  it("drags the Devil's Advocate and shows the poisoned execution marker", () => {
+    const { container, getByLabelText } = render(<PlayerCircle isGM isPlaying totalSlots={1} onDropPlayer={vi.fn()}
+      players={[{ id: "advocate", name: "Advocate", seat_position: 0, character: "t04", is_alive: true }]}
+      roleAssignments={{ advocate: "t04" }} abilityRoleAssignments={{ advocate: "t04" }}
+      playerEffects={{ advocate: new Set(["devil_advocate_execution"]) }} />);
+    const draggable = container.querySelector<HTMLElement>('[draggable="true"]')!;
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+    fireEvent.dragStart(draggable, { dataTransfer });
+
+    expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-t04");
+    expect(getByLabelText(getEffectLabel("devil_advocate_execution", "pt"))).toBeInTheDocument();
   });
 
   it("allows restoring exhausted powers independently without changing player status", () => {

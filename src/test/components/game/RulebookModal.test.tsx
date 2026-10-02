@@ -103,4 +103,12 @@ describe("RulebookModal", () => {
     fireEvent.change(select, { target: { value: "thiercelieux" } });
     await waitFor(() => expect(document.querySelector<HTMLDetailsElement>('details[data-character-lore="e02"]')?.open).toBe(true));
   });
+
+  it("closes the rulebook directly from its close button", () => {
+    const onOpenChange = renderWitch();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
 });

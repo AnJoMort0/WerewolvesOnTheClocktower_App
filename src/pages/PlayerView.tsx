@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw, ScrollText, Waypoints } from "lucide-react";
+import { Clock, Crosshair, Eye, EyeOff, X, Moon, Sun, Scale, BookOpen, RotateCcw, ScrollText, Waypoints, Bone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
@@ -628,15 +628,18 @@ const PlayerView = () => {
   const characterMetadata = parsePlayerCharacterMetadata(player?.character);
   const isDogActorCopying = !!characterMetadata.dogActorCopiedRole;
   const isMimeCopying = !!characterMetadata.mimeCopiedRole;
-  const displayRole = characterMetadata.mimeCopiedRole ?? characterMetadata.dogActorCopiedRole ?? parsedCharacter.displayRole;
+  const isBoneCollectorCopying = !!characterMetadata.boneCollectorCopiedRole;
+  const displayRole = characterMetadata.boneCollectorCopiedRole ?? characterMetadata.mimeCopiedRole ?? characterMetadata.dogActorCopiedRole ?? parsedCharacter.displayRole;
   const copiedActionRole = characterMetadata.dogActorCopiedRole
     ?? (
       parsedCharacter.baseRole === "a02"
       || parsedCharacter.actorCopiedRole === "a02"
       || characterMetadata.mimeCopiedRole === "a02"
+      || characterMetadata.boneCollectorCopiedRole === "a02"
         ? characterMetadata.ownerRole
         : null
     )
+    ?? characterMetadata.boneCollectorCopiedRole
     ?? characterMetadata.mimeCopiedRole
     ?? parsedCharacter.displayRole;
   const roleDef = displayRole ? ROLES[displayRole] ?? null : null;
@@ -644,8 +647,8 @@ const PlayerView = () => {
   const ownerRoleDef = characterMetadata.ownerRole ? ROLES[characterMetadata.ownerRole] : null;
   const objectiveRoleDef = characterMetadata.objectiveRole
     ? ROLES[characterMetadata.objectiveRole]
-    : isMimeCopying ? null : ownerRoleDef;
-  const canUseFlexibleSkin = !!displayRole && parsedCharacter.baseRole === displayRole;
+    : (isMimeCopying || isBoneCollectorCopying) ? null : ownerRoleDef;
+  const canUseFlexibleSkin = !!displayRole && (parsedCharacter.baseRole === displayRole || isMimeCopying || isBoneCollectorCopying);
   const displayedRoleImage = roleDef
     ? resolveRoleImage(roleDef.id, {
       skinPackId,
@@ -669,6 +672,9 @@ const PlayerView = () => {
       } else if (effect === "werewolf_turned") {
         indicators.push({ id: effect, image: werewolfIcon, label: t("objectiveWerewolf", language) });
       }
+    }
+    if ((isMimeCopying || isBoneCollectorCopying) && indicators.length === 0) {
+      indicators.push({ id: "copier-villager", image: villagerIcon, label: t("objectiveVillage", language) });
     }
     if (objectiveRoleDef && indicators.length === 0) {
       const ownerRole = objectiveRoleDef.id;
@@ -696,6 +702,7 @@ const PlayerView = () => {
   const isSpider = displayRole === "v23";
   const isSpy = displayRole === "f02";
   const isMime = parsedCharacter.baseRole === "a03";
+  const isBoneCollector = parsedCharacter.baseRole === "t05";
   const playerIsDead = !!player && !player.is_alive;
   const hasRetainedProphecyPower = playerIsDead && isProphecyRetentionActive(
     characterMetadata.prophecyRetainedUntilNight,
@@ -714,7 +721,8 @@ const PlayerView = () => {
   const pendingV10Request = hasPendingAction("v10-assassinate");
   const pendingV18Request = hasPendingAction("v18-resurrect");
   const pendingV23Request = hasPendingAction("v23-web");
-  const hasActualPendingPlayerAction = pendingV10Request || pendingV18Request || pendingV23Request;
+  const pendingT05Request = hasPendingAction("t05-copy");
+  const hasActualPendingPlayerAction = pendingV10Request || pendingV18Request || pendingV23Request || pendingT05Request;
   const visiblePendingV10Request = pendingV10Request || fakePlayerActionKind === "v10-assassinate";
   const visiblePendingV18Request = pendingV18Request || fakePlayerActionKind === "v18-resurrect";
   const visiblePendingV23Request = pendingV23Request || fakePlayerActionKind === "v23-web";
@@ -734,6 +742,13 @@ const PlayerView = () => {
     && roomStatus === "playing"
     && (!playerIsDead || hasRetainedProphecyPower)
     && !visiblePendingV23Request;
+  const canCopyLastDeadPlayer = isBoneCollector
+    && !isBoneCollectorCopying
+    && roomStatus === "playing"
+    && phaseInfo?.phase === "day"
+    && !playerIsDead
+    && !pendingT05Request
+    && roomPlayers.some((roomPlayer) => !roomPlayer.is_alive);
 
   useEffect(() => {
     if (!isParanoidPower) {
@@ -924,6 +939,19 @@ const PlayerView = () => {
       setWebSubmitting(false);
     }
   }, [isSpiderPower, sendPlayerActionRequest, v23HasUnlimitedUses, v23Uses, webTargetId]);
+
+  const sendBoneCollectorRequest = useCallback(async () => {
+    if (!isBoneCollector || !playerId) return;
+    await sendPlayerActionRequest({
+      kind: "t05-copy",
+      role: "t05",
+      targetPlayerId: playerId,
+      maxUses: 1,
+      currentUses: 0,
+      hasUnlimitedUses: true,
+      closeMode: () => undefined,
+    });
+  }, [isBoneCollector, playerId, sendPlayerActionRequest]);
 
   if (removed) {
     return (
@@ -1379,6 +1407,18 @@ const PlayerView = () => {
                             className="absolute bottom-2 right-2 h-14 w-14 cursor-pointer rounded-md border-2 border-cyan-300 object-cover shadow-lg"
                           />
                         )}
+                        {isBoneCollectorCopying && (
+                          <img
+                            src={getSkinImage("t05")}
+                            alt={getRoleLabel("t05", language)}
+                            title={getRoleLabel("t05", language)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openRulebook("t05");
+                            }}
+                            className="absolute bottom-2 right-2 h-14 w-14 cursor-pointer rounded-md border-2 border-amber-300 object-cover shadow-lg"
+                          />
+                        )}
                         {ownerRoleDef && !isDogActorCopying && (
                           <img
                             src={getSkinImage(ownerRoleDef.id)}
@@ -1521,6 +1561,23 @@ const PlayerView = () => {
                         <p className="text-xs text-yellow-400">
                           {t("assassinationRequestPending", language)}
                         </p>
+                      )}
+                    </div>
+                  )}
+                  {isBoneCollector && !isBoneCollectorCopying && (
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={!canCopyLastDeadPlayer}
+                        onClick={() => void sendBoneCollectorRequest()}
+                        className="w-full border-amber-400/50 bg-amber-500/10 font-display tracking-wider text-amber-100 hover:bg-amber-500/20"
+                      >
+                        <Bone className="mr-2 h-4 w-4" />
+                        {t("copyLastDeadPlayer", language)}
+                      </Button>
+                      {pendingT05Request && (
+                        <p className="text-xs text-yellow-400">{t("assassinationRequestPending", language)}</p>
                       )}
                     </div>
                   )}

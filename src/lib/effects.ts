@@ -23,6 +23,9 @@ export const STATUS_EFFECTS = [
   "cursed",
   "caught",
   "spied_on",
+  "immunity_execution",
+  "devil_advocate_execution",
+  "devil_advocate_used",
   "dug_up",
   "idol",
   "idol_dog",
@@ -30,6 +33,10 @@ export const STATUS_EFFECTS = [
   "enemy_dog",
   "dug_up_dog",
   "dug_up_mime",
+  "webbed_dog",
+  "caught_dog",
+  "spied_on_dog",
+  "devil_advocate_used_dog",
   "owner",
 ] as const;
 

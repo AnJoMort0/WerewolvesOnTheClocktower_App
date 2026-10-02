@@ -13,20 +13,37 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] 
+* [ ] Never copy the D12 line to the in-app script
 
 ## Fixes
 
-* [ ] 
+* [x] Clicking "X" in the rulebook doesn't directly close the rulebook, instead it goes to the previously focused character
+* [x] I think the Dog's copying actions dependant on status effects was mixing with the owner's, so I added more dog-only status to the icons
 
 ## Balance Changes
 
-* [x] If any Werewolf is poisoned, they still wake up and hunt, but the victim does not die, their attack attempt still wakes up the Bunny Tamer
+* [ ] 
 
 ## Additions
 
-* [x] m07. Mother of Werewolves / Mãe dos Lobisomens / Mère des Loups-garous:
-  * [x] On the first night, chooses a player to curse. The Mother wakes every night so the script does not reveal whether a Curse is active. When no player is cursed, she chooses a new target. Once per game, she can use the same nightly action to change an active Curse; doing so automatically ticks her use checkbox. The cursed player still gets called but cannot act at night, learns that they are cursed, and can lift the Curse by nominating someone during the Tribunal (removed manually by the GM).
+* [x] 2 new travellers (description already in rulebookContents):
+  * [x] Devil's Advocate:
+    * [x] Add modal and drag-drop action to give one player the Execution Immune status. He can still pick characters that are tagged devil_advocate_used but neither the immunity nor the poison effect will actually be applied
+    * [x] That status is removed automatically after ending the next Tribunal, and replaced with devil_advocate_used
+    * [x] If the Devil's Advocate is poisoned, add a script line during the Tribunal saying "if [player] is nominated, they get automatically executed" and instead of the Execution Immune status effect, make a big corsshair icon overlay covering the target's role images in the circle and in the list so that the GM doesn't forget to execute them if that happens
+  * [x] Bone Collector:
+    * [x] Have a fox-style used power, since the Bone Collector can only use the copy once. Just like the Actor, if the original role is resurrected, the Bone Collector stops copying the power. If the player is ressurected the same day as the Bone Collector asks to copy them, the Bone Collector checkbox is unticked and he gets to pick another player
+    * [x] Have a button on the player's device to "Copy last dead player", it pop-up in the GM for the GM to confirm or deny the request and if confirmed the Bone Collector is copying that role during that day and the following night
+    * [x] Drag-drop a Bone Collector that isn't copying someone also does this copy action. Add an option to the pop-up menu for "stop copying" just in case there's a mistake
+    * [x] Same player UI as the Actor copying a role
+    * [x] Add an alignement icon for "Villager" / "Evil Being" in the player's phone, even when he is siding with the villagers to remind the player that copying an evil role, does not mean the alignement change
+      * [x] Do the same with the Mime
+      * [x] For both the Mime and Bone Collector, if the role that appears has alignement skins, show the skin of the player's allignement
+    * [x] The script line calls for the "Bone Collector" when he has his own script line
+    * [x] When copying the Spider Tamer, he gets the script line in the beginning of the night to web a player if he hasn't already during the day, and then the watch who was caught in the web line later in the same night
+    * [x] If copying the White Werewolf, he will only have the script line if the script line was meant to be there already
+    * [x] If he copies the Dog Wolf, he copies the original Dog's owner
+    * [x] If he copies the Actor, he will either just be a useless Actor or if the previous Actor was copying a role, the Bone Collector keeps copying that role too. Same UI as Dog copying an Actor copying another role
 
   
 ## Future Plans
@@ -52,12 +69,10 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
   * [ ] Fraud (villager): At the beginning of the second night, appears as one of the Werewolf allies to the Werewolves
   * [ ] Cannibal (solo-advanced): Always take the role of the last executed player. Objective be the last player alive
 * [ ] Add a new class of characters: TRAVELLERS, akin to Blood on the Clocktower, everyone knows the role of the traveller but they have 50/50% chance of being evil or villager (if they are an evil being, they will know who the werewolves are). They participate in votes.They can be exiled at any time during day or tribunal, if the majority of the players, including ghosts, decide so. Exile doesn't count as execution nor assasination. They keep playing like a ghost after that. Their powers are powerful, mostly single use and very simple. The idea is to use the TRAVELLERS for players who arrive late and want to join the game:
-  * [ ] Bone Collector: Once per game, during the day, can ask the Narrator to gain the role of the last dead player during a day and a night. The Bone Collector doesn't change alignement
   * [ ] Harlot: Once per game, during the night can choose one player, that player is awaken, if they are not from the same alignement as the Harlot, that player switches sides to join the Harlot alignement, keeping their role and abilities (probably too OP, needs to be changed, but I kinda wanted a traveller lady of the night in the game)
   * [ ] Bureaucrat: Two times during the game, can ask for the Tribunal votes to be private
   * [ ] Voudon: While alive and present, only the dead and himself can nominate and vote in the Tribunal
   * [ ] Gangster: Once per game, at the beginning of court, can kill one of his neighbours, if the other neighbour publicly agrees.
-  * [ ] Devil's Advocate: each night choose a player, if they are then voted to be executed they won't die. Can't choose the same player two nights in a row
 * [ ] Add character that requests anonymous votes (maybe solo, flexible or evil)
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)
 * [ ] Add screenshots to the README after the UI stabilizes.

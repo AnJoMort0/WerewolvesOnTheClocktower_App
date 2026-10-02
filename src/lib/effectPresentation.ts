@@ -3,6 +3,7 @@ import dogAdoptiveDadIcon from "@/assets/display/icons/adoptive_dad_dog.webp";
 import asleepIcon from "@/assets/display/icons/asleep.webp";
 import burnedIcon from "@/assets/display/icons/burned.webp";
 import caughtIcon from "@/assets/display/icons/caught.webp";
+import dogCaughtIcon from "@/assets/display/icons/caught_dog.webp";
 import cursedIcon from "@/assets/display/icons/cursed.webp";
 import dogDugUpIcon from "@/assets/display/icons/dug_up_dog.webp";
 import dugUpIcon from "@/assets/display/icons/dug_up.webp";
@@ -17,10 +18,12 @@ import immunityCupidIcon from "@/assets/display/icons/immunity_cupid.webp";
 import immunityFullIcon from "@/assets/display/icons/immunity_full.webp";
 import immunityOnetimeIcon from "@/assets/display/icons/immunity_onetime.webp";
 import immunityWerewolfIcon from "@/assets/display/icons/immunity_werewolf.webp";
+import immunityExecutionIcon from "@/assets/display/icons/immunity_execution.webp";
 import loverIcon from "@/assets/display/icons/lover.webp";
 import ownerIcon from "@/assets/display/icons/owner.webp";
 import soldierIcon from "@/assets/display/icons/soldier.webp";
 import spiedOnIcon from "@/assets/display/icons/spied_on.webp";
+import dogSpiedOnIcon from "@/assets/display/icons/spied_on_dog.webp";
 import tetanusIcon from "@/assets/display/icons/tetanus.webp";
 import voteAccusedIcon from "@/assets/display/icons/vote_accused.webp";
 import voteAccusedLastTribunalIcon from "@/assets/display/icons/vote_accused_last_tribunal.webp";
@@ -29,6 +32,9 @@ import voteDoubleIcon from "@/assets/display/icons/vote_double.webp";
 import voteInnocentIcon from "@/assets/display/icons/vote_innocent.webp";
 import voteRevokedIcon from "@/assets/display/icons/vote_revoked.webp";
 import webbedIcon from "@/assets/display/icons/webbed.webp";
+import dogWebbedIcon from "@/assets/display/icons/webbed_dog.webp";
+import devilAdvocateUsedIcon from "@/assets/display/icons/devil_advocate_used.webp";
+import dogDevilAdvocateUsedIcon from "@/assets/display/icons/devil_advocate_used_dog.webp";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import type { StatusEffect } from "@/lib/effects";
 
@@ -56,6 +62,9 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   tetanus: tetanusIcon,
   webbed: webbedIcon,
   caught: caughtIcon,
+  immunity_execution: immunityExecutionIcon,
+  devil_advocate_execution: immunityExecutionIcon,
+  devil_advocate_used: devilAdvocateUsedIcon,
   cursed: cursedIcon,
   spied_on: spiedOnIcon,
   dug_up: dugUpIcon,
@@ -66,4 +75,8 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   dug_up_dog: dogDugUpIcon,
   dug_up_mime: mimeDugUpIcon,
   owner: ownerIcon,
+  webbed_dog: dogWebbedIcon,
+  caught_dog: dogCaughtIcon,
+  spied_on_dog: dogSpiedOnIcon,
+  devil_advocate_used_dog: dogDevilAdvocateUsedIcon,
 };

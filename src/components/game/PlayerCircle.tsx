@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { Crosshair, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { useRoleLabel, useT, useLanguage, getEffectLabel, getToast } from "@/lib/i18n";
@@ -99,6 +99,7 @@ interface PlayerCircleProps {
   playerEffects?: Record<string, Set<StatusEffect>>;
   availableEffects?: (playerId: string) => StatusEffect[];
   onToggleEffect?: (playerId: string, effect: StatusEffect) => void;
+  onStopCopying?: (playerId: string) => void;
   onExecute?: (playerId: string) => void;
   onExile?: (playerId: string) => void;
   exiledPlayerIds?: Set<string>;
@@ -179,6 +180,7 @@ export const PlayerCircle = ({
   playerEffects: _playerEffects = {},
   availableEffects: _availableEffects,
   onToggleEffect: _onToggleEffect,
+  onStopCopying,
   onExecute: _onExecute,
   onExile: _onExile,
   exiledPlayerIds = new Set(),
@@ -450,6 +452,7 @@ export const PlayerCircle = ({
         const isActor = baseRole === "a04";
         const isDrunkard = baseRole === "a01";
         const isMime = baseRole === "a03";
+        const isBoneCollector = baseRole === "t05";
         const roleDef = role ? ROLES[role] : null;
         const rawStatus = seated ? (playerStatuses[seated.id] || "alive") : "alive";
         const rawIsPermanentlyDead = seated ? permanentlyDead.has(seated.id) : false;
@@ -532,6 +535,13 @@ export const PlayerCircle = ({
                     />
                   </div>
                 )}
+                {effects.has("devil_advocate_execution") && (
+                  <Crosshair
+                    aria-label={getEffectLabel("devil_advocate_execution", lang)}
+                    className="pointer-events-none absolute inset-0 h-full w-full p-1 text-destructive drop-shadow-[0_0_3px_rgba(0,0,0,0.9)]"
+                    strokeWidth={2.5}
+                  />
+                )}
                 {/* Illusion icon */}
                 {isThisIllusion && (
                   <img src={illusionIcon} alt="ilusão" className="absolute -top-1 -right-1 w-5 h-5" />
@@ -577,6 +587,13 @@ export const PlayerCircle = ({
                     src={getRoleImage("a03")}
                     alt={roleLabel("a03")}
                     className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-cyan-300 object-cover shadow"
+                  />
+                )}
+                {isBoneCollector && role !== "t05" && (
+                  <img
+                    src={getRoleImage("t05")}
+                    alt={roleLabel("t05")}
+                    className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-amber-300 object-cover shadow"
                   />
                 )}
                 {seated && dogWolfOwnerRoles[seated.id] && (
@@ -656,7 +673,7 @@ export const PlayerCircle = ({
                   <span className="text-[9px] text-muted-foreground">⚡</span>
                 </div>
               )}
-              {isGM && !isPermanentlyDead && (mechanicalRole === "t01" || mechanicalRole === "t03") && onTravellerPowerUsedToggle && (
+              {isGM && !isPermanentlyDead && (mechanicalRole === "t01" || mechanicalRole === "t03" || isBoneCollector) && onTravellerPowerUsedToggle && (
                 <div className="flex items-center gap-1 mt-0.5" onClick={(event) => event.stopPropagation()}>
                   <Checkbox
                     checked={usedTravellerPowerIds.has(seated.id)}
@@ -847,6 +864,10 @@ export const PlayerCircle = ({
               _onToggleEffect?.(seated.id, effect);
               setOpenPopoverId(null);
             }}
+            onStopCopying={isBoneCollector && role !== "t05" ? () => {
+              onStopCopying?.(seated.id);
+              setOpenPopoverId(null);
+            } : undefined}
           >
             {playerNode}
           </PlayerStatusPopover>

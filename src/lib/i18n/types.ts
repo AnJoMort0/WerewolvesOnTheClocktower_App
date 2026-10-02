@@ -366,6 +366,8 @@ export interface UIStrings {
   assassinate: string;
   resurrectPlayer: string;
   changeWeb: string;
+  copyLastDeadPlayer: string;
+  stopCopying: string;
   motherCurseChangeUsed: string;
   assassinationMode: string;
   resurrectionMode: string;

@@ -33,6 +33,7 @@ interface PlayerStatusPopoverProps {
   availableEffects?: StatusEffect[];
   /** When true, hide the poison option (Evil Witch is perma-dead) */
   poisonDisabled?: boolean;
+  onStopCopying?: () => void;
 }
 
 export const PlayerStatusPopover = ({
@@ -57,6 +58,7 @@ export const PlayerStatusPopover = ({
   activeEffects = new Set(),
   availableEffects = [],
   poisonDisabled = false,
+  onStopCopying,
 }: PlayerStatusPopoverProps) => {
   const t = useT();
   const lang = useLanguage();
@@ -141,6 +143,11 @@ export const PlayerStatusPopover = ({
               <Button size="sm" variant="ghost" className="justify-start gap-2 text-amber-300 hover:text-amber-200" onClick={onSetExiled}>
                 <img src={ghostExiledIcon} alt="" className="h-4 w-4" />
                 {getTranslation(lang).ui.travellers.actionExile}
+              </Button>
+            )}
+            {onStopCopying && (
+              <Button size="sm" variant="ghost" className="justify-start gap-2 text-muted-foreground hover:text-blue-300" onClick={onStopCopying}>
+                {t("stopCopying")}
               </Button>
             )}
             {showIllusion && onSetIllusion && !isIllusion && (

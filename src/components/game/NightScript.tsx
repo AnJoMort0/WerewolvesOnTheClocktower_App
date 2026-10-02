@@ -121,6 +121,10 @@ interface NightScriptProps {
   independentPowerStates?: Record<string, ActorPowerState>;
   onIndependentPowerStateChange?: (playerId: string, state: ActorPowerState) => void;
   drunkardMechanicPlayerIds?: Set<string>;
+  boneCollectorPlayerId?: string | null;
+  boneCollectorCopiedRole?: RoleId | null;
+  boneCollectorAbilityRole?: RoleId | null;
+  boneCollectorHasWebbedPlayer?: boolean;
 }
 
 type ScriptRenderItem = {
@@ -137,6 +141,7 @@ type ScriptRenderItem = {
   dogWolfStandalone?: boolean;
   dogWolfActingPoisoned?: boolean;
   mimeLine?: boolean;
+  boneCollectorLine?: boolean;
   actingPoisoned?: boolean;
   actingCursed?: boolean;
   sourcePlayerId?: string | null;
@@ -274,6 +279,7 @@ function ScriptLineDisplay({
   dogWolfCopiedRole,
   dogWolfActingPoisoned,
   mimeLine,
+  boneCollectorLine,
   actingPoisoned,
   actingCursed = false,
   phoneControl,
@@ -334,6 +340,7 @@ function ScriptLineDisplay({
   dogWolfCopiedRole?: RoleId | null;
   dogWolfActingPoisoned?: boolean;
   mimeLine?: boolean;
+  boneCollectorLine?: boolean;
   actingPoisoned?: boolean;
   actingCursed?: boolean;
   phoneControl?: ReactNode;
@@ -347,6 +354,8 @@ function ScriptLineDisplay({
     ? originalText.replace(/(\{[^}]+\})/, `$1 (+ {${getRoleLabel("a04", lang)}})`)
     : actorLine && actorCopiedRole
     ? originalText.replace(replaceAllRoleTokens ? /\{[^}]+\}/g : /\{[^}]+\}/, `{${getRoleLabel("a04", lang)}}`)
+    : boneCollectorLine
+    ? originalText.replace(/\{[^}]+\}/, `{${getRoleLabel("t05", lang)}}`)
     : mimeLine
     ? `(${originalText})`
     : originalText;
@@ -701,6 +710,10 @@ export const NightScript = ({
   independentPowerStates = {},
   onIndependentPowerStateChange,
   drunkardMechanicPlayerIds: suppliedDrunkardMechanicPlayerIds,
+  boneCollectorPlayerId = null,
+  boneCollectorCopiedRole = null,
+  boneCollectorAbilityRole = null,
+  boneCollectorHasWebbedPlayer = false,
 }: NightScriptProps) => {
   const lang = useLanguage();
   const dyn = useMemo(() => getDynamic(lang), [lang]);
@@ -1327,6 +1340,40 @@ export const NightScript = ({
       });
     };
 
+    const addBoneCollectorCopyLines = (items: ScriptRenderItem[]) => {
+      if (!boneCollectorPlayerId || !boneCollectorCopiedRole
+        || _permanentlyDeadPlayerIds.has(boneCollectorPlayerId)
+        || _playerEffects[boneCollectorPlayerId]?.has("cursed")) return;
+      const addLine = (line: ScriptLine | undefined, key: string) => {
+        if (!line || (line.conditionKey && !filterLine(line))) return;
+        items.push({
+          line,
+          key: `${nightNumber}:normal:bone-collector:${key}`,
+          progressOrder: localizedScripts.normalNight.indexOf(line),
+          sourcePlayerId: boneCollectorPlayerId,
+          boneCollectorLine: true,
+          actingPoisoned: isPlayerActingPoisoned(boneCollectorPlayerId),
+        });
+      };
+      const copiedAbilityRole = boneCollectorAbilityRole ?? boneCollectorCopiedRole;
+      if (copiedAbilityRole === "v23") {
+        if (!boneCollectorHasWebbedPlayer) {
+          addLine(localizedScripts.firstNight.find((line) => line.requires?.length === 1 && line.requires[0] === "v23"), "spider-web");
+        }
+        if ((spiderCaughtBySource[boneCollectorPlayerId]?.length ?? 0) > 0) {
+          addLine(localizedScripts.normalNight.find((line) => line.requires?.includes("v23") && line.conditionKey === "spiderHasCaught"), "spider-caught");
+        }
+        return;
+      }
+      if (copiedAbilityRole === "v27") return;
+      const line = localizedScripts.normalNight.find((candidate) => (
+        candidate.requires?.includes(copiedAbilityRole)
+        && !(candidate.requires?.length === 1 && candidate.requires[0] === "a03")
+        && candidate.conditionKey !== "spiderWebbedDied"
+      ));
+      addLine(line, copiedAbilityRole);
+    };
+
     if (nightNumber === 1) {
       const filtered = makeItems("first", localizedScripts.firstNight, (line) => isLineRelevant(line, roleAssignments, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds));
       if (filtered.length > 0) lines.push({ section: sectionLabels.first, items: filtered });
@@ -1335,6 +1382,7 @@ export const NightScript = ({
       if (filtered2.length > 0) lines.push({ section: sectionLabels.secondStart, items: filtered2 });
       const filteredNormal = makeItems("normal", localizedScripts.normalNight, filterLine);
       addDogEvilCupidSetupLines(filteredNormal);
+      addBoneCollectorCopyLines(filteredNormal);
       if (actorCopiedRole && actorPlayerId && actorCopyNoticeNight === nightNumber && (actorCopiedRole === "v08" || !filteredNormal.some((item) => item.actorLine || item.actorJoins))) {
         const actorNoticeLine = localizedScripts.normalNight.find((line) => line.requires?.length === 1 && line.requires[0] === "a04");
         if (actorNoticeLine) filteredNormal.unshift({ line: actorNoticeLine, key: `${nightNumber}:normal:actor-notice`, progressOrder: null, actorNotice: true });
@@ -1343,6 +1391,7 @@ export const NightScript = ({
     } else {
       const filteredNormal = makeItems("normal", localizedScripts.normalNight, filterLine);
       addDogEvilCupidSetupLines(filteredNormal);
+      addBoneCollectorCopyLines(filteredNormal);
       if (actorCopiedRole && actorPlayerId && actorCopyNoticeNight === nightNumber && (actorCopiedRole === "v08" || !filteredNormal.some((item) => item.actorLine || item.actorJoins))) {
         const actorNoticeLine = localizedScripts.normalNight.find((line) => line.requires?.length === 1 && line.requires[0] === "a04");
         if (actorNoticeLine) filteredNormal.unshift({ line: actorNoticeLine, key: `${nightNumber}:normal:actor-notice`, progressOrder: null, actorNotice: true });
@@ -1376,7 +1425,7 @@ export const NightScript = ({
         return item;
       }) };
     });
-  }, [colossusNightSeed, nightNumber, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+  }, [boneCollectorAbilityRole, boneCollectorCopiedRole, boneCollectorHasWebbedPlayer, boneCollectorPlayerId, colossusNightSeed, nightNumber, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
 
   const getItemParticipants = useCallback((item: ScriptRenderItem): string[] => {
     const sourcePlayerId = item.sourcePlayerId ?? (item.actorLine || item.actorNotice ? actorPlayerId : item.mimeLine ? mimePlayerId : null);
@@ -1577,6 +1626,7 @@ export const NightScript = ({
                 dogWolfCopiedRole={item.dogWolfLine && sourcePlayerId ? abilityRoleAssignments[sourcePlayerId] : null}
                 dogWolfActingPoisoned={item.dogWolfActingPoisoned}
                 mimeLine={item.mimeLine}
+                boneCollectorLine={item.boneCollectorLine}
                 actingPoisoned={item.actingPoisoned}
                 actingCursed={sourceCursed}
               />

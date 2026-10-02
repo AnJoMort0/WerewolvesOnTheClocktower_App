@@ -10,7 +10,7 @@ const actions = {
 
 export const fr: Translation = {
   roleLabels: {
-    t01: "Avocate", t02: "Parieur", t03: "Pistolero",
+    t01: "Avocate", t02: "Parieur", t03: "Pistolero", t04: "Avocat du Diable", t05: "Collecteur d'Os",
     e01: "Loup-garou",
     e02: "Méchante Sorcière",
     e03: "Chaman",
@@ -85,6 +85,7 @@ export const fr: Translation = {
       { text: "L'{Ours} grogne / ne grogne pas.", requires: ["v02"] },
       { text: "Le {Maître du Singe} se réveille et choisit un joueur dont la carte lui sera révélée.", requires: ["v26"] },
       { text: "L'{Ancien du Village} se réveille et choisit un joueur qui aura automatiquement 2 votes contre lui au prochain Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
+      { text: "L'{Avocat du Diable} se réveille et choisit un joueur. Ce joueur est immunisé contre l'exécution pendant la journée suivante. L'{Avocat du Diable} ne peut pas choisir le même joueur deux fois pendant la partie.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "À la fin de cette nuit, un hurlement se fait entendre. Le Village sait alors que les Loups-garous se sont révélés et qu'ils ont faim. Le Village se réveille méfiant envers tout le monde." },
     ],
     secondNight: [
@@ -116,6 +117,7 @@ export const fr: Translation = {
       { text: "Le {Maître du Renard} se réveille et indique trois voisins. Il lui sera révélé, par le pouce, si l'un de ces trois joueurs est une Créature Maléfique (ou si le {Renard} est confus).", requires: ["v04"], phoneMode: PHONE_MODE.FOX_TAMER_CHECK },
       { text: "L'{Ours} grogne / ne grogne pas (/ est confus).", requires: ["v02"] },
       { text: "L'{Ancien du Village} se réveille et choisit un joueur qui aura automatiquement 2 votes contre lui au prochain Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
+      { text: "L'{Avocat du Diable} se réveille et choisit un joueur qu'il n'a pas encore choisi. Ce joueur est immunisé contre l'exécution pendant la journée suivante.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "Le {Voleur} se réveille et indique à qui il veut retirer le vote au prochain Tribunal.", requires: ["f01"], phoneMode: PHONE_MODE.THIEF_REVOKE_VOTE },
       { text: "Le {Capitaine} se réveille et choisit un joueur qui sera un SOLDAT pendant cette nuit et le jour suivant.", requires: ["v09"], phoneMode: PHONE_MODE.CAPTAIN_APPOINT_SOLDIER },
       { text: "Le {Cupidon} se réveille et décide avec le pouce s'il veut utiliser l'une de ses deux flèches de protection pour donner une immunité aux Amoureux cette nuit.", requires: ["s01"], conditionKey: "cupidHasCharges" },
@@ -256,6 +258,8 @@ export const fr: Translation = {
     assassinate: "Assassiner",
     resurrectPlayer: "Ressusciter",
     changeWeb: "Déplacer la Toile",
+    copyLastDeadPlayer: "Copier le dernier mort",
+    stopCopying: "Arrêter de copier",
     motherCurseChangeUsed: "Malédiction déplacée",
     assassinationMode: "Mode Assassinat",
     resurrectionMode: "Mode Résurrection",
@@ -376,6 +380,9 @@ export const fr: Translation = {
       cursed: "Maudit",
       caught: "Pris dans la Toile",
       spied_on: "Espionné",
+      immunity_execution: "Immunisé contre l'exécution",
+      devil_advocate_execution: "Exécuté s'il est nommé",
+      devil_advocate_used: "Choisi par l'Avocat du Diable",
       dug_up: "Déterré",
       idol: "Idole",
       idol_dog: "Idole du Chien",
@@ -384,6 +391,10 @@ export const fr: Translation = {
       dug_up_dog: "Déterré par le Chien",
       dug_up_mime: "Déterré par le Mime",
       owner: "Maître",
+      webbed_dog: "Toile du Chien",
+      caught_dog: "Pris dans la Toile du Chien",
+      spied_on_dog: "Espionné par le Chien",
+      devil_advocate_used_dog: "Choisi par l'Avocat du Diable du Chien",
     },
     toasts: {
       errAddPlayer: "Erreur lors de l'ajout du joueur",
