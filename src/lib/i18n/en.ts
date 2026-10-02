@@ -393,7 +393,6 @@ export const en: Translation = {
       owner: "Owner",
       webbed_dog: "Dog's Web",
       caught_dog: "Caught by the Dog's Web",
-      spied_on_dog: "Spied On by the Dog",
       devil_advocate_used_dog: "Dog's Devil's Advocate Used",
     },
     toasts: {

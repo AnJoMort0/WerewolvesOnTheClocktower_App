@@ -23,7 +23,6 @@ import loverIcon from "@/assets/display/icons/lover.webp";
 import ownerIcon from "@/assets/display/icons/owner.webp";
 import soldierIcon from "@/assets/display/icons/soldier.webp";
 import spiedOnIcon from "@/assets/display/icons/spied_on.webp";
-import dogSpiedOnIcon from "@/assets/display/icons/spied_on_dog.webp";
 import tetanusIcon from "@/assets/display/icons/tetanus.webp";
 import voteAccusedIcon from "@/assets/display/icons/vote_accused.webp";
 import voteAccusedLastTribunalIcon from "@/assets/display/icons/vote_accused_last_tribunal.webp";
@@ -77,6 +76,5 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   owner: ownerIcon,
   webbed_dog: dogWebbedIcon,
   caught_dog: dogCaughtIcon,
-  spied_on_dog: dogSpiedOnIcon,
   devil_advocate_used_dog: dogDevilAdvocateUsedIcon,
 };

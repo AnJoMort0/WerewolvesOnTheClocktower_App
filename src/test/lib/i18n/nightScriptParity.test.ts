@@ -15,7 +15,10 @@ function rulebookSignature(phase: RulebookNightPhase) {
   return RULEBOOK_NIGHT_SCRIPT[phase]
     // These are analog bookkeeping reminders. The app resolves them from its
     // day/tribunal state instead of showing an actionable night line.
-    .filter((line) => phase !== "normalNight" || (line.refs[0] !== "v18" && line.refs[0] !== "v07"))
+    .filter((line) => (
+      line.text.en !== "Roll a d12."
+      && (phase !== "normalNight" || (line.refs[0] !== "v18" && line.refs[0] !== "v07"))
+    ))
     .map((line) => (line.refs as readonly string[]).includes("v08")
       ? "v08"
       : (line.refs as readonly string[]).filter((ref) => ref !== "general").join(",") || "general");
@@ -32,6 +35,12 @@ describe("night script parity", () => {
   it("keeps the app scripts aligned with the rulebook scripts", () => {
     for (const phase of PHASES) {
       expect(appSignature(getScripts("en")[phase]), phase).toEqual(rulebookSignature(phase));
+    }
+  });
+
+  it("keeps the d12 roll in the analog rulebook only", () => {
+    for (const language of ["pt", "fr", "en"] as const) {
+      expect(Object.values(getScripts(language)).flat().some((line) => /d12/i.test(line.text))).toBe(false);
     }
   });
 });

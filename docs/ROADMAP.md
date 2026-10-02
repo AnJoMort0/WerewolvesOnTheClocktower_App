@@ -13,7 +13,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [ ] Never copy the D12 line to the in-app script
+* [x] Never copy the D12 line to the in-app script
 
 ## Fixes
 

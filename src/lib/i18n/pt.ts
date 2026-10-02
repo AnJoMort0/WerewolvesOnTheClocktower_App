@@ -393,7 +393,6 @@ export const pt: Translation = {
       owner: "Dono",
       webbed_dog: "Teia do Cão",
       caught_dog: "Apanhado na Teia do Cão",
-      spied_on_dog: "Espiado pelo Cão",
       devil_advocate_used_dog: "Escolhido pelo Advogado do Diabo do Cão",
     },
     toasts: {

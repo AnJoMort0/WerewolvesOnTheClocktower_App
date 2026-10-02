@@ -35,7 +35,6 @@ export const STATUS_EFFECTS = [
   "dug_up_mime",
   "webbed_dog",
   "caught_dog",
-  "spied_on_dog",
   "devil_advocate_used_dog",
   "owner",
 ] as const;

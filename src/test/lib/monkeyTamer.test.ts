@@ -23,6 +23,22 @@ describe("Monkey Tamer", () => {
     expect(shouldExhaustMonkeyPower(reveal("seer").action!.monkeyReveal!, 2)).toBe(false);
   });
 
+  it("treats a Dog following an Evil Being as an Evil Being while keeping the Dog-Wolf card", () => {
+    const dogWorld: PhoneWorld = {
+      packBlocked: false,
+      players: [
+        player("monkey", "v26"),
+        player("dog", "a02", { displayRole: "a02", objectiveRole: "e02" }),
+      ],
+    };
+
+    expect(reveal("dog", dogWorld).action?.monkeyReveal).toEqual({
+      targetPlayerId: "dog",
+      roleId: "a02",
+      evil: true,
+    });
+  });
+
   it("reveals the chosen card once and flags only revealed Evil Being cards", () => {
     expect(EXTRA_DEATH_ROLES).not.toContain("v26");
     const result = reveal("wolf");

@@ -407,7 +407,6 @@ const EFFECT_SOURCE_ROLES: Partial<Record<StatusEffect, RoleId>> = {
   caught: "v23",
   caught_dog: "v23",
   spied_on: "f02",
-  spied_on_dog: "f02",
   immunity_execution: "t04",
   devil_advocate_execution: "t04",
   devil_advocate_used: "t04",
@@ -1106,8 +1105,20 @@ const GMRoom = () => {
       effects.add("owner");
       next[ownerPlayerId] = effects;
     }
+    for (const [dogPlayerId, dogState] of Object.entries(dogWolfStates)) {
+      const ownerPlayerId = dogState.ownerPlayerId;
+      if (!ownerPlayerId || dogState.objectiveRoleOverride) continue;
+      const ownerEffects = next[ownerPlayerId] ?? new Set<StatusEffect>();
+      const ownerObjectiveRole = objectiveRoleAssignments[ownerPlayerId];
+      if (!ownerEffects.has("evil_being")
+        && !ownerEffects.has("werewolf_turned")
+        && !(ownerObjectiveRole && EVIL_ROLES.includes(ownerObjectiveRole))) continue;
+      const dogEffects = new Set(next[dogPlayerId] ?? []);
+      dogEffects.add("evil_being");
+      next[dogPlayerId] = dogEffects;
+    }
     return next;
-  }, [activeDogOwnerPlayerIds, playerEffects]);
+  }, [activeDogOwnerPlayerIds, dogWolfStates, objectiveRoleAssignments, playerEffects]);
 
   const setDogWolfOwner = useCallback((dogPlayerId: string, ownerPlayerId: string | null) => {
     if (!dogWolfPlayerIds.includes(dogPlayerId)) return;
@@ -1189,7 +1200,7 @@ const GMRoom = () => {
     if (assignedRoles.has("m07")) effects.push("cursed");
     // f02 Espião — spied_on effect is manually assignable
     if (assignedRoles.has("f02")) {
-      effects.push("spied_on", "spied_on_dog");
+      effects.push("spied_on");
     }
     if (actorPlayerId && playerId !== actorPlayerId && !permanentlyDead.has(playerId) && actorIdolUses < 2 && !effectiveActorCopiedRole) {
       effects.push("idol");
@@ -2275,7 +2286,27 @@ const GMRoom = () => {
   }, [roomId]);
 
   const updateSeatPosition = async (playerId: string, position: number | null) => {
-    await supabase.from("players").update({ seat_position: position }).eq("id", playerId);
+    const player = players.find((candidate) => candidate.id === playerId);
+    const placingTraveller = position !== null
+      && player?.is_traveller
+      && !!player.character
+      && !!player.traveller_role
+      && !!player.traveller_alignment
+      && player.traveller_state !== "denied"
+      && player.traveller_state !== "exiled";
+    const update = placingTraveller
+      ? { seat_position: position, traveller_state: "placed" }
+      : { seat_position: position };
+    const { error } = await supabase.from("players").update(update).eq("id", playerId);
+    if (error) {
+      toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
+      return;
+    }
+    setPlayers((current) => current.map((candidate) => candidate.id === playerId ? {
+      ...candidate,
+      seat_position: position,
+      ...(placingTraveller ? { traveller_state: "placed" as const } : {}),
+    } : candidate));
   };
 
   const seatPlayerInNextAvailablePosition = (playerId: string) => {
@@ -2380,7 +2411,21 @@ const GMRoom = () => {
   };
 
   const insertTravellerAfter = async (playerId: string, afterPosition: number) => {
-    const traveller = players.find((player) => player.id === playerId && player.traveller_state === "ready");
+    // A Traveller can reach this point before a delayed realtime refresh has
+    // delivered their acknowledgement. Her assigned card is enough to keep the
+    // placement token recoverable; never strand an unseated Traveller because
+    // the local state still says "revealing" or "assigning".
+    const traveller = players.find((player) => (
+      player.id === playerId
+      && player.is_traveller
+      && player.seat_position === null
+      && !!player.character
+      && !!player.traveller_role
+      && !!player.traveller_alignment
+      && player.traveller_state !== "denied"
+      && player.traveller_state !== "exiled"
+      && player.traveller_state !== "placed"
+    ));
     if (!traveller) return;
     const insertPosition = afterPosition + 1;
     const shiftedPlayers = players
@@ -2619,9 +2664,13 @@ const GMRoom = () => {
     addRelevantEffects(playerId);
     const dogState = dogWolfStates[playerId];
     const ownerPlayerId = dogState?.ownerPlayerId;
-    if (ownerPlayerId && !dogState.objectiveRoleOverride) addRelevantEffects(ownerPlayerId);
+    if (ownerPlayerId && !dogState.objectiveRoleOverride) {
+      addRelevantEffects(ownerPlayerId);
+      const ownerObjectiveRole = objectiveRoleAssignments[ownerPlayerId];
+      if (ownerObjectiveRole && EVIL_ROLES.includes(ownerObjectiveRole)) effects.add("evil_being");
+    }
     return Array.from(effects);
-  }, [dogWolfStates, playerEffects]);
+  }, [dogWolfStates, objectiveRoleAssignments, playerEffects]);
 
   const getStoredCharacter = useCallback((playerId: string, role: RoleId) => {
     let identity: string;
@@ -5256,12 +5305,15 @@ const GMRoom = () => {
     nightNumber,
     players: players.filter((player) => player.seat_position !== null).map((player) => {
       const effects = playerEffects[player.id] ?? new Set<StatusEffect>();
+      const objectiveRole = objectiveRoleAssignments[player.id];
       const dead = permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead";
       return {
         id: player.id, name: player.name, seat_position: player.seat_position,
         dead, redX: playerStatuses[player.id] === "dead-this-night",
-        abilityRole: abilityRoleAssignments[player.id], objectiveRole: objectiveRoleAssignments[player.id],
-        displayRole: effectiveRoleAssignments[player.id], actingPoisoned: isPlayerActingPoisoned(player.id),
+        abilityRole: abilityRoleAssignments[player.id], objectiveRole,
+        // Information powers see the card a player was dealt. Copying changes
+        // their ability, never the identity shown to another character.
+        displayRole: roleAssignments[player.id], actingPoisoned: isPlayerActingPoisoned(player.id),
         illusion: illusionPlayerIds.has(player.id),
         foxDisabled: independentPowerStates[player.id]?.foxDisabled ?? foxDisabled,
         monkeyDisabled: independentPowerStates[player.id]?.monkeyDisabled ?? monkeyDisabled,
@@ -5274,14 +5326,15 @@ const GMRoom = () => {
         enemySourceIds: Object.entries(dogWolfStates)
           .filter(([, state]) => state.enemyPlayerIds?.includes(player.id))
           .map(([sourcePlayerId]) => sourcePlayerId),
-        werewolfTurned: effects.has("werewolf_turned"), evil: effects.has("evil_being") || player.traveller_alignment === "evil",
+        werewolfTurned: effects.has("werewolf_turned"),
+        evil: effects.has("evil_being") || player.traveller_alignment === "evil" || !!(objectiveRole && EVIL_ROLES.includes(objectiveRole)),
         mime: player.id === mimePlayerId,
         canWake: (!dead || prophecyGhostPlayerIds.has(player.id)) && !effects.has("host") && !effects.has("burned") && !effects.has("cursed")
           && !(abilityRoleAssignments[player.id] === "v06" && isPlayerActingPoisoned(player.id)),
         powerless: powerlessPlayerIds.has(player.id),
       };
     }),
-  }), [actedTonightPlayerIds, astronomerBlocksWerewolvesTonight, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, effectiveRoleAssignments, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerIds, powerlessPlayerIds, prophecyGhostPlayerIds, sourcedEffectTargets]);
+  }), [actedTonightPlayerIds, astronomerBlocksWerewolvesTonight, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerIds, powerlessPlayerIds, prophecyGhostPlayerIds, roleAssignments, sourcedEffectTargets]);
   const applyPhoneAction = useCallback(({ action, targetPlayerId, targetPlayerIds, sourcePlayerId, monkeyReveal, foxReveal, gamblerReveal }: PhoneAction) => {
     if (action === PHONE_MODE.MONKEY_TAMER_REVEAL) {
       if (!sourcePlayerId || !monkeyReveal) return;
@@ -5994,9 +6047,6 @@ const GMRoom = () => {
     const localLang: Language = (room?.language as Language) || "pt";
     const recipients = getRevealRecipientIds("f02", sourcePlayerId, "independent");
     const pickedPlayerIds = new Set<string>();
-    const spyEffect: StatusEffect = sourcePlayerId && dogWolfStates[sourcePlayerId]
-      ? "spied_on_dog"
-      : "spied_on";
     const inPlayRoles = new Set(Object.values(roleAssignments));
     const allRoles: RoleId[] = Object.keys(ROLES) as RoleId[];
     const notInPlay = allRoles.filter((role) => !inPlayRoles.has(role));
@@ -6012,7 +6062,7 @@ const GMRoom = () => {
       } else {
         const candidates = players.filter((player) => (
           player.seat_position !== null
-          && !playerEffects[player.id]?.has(spyEffect)
+          && !playerEffects[player.id]?.has("spied_on")
           && !pickedPlayerIds.has(player.id)
         ));
         if (candidates.length === 0) {
@@ -6037,7 +6087,7 @@ const GMRoom = () => {
         const next = { ...prev };
         for (const pickedPlayerId of pickedPlayerIds) {
           const current = new Set(next[pickedPlayerId] || []);
-          current.add(spyEffect);
+          current.add("spied_on");
           next[pickedPlayerId] = current;
         }
         return next;
@@ -6051,7 +6101,7 @@ const GMRoom = () => {
       type: "broadcast", event: "spy-reveal",
       payload: { show: true, byPlayerId },
     });
-  }, [room?.language, getRevealRecipientIds, roleAssignments, players, playerEffects, isPlayerActingPoisoned, illusionPlayerIds, markScriptRoleAction, roomId, dogWolfStates]);
+  }, [room?.language, getRevealRecipientIds, roleAssignments, players, playerEffects, isPlayerActingPoisoned, illusionPlayerIds, markScriptRoleAction, roomId]);
 
   const handleCloseSpyModal = useCallback(() => {
     setSpyRevealOpen(false);
@@ -6403,9 +6453,22 @@ const GMRoom = () => {
   const unseatedPlayers = players.filter((p) => p.seat_position === null);
   const isPlaying = room.status === "playing";
   const travellerRequests = players.filter((player) => player.is_traveller && player.traveller_state === "requested");
-  const assigningTravellers = players.filter((player) => player.is_traveller && player.traveller_state === "assigning");
+  const assigningTravellers = players.filter((player) => (
+    player.is_traveller && player.traveller_state === "assigning" && !player.character
+  ));
   const revealingTraveller = players.find((player) => player.is_traveller && player.traveller_state === "revealing") ?? null;
-  const readyTraveller = players.find((player) => player.is_traveller && player.traveller_state === "ready") ?? null;
+  // Keep a configured, unseated Traveller available for placement even when a
+  // stale realtime fetch arrives between the reveal and acknowledgement.
+  const placementTraveller = players.find((player) => (
+    player.is_traveller
+    && player.seat_position === null
+    && !!player.character
+    && !!player.traveller_role
+    && !!player.traveller_alignment
+    && player.traveller_state !== "denied"
+    && player.traveller_state !== "exiled"
+    && player.traveller_state !== "placed"
+  )) ?? null;
   const exiledTravellerIds = new Set(players.filter((player) => player.traveller_state === "exiled").map((player) => player.id));
   const travellerJoinUrl = `${joinUrl}&traveller=1`;
   const pendingWinKind = manualWinKind ?? automaticWinKind;
@@ -6696,7 +6759,7 @@ const GMRoom = () => {
                   onExecute={handleExecute}
                   onExile={handleExile}
                   exiledPlayerIds={exiledTravellerIds}
-                  insertionPlayerId={readyTraveller?.id}
+                  insertionPlayerId={placementTraveller?.id}
                   onInsertPlayer={(playerId, afterPosition) => void insertTravellerAfter(playerId, afterPosition)}
                   onDragAction={handleDragAction}
                   judgeCharges={judgeCharges}
@@ -6763,11 +6826,11 @@ const GMRoom = () => {
                   <p className="text-muted-foreground font-display text-lg">{tt("waitingForPlayers")}</p>
                 </motion.div>
               )}
-              {readyTraveller?.traveller_role && readyTraveller.traveller_alignment && (
+              {placementTraveller?.traveller_role && placementTraveller.traveller_alignment && (
                 <TravellerPlacementToken
-                  player={readyTraveller}
-                  roleId={readyTraveller.traveller_role as RoleId}
-                  alignment={readyTraveller.traveller_alignment}
+                  player={placementTraveller}
+                  roleId={placementTraveller.traveller_role as RoleId}
+                  alignment={placementTraveller.traveller_alignment}
                   language={lang}
                 />
               )}

@@ -489,7 +489,11 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
       const alternative = candidates[Math.floor(Math.random() * candidates.length)];
       roleId = (alternative.displayRole ?? alternative.abilityRole)!;
     }
-    const monkeyReveal = { targetPlayerId: target.id, roleId, evil: EVIL_ROLES.includes(roleId) };
+    const monkeyReveal = {
+      targetPlayerId: target.id,
+      roleId,
+      evil: EVIL_ROLES.includes(roleId) || (roleId === "a02" && countsAsEvilBeing(target)),
+    };
     const revealed = { ...next, visible: true, error: undefined, monkeyReveal };
     return { session: revealed, completedSession: revealed,
       action: { action: PHONE_MODE.MONKEY_TAMER_REVEAL, targetPlayerId: target.id, sourcePlayerId: actorId, monkeyReveal } };
