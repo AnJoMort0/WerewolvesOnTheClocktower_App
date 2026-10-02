@@ -258,6 +258,7 @@ type GMSnapshot = {
   boneCollectorCopiedRole?: RoleId | null;
   boneCollectorCopiedPlayerId?: string | null;
   boneCollectorCopyExpiresAfterNight?: number | null;
+  boneCollectorPowerState?: ActorPowerState;
   drunkardReplacementRole?: RoleId | null;
   drunkardPowerState?: ActorPowerState;
   dogWolfStates?: DogWolfStates;
@@ -628,6 +629,7 @@ const GMRoom = () => {
   const [boneCollectorCopiedRole, setBoneCollectorCopiedRole] = useState<RoleId | null>(null);
   const [boneCollectorCopiedPlayerId, setBoneCollectorCopiedPlayerId] = useState<string | null>(null);
   const [boneCollectorCopyExpiresAfterNight, setBoneCollectorCopyExpiresAfterNight] = useState<number | null>(null);
+  const [boneCollectorPowerState, setBoneCollectorPowerState] = useState<ActorPowerState>(() => ({ ...EMPTY_ACTOR_POWER_STATE }));
   const [drunkardReplacementRole, setDrunkardReplacementRole] = useState<RoleId | null>(null);
   const [drunkardPowerState, setDrunkardPowerState] = useState<ActorPowerState>(() => ({ ...EMPTY_ACTOR_POWER_STATE }));
   const [dogWolfStates, setDogWolfStates] = useState<DogWolfStates>({});
@@ -783,13 +785,14 @@ const GMRoom = () => {
     const states: Record<string, ActorPowerState> = {};
     if (actorPlayerId && effectiveActorCopiedRole && effectiveActorCopiedRole !== "a02") states[actorPlayerId] = actorPowerState;
     if (mimePlayerId && mimeMechanicalRole) states[mimePlayerId] = mimePowerState;
+    if (boneCollectorPlayerId && boneCollectorCopiedRole) states[boneCollectorPlayerId] = boneCollectorPowerState;
     if (drunkardPlayerId && drunkardReplacementRole) states[drunkardPlayerId] = drunkardPowerState;
     for (const dogPlayerId of dogWolfPlayerIds) {
       const dogState = dogWolfStates[dogPlayerId];
       if (dogState) states[dogPlayerId] = dogState.powerState;
     }
     return states;
-  }, [actorPlayerId, actorPowerState, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, drunkardPowerState, drunkardReplacementRole, effectiveActorCopiedRole, mimeMechanicalRole, mimePlayerId, mimePowerState]);
+  }, [actorPlayerId, actorPowerState, boneCollectorCopiedRole, boneCollectorPlayerId, boneCollectorPowerState, dogWolfPlayerIds, dogWolfStates, drunkardPlayerId, drunkardPowerState, drunkardReplacementRole, effectiveActorCopiedRole, mimeMechanicalRole, mimePlayerId, mimePowerState]);
 
   const getStoredDogWolfFallbackState = useCallback((playerId: string) => {
     const player = players.find((candidate) => candidate.id === playerId);
@@ -1353,6 +1356,7 @@ const GMRoom = () => {
     const current = dogWolfStates[playerId]?.powerState
       ?? storedDogFallbackState?.powerState
       ?? (playerId === mimePlayerId ? mimePowerState : null)
+      ?? (playerId === boneCollectorPlayerId ? boneCollectorPowerState : null)
       ?? (playerId === actorPlayerId ? actorPowerState : null)
       ?? (playerId === drunkardPlayerId ? drunkardPowerState : null);
     if (!current) return;
@@ -1397,12 +1401,14 @@ const GMRoom = () => {
       }));
     } else if (playerId === mimePlayerId) {
       setMimePowerState(next);
+    } else if (playerId === boneCollectorPlayerId) {
+      setBoneCollectorPowerState(next);
     } else if (playerId === actorPlayerId) {
       setActorPowerState(next);
     } else if (playerId === drunkardPlayerId) {
       setDrunkardPowerState(next);
     }
-  }, [abilityRoleAssignments, actorPlayerId, actorPowerState, dogWolfStates, drunkardPlayerId, drunkardPowerState, getStoredDogWolfFallbackState, isPlayerActingPoisoned, isWerewolfAttackSource, killSourcePlayerIds, killSources, mimePlayerId, mimePowerState, playerEffects, playerStatuses, room?.language, toggleEffect]);
+  }, [abilityRoleAssignments, actorPlayerId, actorPowerState, boneCollectorPlayerId, boneCollectorPowerState, dogWolfStates, drunkardPlayerId, drunkardPowerState, getStoredDogWolfFallbackState, isPlayerActingPoisoned, isWerewolfAttackSource, killSourcePlayerIds, killSources, mimePlayerId, mimePowerState, playerEffects, playerStatuses, room?.language, toggleEffect]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !roomId) return;
@@ -1503,6 +1509,7 @@ const GMRoom = () => {
       setBoneCollectorCopiedRole(snapshot.boneCollectorCopiedRole ?? null);
       setBoneCollectorCopiedPlayerId(snapshot.boneCollectorCopiedPlayerId ?? null);
       setBoneCollectorCopyExpiresAfterNight(snapshot.boneCollectorCopyExpiresAfterNight ?? null);
+      setBoneCollectorPowerState(restoreActorPowerState(snapshot.boneCollectorPowerState as LegacyActorPowerState | undefined));
       setDrunkardReplacementRole(snapshot.drunkardReplacementRole ?? null);
       setDrunkardPowerState(restoreActorPowerState(snapshot.drunkardPowerState as LegacyActorPowerState | undefined));
       setDogWolfStates(restoreDogWolfStates(snapshot.dogWolfStates));
@@ -1587,6 +1594,7 @@ const GMRoom = () => {
       boneCollectorCopiedRole,
       boneCollectorCopiedPlayerId,
       boneCollectorCopyExpiresAfterNight,
+      boneCollectorPowerState,
       drunkardReplacementRole,
       drunkardPowerState,
       dogWolfStates,
@@ -1665,6 +1673,7 @@ const GMRoom = () => {
     boneCollectorCopiedRole,
     boneCollectorCopiedPlayerId,
     boneCollectorCopyExpiresAfterNight,
+    boneCollectorPowerState,
     drunkardReplacementRole,
     drunkardPowerState,
     dogWolfStates,
@@ -2759,6 +2768,7 @@ const GMRoom = () => {
     setBoneCollectorCopiedRole(targetRole);
     setBoneCollectorCopiedPlayerId(targetPlayerId);
     setBoneCollectorCopyExpiresAfterNight(nightNumber + 1);
+    setBoneCollectorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
     setUsedTravellerPowerIds((previous) => new Set(previous).add(boneCollectorPlayerId));
     if (copiedDogState) {
       setDogWolfStates((previous) => ({
@@ -3062,6 +3072,7 @@ const GMRoom = () => {
         setBoneCollectorCopiedRole(null);
         setBoneCollectorCopiedPlayerId(null);
         setBoneCollectorCopyExpiresAfterNight(null);
+        setBoneCollectorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
         setDogWolfStates((previous) => {
           if (!previous[boneCollectorPlayerId]) return previous;
           const next = { ...previous };
@@ -3639,6 +3650,7 @@ const GMRoom = () => {
       setBoneCollectorCopiedRole(null);
       setBoneCollectorCopiedPlayerId(null);
       setBoneCollectorCopyExpiresAfterNight(null);
+      setBoneCollectorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
       if (boneCollectorPlayerId) {
         setDogWolfStates((previous) => {
           if (!previous[boneCollectorPlayerId]) return previous;
@@ -6745,6 +6757,7 @@ const GMRoom = () => {
                     setBoneCollectorCopiedRole(null);
                     setBoneCollectorCopiedPlayerId(null);
                     setBoneCollectorCopyExpiresAfterNight(null);
+                    setBoneCollectorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
                     setUsedTravellerPowerIds((previous) => {
                       const next = new Set(previous);
                       next.delete(playerId);
@@ -7467,6 +7480,7 @@ const GMRoom = () => {
                             setBoneCollectorCopiedRole(null);
                             setBoneCollectorCopiedPlayerId(null);
                             setBoneCollectorCopyExpiresAfterNight(null);
+                            setBoneCollectorPowerState({ ...EMPTY_ACTOR_POWER_STATE });
                             setUsedTravellerPowerIds((previous) => {
                               const next = new Set(previous);
                               next.delete(player.id);

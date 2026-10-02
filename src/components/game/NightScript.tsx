@@ -1056,23 +1056,33 @@ export const NightScript = ({
     });
   }, [roleAssignments, _playerEffects]);
 
-  const filterLine = useCallback((l: ScriptLine): boolean => {
-    if (!isLineRelevant(l, roleAssignments, effectivelyDead, prophecyGhostPlayerIds)) return false;
+  const filterLine = useCallback((
+    l: ScriptLine,
+    sourcePlayerId?: string,
+    sourceRole?: RoleId,
+  ): boolean => {
+    const lineRoleAssignments = sourcePlayerId && sourceRole
+      ? { ...roleAssignments, [sourcePlayerId]: sourceRole }
+      : roleAssignments;
+    const linePowerState = sourcePlayerId ? independentPowerStates[sourcePlayerId] : undefined;
+    if (!isLineRelevant(l, lineRoleAssignments, effectivelyDead, prophecyGhostPlayerIds)) return false;
     if (l.conditionKey && !conditionKeys[l.conditionKey]) return false;
-    if (l.requires?.length === 1 && l.requires[0] === ("e03" as RoleId) && shamanCharges >= 2) return false;
+    if (l.requires?.length === 1 && l.requires[0] === ("e03" as RoleId)
+      && (linePowerState?.shamanCharges ?? shamanCharges) >= 2) return false;
     if (l.requires?.length === 1 && l.requires[0] === ("e04" as RoleId) && !shouldShowFortuneTellerLine) return false;
     if (l.requires?.length === 1 && l.requires[0] === ("v04" as RoleId) && foxDisabled) {
+      const copiedFoxIsAvailable = sourceRole === "v04" && !linePowerState?.foxDisabled;
       const nestedActorFoxIsAvailable = actorCopiedRole === "a01"
         && drunkardReplacementRole === "v04"
         && !actorPowerState.foxDisabled;
-      if (!nestedActorFoxIsAvailable) return false;
+      if (!copiedFoxIsAvailable && !nestedActorFoxIsAvailable) return false;
     }
     if (l.requires?.length === 1 && l.requires[0] === ("as01b" as RoleId) && !l.conditionKey) {
       const secretLoverId = Object.entries(roleAssignments).find(([, role]) => role === "as01b")?.[0];
       if (secretLoverId && _playerEffects[secretLoverId]?.has("lover")) return false;
     }
     return true;
-  }, [roleAssignments, effectivelyDead, conditionKeys, shamanCharges, shouldShowFortuneTellerLine, foxDisabled, prophecyGhostPlayerIds, _playerEffects, actorCopiedRole, actorPowerState.foxDisabled, drunkardReplacementRole]);
+  }, [roleAssignments, effectivelyDead, conditionKeys, shamanCharges, shouldShowFortuneTellerLine, foxDisabled, prophecyGhostPlayerIds, _playerEffects, actorCopiedRole, actorPowerState.foxDisabled, drunkardReplacementRole, independentPowerStates]);
 
   const shouldShowMimeCopiedLine = useCallback((l: ScriptLine): boolean => {
     if (l.conditionKey && !conditionKeys[l.conditionKey]) return false;
@@ -1344,8 +1354,9 @@ export const NightScript = ({
       if (!boneCollectorPlayerId || !boneCollectorCopiedRole
         || _permanentlyDeadPlayerIds.has(boneCollectorPlayerId)
         || _playerEffects[boneCollectorPlayerId]?.has("cursed")) return;
+      const copiedAbilityRole = boneCollectorAbilityRole ?? boneCollectorCopiedRole;
       const addLine = (line: ScriptLine | undefined, key: string) => {
-        if (!line || (line.conditionKey && !filterLine(line))) return;
+        if (!line || !filterLine(line, boneCollectorPlayerId, copiedAbilityRole)) return;
         items.push({
           line,
           key: `${nightNumber}:normal:bone-collector:${key}`,
@@ -1355,7 +1366,6 @@ export const NightScript = ({
           actingPoisoned: isPlayerActingPoisoned(boneCollectorPlayerId),
         });
       };
-      const copiedAbilityRole = boneCollectorAbilityRole ?? boneCollectorCopiedRole;
       if (copiedAbilityRole === "v23") {
         if (!boneCollectorHasWebbedPlayer) {
           addLine(localizedScripts.firstNight.find((line) => line.requires?.length === 1 && line.requires[0] === "v23"), "spider-web");
@@ -1366,12 +1376,13 @@ export const NightScript = ({
         return;
       }
       if (copiedAbilityRole === "v27") return;
-      const line = localizedScripts.normalNight.find((candidate) => (
-        candidate.requires?.includes(copiedAbilityRole)
-        && !(candidate.requires?.length === 1 && candidate.requires[0] === "a03")
-        && candidate.conditionKey !== "spiderWebbedDied"
-      ));
-      addLine(line, copiedAbilityRole);
+      localizedScripts.normalNight.forEach((candidate, index) => {
+        if (
+          candidate.requires?.includes(copiedAbilityRole)
+          && !(candidate.requires?.length === 1 && candidate.requires[0] === "a03")
+          && candidate.conditionKey !== "spiderWebbedDied"
+        ) addLine(candidate, `${copiedAbilityRole}:${index}`);
+      });
     };
 
     if (nightNumber === 1) {

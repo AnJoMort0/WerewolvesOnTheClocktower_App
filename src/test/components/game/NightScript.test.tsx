@@ -1062,6 +1062,69 @@ describe("NightScript Actor copy", () => {
   });
 });
 
+describe("NightScript Bone Collector copy", () => {
+  it("shows a copied Shaman's conditional save line with independent charges", () => {
+    const onIndependentPowerStateChange = vi.fn();
+    const { container } = render(
+      <LanguageContext.Provider value="en">
+        <NightScript
+          {...baseProps}
+          nightNumber={3}
+          roleAssignments={{ collector: "t05" }}
+          baseRoleAssignments={{ collector: "t05" }}
+          abilityRoleAssignments={{ collector: "e03" }}
+          conditionKeys={{ hasRedXPlayers: true }}
+          players={[{ id: "collector", name: "Collector", seat_position: 0 }]}
+          boneCollectorPlayerId="collector"
+          boneCollectorCopiedRole="e03"
+          boneCollectorAbilityRole="e03"
+          independentPowerStates={{ collector: { ...EMPTY_ACTOR_POWER_STATE } }}
+          onIndependentPowerStateChange={onIndependentPowerStateChange}
+          onPhoneToggle={vi.fn()}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    expect(container.textContent).toContain("Collector wakes up and is shown the victims");
+    const action = container.querySelector<HTMLButtonElement>(phoneModeSelector(PHONE_MODE.SHAMAN_SAVE));
+    expect(action).toBeInTheDocument();
+    const chargeCheckbox = Array.from(container.querySelectorAll<HTMLInputElement>("button[role=checkbox]"))
+      .find((checkbox) => !checkbox.hasAttribute("data-line-checkbox"));
+    fireEvent.click(chargeCheckbox!);
+    expect(onIndependentPowerStateChange).toHaveBeenCalledWith("collector", {
+      ...EMPTY_ACTOR_POWER_STATE,
+      shamanCharges: 1,
+    });
+  });
+
+  it("adds a Fortune Teller reveal action sourced to the Bone Collector", () => {
+    const onFortuneTellerReveal = vi.fn();
+    const { container } = render(
+      <LanguageContext.Provider value="en">
+        <NightScript
+          {...baseProps}
+          nightNumber={3}
+          roleAssignments={{ collector: "t05" }}
+          baseRoleAssignments={{ collector: "t05", dead: "e02" }}
+          abilityRoleAssignments={{ collector: "e04", dead: "e02" }}
+          permanentlyDead={new Set(["dead"])}
+          lastNightDeadPlayerIds={["dead"]}
+          players={[{ id: "collector", name: "Collector", seat_position: 0 }, { id: "dead", name: "Dead", seat_position: 1 }]}
+          boneCollectorPlayerId="collector"
+          boneCollectorCopiedRole="e04"
+          boneCollectorAbilityRole="e04"
+          onFortuneTellerReveal={onFortuneTellerReveal}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const revealButton = container.querySelector<HTMLButtonElement>("button .lucide-eye")?.closest("button") ?? null;
+    expect(revealButton).toBeInTheDocument();
+    fireEvent.click(revealButton!);
+    expect(onFortuneTellerReveal).toHaveBeenCalledWith("collector");
+  });
+});
+
 describe("NightScript Dog-Wolf copy", () => {
   it("adds a parenthesized Dog line beneath the owner's line with an independent drag source", () => {
     const transfers = [
