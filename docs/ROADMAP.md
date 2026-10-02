@@ -13,12 +13,11 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Critical Fixes
 
-* [x] Never copy the D12 line to the in-app script
+* [ ] The Bone Collector is broken and does not completly copy powers / automatic or dependant script line do not appear for him (for example copying the Shaman does not have a script line and copying the Fortune Teller does not have a modal)
 
 ## Fixes
 
-* [x] Clicking "X" in the rulebook doesn't directly close the rulebook, instead it goes to the previously focused character
-* [x] I think the Dog's copying actions dependant on status effects was mixing with the owner's, so I added more dog-only status to the icons
+* [ ] 
 
 ## Balance Changes
 
@@ -26,24 +25,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [x] 2 new travellers (description already in rulebookContents):
-  * [x] Devil's Advocate:
-    * [x] Add modal and drag-drop action to give one player the Execution Immune status. He can still pick characters that are tagged devil_advocate_used but neither the immunity nor the poison effect will actually be applied
-    * [x] That status is removed automatically after ending the next Tribunal, and replaced with devil_advocate_used
-    * [x] If the Devil's Advocate is poisoned, add a script line during the Tribunal saying "if [player] is nominated, they get automatically executed" and instead of the Execution Immune status effect, make a big corsshair icon overlay covering the target's role images in the circle and in the list so that the GM doesn't forget to execute them if that happens
-  * [x] Bone Collector:
-    * [x] Have a fox-style used power, since the Bone Collector can only use the copy once. Just like the Actor, if the original role is resurrected, the Bone Collector stops copying the power. If the player is ressurected the same day as the Bone Collector asks to copy them, the Bone Collector checkbox is unticked and he gets to pick another player
-    * [x] Have a button on the player's device to "Copy last dead player", it pop-up in the GM for the GM to confirm or deny the request and if confirmed the Bone Collector is copying that role during that day and the following night
-    * [x] Drag-drop a Bone Collector that isn't copying someone also does this copy action. Add an option to the pop-up menu for "stop copying" just in case there's a mistake
-    * [x] Same player UI as the Actor copying a role
-    * [x] Add an alignement icon for "Villager" / "Evil Being" in the player's phone, even when he is siding with the villagers to remind the player that copying an evil role, does not mean the alignement change
-      * [x] Do the same with the Mime
-      * [x] For both the Mime and Bone Collector, if the role that appears has alignement skins, show the skin of the player's allignement
-    * [x] The script line calls for the "Bone Collector" when he has his own script line
-    * [x] When copying the Spider Tamer, he gets the script line in the beginning of the night to web a player if he hasn't already during the day, and then the watch who was caught in the web line later in the same night
-    * [x] If copying the White Werewolf, he will only have the script line if the script line was meant to be there already
-    * [x] If he copies the Dog Wolf, he copies the original Dog's owner
-    * [x] If he copies the Actor, he will either just be a useless Actor or if the previous Actor was copying a role, the Bone Collector keeps copying that role too. Same UI as Dog copying an Actor copying another role
+* [ ] 
 
   
 ## Future Plans
