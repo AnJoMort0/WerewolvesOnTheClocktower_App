@@ -54,9 +54,6 @@ CREATE TABLE public.players (
       )
     ),
 
-  CONSTRAINT players_traveller_role_check
-    CHECK (traveller_role IS NULL OR traveller_role IN ('t01', 't02', 't03')),
-
   CONSTRAINT players_traveller_alignment_check
     CHECK (traveller_alignment IS NULL OR traveller_alignment IN ('villager', 'evil')),
 

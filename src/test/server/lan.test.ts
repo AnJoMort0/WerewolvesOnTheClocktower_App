@@ -125,9 +125,12 @@ describe("offline LAN server", () => {
       table: "players",
       operation: "update",
       filters: [["id", late.id]],
-      values: { traveller_state: "revealing", traveller_role: "t01", traveller_alignment: "villager", character: "t01" },
+      values: { traveller_state: "revealing", traveller_role: "t04", traveller_alignment: "evil", character: "t04" },
     });
     expect((await phone.query({ table: "players", operation: "update", filters: [["id", late.id]], values: { traveller_state: "ready" } })).error).toBeNull();
+    for (const role of ["t04", "t05", "t99"]) {
+      expect((await gm.query({ table: "players", operation: "update", filters: [["id", late.id]], values: { traveller_role: role } })).error).toBeNull();
+    }
     expect((await other.query({ table: "players", operation: "update", filters: [["id", late.id]], values: { traveller_state: "ready" } })).status).toBe(403);
     expect((await phone.query({ table: "players", operation: "select", filters: [["id", "missing"]], cardinality: "maybeSingle" })).data).toBeNull();
   });

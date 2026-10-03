@@ -287,6 +287,19 @@ supabase db push
 
 The initial migration creates the `rooms` and `players` tables, grants and row-level security policies, activity tracking, and the Realtime publication entries. It also defines `cleanup_old_rooms(retention interval)`; it does not schedule automatic cleanup.
 
+### Remove the legacy Traveller role whitelist
+
+`players.traveller_role` is text. It must not have a SQL `CHECK` constraint enumerating role IDs: the application owns the available role list, and adding a Traveller should not require a schema deployment. Existing Supabase projects may still have the old `players_traveller_role_check` constraint, which rejected newer roles and could leave a Traveller configured only in the GM's local state.
+
+Apply `supabase/migrations/20261003000000_remove_traveller_role_whitelist.sql` once to each existing project. Because the consolidated initial migration is for fresh projects only, do not blindly run `supabase db push` on the existing production project. If its migration history has not been reconciled, open the correct project in the Supabase Dashboard, go to **SQL Editor → New query**, and run:
+
+```sql
+ALTER TABLE public.players
+   DROP CONSTRAINT IF EXISTS players_traveller_role_check;
+```
+
+This removes only the role-ID whitelist and does not change player rows. Keep the migration file in version control. Future Traveller additions require application changes, but no further database migration for `traveller_role`.
+
 **Do not run `supabase db push` against the existing production project as part of a Pages deploy.** `supabase/migrations/20260929231441_initial_schema.sql` is a consolidated baseline marked for new projects only. Its history must be deliberately reconciled with an existing database before using it there. For an existing project, inspect `supabase migration list` and take a backup before any schema operation. Do not repair migration history or apply this baseline just to make the frontend deploy.
 
 Useful inspection/backup commands for a deliberately linked project:

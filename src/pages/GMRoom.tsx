@@ -2353,17 +2353,21 @@ const GMRoom = () => {
       .filter((roleId): roleId is RoleId => !!roleId && TRAVELLER_ROLES.includes(roleId));
     const travellerRole = pickTravellerRole(usedTravellerRoles);
     const travellerAlignment = pickTravellerAlignment();
+    const { error } = await supabase.from("players").update({
+      traveller_state: "assigning",
+      traveller_role: travellerRole,
+      traveller_alignment: travellerAlignment,
+    }).eq("id", playerId);
+    if (error) {
+      toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
+      return;
+    }
     setPlayers((current) => current.map((player) => player.id === playerId ? {
       ...player,
       traveller_state: "assigning",
       traveller_role: travellerRole,
       traveller_alignment: travellerAlignment,
     } : player));
-    await supabase.from("players").update({
-      traveller_state: "assigning",
-      traveller_role: travellerRole,
-      traveller_alignment: travellerAlignment,
-    }).eq("id", playerId);
   };
 
   const denyTraveller = async (playerId: string) => {
@@ -2375,10 +2379,14 @@ const GMRoom = () => {
 
   const changeTravellerRole = async (playerId: string, roleId: RoleId) => {
     if (!TRAVELLER_ROLES.includes(roleId)) return;
+    const { error } = await supabase.from("players").update({ traveller_role: roleId }).eq("id", playerId);
+    if (error) {
+      toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
+      return;
+    }
     setPlayers((current) => current.map((player) => player.id === playerId
       ? { ...player, traveller_role: roleId }
       : player));
-    await supabase.from("players").update({ traveller_role: roleId }).eq("id", playerId);
   };
 
   const confirmTraveller = async (playerId: string) => {
@@ -2396,6 +2404,11 @@ const GMRoom = () => {
     const character = encodePlayerCharacterMetadata(roleId, { objectiveEffects, knownWerewolfPlayerIds });
     const spyPlayerId = Object.entries(abilityRoleAssignments).find(([, role]) => role === "f02")?.[0] ?? null;
 
+    const { error } = await supabase.from("players").update({ character, traveller_state: "revealing" }).eq("id", playerId);
+    if (error) {
+      toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
+      return;
+    }
     setRoleAssignments((current) => ({ ...current, [playerId]: roleId }));
     setPlayerEffects((current) => {
       const effects = new Set(current[playerId] || []);
@@ -2408,7 +2421,6 @@ const GMRoom = () => {
       character,
       traveller_state: "revealing",
     } : player));
-    await supabase.from("players").update({ character, traveller_state: "revealing" }).eq("id", playerId);
     broadcastPlayerSync([playerId]);
   };
 

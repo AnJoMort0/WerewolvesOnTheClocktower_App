@@ -125,7 +125,10 @@ export function createLanServer({ distDir, dataDir, joinBaseUrl, pin = String(Ma
     for (const key of ["is_ready", "is_alive"]) if (key in values && typeof values[key] !== "boolean") throw failure(`Invalid ${key}`);
     if ("is_traveller" in values && typeof values.is_traveller !== "boolean") throw failure("Invalid is_traveller");
     if ("traveller_state" in values && values.traveller_state !== null && !["requested", "assigning", "revealing", "ready", "placed", "denied", "exiled"].includes(values.traveller_state)) throw failure("Invalid traveller_state");
-    if ("traveller_role" in values && values.traveller_role !== null && !["t01", "t02", "t03"].includes(values.traveller_role)) throw failure("Invalid traveller_role");
+    if ("traveller_role" in values && values.traveller_role !== null
+      && (typeof values.traveller_role !== "string" || !values.traveller_role.trim() || values.traveller_role.length > 100)) {
+      throw failure("Invalid traveller_role");
+    }
     if ("traveller_alignment" in values && values.traveller_alignment !== null && !["villager", "evil"].includes(values.traveller_alignment)) throw failure("Invalid traveller_alignment");
   }
 

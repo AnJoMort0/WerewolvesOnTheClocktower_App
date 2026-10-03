@@ -103,7 +103,13 @@ try {
   await cdp.click(travellerPhone, "Ask to join as a Traveller");
   await cdp.wait(gm, "document.body.innerText.includes('Late Traveller wants to join as a Traveller.')");
   await cdp.click(gm, "Accept");
-  await cdp.click(gm, "Confirm Traveller");
+  const unassignedTraveller = (await query({ table: "players", filters: [["room_id", roomId]] }))
+    .find(player => player.name === "Late Traveller");
+  assert.ok(unassignedTraveller);
+  await query({ table: "players", operation: "update", filters: [["id", unassignedTraveller.id]],
+    values: { traveller_role: "t04", traveller_alignment: "evil" } });
+  await cdp.wait(gm, `document.body.innerText.includes("t04. Devil's Advocate")`);
+  await cdp.click(gm, "Confirm");
   await cdp.wait(travellerPhone, "document.body.innerText.includes('You are a Villager') || document.body.innerText.includes('You are an Evil Being')");
   await cdp.click(travellerPhone, "I understand");
   await cdp.wait(gm, "document.body.innerText.includes('Drag this Traveller between two players to seat them.')");
@@ -132,8 +138,8 @@ try {
   } while (Date.now() < travellerDeadline);
   assert.equal(traveller?.traveller_state, "placed");
   assert.equal(traveller?.seat_position, 1);
-  assert.ok(["t01", "t02", "t03"].includes(traveller?.traveller_role));
-  const travellerRoleNames = { t01: "Lawyer", t02: "Gambler", t03: "Gunslinger" };
+  assert.equal(traveller?.traveller_role, "t04");
+  const travellerRoleNames = { t04: "Devil's Advocate" };
   await cdp.click(phones[1], "Hide Role");
   await cdp.wait(phones[1], `!!document.querySelector(${JSON.stringify(`button[aria-label="${travellerRoleNames[traveller.traveller_role]}"]`)})`);
   console.log("Late Traveller request, approval, secret alignment reveal, public role and circle placement worked through the real LAN transport.");
@@ -142,14 +148,14 @@ try {
   await cdp.evaluate(gm, "document.querySelector('button[aria-label=\"Monkey Tamer\"]').click()");
   await cdp.wait(phones[0], "!!document.querySelector('[data-testid=phone-action-map] button[aria-label=Wolf]')");
   await cdp.evaluate(phones[0], "document.querySelector('[data-testid=phone-action-map] button[aria-label=Wolf]').click()");
-  await cdp.wait(phones[0], "[...document.querySelectorAll('button')].some(button => button.textContent.includes('Reveal card: Wolf') && !button.disabled)");
-  await cdp.evaluate(phones[0], "[...document.querySelectorAll('button')].find(button => button.textContent.includes('Reveal card: Wolf')).click()");
+  await cdp.wait(phones[0], "[...document.querySelectorAll('button')].some(button => button.textContent.includes('See: Wolf') && !button.disabled)");
+  await cdp.evaluate(phones[0], "[...document.querySelectorAll('button')].find(button => button.textContent.includes('See: Wolf')).click()");
   await cdp.wait(phones[0], "!!document.querySelector('[data-testid=monkey-revealed-card]')");
   await cdp.wait(gm, "!!document.querySelector('[data-testid=monkey-revealed-card]')");
   assert.ok(!(await cdp.evaluate(phones[1], "!!document.querySelector('[data-testid=monkey-revealed-card]')")), "Private reveal reached the wrong screen");
   await cdp.click(phones[0], "Close");
   await cdp.wait(gm, "!document.querySelector('[data-testid=monkey-revealed-card]')");
-  await cdp.click(phones[0], "Reopen card");
+  await cdp.click(phones[0], "Reopen");
   await cdp.wait(gm, "!!document.querySelector('[data-testid=monkey-revealed-card]')");
   console.log("Monkey choice, confirmation, private reveal and shared close/reopen worked through the real LAN transport.");
 
