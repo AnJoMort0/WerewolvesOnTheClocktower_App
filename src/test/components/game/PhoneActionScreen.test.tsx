@@ -160,15 +160,18 @@ describe("PhoneActionScreen", () => {
     expect(onSend).toHaveBeenCalledExactlyOnceWith("confirm", "other");
   });
 
-  it("shows selectable Priest Ghosts without disabled styling and marks them with a ghost icon", () => {
+  it("shows selectable dead Priest targets as ordinary player bubbles", () => {
     const ghost = { id: "ghost", name: "Ghost", seat_position: 2, selectable: true, redX: false, dead: true, marker: null };
     render(<PhoneActionScreen session={{ ...baseView, mode: PHONE_MODE.PRIEST_CONFESSION, participantIds: ["wolf"], players: [...baseView.players, ghost] }}
       playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} />);
 
     const ghostButton = screen.getByRole("button", { name: "Ghost" });
     expect(ghostButton).toBeEnabled();
-    expect(ghostButton.querySelector("span")).not.toHaveClass("opacity-40");
-    expect(screen.getByTestId("ghost-marker-ghost")).toBeInTheDocument();
+    expect(ghostButton.querySelector("span")).not.toHaveClass("grayscale");
+    expect(ghostButton.querySelector("span")).not.toHaveClass("opacity-30");
+    expect(ghostButton.querySelector("span")).toHaveTextContent("G");
+    expect(screen.queryByTestId("ghost-marker-ghost")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ghost-tonight-victim-ghost")).not.toBeInTheDocument();
   });
 
   it.each([
@@ -181,6 +184,16 @@ describe("PhoneActionScreen", () => {
     )) }} playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} />);
 
     expect(screen.getByTestId("ghost-tonight-victim-target")).toBeInTheDocument();
+  });
+
+  it("keeps the gray X for permanently dead players instead of the tonight-victim artwork", () => {
+    render(<PhoneActionScreen session={{ ...baseView, mode: PHONE_MODE.SHAMAN_SAVE, players: baseView.players.map((player) => (
+      player.id === "target" ? { ...player, dead: true, redX: true } : player
+    )) }} playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} />);
+
+    const target = screen.getByRole("button", { name: "Target" });
+    expect(target.querySelector("svg.lucide-x")).toHaveClass("text-muted-foreground");
+    expect(screen.queryByTestId("ghost-tonight-victim-target")).not.toBeInTheDocument();
   });
 
   it("shows an approved Priest character card and opens its rulebook entry", () => {
