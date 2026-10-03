@@ -10,6 +10,7 @@ import { ROLES, type RoleId } from "@/lib/roles";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
 import ghostIcon from "@/assets/display/icons/ghost.webp";
+import ghostTonightVictimIcon from "@/assets/display/icons/ghost_tonight_victim.webp";
 
 const MAP_MAX_WIDTH = 304;
 const MAP_MIN_HEIGHT = 264;
@@ -219,7 +220,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                   {player.marker
                     ? <img src={player.marker === "werewolf" ? werewolfIcon : evilBeingIcon} alt="" draggable={false} className="h-8 w-8 object-contain" />
                     : <span className="font-bold">{player.name.charAt(0).toUpperCase()}</span>}
-                  {(player.redX || (player.dead && session.mode !== PHONE_MODE.PRIEST_CONFESSION)) && <X className={`absolute h-9 w-9 ${player.redX ? "text-destructive" : "text-muted-foreground"}`} strokeWidth={3} />}
+                  {(player.redX || (player.dead && session.mode !== PHONE_MODE.PRIEST_CONFESSION)) && <img src={ghostTonightVictimIcon} alt=""
+                    data-testid={`ghost-tonight-victim-${player.id}`} className="absolute h-9 w-9 object-contain drop-shadow" />}
                   {player.dead && session.mode === PHONE_MODE.PRIEST_CONFESSION && <img src={ghostIcon} alt="" data-testid={`ghost-marker-${player.id}`}
                     className="absolute h-9 w-9 object-contain drop-shadow" />}
                   {voters.length > 0 && (

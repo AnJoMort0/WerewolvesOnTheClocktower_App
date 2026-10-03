@@ -171,6 +171,18 @@ describe("PhoneActionScreen", () => {
     expect(screen.getByTestId("ghost-marker-ghost")).toBeInTheDocument();
   });
 
+  it.each([
+    PHONE_MODE.SHAMAN_SAVE,
+    PHONE_MODE.GRAVE_ROBBER_SWAP,
+    PHONE_MODE.DEVOUT_SERVANT_SAVE,
+  ] as const)("uses the tonight ghost artwork for red-X players in %s", (mode) => {
+    render(<PhoneActionScreen session={{ ...baseView, mode, players: baseView.players.map((player) => (
+      player.id === "target" ? { ...player, redX: true } : player
+    )) }} playerId="wolf" language="en" pending={false} connected onSend={vi.fn()} />);
+
+    expect(screen.getByTestId("ghost-tonight-victim-target")).toBeInTheDocument();
+  });
+
   it("shows an approved Priest character card and opens its rulebook entry", () => {
     const onRoleClick = vi.fn();
     render(<PhoneActionScreen session={{ ...baseView, mode: PHONE_MODE.PRIEST_CONFESSION, priestReveal: { targetPlayerId: "target", roleId: "v03" } }}
