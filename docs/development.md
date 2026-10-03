@@ -252,79 +252,119 @@ Direct refreshes on deployed routes are supported by `public/_redirects`.
 
 ## Supabase
 
-The current Supabase project reference is:
+The hosted app connects from each browser directly to Supabase. Cloudflare Pages serves the static Vite build; it does not host the database or require a Pages Function or Worker. A normal Pages deployment does not change the database schema.
+
+The current production project reference is:
 
 ```text
 ahbkwclivorvwndnmblz
 ```
 
-### Link the local project and apply migrations
+### Reuse the current production backend
+
+For a new Cloudflare Pages site that should use the existing game data:
+
+1. Open the current project in the [Supabase Dashboard](https://supabase.com/dashboard/projects) and open its **Connect** dialog. Copy the project URL and a **publishable key**.
+2. If the project does not yet have a publishable key, create one under **Project Settings → API Keys**. Supabase is deprecating the legacy `anon` key by the end of 2026; prefer a key beginning with `sb_publishable_`.
+3. Add those two values to the Pages **Production** environment as shown in [Hosted deployment](#hosted-deployment).
+
+Do not use a secret key (`sb_secret_...`) or legacy `service_role` key in this Vite app. Variables prefixed with `VITE_` are compiled into browser code and are public. A publishable key is expected to be public; it does not protect data by itself. This app does not sign players in with Supabase Auth, and the current table policies allow public game operations. Anyone who can reach a deployed app can use its configured backend within those policies.
+
+### Create a separate Supabase backend
+
+Use a separate project when you need an isolated test/preview backend or a new independent game deployment:
+
+1. Create a project in the Supabase Dashboard and wait until its database is ready.
+2. Get the new project's URL and publishable key from **Connect** or **Project Settings → API Keys**.
+3. From the repository root, install/use the Supabase CLI and apply the committed migration to this new, empty project:
 
 ```sh
 supabase login
-supabase link --project-ref ahbkwclivorvwndnmblz
+supabase link --project-ref NEW_PROJECT_REF
+supabase migration list
 supabase db push
 ```
 
-### Compare local migrations with the live project
+The initial migration creates the `rooms` and `players` tables, grants and row-level security policies, activity tracking, and the Realtime publication entries. It also defines `cleanup_old_rooms(retention interval)`; it does not schedule automatic cleanup.
 
-Before destructive production changes, inspect the difference:
+**Do not run `supabase db push` against the existing production project as part of a Pages deploy.** `supabase/migrations/20260929231441_initial_schema.sql` is a consolidated baseline marked for new projects only. Its history must be deliberately reconciled with an existing database before using it there. For an existing project, inspect `supabase migration list` and take a backup before any schema operation. Do not repair migration history or apply this baseline just to make the frontend deploy.
+
+Useful inspection/backup commands for a deliberately linked project:
 
 ```sh
+supabase migration list
 supabase db diff --linked
-```
-
-### Create a manual backup
-
-```sh
 supabase db dump --linked --file supabase-backup.sql
 ```
 
-The schema uses `rooms` and `players`, Supabase Realtime, row-level security policies, and the manual cleanup helper `cleanup_old_rooms(retention interval)`.
-
 ## Hosted deployment
 
-Production hosting uses Cloudflare Pages connected to GitHub. Cloudflare Pages builds the Vite application and publishes `.build/app` automatically. The deploy command must remain blank.
+The production branch is `main`. Cloudflare Pages builds the Vite app and publishes its static output. The dashboard labels below were checked against the current Cloudflare and Supabase documentation on 2026-10-03.
 
-### Cloudflare Pages settings
+### Create the Pages project
+
+1. Push the repository and the `main` branch to GitHub. Cloudflare needs at least one pushed branch to select as the production branch.
+2. In the Cloudflare dashboard, open **Workers & Pages → Create application → Pages → Connect to Git**.
+3. Connect/authorize GitHub, choose this repository, and select **Begin setup**.
+4. Set the project name and choose `main` as the **Production branch**. Other branches and pull requests can produce preview deployments.
+
+### Set the build configuration
+
+Use the following values in **Set up builds and deployments**. Leave the root directory at the repository root.
 
 ```text
 Framework preset: Vite
 Production branch: main
-Install command: npm ci
 Build command: npm run build
 Build output directory: .build/app
-Deploy command: leave blank
-Node version: 22
 ```
 
-### Cloudflare environment variables
+The Vite preset may suggest `dist`; override it with `.build/app`, which is the output configured in `config/vite.config.ts`. Pages installs dependencies from the repository's `package-lock.json`. The repository's `.nvmrc` pins Node to `22.23.1`, which the Pages build image recognizes. If the build log uses a different Node version, set `NODE_VERSION=22.23.1` in the Pages build environment.
+
+This is a static Pages deployment: Pages uploads the build output after the build succeeds. No `wrangler deploy` command, Worker entry point, or Pages Function is needed. If the dashboard asks for a Worker script or a deploy command, return to **Pages → Connect to Git** rather than creating a Worker.
+
+### Set build environment variables
+
+In the Cloudflare dashboard, open **Workers & Pages → your Pages project → Settings → Environment variables**. Add these for **Production**:
 
 ```text
 VITE_SUPABASE_URL=https://ahbkwclivorvwndnmblz.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=the Supabase publishable key for this project
-VITE_PUBLIC_APP_URL=the hosted app base URL
+VITE_SUPABASE_PUBLISHABLE_KEY=the project's sb_publishable_ key
 ```
 
-Trigger a fresh deployment after changing Cloudflare environment variables.
+`VITE_PUBLIC_APP_URL` is optional. Leave it unset to use the current site origin for generated join/QR links. Set it only when you want a fixed public base URL; use the same canonical origin as the deployed app.
+
+Cloudflare builds separate **Production** and **Preview** environments. Preview deployments are public by default. If you use them, configure the Preview values to point to a separate Supabase project; otherwise preview builds can read and modify production game data. Do not put a Supabase secret/service-role key in either environment. After adding or changing build variables, trigger a fresh deployment because Vite embeds them during the build.
+
+Select **Save and Deploy** to start the first build. Cloudflare shows build logs, deployment status, and the generated `https://<project-name>.pages.dev` address in the project. Push to `main` to update production; non-production branches create previews. Restrict preview access with Cloudflare Access if the preview itself should not be public.
+
+### Add a custom domain (optional)
+
+Open **Workers & Pages → your Pages project → Custom domains → Set up a domain** and follow the dashboard prompts. Add the domain to the Pages project before creating a DNS record manually. Apex domains must use Cloudflare DNS; a subdomain can use a CNAME to the project's `pages.dev` hostname. See [Cloudflare custom domains](https://developers.cloudflare.com/pages/configuration/custom-domains/) for DNS details.
 
 ## Troubleshooting
 
-### Cloudflare reports failure after `vite build` succeeds
+### Build succeeds but the deployment is missing or shows a 404
 
-A deploy command such as `npx wrangler deploy` is probably configured. Remove the deploy command and allow Cloudflare Pages to publish the build output itself.
+Confirm the build output directory is `.build/app`, not the Vite default `dist`. `public/_redirects` is copied into the build and provides the single-page-app fallback for direct route refreshes. Check the deployment's build log and **View build** details in the Pages project.
+
+If the screen you are configuring asks for a Worker script or a `wrangler deploy` command, it is the Workers flow, not this repository's static Pages flow. Pages publishes the generated output automatically.
+
+### The app reports missing Supabase configuration
+
+Check that `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are set for the environment that produced the deployment (Production or Preview), and that the URL and key belong to the same Supabase project. Redeploy after changing them.
 
 ### Hosted room creation returns `401 (Unauthorized)`
 
 Likely causes include:
 
-- the Cloudflare publishable key does not match the Supabase project;
-- environment variables were changed without a fresh deployment; or
-- database migrations, grants, or row-level security policies are missing from the live project.
+- the publishable key does not match the configured Supabase URL;
+- a deployment was built before the environment variables were changed; or
+- the selected Supabase project is missing the app's tables, grants, or row-level security policies.
 
 Inspect the failed request body in the browser Network panel:
 
-- `Invalid API key`: the key does not match the project.
+- `Invalid API key`: the key is wrong, disabled, or belongs to a different project.
 - `permission denied for table rooms`: required grants are missing.
 - `new row violates row-level security policy`: the live insert policy is missing or incorrect.
 
@@ -332,10 +372,21 @@ Inspect the failed request body in the browser Network panel:
 
 Confirm that:
 
-- `rooms` and `players` are included in the Supabase Realtime publication;
+- `rooms` and `players` are included in the `supabase_realtime` publication;
 - the browser can reach Supabase;
-- the configured Supabase URL and publishable key are correct; and
+- the configured Supabase URL and publishable key are from the same project; and
 - free-tier limits have not been exhausted by accumulated test rooms or excessive connections.
+
+For a fresh project, the committed initial migration adds both tables to the publication. For an existing project, verify its live schema and migration history rather than pushing the fresh-project baseline blindly.
+
+### Official references
+
+- [Cloudflare Pages Git integration](https://developers.cloudflare.com/pages/get-started/git-integration/)
+- [Cloudflare Pages build configuration](https://developers.cloudflare.com/pages/configuration/build-configuration/)
+- [Cloudflare Pages build image and Node versions](https://developers.cloudflare.com/pages/configuration/build-image/)
+- [Cloudflare Pages preview deployments](https://developers.cloudflare.com/pages/configuration/preview-deployments/)
+- [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys)
+- [Supabase database migrations](https://supabase.com/docs/guides/deployment/database-migrations)
 
 ## Smoke test
 
