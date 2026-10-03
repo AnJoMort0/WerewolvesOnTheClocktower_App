@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
   createPlayerActionRequest,
+  getPlayerActionNoticeKey,
   normalizePlayerActionState,
   removePlayerActionRequest,
   upsertPowerUses,
 } from "@/lib/playerActions";
 
 describe("player action state", () => {
+  it("uses copy-specific notices for Bone Collector requests", () => {
+    expect(getPlayerActionNoticeKey("t05-copy", "request")).toBe("gmT05CopyRequest");
+    expect(getPlayerActionNoticeKey("t05-copy", "complete")).toBe("gmT05CopyComplete");
+    expect(getPlayerActionNoticeKey("t05-copy", "denied")).toBe("gmT05CopyDenied");
+    expect(getPlayerActionNoticeKey("v10-assassinate", "request")).toBe("gmV10AssassinationRequest");
+  });
+
   it("normalizes invalid room state into an empty state", () => {
     expect(normalizePlayerActionState(null)).toEqual({
       version: 1,

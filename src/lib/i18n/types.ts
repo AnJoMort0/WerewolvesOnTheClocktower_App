@@ -176,6 +176,7 @@ export type GameLogActionKey =
   | "effect_add"
   | "role_change"
   | "traveller_join"
+  | "traveller_power"
   | "game_over";
 
 export interface GameLogStrings {
@@ -192,6 +193,12 @@ export interface GameLogStrings {
   noRole: string;
   permanentDeath: string;
   gypsyPoisonStolen: string;      // Supports {name}
+  travellerGamblerGuess: string; // Supports {role}, {players}, and {result}
+  travellerGuessCorrect: string;
+  travellerGuessIncorrect: string;
+  travellerGunslingerShot: string;
+  travellerDevilsAdvocate: string;
+  travellerBoneCollectorCopy: string;
   phaseLabels: Record<GameLogPhaseKey, string>;
   actionLabels: Record<GameLogActionKey, string>;
 }
@@ -368,7 +375,6 @@ export interface UIStrings {
   changeWeb: string;
   copyLastDeadPlayer: string;
   stopCopying: string;
-  motherCurseChangeUsed: string;
   assassinationMode: string;
   resurrectionMode: string;
   webMode: string;
@@ -381,10 +387,13 @@ export interface UIStrings {
   gmV10AssassinationRequest: string;
   gmV18ResurrectionRequest: string;
   gmV23WebRequest: string;
+  gmT05CopyRequest: string;
   gmV10AssassinationComplete: string;
   gmV18ResurrectionComplete: string;
   gmV23WebComplete: string;
+  gmT05CopyComplete: string;
   gmPlayerActionDenied: string;
+  gmT05CopyDenied: string;
   sessionEnded: string;
   sessionEndedDesc: string;
   backHome: string;
@@ -471,7 +480,7 @@ export interface UIStrings {
   gameOver: GameOverStrings;
   uses: string;             // "Usos:" / "Utilisations :"
   powerExhausted: string;   // "Poder esgotado" / "Pouvoir épuisé"
-  actionUsed: string;
+  powerUsed: string;
   keepsPowers: string;      // "Mantém os poderes"
   diedOfTetanus: string;    // "morreu de Tétano." (used in tribunal lines)
   diedSimple: string;       // "morreu."

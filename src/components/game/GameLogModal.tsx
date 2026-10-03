@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, CircleSlash, Clock, Minus, ScrollText, Trophy, X } from "lucide-react";
+import { ChevronDown, CircleSlash, Clock, Minus, ScrollText, Trophy, X, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getEffectLabel, getGameOver, getRoleLabel, getTranslation, getWinLabel, type Language } from "@/lib/i18n";
@@ -43,6 +43,7 @@ function getEventIcon(event: GameLogEvent) {
   if (event.action === "execute") return ghostExecutedIcon;
   if (event.action === "resurrect") return ghostResurrectIcon;
   if (event.action === "kill") return ghostIcon;
+  if (event.action === "traveller_power") return "traveller-power";
   if (event.action === "role_change" || event.action === "traveller_join") return cardSwitchIcon;
   return null;
 }
@@ -363,6 +364,8 @@ export function GameLogModal({
                               <div className="flex min-w-0 items-center justify-center gap-1">
                                 {event.action === "game_over" ? (
                                   <Trophy className="h-4 w-4 shrink-0 text-yellow-400 xl:h-5 xl:w-5" />
+                                ) : eventIcon === "traveller-power" ? (
+                                  <Zap className="h-4 w-4 shrink-0 text-primary xl:h-5 xl:w-5" />
                                 ) : eventIcon ? (
                                   <img src={eventIcon} alt="" className="h-4 w-4 shrink-0 xl:h-5 xl:w-5" />
                                 ) : (

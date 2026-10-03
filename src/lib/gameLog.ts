@@ -14,6 +14,7 @@ export type GameLogAction =
   | "effect_add"
   | "role_change"
   | "traveller_join"
+  | "traveller_power"
   | "game_over";
 
 export type GameLogPlayerSnapshot = {

@@ -3,6 +3,26 @@ import type { RoleId } from "@/lib/roles";
 export const PLAYER_ACTION_STATE_VERSION = 1;
 
 export type PlayerActionKind = "v10-assassinate" | "v18-resurrect" | "v23-web" | "t05-copy";
+export type PlayerActionNotice = "request" | "complete" | "denied";
+export type PlayerActionNoticeKey =
+  | "gmV10AssassinationRequest"
+  | "gmV18ResurrectionRequest"
+  | "gmV23WebRequest"
+  | "gmT05CopyRequest"
+  | "gmV10AssassinationComplete"
+  | "gmV18ResurrectionComplete"
+  | "gmV23WebComplete"
+  | "gmT05CopyComplete"
+  | "gmPlayerActionDenied"
+  | "gmT05CopyDenied";
+
+export function getPlayerActionNoticeKey(kind: PlayerActionKind, notice: PlayerActionNotice): PlayerActionNoticeKey {
+  if (notice === "denied") return kind === "t05-copy" ? "gmT05CopyDenied" : "gmPlayerActionDenied";
+  if (kind === "t05-copy") return notice === "request" ? "gmT05CopyRequest" : "gmT05CopyComplete";
+  if (kind === "v18-resurrect") return notice === "request" ? "gmV18ResurrectionRequest" : "gmV18ResurrectionComplete";
+  if (kind === "v23-web") return notice === "request" ? "gmV23WebRequest" : "gmV23WebComplete";
+  return notice === "request" ? "gmV10AssassinationRequest" : "gmV10AssassinationComplete";
+}
 
 const PLAYER_ACTION_KINDS = new Set<PlayerActionKind>([
   "v10-assassinate",

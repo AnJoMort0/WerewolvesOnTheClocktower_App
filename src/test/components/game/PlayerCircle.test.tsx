@@ -120,11 +120,11 @@ describe("PlayerCircle drag and power controls", () => {
     const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
     fireEvent.dragStart(draggable, { dataTransfer });
     expect(dataTransfer.setData).toHaveBeenCalledWith("action", "role-t03");
-    expect(getByRole("checkbox", { name: "Ação usada" })).not.toBeChecked();
+    expect(getByRole("checkbox", { name: "Poder usado" })).not.toBeChecked();
 
     rerender(<PlayerCircle {...props} usedTravellerPowerIds={new Set(["gunslinger"])} />);
     expect(container.querySelector('[draggable="true"]')).toBeNull();
-    expect(getByRole("checkbox", { name: "Ação usada" })).toBeChecked();
+    expect(getByRole("checkbox", { name: "Poder usado" })).toBeChecked();
   });
 
   it("drags the Devil's Advocate and shows the poisoned execution marker", () => {

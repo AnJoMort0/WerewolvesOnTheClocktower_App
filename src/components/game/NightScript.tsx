@@ -602,7 +602,8 @@ function ScriptLineDisplay({
         )}
         {isVampireWolfLine && onVampireWolfToggle != null && (
           <div className="flex items-center gap-2 mt-2">
-            <Checkbox checked={!!vampireWolfUsed} onCheckedChange={() => onVampireWolfToggle()} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+            <Checkbox checked={!!vampireWolfUsed} aria-label={t("powerUsed", lang)} onCheckedChange={() => onVampireWolfToggle()} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+            <span className="text-xs text-muted-foreground">{t("powerUsed", lang)}</span>
           </div>
         )}
         {isJudgeLine && onJudgeChargeToggle != null && (
@@ -622,9 +623,9 @@ function ScriptLineDisplay({
         {isMotherLine && onMotherCurseChangeToggle != null && (
           <div className="mt-2 flex items-center gap-2">
             <Checkbox checked={motherCurseChangeUsed} onCheckedChange={onMotherCurseChangeToggle}
-              aria-label={t("motherCurseChangeUsed", lang)}
+              aria-label={t("powerUsed", lang)}
               className="h-5 w-5 border-fuchsia-400 data-[state=checked]:border-fuchsia-500 data-[state=checked]:bg-fuchsia-500" />
-            <span className="text-xs text-muted-foreground">{t("motherCurseChangeUsed", lang)}</span>
+            <span className="text-xs text-muted-foreground">{t("powerUsed", lang)}</span>
           </div>
         )}
         </>}

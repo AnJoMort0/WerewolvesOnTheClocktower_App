@@ -16,6 +16,50 @@ const snapshot = (id: string, name: string, role: GameLogPlayerSnapshot["role"])
 });
 
 describe("GameLogModal", () => {
+  it("renders a Traveller power event with its selected target and detail", () => {
+    const boneCollector = snapshot("collector", "Collector", "t05");
+    const deadPlayer = { ...snapshot("dead", "Mira", "e03"), status: "dead" as const, permanentlyDead: true };
+    const event: GameLogEvent = {
+      id: "traveller-power",
+      createdAt: 1_700_000_000_000,
+      phase: "day",
+      phaseNumber: 2,
+      action: "traveller_power",
+      actor: boneCollector,
+      actorRole: "t05",
+      target: deadPlayer,
+      participants: [boneCollector.id, deadPlayer.id],
+      detail: "Copied the most recently deceased player's power.",
+    };
+
+    render(
+      <LanguageContext.Provider value="en">
+        <GameLogModal
+          open
+          onOpenChange={vi.fn()}
+          language="en"
+          events={[event]}
+          players={[
+            { id: boneCollector.id, name: boneCollector.name, seat_position: 0, character: "t05", is_alive: true },
+            { id: deadPlayer.id, name: deadPlayer.name, seat_position: 1, character: "e03", is_alive: false },
+          ]}
+          roleAssignments={{ collector: "t05", dead: "e03" }}
+          playerStatuses={{ collector: "alive", dead: "dead" }}
+          permanentlyDead={new Set([deadPlayer.id])}
+          playerEffects={{}}
+          poisonedPlayerId={null}
+          illusionPlayerId={null}
+        />
+      </LanguageContext.Provider>,
+    );
+
+    const logRow = document.querySelector("[data-log-row]");
+    expect(logRow).toHaveTextContent("Traveller power");
+    expect(logRow).toHaveTextContent("Copied the most recently deceased player's power.");
+    expect(logRow).toHaveTextContent("Mira");
+    expect(logRow?.querySelector("svg.lucide-zap")).toBeInTheDocument();
+  });
+
   it("renders dense collapsible rows and filters them by clicked participants", () => {
     const witch = snapshot("witch", "Beatrice", "e02");
     const wolf = snapshot("wolf", "Alexandre", "e01");

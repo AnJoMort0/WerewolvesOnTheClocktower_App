@@ -102,6 +102,7 @@ import {
 import {
   normalizePlayerActionState,
   createPlayerActionRequest,
+  getPlayerActionNoticeKey,
   removePlayerActionRequest,
   upsertPowerUses,
   type PlayerActionRequest,
@@ -3992,6 +3993,29 @@ const GMRoom = () => {
     setGameLogEvents((prev) => [...prev, nextEvent].slice(-MAX_GAME_LOG_EVENTS));
   }, [dayPhase, gameCyclePhase, nightNumber]);
 
+  const recordTravellerPowerEvent = useCallback((
+    role: "t02" | "t03" | "t04" | "t05",
+    actorPlayerId: string,
+    targetPlayerIds: string[],
+    detail: string,
+  ) => {
+    if (!players.some((player) => player.id === actorPlayerId && player.is_traveller)) return;
+    const actor = getPlayerLogSnapshot(actorPlayerId);
+    if (!actor) return;
+    const targets = targetPlayerIds
+      .map((playerId) => getPlayerLogSnapshot(playerId))
+      .filter((snapshot): snapshot is GameLogPlayerSnapshot => !!snapshot);
+    recordGameEvent({
+      action: "traveller_power",
+      actor,
+      actorRole: role,
+      target: targets[0] ?? null,
+      secondaryTarget: targets[1] ?? null,
+      participants: Array.from(new Set([actorPlayerId, ...targetPlayerIds])),
+      detail,
+    });
+  }, [getPlayerLogSnapshot, players, recordGameEvent]);
+
   const getCoupledActionPlayerIds = useCallback((
     role: RoleId,
     sourcePlayerId?: string | null,
@@ -4728,13 +4752,16 @@ const GMRoom = () => {
         if (!randomTarget) return;
         killId = randomTarget.id;
       }
+      recordTravellerPowerEvent("t03", sourcePlayerId, [targetPlayerId], getTranslation((room?.language as Language) || "pt").ui.gameLog.travellerGunslingerShot);
       setUsedTravellerPowerIds((previous) => new Set(previous).add(sourcePlayerId));
       applyCaughtIfWebbed();
       handlePlayerStatusChange(killId, "dead-this-night", "t03", sourcePlayerId);
       return;
     }
     if (actionRole === "t05") {
-      beginBoneCollectorCopy(targetPlayerId);
+      if (sourcePlayerId && beginBoneCollectorCopy(targetPlayerId)) {
+        recordTravellerPowerEvent("t05", sourcePlayerId, [targetPlayerId], getTranslation((room?.language as Language) || "pt").ui.gameLog.travellerBoneCollectorCopy);
+      }
       return;
     }
     if (actionRole === "t04") {
@@ -4744,6 +4771,7 @@ const GMRoom = () => {
       const usedEffect: StatusEffect = dogSource ? "devil_advocate_used_dog" : "devil_advocate_used";
       if (playerEffects[targetPlayerId]?.has("devil_advocate_used")
         || playerEffects[targetPlayerId]?.has("devil_advocate_used_dog")) return;
+      recordTravellerPowerEvent("t04", sourcePlayerId, [targetPlayerId], getTranslation((room?.language as Language) || "pt").ui.gameLog.travellerDevilsAdvocate);
       const outcomeEffect: StatusEffect = isPlayerActingPoisoned(sourcePlayerId)
         ? "devil_advocate_execution"
         : "immunity_execution";
@@ -5391,6 +5419,16 @@ const GMRoom = () => {
     }
     if (action === PHONE_MODE.GAMBLER_GUESS) {
       if (!sourcePlayerId || !gamblerReveal) return;
+      const language = (room?.language as Language) || "pt";
+      const logCopy = getTranslation(language).ui.gameLog;
+      const guessedPlayers = gamblerReveal.playerIds.map((playerId) => (
+        players.find((player) => player.id === playerId)?.name ?? logCopy.unknownPlayer
+      ));
+      recordTravellerPowerEvent("t02", sourcePlayerId, gamblerReveal.playerIds, format(logCopy.travellerGamblerGuess, {
+        role: getRoleLabel(gamblerReveal.roleId, language),
+        players: guessedPlayers.join(", "),
+        result: gamblerReveal.correct ? logCopy.travellerGuessCorrect : logCopy.travellerGuessIncorrect,
+      }));
       if (!gamblerReveal.correct) {
         handlePlayerStatusChange(sourcePlayerId, "dead-this-night", "t02-suicide", sourcePlayerId);
       }
@@ -5410,7 +5448,7 @@ const GMRoom = () => {
       : action === PHONE_MODE.EVIL_WITCH_POISON ? "poison"
       : action === PHONE_MODE.SHAMAN_SAVE ? "shaman" : action;
     handleDragAction(dragAction, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
-  }, [handleDragAction, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, markScriptRoleAction, nightNumber]);
+  }, [handleDragAction, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, markScriptRoleAction, nightNumber, players, recordTravellerPowerEvent, room?.language]);
   const completePhoneLine = useCallback((session: PhoneSession) => {
     const actionParticipants = session.mode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE
       ? session.participantIds.filter((playerId) => playerId === session.sourcePlayerId)
@@ -5495,8 +5533,11 @@ const GMRoom = () => {
 
     setPlayerActionState(nextState);
     if (shouldApply) {
-      if (request.kind === "t05-copy" && latestDeadPlayerId) beginBoneCollectorCopy(latestDeadPlayerId);
-      else handleDragAction(`role-${actionRole}`, request.targetPlayerId, request.actorPlayerId, {
+      if (request.kind === "t05-copy" && latestDeadPlayerId) {
+        if (beginBoneCollectorCopy(latestDeadPlayerId)) {
+          recordTravellerPowerEvent("t05", request.actorPlayerId, [latestDeadPlayerId], getTranslation((room?.language as Language) || "pt").ui.gameLog.travellerBoneCollectorCopy);
+        }
+      } else handleDragAction(`role-${actionRole}`, request.targetPlayerId, request.actorPlayerId, {
           preserveSpiderFreeWebChange: preservesSpiderFreeWebChange,
         });
     }
@@ -5520,7 +5561,7 @@ const GMRoom = () => {
     if (updateResult.error) {
       toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
     }
-  }, [abilityRoleAssignments, beginBoneCollectorCopy, boneCollectorCopiedRole, getStoredDogWolfFallbackState, handleDragAction, independentPowerStates, lastNightDeadPlayerIds, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionPowerUsesByRole, playerActionState, playerStatuses, players, powerlessPlayerIds, prophecyPowerPlayerIds, pruneResolvedPlayerActionState, room?.language, roomId, spiderWebbedDiedSourcePlayerIds, usedTravellerPowerIds]);
+  }, [abilityRoleAssignments, beginBoneCollectorCopy, boneCollectorCopiedRole, getStoredDogWolfFallbackState, handleDragAction, independentPowerStates, lastNightDeadPlayerIds, mimeMechanicalRole, mimePlayerId, permanentlyDead, playerActionPowerUsesByRole, playerActionState, playerStatuses, players, powerlessPlayerIds, prophecyPowerPlayerIds, pruneResolvedPlayerActionState, recordTravellerPowerEvent, room?.language, roomId, spiderWebbedDiedSourcePlayerIds, usedTravellerPowerIds]);
 
   const getListDragProps = (playerId: string) => {
     if (!isPlaying) return {};
@@ -6368,19 +6409,12 @@ const GMRoom = () => {
     : "";
   const pendingPlayerActionDescription = displayedPlayerActionRequest
     ? format(tt(
-      resolvedPlayerActionNotice
-        ? !resolvedPlayerActionNotice.accepted
-          ? "gmPlayerActionDenied"
-          : displayedPlayerActionRequest.kind === "v18-resurrect"
-            ? "gmV18ResurrectionComplete"
-            : displayedPlayerActionRequest.kind === "v23-web"
-              ? "gmV23WebComplete"
-              : "gmV10AssassinationComplete"
-        : displayedPlayerActionRequest.kind === "v18-resurrect"
-          ? "gmV18ResurrectionRequest"
-          : displayedPlayerActionRequest.kind === "v23-web"
-            ? "gmV23WebRequest"
-            : "gmV10AssassinationRequest",
+      getPlayerActionNoticeKey(
+        displayedPlayerActionRequest.kind,
+        resolvedPlayerActionNotice
+          ? resolvedPlayerActionNotice.accepted ? "complete" : "denied"
+          : "request",
+      ),
     ), {
       actor: pendingPlayerActionActorName,
       target: pendingPlayerActionTargetName,
@@ -7227,11 +7261,11 @@ const GMRoom = () => {
                             <div className="flex items-center gap-1 flex-shrink-0" onClick={(event) => event.stopPropagation()}>
                               <Checkbox
                                 checked={usedTravellerPowerIds.has(player.id)}
-                                aria-label={tt("actionUsed")}
+                                aria-label={tt("powerUsed")}
                                 onCheckedChange={() => toggleTravellerPowerUsed(player.id)}
                                 className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                               />
-                              <span className="text-[9px] text-muted-foreground">{tt("actionUsed")}</span>
+                              <span className="text-[9px] text-muted-foreground">{tt("powerUsed")}</span>
                             </div>
                           )}
                           {/* Paranoid charges */}
@@ -7287,9 +7321,10 @@ const GMRoom = () => {
                           )}
                           {/* Domador da Aranha daytime web-change */}
                           {mechanicalRoleId === "v23" && (!isPermanentDead || prophecyPowerPlayerIds.has(player.id)) && (
-                            <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               <Checkbox
                                 checked={independentPowerState?.spiderDayChangeUsed ?? spiderDayChangeUsed}
+                                aria-label={tt("powerUsed")}
                                 onCheckedChange={() => {
                                   if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, spiderDayChangeUsed: !independentPowerState.spiderDayChangeUsed });
                                   else setSpiderDayChangeUsed((value) => !value);
@@ -7297,6 +7332,7 @@ const GMRoom = () => {
                                 }}
                                 className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                               />
+                              <span className="text-[9px] text-muted-foreground">{tt("powerUsed")}</span>
                             </div>
                           )}
                           {mechanicalRoleId === "m07" && (!isPermanentDead || prophecyPowerPlayerIds.has(player.id)) && (
@@ -7308,9 +7344,10 @@ const GMRoom = () => {
                                   else setMotherCurseChangeUsed((value) => !value);
                                   markScriptRoleAction("m07", player.id);
                                 }}
-                                aria-label={tt("motherCurseChangeUsed")}
+                                aria-label={tt("powerUsed")}
                                 className="h-4 w-4 border-fuchsia-400 data-[state=checked]:bg-fuchsia-500"
                               />
+                              <span className="text-[9px] text-muted-foreground">{tt("powerUsed")}</span>
                             </div>
                           )}
                           {/* Werewolf Seer: no checkbox (unlimited uses) */}
@@ -7333,9 +7370,10 @@ const GMRoom = () => {
                           )}
           {/* Vampiro used: ticking auto-applies werewolf_turned to werewolf victim */}
           {mechanicalRoleId === "m03" && !isPermanentDead && (
-            <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               <Checkbox
                 checked={independentPowerState?.vampireWolfUsed ?? vampireWolfUsed}
+                aria-label={tt("powerUsed")}
                 onCheckedChange={() => {
                   markScriptRoleAction("m03", player.id);
                   const nextValue = independentPowerState ? !independentPowerState.vampireWolfUsed : !vampireWolfUsed;
@@ -7357,6 +7395,7 @@ const GMRoom = () => {
                 }}
                 className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
               />
+              <span className="text-[9px] text-muted-foreground">{tt("powerUsed")}</span>
             </div>
           )}
           {/* Vampire victim: distinct square blue checkbox = keeps power */}

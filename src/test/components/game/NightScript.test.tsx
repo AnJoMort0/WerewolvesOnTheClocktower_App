@@ -147,7 +147,7 @@ describe("NightScript phone controls", () => {
     expect(container.querySelector('[draggable="true"]')).toBeNull();
     expect(container.querySelector('img[alt="Cursed"]')).toBeInTheDocument();
     expect(container.textContent).toContain("Mother of Werewolves");
-    expect(container.textContent).not.toContain(getTranslation("en").ui.motherCurseChangeUsed);
+    expect(container.textContent).not.toContain(getTranslation("en").ui.powerUsed);
   });
 
   it("calls every Mother but only offers the action to an eligible copy", () => {

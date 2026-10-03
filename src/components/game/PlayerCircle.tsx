@@ -670,18 +670,18 @@ export const PlayerCircle = ({
                     }}
                     className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                   />
-                  <span className="text-[9px] text-muted-foreground">⚡</span>
+                  <span className="text-[8px] leading-none text-muted-foreground">{t("powerExhausted")}</span>
                 </div>
               )}
               {isGM && !isPermanentlyDead && (mechanicalRole === "t01" || mechanicalRole === "t03" || isBoneCollector) && onTravellerPowerUsedToggle && (
                 <div className="flex items-center gap-1 mt-0.5" onClick={(event) => event.stopPropagation()}>
                   <Checkbox
                     checked={usedTravellerPowerIds.has(seated.id)}
-                    aria-label={t("actionUsed")}
+                    aria-label={t("powerUsed")}
                     onCheckedChange={() => onTravellerPowerUsedToggle(seated.id)}
                     className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                   />
-                  <span className="text-[9px] text-muted-foreground">{t("actionUsed")}</span>
+                  <span className="text-[8px] leading-none text-muted-foreground">{t("powerUsed")}</span>
                 </div>
               )}
               {/* Cupid (s01) protection charges */}
@@ -721,24 +721,28 @@ export const PlayerCircle = ({
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={independentPowerState?.spiderDayChangeUsed ?? spiderDayChangeUsed}
+                    aria-label={t("powerUsed")}
                     onCheckedChange={() => {
                       if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, spiderDayChangeUsed: !independentPowerState.spiderDayChangeUsed });
                       else onSpiderDayChangeToggle();
                     }}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                   />
+                  <span className="text-[8px] leading-none text-muted-foreground">{t("powerUsed")}</span>
                 </div>
               )}
               {isGM && mechanicalRole === ("m07" as RoleId) && !isPermanentlyDead && onMotherCurseChangeToggle && (
                 <div className="mt-0.5 flex gap-1" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={independentPowerState?.motherCurseChangeUsed ?? motherCurseChangeUsed}
+                    aria-label={t("powerUsed")}
                     onCheckedChange={() => {
                       if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, motherCurseChangeUsed: !independentPowerState.motherCurseChangeUsed });
                       else onMotherCurseChangeToggle();
                     }}
                     className="h-4 w-4 border-fuchsia-400 data-[state=checked]:bg-fuchsia-500"
                   />
+                  <span className="text-[8px] leading-none text-muted-foreground">{t("powerUsed")}</span>
                 </div>
               )}
               {/* Judge (v13) checkboxes */}
@@ -778,12 +782,14 @@ export const PlayerCircle = ({
                 <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={independentPowerState?.vampireWolfUsed ?? vampireWolfUsed}
+                    aria-label={t("powerUsed")}
                     onCheckedChange={() => {
                       if (independentPowerState) updateIndependentPowerState({ ...independentPowerState, vampireWolfUsed: !independentPowerState.vampireWolfUsed });
                       else onVampireWolfToggle();
                     }}
                     className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
                   />
+                  <span className="text-[8px] leading-none text-muted-foreground">{t("powerUsed")}</span>
                 </div>
               )}
               {/* Vampire victim keeps-power checkbox (square blue) */}
