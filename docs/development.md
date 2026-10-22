@@ -287,6 +287,8 @@ supabase db push
 
 The initial migration creates the `rooms` and `players` tables, grants and row-level security policies, activity tracking, and the Realtime publication entries. It also defines `cleanup_old_rooms(retention interval)`; it does not schedule automatic cleanup.
 
+When a future migration creates another `public` table for the app, include explicit Data API `GRANT` statements in that same migration for the roles that need access (`anon`, `authenticated`, and/or `service_role`). Supabase no longer guarantees automatic grants for newly created tables. Keep row-level security and its policies separate from these table grants; both are needed for browser access. The initial migration already grants the app's existing tables.
+
 ### Remove the legacy Traveller role whitelist
 
 `players.traveller_role` is text. It must not have a SQL `CHECK` constraint enumerating role IDs: the application owns the available role list, and adding a Traveller should not require a schema deployment. Existing Supabase projects may still have the old `players_traveller_role_check` constraint, which rejected newer roles and could leave a Traveller configured only in the GM's local state.

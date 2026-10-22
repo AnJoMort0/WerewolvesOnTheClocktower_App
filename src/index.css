@@ -76,6 +76,14 @@
     -webkit-user-drag: none;
     user-select: none;
   }
+
+  /* Let the drag polyfill own long presses on game actions. */
+  [draggable="true"],
+  [draggable="true"] * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }
 
 @layer utilities {

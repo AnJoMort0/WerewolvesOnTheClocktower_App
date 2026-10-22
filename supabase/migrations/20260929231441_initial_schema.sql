@@ -215,6 +215,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE
   ON TABLE public.players
   TO anon, authenticated;
 
+-- Keep privileged maintenance clients working on fresh projects and resets
+-- when automatic Data API grants for new public tables are disabled.
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.rooms, public.players
+  TO service_role;
+
 -- Preserved from the historical migrations for application compatibility.
 -- Because the function is SECURITY INVOKER and rooms has no DELETE RLS policy,
 -- anonymous callers cannot actually delete rooms through it; privileged/manual

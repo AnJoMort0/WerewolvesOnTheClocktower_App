@@ -26,6 +26,7 @@
     "test": "vitest run --config config/vitest.config.ts",
     "test:watch": "vitest --config config/vitest.config.ts",
     "test:lan-browser": "node src/test/e2e/lan.smoke.mjs",
+    "test:touch-browser": "node src/test/e2e/touch-drag.smoke.mjs",
     "test:rulebook-browser": "node src/test/e2e/rulebook.smoke.mjs",
     "assets:optimize": "node scripts/optimize-assets.mjs"
   },

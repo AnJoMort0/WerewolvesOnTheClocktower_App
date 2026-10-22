@@ -5,17 +5,21 @@ import { polyfill } from "mobile-drag-drop";
 import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scroll-behaviour";
 import "mobile-drag-drop/default.css";
 import { getLanConfig, prepareLanStorage } from "@/lib/lanMode";
-import { blockImplicitImageDrag, findExplicitDraggableTarget } from "@/lib/touchDragDrop";
+import { blockDragSourceContextMenu, blockImplicitImageDrag, findExplicitDraggableTarget } from "@/lib/touchDragDrop";
 
 // Use the same explicit drag sources on touch and mouse. A short hold keeps
 // ordinary taps responsive and lets a vertical swipe scroll before drag starts.
 polyfill({
+  // Touch-enabled desktop browsers can advertise native DnD yet still hand a
+  // long press on card artwork to the context menu instead of the game drag.
+  forceApply: true,
   holdToDrag: 250,
   dragImageCenterOnTouch: true,
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
   tryFindDraggableTarget: findExplicitDraggableTarget,
 });
 document.addEventListener("dragstart", blockImplicitImageDrag, true);
+document.addEventListener("contextmenu", blockDragSourceContextMenu, true);
 
 async function mount() {
   if (getLanConfig() && "serviceWorker" in navigator) {
