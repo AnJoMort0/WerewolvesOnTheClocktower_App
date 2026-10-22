@@ -184,6 +184,8 @@ npm run preview:lan
 
 ## Publishing the Windows LAN download
 
+For the short, step-by-step publishing checklist, see [Publishing a LAN game release](releasing-lan.md). The details below explain the packaging system and its alternatives.
+
 Generated outputs belong under the ignored `.build` directory: `app`, `rulebook`, `lan-kit`, `release`, and `runtime`. Saved games in `.lan` and legacy `.lan-runtime` caches are also ignored. None of these belongs in source control. GitHub releases distribute the ready-to-play binary separately from the source history, as recommended in [GitHub's large-file guidance](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github).
 
 ### Build a ZIP locally
