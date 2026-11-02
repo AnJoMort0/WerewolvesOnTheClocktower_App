@@ -285,9 +285,42 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language, option
           ${objectiveHtml}
         </div>
       </div>
-      ${renderCharacterLore(character, lang)}
+      ${renderCharacterMeta(character, lang)}
     </article>
   `;
+}
+
+function renderCharacterMeta(character: RulebookCharacter, lang: Language): string {
+  const lore = renderCharacterLore(character, lang);
+  const origin = renderCharacterOrigin(character, lang);
+  if (!lore && !origin) return "";
+  return `<div class="role-meta">${lore}${origin}</div>`;
+}
+
+function renderCharacterOrigin(character: RulebookCharacter, lang: Language): string {
+  const localizedOrigin = character.origin?.[lang];
+  if (!localizedOrigin) return "";
+  if (typeof localizedOrigin === "string") {
+    return `<span class="role-origin">${renderInline(localizedOrigin)}</span>`;
+  }
+
+  const inspirations: string[] = [];
+  for (let index = 0; index < localizedOrigin.length; index += 1) {
+    const item = localizedOrigin[index];
+    if (typeof item === "string") {
+      const source = localizedOrigin[index + 1];
+      if (source && typeof source !== "string") {
+        inspirations.push(`${renderInline(item)} (${renderInline(source[lang])})`);
+        index += 1;
+      } else {
+        inspirations.push(renderInline(item));
+      }
+    } else {
+      inspirations.push(renderInline(item[lang]));
+    }
+  }
+
+  return `<span class="role-origin">${renderInline(RULEBOOK_TEXT.basedOnLabel[lang])}: ${inspirations.join(" / ")}</span>`;
 }
 
 function renderCharacterLore(character: RulebookCharacter, lang: Language): string {

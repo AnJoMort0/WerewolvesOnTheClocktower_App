@@ -510,11 +510,33 @@
     padding-top: 0.6rem;
   }
 
-  .rulebook-content .role-lore {
+  .rulebook-content .role-meta {
     grid-column: 1 / -1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
     padding: 0 1rem;
     border-top: 1px solid rgb(0 0 0 / 0.18);
     background: rgb(255 255 255 / 0.15);
+  }
+
+  .rulebook-content .role-lore {
+    min-width: 0;
+  }
+
+  .rulebook-content .role-lore[open] {
+    flex: 1;
+  }
+
+  .rulebook-content .role-origin {
+    margin-left: auto;
+    padding: 0.48rem 0;
+    color: rgb(27 27 27 / 0.68);
+    font-family: 'Crimson Text', serif;
+    font-size: 0.62rem;
+    line-height: 1.25;
+    text-align: right;
   }
 
   .rulebook-content .role-lore summary {

@@ -57,6 +57,25 @@ describe("in-app rulebook rendering", () => {
     expect(mismatches).toEqual([]);
   });
 
+  it("shows compact, localized origins for every playable character", () => {
+    for (const roleId of ALL_ROLE_IDS) expect(RULEBOOK_CHARACTERS[roleId].origin).toBeTruthy();
+
+    const adapted = document.createElement("article");
+    adapted.innerHTML = getRulebookHtml("en", "e02");
+    expect(adapted.querySelector(".role-meta > .role-origin")).toHaveTextContent(
+      "Based on: Witch (Werewolves of Miller's Hollow) / Poisoner (Blood on the Clocktower)",
+    );
+    expect(adapted.querySelector(".role-meta > details > summary")).toHaveTextContent("Lore");
+
+    const original = document.createElement("article");
+    original.innerHTML = getRulebookHtml("en", "v08b");
+    expect(original.querySelector(".role-origin")).toHaveTextContent("Original character");
+    expect(original.querySelector(".role-origin")).not.toHaveTextContent("Based on");
+
+    expect(getRulebookHtml("pt", "e01")).toContain("Baseado em");
+    expect(getRulebookHtml("fr", "e01")).toContain("Inspiré de");
+  });
+
   it("separates Werewolves from their Allies in both character lists", () => {
     const root = document.createElement("main");
     root.innerHTML = getRulebookHtml("en");
@@ -82,7 +101,7 @@ describe("in-app rulebook rendering", () => {
     expect(lore.open).toBe(false);
     expect(lore.querySelector("summary")).toHaveTextContent("Lore");
     expect(lore.querySelector("button[data-lore-explanation]")).toHaveTextContent("killed a little girl");
-    expect(lore.querySelector("button")?.dataset.loreExplanation).toContain("die immediately");
+    expect(lore.querySelector("button")?.dataset.loreExplanation).toContain("die instantly");
     expect(witch.querySelector(".role-text-cell details")).toBeNull();
     expect(getRulebookHtml("en", "v26")).not.toContain("data-character-lore");
     expect(getRulebookHtml("en")).toContain('class="rulebook-story"');

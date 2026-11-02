@@ -55,6 +55,13 @@ import type { Language } from "@/lib/i18n";
   - Split passages into separate entries to attach a note to just one sentence.
     Only passages with explanation get a bubble on hover or tap.
   - Omit lore when unavailable: no empty disclosure will be shown.
+  To add a character origin:
+  - Use origin: WOTCT when it is only an original character.
+  - For adaptations, add alternating character-name/source pairs for each language:
+    origin: { en: [`Witch`, WOMH, `Poisoner`, BOCT], ... }.
+  - Add WOTCT after a pair when an adaptation is also partly original.
+  - Rulebook-only extra cards may omit origin because they are states or group references,
+    rather than playable characters.
   - Character entries have id/name landmarks below; display order is separate.
 */
 // ============================================================================
@@ -65,6 +72,7 @@ export type RulebookCharacterId = RoleId | "x01" | "x02" | "x02.1" | "x.t" | "x0
 export type RulebookGroupId = "essential" | "villager" | "evil" | "solo" | "flexible" | "complex" | "traveller" | "lame" | "extra";
 export type RulebookTeam = "villagers" | "evilBeing" | "solo" | "flexible" | "villagersFlex" | "traveller" | "extra";
 export type LocalizedText = Record<Language, string>;
+export type RulebookOrigin = LocalizedText | Record<Language, readonly (string | LocalizedText)[]>;
 export type RulebookSectionBlock = {
     type: "h2" | "h3" | "h4";
     id: string;
@@ -104,6 +112,8 @@ export type RulebookCharacter = {
         description: LocalizedText;
     }>;
     objective?: LocalizedText;
+    /** A direct localized label for an original character, or alternating inspiration name/source pairs. */
+    origin?: RulebookOrigin;
 };
 
 const WEREWOLF_POISON_DETAIL: RulebookCharacter["details"][number] = {
@@ -155,6 +165,26 @@ const SOLO_OBJECTIVE: RulebookCharacter["objective"] = {
     en: `Be the last survivor.`
 };
 
+// ORIGINS
+
+const WOTCT: LocalizedText = {
+    pt: `Personagem original`,
+    fr: `Personnage original`,
+    en: `Original character`
+};
+
+const WOMH: LocalizedText = {
+    pt: `Lobisomens da Aldeia Velha`,
+    fr: `Loups-garous de Thiercelieux`,
+    en: `Werewolves of Miller's Hollow`
+};
+
+const BOCT: LocalizedText = {
+    pt: `Blood on the Clocktower`,
+    fr: `Blood on the Clocktower`,
+    en: `Blood on the Clocktower`
+};
+
 // ============================================================================
 // GENERAL RULES AND NAVIGATION TEXT — edit the language sections below
 // ============================================================================
@@ -162,6 +192,7 @@ const SOLO_OBJECTIVE: RulebookCharacter["objective"] = {
 export const RULEBOOK_TEXT = {
     loreLabel: { pt: `História`, fr: `Histoire`, en: `Lore` },
     loreExplanationLabel: { pt: `Por trás da história`, fr: `Derrière l'histoire`, en: `Behind the story` },
+    basedOnLabel: { pt: `Baseado em`, fr: `Inspiré de`, en: `Based on` },
     navigationLabel: { pt: `Navegação do livro de regras`, fr: `Navigation du livret de règles`, en: `Rulebook navigation` },
     basicsLabel: { pt: `Como jogar`, fr: `Comment jouer`, en: `How to play` },
     charactersLabel: { pt: `Personagens`, fr: `Personnages`, en: `Characters` },
@@ -723,15 +754,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Loup-garou`,
             en: `Werewolf`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Os Lobisomens são um problema recorrente em Freeborough, mas os Aldeões ficam sempre surpreendidos quando aparecem. Seja como for, parece que voltaram.`,
-                    fr: `Les Loups-garous sont un problème récurrent à Freeborough, mais les Villageois sont toujours surpris de les voir apparaître. Quoi qu'il en soit, les voilà de retour.`,
-                    en: `Werewolves are a recurring problem in Freeborough, yet the Villagers are always surprised when they appear. In any case, it seems they are back again.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, o Lobisomem escolhe com os outros Lobisomens quem vão assassinar.`,
@@ -744,7 +766,21 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [WEREWOLF_POISON_DETAIL],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Os Lobisomens são um problema recorrente em Freeborough, mas os Aldeões ficam sempre surpreendidos quando aparecem. Seja como for, parece que voltaram.`,
+                    fr: `Les Loups-garous sont un problème récurrent à Freeborough, mais les Villageois sont toujours surpris de les voir apparaître. Quoi qu'il en soit, les voilà de retour.`,
+                    en: `Werewolves are a recurring problem in Freeborough, yet the Villagers are always surprised when they appear. In any case, it seems they are back again.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Lobisomen`, WOMH],
+            fr: [`Loup-garou`, WOMH],
+            en: [`Werewolf`, WOMH]
+        }
     },
 
     // e02 | Evil Witch
@@ -757,27 +793,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Méchante Sorcière`,
             en: `Evil Witch`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Com o seu próprio kit de poções, a Bruxa Malvada envenena alguém todas as noites. Ninguém sabe bem porquê, mas, como nunca mata ninguém, nunca se deram ao trabalho de a impedir.`,
-                    fr: `Avec son nécessaire à potions, la Méchante Sorcière empoisonne quelqu'un chaque nuit. Personne ne sait vraiment pourquoi, mais puisqu'elle ne tue personne, nul n'a pris la peine de l'arrêter.`,
-                    en: `With her personal brewing kit, the Evil Witch poisons someone every night. Nobody really knows why she does it, but since she never kills anyone, they have never bothered to stop her.`
-                },
-            },
-            {
-                text: {
-                    pt: `Ainda assim, correm rumores inquietantes de que, em tempos, matou uma menina.`,
-                    fr: `Pourtant, des rumeurs inquiétantes prétendent qu'elle aurait autrefois tué une petite fille.`,
-                    en: `Still, there are worrying rumours that she once killed a little girl.`
-                },
-                explanation: {
-                    pt: `Na primeira versão deste jogo, envenenar a Menina fazia-a morrer imediatamente.`,
-                    fr: `Dans la première version de ce jeu, empoisonner la Petite Fille la faisait mourir immédiatement.`,
-                    en: `In the first version of this game, poisoning the Little Girl made her die immediately.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `A Bruxa Malvada <red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
@@ -809,7 +824,33 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Com o seu próprio kit de poções, a Bruxa Malvada envenena alguém todas as noites. Ninguém sabe bem porquê, mas, como nunca mata ninguém, nunca se deram ao trabalho de a impedir.`,
+                    fr: `Avec son nécessaire à potions, la Méchante Sorcière empoisonne quelqu'un chaque nuit. Personne ne sait vraiment pourquoi, mais puisqu'elle ne tue personne, nul n'a pris la peine de l'arrêter.`,
+                    en: `With her personal brewing kit, the Evil Witch poisons someone every night. Nobody really knows why she does it, but since she never kills anyone, they have never bothered to stop her.`
+                },
+            },
+            {
+                text: {
+                    pt: `Ainda assim, correm rumores inquietantes de que, em tempos, matou uma menina.`,
+                    fr: `Pourtant, des rumeurs inquiétantes prétendent qu'elle aurait autrefois tué une petite fille.`,
+                    en: `Still, there are worrying rumours that she once killed a little girl.`
+                },
+                explanation: {
+                    pt: `Na primeira versão deste jogo, envenenar a Menina fazia-a morrer instantaneamente.`,
+                    fr: `Dans la première version de ce jeu, empoisonner la Petite Fille la faisait mourir instantanément.`,
+                    en: `In the first version of this game, poisoning the Little Girl made her die instantly.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Bruxa`, WOMH, `Envenenador`, BOCT],
+            fr: [`Sorcière`, WOMH, `Empoisonneur`, BOCT],
+            en: [`Witch`, WOMH, `Poisoner`, BOCT]
+        }
     },
 
     // e03 | Shaman
@@ -822,15 +863,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Chaman`,
             en: `Shaman`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Ainda bem que o Chaman encontrou carretéis mágicos cujo fio pode curar pessoas, mesmo nos piores estados. Estranhamente, não se lembra de onde os encontrou.`,
-                    fr: `Heureusement, le Chaman a trouvé des bobines magiques dont le fil peut soigner les gens, même dans les pires états. Étrangement, il ne se souvient pas de l'endroit où il les a trouvées.`,
-                    en: `It is a good thing the Shaman found magical spools whose thread can heal people, even in the worst of states. Strangely, he cannot remember where he found them.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, o Chaman é avisado sobre os jogadores <red>assassinados</red> e pode escolher salvá-los.`,
@@ -859,7 +891,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Ainda bem que o Chaman encontrou carretéis mágicos cujo fio pode curar pessoas, mesmo nos piores estados. Estranhamente, não se lembra de onde os encontrou.`,
+                    fr: `Heureusement, le Chaman a trouvé des bobines magiques dont le fil peut soigner les gens, même dans les pires états. Étrangement, il ne se souvient pas de l'endroit où il les a trouvées.`,
+                    en: `It is a good thing the Shaman found magical spools whose thread can heal people, even in the worst of states. Strangely, he cannot remember where he found them.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Chaman`, WOMH, `Bruxa`, WOMH],
+            fr: [`Chaman`, WOMH, `Sorcière`, WOMH],
+            en: [`Shaman`, WOMH, `Witch`, WOMH]
+        }
     },
 
     // e04 | Fortune Teller
@@ -872,15 +918,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Voyante`,
             en: `Fortune Teller`
         },
-        lore: [
-            {
-                text: {
-                    pt: `O negócio correu mal quando o futuro de toda a gente passou a resumir-se à morte. A Vidente especializou-se entretanto como médium espiritual.`,
-                    fr: `Les affaires ont mal tourné lorsque l'avenir de tout le monde s'est résumé à la mort. La Voyante s'est depuis reconvertie en médium.`,
-                    en: `Business took a turn for the worse when everyone's fortune became nothing but death. The Fortune Teller has since retrained as a spiritual medium.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada vez que um jogador é morto</red>, a Vidente descobre qual era o seu poder <red>(será informada na próxima noite)</red>.`,
@@ -906,7 +943,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `O negócio correu mal quando o futuro de toda a gente passou a resumir-se à morte. A Vidente especializou-se entretanto como médium espiritual.`,
+                    fr: `Les affaires ont mal tourné lorsque l'avenir de tout le monde s'est résumé à la mort. La Voyante s'est depuis reconvertie en médium.`,
+                    en: `Business took a turn for the worse when everyone's fortune became nothing but death. The Fortune Teller has since retrained as a spiritual medium.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Vidente`, WOMH, `Coveiro`, BOCT],
+            fr: [`Voyante`, WOMH, `Fossoyeur`, BOCT],
+            en: [`Fortune Teller`, WOMH, `Undertaker`, BOCT]
+        },
     },
 
     // ---- VILLAGER CHARACTERS -----------------------------------------
@@ -921,15 +972,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Petite Fille`,
             en: `Little Girl`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Tem o sono leve e ouve frequentemente gritos durante a noite, embora já não sejam os mesmos que antes a acordavam.`,
-                    fr: `Elle a le sommeil léger et entend souvent des cris la nuit, même si ce ne sont plus ceux qui la réveillaient autrefois.`,
-                    en: `A light sleeper, she often hears screams at night, though they are no longer the ones that used to wake her.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, a Menina é avisada sobre os jogadores <red>assassinados</red> e vê como eles morreram.`,
@@ -964,7 +1006,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Tem o sono leve e ouve frequentemente gritos durante a noite, embora já não sejam os mesmos que antes a acordavam.`,
+                    fr: `Elle a le sommeil léger et entend souvent des cris la nuit, même si ce ne sont plus ceux qui la réveillaient autrefois.`,
+                    en: `A light sleeper, she often hears screams at night, though they are no longer the ones that used to wake her.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Menina`, WOMH, WOTCT],
+            fr: [`Petite Fille`, WOMH, WOTCT],
+            en: [`Little Girl`, WOMH, WOTCT]
+        },
     },
 
     // v02 | Bear Tamer
@@ -977,15 +1033,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Maître de l'Ours`,
             en: `Bear Tamer`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Ninguém sabe onde arranjou o urso, como o arranjou ou porquê. A aldeia sabe apenas que foi o seu primeiro domador. A sua identidade continua a ser um mistério, porque o urso anda à solta durante o dia.`,
-                    fr: `Personne ne sait où il a trouvé l'ours, comment il l'a obtenu, ni pourquoi. Le village sait seulement qu'il a été son premier maître d'animaux. Son identité reste un mystère, car l'ours se promène librement pendant la journée.`,
-                    en: `No one knows where he got the bear, how he got the bear, or why he got the bear. The village knows only that he was its first tamer. His identity remains a mystery, because the bear roams freely during the day.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>A cada noite</red>, se um dos vizinhos do Domador do Urso for uma Criatura Malvada, o Urso rosna.`,
@@ -1011,7 +1058,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Ninguém sabe onde arranjou o urso, como o arranjou ou porquê. A aldeia sabe apenas que foi o seu primeiro domador. A sua identidade continua a ser um mistério, porque o urso anda à solta durante o dia.`,
+                    fr: `Personne ne sait où il a trouvé l'ours, comment il l'a obtenu, ni pourquoi. Le village sait seulement qu'il a été son premier maître d'animaux. Son identité reste un mystère, car l'ours se promène librement pendant la journée.`,
+                    en: `No one knows where he got the bear, how he got the bear, or why he got the bear. The village knows only that he was its first tamer. His identity remains a mystery, because the bear roams freely during the day.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Mostrador de Ursos`, WOMH],
+            fr: [`Montreur d’Ours`, WOMH],
+            en: [`Bear Tamer`, WOMH]
+        },
     },
 
     // v03 | Raven Tamer
@@ -1024,15 +1085,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Maître du Corbeau`,
             en: `Raven Tamer`
         },
-        lore: [
-            {
-                text: {
-                    pt: `A aldeia odiava o Domador do Corvo por andar com tal símbolo de escuridão. Ainda hoje o odeia, convencida de que o seu mau presságio vivo trouxe os Lobisomens.`,
-                    fr: `Le village détestait le Maître du Corbeau parce qu'il portait un tel symbole des ténèbres. Il le déteste toujours, persuadé que son mauvais présage vivant a attiré les Loups-garous.`,
-                    en: `The village hated the Raven Tamer for carrying such a symbol of darkness. It still hates him today, convinced that his living bad omen brought the Werewolves.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>A cada noite</red>, é revelado silenciosamente ao Domador do Corvo quantas Criaturas Malvadas vivas estão em jogo.`,
@@ -1058,7 +1110,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `A aldeia odiava o Domador do Corvo por andar com tal símbolo de escuridão. Ainda hoje o odeia, convencida de que o seu mau presságio vivo trouxe os Lobisomens.`,
+                    fr: `Le village détestait le Maître du Corbeau parce qu'il portait un tel symbole des ténèbres. Il le déteste toujours, persuadé que son mauvais présage vivant a attiré les Loups-garous.`,
+                    en: `The village hated the Raven Tamer for carrying such a symbol of darkness. It still hates him today, convinced that his living bad omen brought the Werewolves.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Corvo`, WOMH, WOTCT],
+            fr: [`Corbeau`, WOMH, WOTCT],
+            en: [`Raven`, WOMH, WOTCT]
+        },
     },
 
     // v04 | Fox Tamer
@@ -1071,15 +1137,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Maître du Renard`,
             en: `Fox Tamer`
         },
-        lore: [
-            {
-                text: {
-                    pt: `O Domador da Raposa ainda não percebeu que nunca chegou a domr a raposa. Ela só volta porque as Criaturas Malvadas a encurralam sempre que tenta fugir.`,
-                    fr: `Le Maître du Renard n'a pas compris qu'il n'a jamais vraiment apprivoisé le renard. Celui-ci ne revient que parce que les Créatures Maléfiques le coincent chaque fois qu'il essaie de s'enfuir.`,
-                    en: `The Fox Tamer has not realised that he never really tamed the fox. It only returns because Evil Beings keep cornering it whenever it tries to flee.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>A cada noite</red>, o Domador da Raposa escolhe um jogador e o Narrador revela-lhe se entre ele e os 2 vizinhos há uma Criatura Malvada (👍) ou não (👎).`,
@@ -1108,7 +1165,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `O Domador da Raposa ainda não percebeu que nunca chegou a domr a raposa. Ela só volta porque as Criaturas Malvadas a encurralam sempre que tenta fugir.`,
+                    fr: `Le Maître du Renard n'a pas compris qu'il n'a jamais vraiment apprivoisé le renard. Celui-ci ne revient que parce que les Créatures Maléfiques le coincent chaque fois qu'il essaie de s'enfuir.`,
+                    en: `The Fox Tamer has not realised that he never really tamed the fox. It only returns because Evil Beings keep cornering it whenever it tries to flee.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Raposa`, WOMH],
+            fr: [`Renard`, WOMH],
+            en: [`Fox`, WOMH]
+        },
     },
 
     // v05 | Bunny Tamer
@@ -1121,15 +1192,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Maître des Lapins`,
             en: `Bunny Tamer`
         },
-        lore: [
-            {
-                text: {
-                    pt: `«CALEM-SE! DEIXEM-ME DORMIR!» é o que os vizinhos costumam ouvir todas as noites da casa do Domador dos Coelhos. Ainda assim, não há dúvida de que gosta muito deles.`,
-                    fr: `« TAISEZ-VOUS ! LAISSEZ-MOI DORMIR ! » Voilà ce que les voisins entendent chaque nuit chez le Maître des Lapins. Pourtant, personne ne doute de l'affection qu'il leur porte.`,
-                    en: `“SHUT UP! JUST LET ME SLEEP!” is what the neighbours usually hear from the Bunny Tamer's home every night. Still, there is no doubt that he loves them dearly.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>A cada noite</red>, se o Domador dos Coelhos ou um dos seus vizinhos foi atacado pelos Lobisomens ou envenenado pela Bruxa Malvada, os coelhos assustam-se.`,
@@ -1155,7 +1217,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `«CALEM-SE! DEIXEM-ME DORMIR!» é o que os vizinhos costumam ouvir todas as noites da casa do Domador dos Coelhos. Ainda assim, não há dúvida de que gosta muito deles.`,
+                    fr: `« TAISEZ-VOUS ! LAISSEZ-MOI DORMIR ! » Voilà ce que les voisins entendent chaque nuit chez le Maître des Lapins. Pourtant, personne ne doute de l'affection qu'il leur porte.`,
+                    en: `“SHUT UP! JUST LET ME SLEEP!” is what the neighbours usually hear from the Bunny Tamer's home every night. Still, there is no doubt that he loves them dearly.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Coelho Branco`, WOMH, WOTCT],
+            fr: [`Lapin Blanc`, WOMH, WOTCT],
+            en: [`White Rabbit`, WOMH, WOTCT]
+        },
     },
 
     // v26 | Monkey Tamer
@@ -1170,13 +1246,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, o Domador do Macaco acorda e vê uma carta à sua escolha. <red>A partir da segunda noite</red>, se a <red>personagem revelada for uma Criatura Malvada</red>, perde o seu poder.`
+                `<red>A cada noite</red>, o Domador do Macaco acorda e vê o personagem de um jogador à sua escolha. <red>A partir da segunda noite</red>, se a <red>personagem revelada for uma Criatura Malvada</red>, perde o seu poder.`
             ],
             fr: [
-                `<red>Chaque nuit</red>, le Maître du Singe se réveille et voit une carte de son choix. <red>Dès la deuxième nuit</red>, si le <red>personnage révélé est une Créature Maléfique</red>, il perd son pouvoir.`
+                `<red>Chaque nuit</red>, le Maître du Singe se réveille et voit le personnage d'un joueur de son choix. <red>Dès la deuxième nuit</red>, si le <red>personnage révélé est une Créature Maléfique</red>, il perd son pouvoir.`
             ],
             en: [
-                `<red>Every night</red>, the Monkey Tamer wakes up and sees a card of his choice. <red>From the second night</red>, if the <red>revealed character is an Evil Being</red>, he loses his power.`
+                `<red>Every night</red>, the Monkey Tamer wakes up and sees the character of a player of his choice. <red>From the second night</red>, if the <red>revealed character is an Evil Being</red>, he loses his power.`
             ]
         },
         details: [{
@@ -1187,7 +1263,12 @@ export const RULEBOOK_CHARACTERS = {
                 en: `Receives incorrect information.`
             }
         }],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Macaco Treinado`, WOMH,],
+            fr: [`Singe Savant`, WOMH],
+            en: [`Trained Monkey`, WOMH]
+        },
     },
 
     // v06 | Puppeteer
@@ -1200,15 +1281,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Marionnettiste`,
             en: `Puppeteer`
         },
-        lore: [
-            {
-                text: {
-                    pt: `O Marionetista tem sorte de os Lobisomens verem tão mal: não faz ideia de como conseguiu manter a farsa durante tanto tempo.`,
-                    fr: `Le Marionnettiste a de la chance que les Loups-garous aient une si mauvaise vue : il ignore vraiment comment il a réussi à tenir aussi longtemps.`,
-                    en: `The Puppeteer is lucky that Werewolves have terrible eyesight: he truly has no idea how he has managed to keep this up for so long.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `O Marionetista faz de conta que é um Lobisomem.`, `<red>Acorda ao mesmo tempo que os Lobisomens</red> e vota com eles.`,
@@ -1236,7 +1308,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `O Marionetista tem sorte de os Lobisomens verem tão mal: não faz ideia de como conseguiu manter a farsa durante tanto tempo.`,
+                    fr: `Le Marionnettiste a de la chance que les Loups-garous aient une si mauvaise vue : il ignore vraiment comment il a réussi à tenir aussi longtemps.`,
+                    en: `The Puppeteer is lucky that Werewolves have terrible eyesight: he truly has no idea how he has managed to keep this up for so long.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Marionetista`, WOMH],
+            fr: [`Marionnettiste`, WOMH],
+            en: [`Puppeteer`, WOMH]
+        },
     },
 
     // v07 | Rusted Knight
@@ -1249,15 +1335,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Chevalier Rouillé`,
             en: `Rusted Knight`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Uma pequena ressalva: este jogo passa-se antes da invenção da vacina contra o tétano.`,
-                    fr: `Petite précision : ce jeu se déroule avant l'invention du vaccin contre le tétanos.`,
-                    en: `A small disclaimer: this game takes place before the invention of the tetanus vaccine.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Quando o Cavaleiro Enferrujado morre</red>, o Lobisomem mais próximo é assassinado <red>durante o próximo dia</red>. O assassinato é anunciado no início do Tribunal.`,
@@ -1283,7 +1360,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Uma pequena ressalva: este jogo passa-se antes da invenção da vacina contra o tétano.`,
+                    fr: `Petite précision : ce jeu se déroule avant l'invention du vaccin contre le tétanos.`,
+                    en: `A small disclaimer: this game takes place before the invention of the tetanus vaccine.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Cavaleiro da Espada Enferrujada`, WOMH],
+            fr: [`Chevalier à l’Épée Rouillée`, WOMH],
+            en: [`Rusty Sword Knight`, WOMH]
+        },
     },
 
     // v08 | Hunter
@@ -1296,20 +1387,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Chasseur`,
             en: `Hunter`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Há quem suspeite que o Caçador é o responsável pelos lobos mortos que por vezes aparecem junto ao rio da aldeia, com a barriga cheia de pedras.`,
-                    fr: `On soupçonne le Chasseur d'être responsable des loups morts que l'on retrouve parfois près de la rivière du village, le ventre rempli de pierres.`,
-                    en: `People suspect that the Hunter is behind the dead wolves occasionally found by the village river, their bellies stuffed with rocks.`
-                },
-                explanation: {
-                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
-                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
-                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
-                }
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Uma vez morto</red>, o Caçador será acordado na próxima noite para escolher <red>um</red> jogador que deverá assassinar.`,
@@ -1338,7 +1415,26 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Há quem suspeite que o Caçador é o responsável pelos lobos mortos que por vezes aparecem junto ao rio da aldeia, com a barriga cheia de pedras.`,
+                    fr: `On soupçonne le Chasseur d'être responsable des loups morts que l'on retrouve parfois près de la rivière du village, le ventre rempli de pierres.`,
+                    en: `People suspect that the Hunter is behind the dead wolves occasionally found by the village river, their bellies stuffed with rocks.`
+                },
+                explanation: {
+                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
+                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
+                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
+                }
+            },
+        ],
+        origin: {
+            pt: [`Caçador`, WOMH],
+            fr: [`Chasseur`, WOMH],
+            en: [`Hunter`, WOMH]
+        },
     },
 
     // v08b | Little Red Riding Hood
@@ -1351,20 +1447,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Petit Chaperon Rouge`,
             en: `Little Red Riding Hood`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Como se lidar com uma avó loba não fosse suficiente, agora há avós Lobisomens com que se preocupar. Pelo menos o Caçador continua por perto.`,
-                    fr: `Comme si une grand-mère louve ne suffisait pas, il faut maintenant se méfier des grands-mères Loups-garous. Au moins, le Chasseur est toujours là.`,
-                    en: `As if dealing with a wolf grandmother were not bad enough, now there are Werewolf grandmothers to worry about. At least the Hunter is still around.`
-                },
-                explanation: {
-                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
-                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
-                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
-                }
-            },
-        ],
         mainDescription: {
             pt: [
                 `O Capuchinho Vermelho é imune aos <red>assassinatos dos Lobisomens</red> enquanto o <red>Caçador estiver vivo</red>.`,
@@ -1393,7 +1475,22 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Como se lidar com uma avó loba não fosse suficiente, agora há avós Lobisomens com que se preocupar. Pelo menos o Caçador continua por perto.`,
+                    fr: `Comme si une grand-mère louve ne suffisait pas, il faut maintenant se méfier des grands-mères Loups-garous. Au moins, le Chasseur est toujours là.`,
+                    en: `As if dealing with a wolf grandmother were not bad enough, now there are Werewolf grandmothers to worry about. At least the Hunter is still around.`
+                },
+                explanation: {
+                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
+                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
+                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
+                }
+            },
+        ],
+        origin: WOTCT,
     },
 
     // v09 | Captain
@@ -1406,15 +1503,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Capitaine`,
             en: `Captain`
         },
-        lore: [
-            {
-                text: {
-                    pt: `É evidente que o Chefe da Aldeia não estava à espera de Lobisomens quando reduziu o serviço militar obrigatório a um único dia.`,
-                    fr: `Visiblement, l'Ancien du Village ne s'attendait pas aux Loups-garous lorsqu'il a réduit le service militaire obligatoire à une seule journée.`,
-                    en: `Clearly, the Village Elder was not expecting Werewolves when he reduced compulsory military service to a single day.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, o Capitão escolhe um jogador que será um Soldado durante essa noite e dia. O Soldado será tocado pelo Narrador.`,
@@ -1443,7 +1531,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `É evidente que o Chefe da Aldeia não estava à espera de Lobisomens quando reduziu o serviço militar obrigatório a um único dia.`,
+                    fr: `Visiblement, l'Ancien du Village ne s'attendait pas aux Loups-garous lorsqu'il a réduit le service militaire obligatoire à une seule journée.`,
+                    en: `Clearly, the Village Elder was not expecting Werewolves when he reduced compulsory military service to a single day.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Capitão`, WOMH, WOTCT],
+            fr: [`Capitaine`, WOMH, WOTCT],
+            en: [`Captain`, WOMH, WOTCT]
+        },
     },
 
     // v27 | Colossus
@@ -1481,7 +1583,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             },
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Colosso`, WOMH],
+            fr: [`Colosse`, WOMH],
+            en: [`Colossus`, WOMH]
+        },
     },
 
     // v10 | Paranoid
@@ -1494,15 +1601,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Paranoïaque`,
             en: `Paranoid`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Como o faz? Intervenção divina, talvez, ou um machado? A aldeia sabe apenas que, por vezes, pessoas que estavam vivas há poucos minutos aparecem como Fantasmas nos degraus do Tribunal.`,
-                    fr: `Comment s'y prend-il ? Une intervention divine, peut-être, ou une hache ? Le village sait seulement que des gens encore vivants quelques minutes auparavant apparaissent parfois comme Fantômes sur les marches du Tribunal.`,
-                    en: `How does he do it? Divine intervention, perhaps, or an axe? All the village knows is that people who were alive only minutes ago sometimes appear as Ghosts on the courthouse steps.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Duas vezes</red> no jogo, <red>durante o dia</red>, o Paranoico pode dizer <red>discretamente</red> ao Narrador para <red>assassinar</red> uma pessoa cuja morte será anunciada no início do Tribunal.`,
@@ -1528,7 +1626,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Como o faz? Intervenção divina, talvez, ou um machado? A aldeia sabe apenas que, por vezes, pessoas que estavam vivas há poucos minutos aparecem como Fantasmas nos degraus do Tribunal.`,
+                    fr: `Comment s'y prend-il ? Une intervention divine, peut-être, ou une hache ? Le village sait seulement que des gens encore vivants quelques minutes auparavant apparaissent parfois comme Fantômes sur les marches du Tribunal.`,
+                    en: `How does he do it? Divine intervention, perhaps, or an axe? All the village knows is that people who were alive only minutes ago sometimes appear as Ghosts on the courthouse steps.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Sectário Abominável`, WOMH, WOTCT],
+            fr: [`Abominable Sectaire`, WOMH, WOTCT],
+            en: [`Aboninable Sectary`, WOMH, WOTCT]
+        },
     },
 
     // v11 | Village Elder
@@ -1566,7 +1678,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Ancião`, WOMH, `Corvo`, WOMH],
+            fr: [`Ancien`, WOMH, `Corbeau`, WOMH],
+            en: [`Elder`, WOMH, `Raven`, WOMH]
+        },
     },
 
     // v12 | Gypsy
@@ -1607,7 +1724,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Cigana`, WOMH, WOTCT],
+            fr: [`Gitane`, WOMH, WOTCT],
+            en: [`Gypsy`, WOMH, WOTCT]
+        },
     },
 
     // v13 | Judge
@@ -1620,15 +1742,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Juge`,
             en: `Judge`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Esforça-se por manter a calma durante os julgamentos. Mas, às vezes, o processo torna-se tão absurdo que tem de intervir, nem que seja só para acabar com o barulho.`,
-                    fr: `Il s'efforce de rester calme pendant les procès. Mais les débats deviennent parfois si absurdes qu'il doit intervenir, ne serait-ce que pour faire cesser le bruit.`,
-                    en: `He tries hard to remain calm during trials. Sometimes, though, the proceedings become such nonsense that he simply has to intervene, if only to stop the noise.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Duas vezes durante todo o jogo</red>, o Juiz pode-se revelar e anular uma execução durante o Tribunal.`,
@@ -1660,7 +1773,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Esforça-se por manter a calma durante os julgamentos. Mas, às vezes, o processo torna-se tão absurdo que tem de intervir, nem que seja só para acabar com o barulho.`,
+                    fr: `Il s'efforce de rester calme pendant les procès. Mais les débats deviennent parfois si absurdes qu'il doit intervenir, ne serait-ce que pour faire cesser le bruit.`,
+                    en: `He tries hard to remain calm during trials. Sometimes, though, the proceedings become such nonsense that he simply has to intervene, if only to stop the noise.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Juiz Gago`, WOMH, WOTCT],
+            fr: [`Juge Bègue`, WOMH, WOTCT],
+            en: [`Stuttering Judge`, WOMH, WOTCT]
+        },
     },
 
     // v14 | Accuser
@@ -1701,7 +1828,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Bode Expiatório`, WOMH, WOTCT],
+            fr: [`Bouc émissaire`, WOMH, WOTCT],
+            en: [`Scapegoat`, WOMH, WOTCT]
+        },
     },
 
     // v15 | Pyromaniac
@@ -1714,20 +1846,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Pyromane`,
             en: `Pyromaniac`
         },
-        lore: [
-            {
-                text: {
-                    pt: `A terapia tem feito maravilhas pelas tendências assassinas do Piromaníaco. Hoje em dia, limita-se a incendiar casas.`,
-                    fr: `La thérapie a beaucoup aidé le Pyromane à maîtriser ses tendances meurtrières. Désormais, il se contente de mettre le feu.`,
-                    en: `Therapy has done wonders for the Pyromaniac's murderous tendencies. These days, he limits himself to arson.`
-                },
-                explanation: {
-                    pt: `No jogo original, o Piromaníaco podia escolher um momento para assassinar todos os jogadores que tinha selecionado.`,
-                    fr: `Dans le jeu original, le Pyromane pouvait choisir un moment pour assassiner tous les joueurs qu'il avait choisis.`,
-                    en: `In the original game, the Pyromaniac could choose a moment to assassinate every player he had chosen.`
-                }
-            },
-        ],
         mainDescription: {
             pt: [
                 `Quando um jogador é chamado ao Tribunal, mas <red>não é executado</red>, o Piromaníaco <red>pode escolher</red> na <red>noite seguinte</red> incendiar a casa desse jogador (👍/👎).`,
@@ -1756,7 +1874,26 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `A terapia tem feito maravilhas pelas tendências assassinas do Piromaníaco. Hoje em dia, limita-se a incendiar casas.`,
+                    fr: `La thérapie a beaucoup aidé le Pyromane à maîtriser ses tendances meurtrières. Désormais, il se contente de mettre le feu.`,
+                    en: `Therapy has done wonders for the Pyromaniac's murderous tendencies. These days, he limits himself to arson.`
+                },
+                explanation: {
+                    pt: `No jogo original, o Piromaníaco podia escolher um momento para assassinar todos os jogadores que tinha selecionado.`,
+                    fr: `Dans le jeu original, le Pyromane pouvait choisir un moment pour assassiner tous les joueurs qu'il avait choisis.`,
+                    en: `In the original game, the Pyromaniac could choose a moment to assassinate every player he had chosen.`
+                }
+            },
+        ],
+        origin: {
+            pt: [`Piromaníaco`, WOMH, WOTCT],
+            fr: [`Pyromane`, WOMH, WOTCT],
+            en: [`Pyromaniac`, WOMH, WOTCT]
+        },
     },
 
     // v16 | Sleepwalker
@@ -1769,15 +1906,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Somnambule`,
             en: `Sleepwalker`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Quase todos têm a certeza de que está a dormir quando invade as suas casas. Ainda assim, desconfiam o suficiente para não fazerem nada enquanto ele lá está.`,
-                    fr: `La plupart des gens sont presque certains qu'il dort lorsqu'il fait irruption chez eux. Ils restent pourtant assez méfiants pour ne rien faire tant qu'il est là.`,
-                    en: `Most people are fairly sure that he is asleep when he barges into their homes. They are still suspicious enough to avoid doing anything while he is there.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada início de noite</red>, o Sonâmbulo escolhe um jogador para visitar.`,
@@ -1809,7 +1937,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Quase todos têm a certeza de que está a dormir quando invade as suas casas. Ainda assim, desconfiam o suficiente para não fazerem nada enquanto ele lá está.`,
+                    fr: `La plupart des gens sont presque certains qu'il dort lorsqu'il fait irruption chez eux. Ils restent pourtant assez méfiants pour ne rien faire tant qu'il est là.`,
+                    en: `Most people are fairly sure that he is asleep when he barges into their homes. They are still suspicious enough to avoid doing anything while he is there.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Notívago`, WOMH],
+            fr: [`Noctambule`, WOMH],
+            en: [`Night Owl`, WOMH]
+        },
     },
 
     // v17 | Saviour
@@ -1850,7 +1992,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Salvador`, WOMH],
+            fr: [`Salvateur`, WOMH],
+            en: [`Protector`, WOMH]
+        },
     },
 
     // v18 | Angel
@@ -1894,7 +2041,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Anjo`, WOMH],
+            fr: [`Ange`, WOMH],
+            en: [`Angel`, WOMH]
+        },
     },
 
     // v19 | Prophet
@@ -1907,15 +2059,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Prophète`,
             en: `Prophet`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Se inventares profecias suficientes, mais cedo ou mais tarde uma delas há de tornar-se verdade.`,
-                    fr: `À force d'inventer des prophéties, il y en aura bien une qui finira par se réaliser.`,
-                    en: `If you invent enough prophecies, sooner or later one of them is bound to come true.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada fim de noite</red>, o Profeta aponta para um jogador que acha que morreu durante essa noite.`,
@@ -1947,7 +2090,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Se inventares profecias suficientes, mais cedo ou mais tarde uma delas há de tornar-se verdade.`,
+                    fr: `À force d'inventer des prophéties, il y en aura bien une qui finira par se réaliser.`,
+                    en: `If you invent enough prophecies, sooner or later one of them is bound to come true.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Astrónomo`, WOMH, WOTCT],
+            fr: [`Astronome`, WOMH, WOTCT],
+            en: [`Astronomer`, WOMH, WOTCT]
+        },
     },
 
     // v20 | Housemaid
@@ -1960,15 +2117,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Domestique`,
             en: `Housemaid`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Ficar acordada até tarde a limpar permite-lhe vislumbrar a casa que a Bruxa Malvada visita. Infelizmente, apesar do seu excelente sentido de distância, não distingue a esquerda da direita.`,
-                    fr: `Comme elle veille tard pour faire le ménage, elle aperçoit la maison que visite la Méchante Sorcière. Malheureusement, malgré son excellent sens des distances, elle ne distingue pas sa gauche de sa droite.`,
-                    en: `Staying up late to clean gives her a glimpse of the house the Evil Witch visits. Unfortunately, despite her excellent sense of distance, she cannot tell left from right.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, é revelada à Empregada a distância até à pessoa envenenada.`,
@@ -1997,7 +2145,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Ficar acordada até tarde a limpar permite-lhe vislumbrar a casa que a Bruxa Malvada visita. Infelizmente, apesar do seu excelente sentido de distância, não distingue a esquerda da direita.`,
+                    fr: `Comme elle veille tard pour faire le ménage, elle aperçoit la maison que visite la Méchante Sorcière. Malheureusement, malgré son excellent sens des distances, elle ne distingue pas sa gauche de sa droite.`,
+                    en: `Staying up late to clean gives her a glimpse of the house the Evil Witch visits. Unfortunately, despite her excellent sense of distance, she cannot tell left from right.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Criada Devota`, WOMH, WOTCT],
+            fr: [`Servante dévouée`, WOMH, WOTCT],
+            en: [`Devout Servant`, WOMH, WOTCT]
+        },
     },
 
     // v21 | Lamplighter
@@ -2010,15 +2172,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Falotier`,
             en: `Lamplighter`
         },
-        lore: [
-            {
-                text: {
-                    pt: `O Faroleiro mantém-se reservado enquanto percorre Freeborough durante a noite. De vez em quando, espreita por uma janela, por puro acidente, e repara no que os outros trabalhadores andam a fazer.`,
-                    fr: `Le Falotier reste discret tandis qu'il arpente Freeborough toute la nuit. Il lui arrive de jeter un œil par une fenêtre, par pur accident, et de remarquer ce que font les autres travailleurs.`,
-                    en: `The Lamplighter keeps to himself as he walks around Freeborough all night. Occasionally, he peeks through a window, purely by accident, and notices what the other workers are up to.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, é mostrado ao Faroleiro um personagem em jogo com um poder com usos limitados e é-lhe revelado quantos usos esse personagem ainda tem.`,
@@ -2044,7 +2197,17 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `O Faroleiro mantém-se reservado enquanto percorre Freeborough durante a noite. De vez em quando, espreita por uma janela, por puro acidente, e repara no que os outros trabalhadores andam a fazer.`,
+                    fr: `Le Falotier reste discret tandis qu'il arpente Freeborough toute la nuit. Il lui arrive de jeter un œil par une fenêtre, par pur accident, et de remarquer ce que font les autres travailleurs.`,
+                    en: `The Lamplighter keeps to himself as he walks around Freeborough all night. Occasionally, he peeks through a window, purely by accident, and notices what the other workers are up to.`
+                },
+            },
+        ],
+        origin: WOTCT,
     },
 
     // v22 | Boy
@@ -2057,20 +2220,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Enfant`,
             en: `Boy`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Se ao menos a aldeia tivesse acreditado nele da primeira vez que gritou "lobo".`,
-                    fr: `Si seulement le village l'avait cru la première fois qu'il a crié au loup.`,
-                    en: `If only the village had believed him the first time he cried wolf.`
-                },
-                explanation: {
-                    pt: `Referência ao conto de fadas "O Pedro e o Lobo", que inspirou este personagem original.`,
-                    fr: `Référence au conte de fées "Le Garçon qui criait au loup", qui a inspiré ce rôle original.`,
-                    en: `Reference to the fairy tale "The Boy Who Cried Wolf," which inspired this original character.`
-                }
-            },
-        ],
         mainDescription: {
             pt: [
                 `Cada vez que o Pedro leva um jogador a Tribunal, é-lhe revelado na <red>noite seguinte</red> se esse jogador era um Lobisomem ou não.`,
@@ -2099,7 +2248,22 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Se ao menos a aldeia tivesse acreditado nele da primeira vez que gritou "lobo".`,
+                    fr: `Si seulement le village l'avait cru la première fois qu'il a crié au loup.`,
+                    en: `If only the village had believed him the first time he cried wolf.`
+                },
+                explanation: {
+                    pt: `Referência ao conto de fadas "O Pedro e o Lobo", que inspirou este personagem original.`,
+                    fr: `Référence au conte de fées "Le Garçon qui criait au loup", qui a inspiré ce rôle original.`,
+                    en: `Reference to the fairy tale "The Boy Who Cried Wolf," which inspired this original character.`
+                }
+            },
+        ],
+        origin: WOTCT,
     },
 
     // v23 | Spider Tamer
@@ -2146,7 +2310,8 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: WOTCT,
     },
 
     // v24 | Vintner
@@ -2187,7 +2352,8 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: WOTCT,
     },
 
     // v25 | Priest
@@ -2228,7 +2394,8 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: WOTCT,
     },
 
     // ---- EVIL CHARACTERS -----------------------------------------
@@ -2243,20 +2410,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Méchant Loup-garou`,
             en: `Big Bad Werewolf`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Ninguém suspeitaria de uma pobre avó velhinha. Bem, ninguém a não ser aquelas crianças traquinas.`,
-                    fr: `Personne ne soupçonnerait une pauvre vieille grand-mère. Enfin, personne sauf ces enfants turbulents.`,
-                    en: `No one would ever suspect a poor old grandmother. Well, no one except those rowdy children.`
-                },
-                explanation: {
-                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho". O design da carta é inspirado na aparência do Lobo Mau do filme "Shrek".`,
-                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge". Le design de la carte est inspiré de l'apparence du Grand Méchant Loup dans le film "Shrek".`,
-                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood. The card design is inspired by the appearance of the Big Bad Wolf in the movie "Shrek".`
-                }
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Duas vezes</red> por jogo, o Lobisomem Mau escolhe se quer se mascarar de Avózinha (👍/👎), dando-lhe imunidade durante um dia e uma noite.`,
@@ -2272,7 +2425,26 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [WEREWOLF_POISON_DETAIL],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Ninguém suspeitaria de uma pobre avó velhinha. Bem, ninguém a não ser aquelas crianças traquinas.`,
+                    fr: `Personne ne soupçonnerait une pauvre vieille grand-mère. Enfin, personne sauf ces enfants turbulents.`,
+                    en: `No one would ever suspect a poor old grandmother. Well, no one except those rowdy children.`
+                },
+                explanation: {
+                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho". O design da carta é inspirado na aparência do Lobo Mau do filme "Shrek".`,
+                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge". Le design de la carte est inspiré de l'apparence du Grand Méchant Loup dans le film "Shrek".`,
+                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood. The card design is inspired by the appearance of the Big Bad Wolf in the movie "Shrek".`
+                }
+            },
+        ],
+        origin: {
+            pt: [`Lobo Mau`, WOMH, WOTCT],
+            fr: [`Grand-Méchant-Loup`, WOMH, WOTCT],
+            en: [`Big Bad Wolf`, WOMH, WOTCT]
+        },
     },
 
     // m02 | Werewolf Seer
@@ -2285,15 +2457,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Loup-garou Voyant`,
             en: `Werewolf Seer`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Os Lobisomens costumavam escolher as vítimas ao acaso. Depois de o Lobisomem Vampiro transformar um Bêbado, perceberam que talvez fosse útil conhecer um pouco melhor as vítimas antes de as atacar.`,
-                    fr: `Les Loups-garous choisissaient autrefois leurs victimes au hasard. Après que le Loup-garou Vampire a transformé un Ivrogne, ils ont compris qu'il pouvait être utile de mieux connaître leurs victimes avant de les attaquer.`,
-                    en: `Werewolves used to choose their victims at random. After the Vampire Werewolf turned a Drunkard, they realised that learning a little about their victims first might be useful.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `Após os Lobisomens escolherem a vítima, o Lobisomem Vidente pode <red>escolher</red> NÃO ASSASSINAR esse jogador e, em vez disso, ver a sua personagem.`,
@@ -2306,7 +2469,21 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [WEREWOLF_POISON_DETAIL],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Os Lobisomens costumavam escolher as vítimas ao acaso. Depois de o Lobisomem Vampiro transformar um Bêbado, perceberam que talvez fosse útil conhecer um pouco melhor as vítimas antes de as atacar.`,
+                    fr: `Les Loups-garous choisissaient autrefois leurs victimes au hasard. Après que le Loup-garou Vampire a transformé un Ivrogne, ils ont compris qu'il pouvait être utile de mieux connaître leurs victimes avant de les attaquer.`,
+                    en: `Werewolves used to choose their victims at random. After the Vampire Werewolf turned a Drunkard, they realised that learning a little about their victims first might be useful.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Lobisomem Vidente`, WOMH],
+            fr: [`Loup-Garou Voyant`, WOMH],
+            en: [`Werewolf Seer`, WOMH]
+        },
     },
 
     // m03 | Vampire Werewolf
@@ -2337,7 +2514,12 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [WEREWOLF_POISON_DETAIL],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        origin: {
+            pt: [`Pai Infecto dos Lobos`, WOMH],
+            fr: [`Infect Père des Loups`, WOMH],
+            en: [`Infectious Father of Wolves`, WOMH]
+        },
     },
 
     // m04 | Ankou
@@ -2378,7 +2560,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        origin: {
+            pt: [`Ankou`, WOMH],
+            fr: [`Ankou`, WOMH],
+            en: [`Ankou`, WOMH]
+        },
     },
 
     // m05 | Evil Cupid
@@ -2391,15 +2578,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Méchant Cupidon`,
             en: `Evil Cupid`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Uma criatura de puro caos, o Cupido Malvado é atraído pelo caos onde quer que o encontre. Tinha tanta inveja de não ser a sua principal causa que se mudou para a aldeia antecipadamente, assim que começaram os primeiros rumores de Lobisomens.`,
-                    fr: `Créature de pur chaos, le Méchant Cupidon est attiré par le chaos partout où il le trouve. Si jaloux de ne pas en être la principale cause, il s'est installé au village à l'avance, dès les premières rumeurs de Loups-garous.`,
-                    en: `A creature of pure chaos, Evil Cupid is drawn to chaos wherever he finds it. He was so jealous of not being its main cause that he moved to town ahead of time, as soon as the first rumours of Werewolves began.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `O Cupido Malvado <red>NÃO</red> ACORDA COM OS LOBISOMENS.`,
@@ -2440,7 +2618,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Uma criatura de puro caos, o Cupido Malvado é atraído pelo caos onde quer que o encontre. Tinha tanta inveja de não ser a sua principal causa que se mudou para a aldeia antecipadamente, assim que começaram os primeiros rumores de Lobisomens.`,
+                    fr: `Créature de pur chaos, le Méchant Cupidon est attiré par le chaos partout où il le trouve. Si jaloux de ne pas en être la principale cause, il s'est installé au village à l'avance, dès les premières rumeurs de Loups-garous.`,
+                    en: `A creature of pure chaos, Evil Cupid is drawn to chaos wherever he finds it. He was so jealous of not being its main cause that he moved to town ahead of time, as soon as the first rumours of Werewolves began.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Cupido`, WOMH, WOTCT],
+            fr: [`Cupidon`, WOMH, WOTCT],
+            en: [`Cupid`, WOMH, WOTCT]
+        },
     },
 
     // m06 | (Were)wolf Tamer
@@ -2465,7 +2657,8 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [WEREWOLF_POISON_DETAIL],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        origin: WOTCT
     },
 
     // m07 | Mother of Werewolves
@@ -2502,7 +2695,12 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [WEREWOLF_POISON_DETAIL],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        origin: {
+            pt: [`Poderosa Mãe dos Lobos`, WOMH, WOTCT],
+            fr: [`Puissante Mère des Loups`, WOMH, WOTCT],
+            en: [`Powerful Mother of the Wolves`, WOMH, WOTCT]
+        },
     },
 
     // ---- SOLO CHARACTERS -----------------------------------------
@@ -2517,15 +2715,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Cupidon`,
             en: `Cupid`
         },
-        lore: [
-            {
-                text: {
-                    pt: `O Cupido é narcisista. Gosta mesmo de ter razão.`,
-                    fr: `Cupidon est narcissique. Il aime vraiment avoir raison.`,
-                    en: `Cupid is a narcissist. He really likes to be right.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>O objetivo dos Namorados é de serem os últimos sobreviventes</red>.`,
@@ -2570,7 +2759,21 @@ export const RULEBOOK_CHARACTERS = {
             pt: `Os Namorados serem os únicos sobreviventes.`,
             fr: `Que les Amoureux soient les derniers survivants.`,
             en: `The Lovers must be the only survivors.`
-        }
+        },
+        lore: [
+            {
+                text: {
+                    pt: `O Cupido é narcisista. Gosta mesmo de ter razão.`,
+                    fr: `Cupidon est narcissique. Il aime vraiment avoir raison.`,
+                    en: `Cupid is a narcissist. He really likes to be right.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Cupido`, WOMH],
+            fr: [`Cupidon`, WOMH],
+            en: [`Cupid`, WOMH]
+        },
     },
 
     // s02 | White Werewolf
@@ -2611,7 +2814,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: SOLO_OBJECTIVE
+        objective: SOLO_OBJECTIVE,
+        origin: {
+            pt: [`Lobo Branco`, WOMH],
+            fr: [`Loup Blanc`, WOMH],
+            en: [`White Wolf`, WOMH]
+        },
     },
 
     // ---- FLEXIBLE CHARACTERS -----------------------------------------
@@ -2626,20 +2834,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Voleur`,
             en: `Thief`
         },
-        lore: [
-            {
-                text: {
-                    pt: `De alguma forma, rouba votos à Landsgemeinde. Como é que isso funciona sequer?`,
-                    fr: `Il parvient à voler des voix à la Landsgemeinde. Comment est-ce seulement possible ?`,
-                    en: `Somehow, he steals votes from the Landsgemeinde. How does that even work?`
-                },
-                explanation: {
-                    pt: `Landsgemeinde é uma forma de democracia direta, onde todos os cidadãos votam em público à frente de toda a gente.`,
-                    fr: `La Landsgemeinde est un système de démocratie directe où tous les citoyens votent en public devant tout le monde.`,
-                    en: `The Landsgemeinde is a form of direct democracy where all citizens vote in public before everyone.`
-                }
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, o Ladrão escolhe um jogador que não poderá votar no próximo Tribunal.`,
@@ -2671,7 +2865,26 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: CHOICE_OBJECTIVE
+        objective: CHOICE_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `De alguma forma, rouba votos à Landsgemeinde. Como é que isso funciona sequer?`,
+                    fr: `Il parvient à voler des voix à la Landsgemeinde. Comment est-ce seulement possible ?`,
+                    en: `Somehow, he steals votes from the Landsgemeinde. How does that even work?`
+                },
+                explanation: {
+                    pt: `Landsgemeinde é uma forma de democracia direta, onde todos os cidadãos votam em público à frente de toda a gente.`,
+                    fr: `La Landsgemeinde est un système de démocratie directe où tous les citoyens votent en public devant tout le monde.`,
+                    en: `The Landsgemeinde is a form of direct democracy where all citizens vote in public before everyone.`
+                }
+            },
+        ],
+        origin: {
+            pt: [`Ladrão`, WOMH, `Ladrão`, BOCT],
+            fr: [`Voleur`, WOMH, `Voleur`, BOCT],
+            en: [`Thief`, WOMH, `Thief`, BOCT]
+        },
     },
 
     // f02 | Spy
@@ -2715,7 +2928,8 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: CHOICE_OBJECTIVE
+        objective: CHOICE_OBJECTIVE,
+        origin: WOTCT,
     },
 
     // ---- COMPLEX CHARACTERS -----------------------------------------
@@ -2761,7 +2975,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Idiota da Aldeia`, WOMH, `Bêbado`, BOCT],
+            fr: [`Idiot du Village`, WOMH, `Ivrogne`, BOCT],
+            en: [`Village Idiot`, WOMH, `Drunkard`, BOCT]
+        },
     },
 
     // a02 | Wolf-Dog
@@ -2809,7 +3028,12 @@ export const RULEBOOK_CHARACTERS = {
             pt: `à escolha ou segundo o dono.`,
             fr: `À choix ou selon maître`,
             en: `Player’s choice, or the owner’s objective.`
-        }
+        },
+        origin: {
+            pt: [`Cão-Lobo`, WOMH],
+            fr: [`Chien-Loup`, WOMH],
+            en: [`Wolf-Dog`, WOMH]
+        },
     },
 
     // a03 | Mime
@@ -2853,7 +3077,8 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: WOTCT,
     },
 
     // a04 | Actor
@@ -2866,15 +3091,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Comédien`,
             en: `Actor`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Todos os papéis já estavam ocupados quando se mudou para a aldeia. Costuma ficar à espera até que a tragédia lhe seja favorável.`,
-                    fr: `Tous les rôles étaient déjà pris lorsqu'il s'est installé au village. Il attend généralement qu'une tragédie tourne à son avantage.`,
-                    en: `All the parts were already taken when he moved to town. He usually waits around until tragedy works in his favour.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `<red>Na primeira noite</red>, o Ator escolhe um jogador que será o seu Ídolo e que copiará se esse jogador morrer. O poder só lhe é revelado quando o Ídolo morrer.`,
@@ -2903,7 +3119,21 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_FLEX_OBJECTIVE
+        objective: VILLAGER_FLEX_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Todos os papéis já estavam ocupados quando se mudou para a aldeia. Costuma ficar à espera até que a tragédia lhe seja favorável.`,
+                    fr: `Tous les rôles étaient déjà pris lorsqu'il s'est installé au village. Il attend généralement qu'une tragédie tourne à son avantage.`,
+                    en: `All the parts were already taken when he moved to town. He usually waits around until tragedy works in his favour.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Ator`, WOMH, WOTCT],
+            fr: [`Comédien`, WOMH, WOTCT],
+            en: [`Actor`, WOMH, WOTCT]
+        },
     },
 
     // a05 | Grave Robber
@@ -2953,7 +3183,8 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_FLEX_OBJECTIVE
+        objective: VILLAGER_FLEX_OBJECTIVE,
+        origin: WOTCT,
     },
 
     // a06 | Illusionist
@@ -3012,7 +3243,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: EVIL_BEING_OBJECTIVE
+        objective: EVIL_BEING_OBJECTIVE,
+        origin: {
+            pt: [`Flautista`, WOMH, WOTCT],
+            fr: [`Joueur de flûte`, WOMH, WOTCT],
+            en: [`Pied Piper`, WOMH, WOTCT]
+        },
     },
 
     // as01b | Secret Lover
@@ -3063,7 +3299,12 @@ export const RULEBOOK_CHARACTERS = {
             pt: `O Amante Secreto e o Traidor serem os únicos sobreviventes.`,
             fr: `Que l’Arnacœur et le Traître soient les derniers survivants.`,
             en: `The Secret Lover and the Traitor must be the only survivors.`
-        }
+        },
+        origin: {
+            pt: [`Arnacoeur`, WOMH],
+            fr: [`Arnacœur`, WOMH],
+            en: [`Heartbreaker`, WOMH]
+        },
     },
 
     // ---- TRAVELLERS ---------------------------------------------
@@ -3091,7 +3332,12 @@ export const RULEBOOK_CHARACTERS = {
                 en: `The opposite result occurs.`
             }
         }],
-        objective: TRAVELLER_OBJECTIVE
+        objective: TRAVELLER_OBJECTIVE,
+        origin: {
+            pt: [`Juiz`, BOCT],
+            fr: [`Juge`, BOCT],
+            en: [`Judge`, BOCT]
+        },
     },
 
     // t02 | Gambler
@@ -3117,7 +3363,12 @@ export const RULEBOOK_CHARACTERS = {
                 en: `Does not wake up.`
             }
         }],
-        objective: TRAVELLER_OBJECTIVE
+        objective: TRAVELLER_OBJECTIVE,
+        origin: {
+            pt: [`Apostador`, BOCT],
+            fr: [`Parieur`, BOCT],
+            en: [`Gambler`, BOCT]
+        },
     },
 
     // t03 | Gunslinger
@@ -3143,7 +3394,12 @@ export const RULEBOOK_CHARACTERS = {
                 en: `Assassinates the wrong player.`
             }
         }],
-        objective: TRAVELLER_OBJECTIVE
+        objective: TRAVELLER_OBJECTIVE,
+        origin: {
+            pt: [`Pistoleiro`, BOCT],
+            fr: [`Pistolero`, BOCT],
+            en: [`Gunslinger`, BOCT]
+        },
     },
 
     // t04 | Devil's Advocate
@@ -3182,7 +3438,12 @@ export const RULEBOOK_CHARACTERS = {
                 en: `If the chosen player is nominated, they are immediately executed.`
             }
         }],
-        objective: TRAVELLER_OBJECTIVE
+        objective: TRAVELLER_OBJECTIVE,
+        origin: {
+            pt: [`Advogado do Diabo`, BOCT],
+            fr: [`Avocat du Diable`, BOCT],
+            en: [`Devil's Advocate`, BOCT]
+        },
     },
 
     // t05 | Bone Collector
@@ -3224,7 +3485,12 @@ export const RULEBOOK_CHARACTERS = {
                 en: `Uses the poisoned effect of the copied character.`
             }
         }],
-        objective: TRAVELLER_OBJECTIVE
+        objective: TRAVELLER_OBJECTIVE,
+        origin: {
+            pt: [`Colecionador de Ossos`, BOCT],
+            fr: [`Collecteur d'Os`, BOCT],
+            en: [`Bone Collector`, BOCT]
+        },
     },
 
     // ---- LAME CHARACTERS -----------------------------------------
@@ -3239,15 +3505,6 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Villageois Triste`,
             en: `Ordinary Townsfolk`
         },
-        lore: [
-            {
-                text: {
-                    pt: `Uma alma simples a viver uma vida sem graça. Ou a morrer, neste caso.`,
-                    fr: `Une âme ordinaire qui mène une vie bien terne. Ou qui en meurt, en l'occurrence.`,
-                    en: `Just a simple soul living a dreary life. Or dying one, as the case may be.`
-                },
-            },
-        ],
         mainDescription: {
             pt: [
                 `O Aldeão Triste não tem poder especial.`,
@@ -3260,7 +3517,21 @@ export const RULEBOOK_CHARACTERS = {
             ]
         },
         details: [],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Uma alma simples a viver uma vida sem graça. Ou a morrer, neste caso.`,
+                    fr: `Une âme ordinaire qui mène une vie bien terne. Ou qui en meurt, en l'occurrence.`,
+                    en: `Just a simple soul living a dreary life. Or dying one, as the case may be.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Aldeão Simples`, WOMH],
+            fr: [`Simple Villageois`, WOMH],
+            en: [`Simple Villager`, WOMH]
+        },
     },
 
     // l02 | Wild Child
@@ -3301,7 +3572,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_FLEX_OBJECTIVE
+        objective: VILLAGER_FLEX_OBJECTIVE,
+        origin: {
+            pt: [`Criança Selvagem`, WOMH],
+            fr: [`Enfant Sauvage`, WOMH],
+            en: [`Wild Child`, WOMH]
+        },
     },
 
     // l03 | Sisters
@@ -3345,7 +3621,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_FLEX_OBJECTIVE
+        objective: VILLAGER_FLEX_OBJECTIVE,
+        origin: {
+            pt: [`Duas Irmãs`, WOMH],
+            fr: [`Deux Sœurs`, WOMH],
+            en: [`Two Sisters`, WOMH]
+        },
     },
 
     // l04 | Brothers
@@ -3384,7 +3665,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Três Irmãos`, WOMH],
+            fr: [`Trois Frères`, WOMH],
+            en: [`Three Brothers`, WOMH]
+        },
     },
 
     // l05 | Astronomer
@@ -3422,7 +3708,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Astrônomo`, WOMH],
+            fr: [`Astronome`, WOMH],
+            en: [`Astronomer`, WOMH]
+        },
     },
 
     // l06 | Devout Servant
@@ -3463,7 +3754,12 @@ export const RULEBOOK_CHARACTERS = {
                 }
             }
         ],
-        objective: VILLAGER_OBJECTIVE
+        objective: VILLAGER_OBJECTIVE,
+        origin: {
+            pt: [`Serva Devota`, WOMH],
+            fr: [`Servante Dévouée`, WOMH],
+            en: [`Devout Servant`, WOMH]
+        },
     },
 
     // ---- EXTRA CHARACTERS -----------------------------------------
