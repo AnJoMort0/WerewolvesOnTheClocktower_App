@@ -513,6 +513,7 @@
   .rulebook-content .role-meta {
     grid-column: 1 / -1;
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
@@ -526,7 +527,8 @@
   }
 
   .rulebook-content .role-lore[open] {
-    flex: 1;
+    flex: 0 0 100%;
+    width: 100%;
   }
 
   .rulebook-content .role-origin {
