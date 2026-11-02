@@ -17,9 +17,10 @@ interface RulebookModalProps {
   onOpenChange: (open: boolean) => void;
   language: Language;
   roleId?: RoleId | null;
+  beginnerMode?: boolean;
 }
 
-export function RulebookModal({ open, onOpenChange, language, roleId = null }: RulebookModalProps) {
+export function RulebookModal({ open, onOpenChange, language, roleId = null, beginnerMode = false }: RulebookModalProps) {
   const [viewRoleId, setViewRoleId] = useState<RulebookCharacterId | null>(roleId);
   const [pendingScroll, setPendingScroll] = useState<"top" | "summary" | null>(null);
   const [skinPreviewOverrides, setSkinPreviewOverrides] = useState<Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>>({});
@@ -28,8 +29,8 @@ export function RulebookModal({ open, onOpenChange, language, roleId = null }: R
   const expandedLoreIds = useRef(new Set<string>());
   const { skinPackId } = useSkinPack();
   const html = useMemo(
-    () => getRulebookHtml(language, viewRoleId, { skinPackId, skinPreviewOverrides }),
-    [language, viewRoleId, skinPackId, skinPreviewOverrides],
+    () => getRulebookHtml(language, viewRoleId, { skinPackId, skinPreviewOverrides, beginnerMode }),
+    [language, viewRoleId, skinPackId, skinPreviewOverrides, beginnerMode],
   );
   const title = viewRoleId ? RULEBOOK_CHARACTERS[viewRoleId]?.name[language] ?? t("rulebook", language) : t("rulebook", language);
 

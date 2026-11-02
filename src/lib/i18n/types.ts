@@ -436,6 +436,7 @@ export interface UIStrings {
   sendRolesToPlayers: string;
   confirmChanges: string;
   advancedMode: string;
+  beginnerMode: string;
   devTestPlayers: string;
   waitingForPlayers: string;
   devTestPlayersAdded: string;

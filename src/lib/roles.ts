@@ -6,6 +6,7 @@ import v01Img from "@/assets/display/roles/v01.webp";
 import v02Img from "@/assets/display/roles/v02.webp";
 import v03Img from "@/assets/display/roles/v03.webp";
 import v28Img from "@/assets/display/roles/v28.webp";
+import { BEGINNER_ROLE_SET } from "@/lib/beginnerMode";
 import v04Img from "@/assets/display/roles/v04.webp";
 import v05Img from "@/assets/display/roles/v05.webp";
 import v26Img from "@/assets/display/roles/v26.webp";
@@ -241,14 +242,14 @@ export function getExpectedWerewolfCount(playerCount: number): number {
   return Math.floor(playerCount / 4);
 }
 
-function getWerewolfRoles(playerCount: number, preferredRoles: ReadonlySet<RoleId>): RoleId[] {
+function getWerewolfRoles(playerCount: number, preferredRoles: ReadonlySet<RoleId>, allowedRoles?: ReadonlySet<RoleId>): RoleId[] {
   const wwCount = getExpectedWerewolfCount(playerCount);
   if (playerCount < 12) {
     return Array.from({ length: wwCount }, () => "e01" as RoleId);
   }
 
   // Keep at least one ordinary wolf; special wolves are unique and eligible only.
-  const eligibleSpecials = SPECIAL_WEREWOLVES.filter((id) => canRandomlyAssignRole(id, [], playerCount));
+  const eligibleSpecials = SPECIAL_WEREWOLVES.filter((id) => (!allowedRoles || allowedRoles.has(id)) && canRandomlyAssignRole(id, [], playerCount));
   const normalCount = Math.max(1, wwCount - eligibleSpecials.length);
   const specialCount = wwCount - normalCount;
   const specialRoles = weightedShuffle(eligibleSpecials, (id) => preferredRoles.has(id) ? 1.25 : 1).slice(0, specialCount);
@@ -272,21 +273,22 @@ function weightedShuffle<T>(items: T[], weight: (item: T) => number): T[] {
     .sort((a, b) => a.priority - b.priority).map(({ item }) => item);
 }
 
-export function assignRoles(playerCount: number, advancedEnabled: boolean = false, preferredRoleIds: readonly RoleId[] = []): RoleId[] {
+export function assignRoles(playerCount: number, advancedEnabled: boolean = false, preferredRoleIds: readonly RoleId[] = [], beginnerMode = false): RoleId[] {
   if (!Number.isInteger(playerCount) || playerCount < 8) throw new RangeError("Random assignment requires at least 8 players.");
   const preferredRoles = new Set(preferredRoleIds);
+  const allowedRoles = beginnerMode ? BEGINNER_ROLE_SET : null;
   const roles: RoleId[] = [];
   // Witch, Shaman, and Fortune Teller anchor every automatically generated game.
   roles.push(...ESSENTIAL_SINGLES);
 
-  roles.push(...getWerewolfRoles(playerCount, preferredRoles));
+  roles.push(...getWerewolfRoles(playerCount, preferredRoles, allowedRoles ?? undefined));
 
   const assigned = new Set<RoleId>(roles);
 
   // Balance: ensure at least one INFO character is in the villager pool.
   // Force-include one random INFO role first (if there's room).
   if (roles.length < playerCount) {
-    const shuffledInfo = weightedShuffle(INFO_ROLES.filter((id) => canRandomlyAssignRole(id, roles, playerCount)), (id) => preferredRoles.has(id) ? 1.25 : 1);
+    const shuffledInfo = weightedShuffle(INFO_ROLES.filter((id) => (!allowedRoles || allowedRoles.has(id)) && canRandomlyAssignRole(id, roles, playerCount)), (id) => preferredRoles.has(id) ? 1.25 : 1);
     for (const id of shuffledInfo) {
       if (!assigned.has(id)) {
         roles.push(id);
@@ -300,8 +302,8 @@ export function assignRoles(playerCount: number, advancedEnabled: boolean = fals
   // in one draw. Previously villagers consumed every slot before advanced mode.
   // Lame Characters are strictly fallback options. Seasonal preference changes
   // odds within an eligible pool; it never moves a filler into the main draw.
-  const pool: RoleId[] = [...VILLAGER_UNIQUE, ...OTHER_UNIQUE, ...(advancedEnabled ? ADVANCED_ROLES : [])];
-  const fallbackPool: RoleId[] = [...LAME_SINGLES, "l03", "l04"];
+  const pool: RoleId[] = [...VILLAGER_UNIQUE, ...OTHER_UNIQUE, ...(advancedEnabled ? ADVANCED_ROLES : [])].filter((id) => !allowedRoles || allowedRoles.has(id));
+  const fallbackPool: RoleId[] = ([...LAME_SINGLES, "l03", "l04"] as RoleId[]).filter((id) => !allowedRoles || allowedRoles.has(id));
   const weight = (id: RoleId) => (ADVANCED_ROLES.includes(id) ? 2 : 1)
     * (preferredRoles.has(id) ? 1.25 : 1);
   const eligibleFrom = (candidates: RoleId[]) => candidates.filter((id) => !assigned.has(id)

@@ -23,12 +23,13 @@ export default function RulebookPage({ standalone = false }: { standalone?: bool
   const { hash } = useLocation();
   const [searchParams] = useSearchParams();
   const language = getInitialLanguage(searchParams.get("lang"));
+  const beginnerMode = searchParams.get("mode") === "beginner";
   const { skinPackId } = useSkinPack();
   const [skinPreviewOverrides, setSkinPreviewOverrides] = useState<Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>>({});
   const [articleElement, setArticleElement] = useState<HTMLElement | null>(null);
   const html = useMemo(
-    () => getRulebookHtml(language, null, { skinPackId, skinPreviewOverrides }),
-    [language, skinPackId, skinPreviewOverrides],
+    () => getRulebookHtml(language, null, { skinPackId, skinPreviewOverrides, beginnerMode }),
+    [language, skinPackId, skinPreviewOverrides, beginnerMode],
   );
 
   useEffect(() => {
@@ -110,6 +111,18 @@ export default function RulebookPage({ standalone = false }: { standalone?: bool
         <div className={standalone ? undefined : "pr-14 sm:pr-0"}>
           <SkinPackSelectButton language={language} />
         </div>
+      </div>
+      <div className="mx-auto mb-4 flex max-w-6xl justify-center gap-2">
+        <Button type="button" size="sm" variant={beginnerMode ? "secondary" : "default"} onClick={() => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("mode");
+          navigate({ search: `?${next.toString()}` });
+        }}>{t("rulebook", language)}</Button>
+        <Button type="button" size="sm" variant={beginnerMode ? "default" : "secondary"} onClick={() => {
+          const next = new URLSearchParams(searchParams);
+          next.set("mode", "beginner");
+          navigate({ search: `?${next.toString()}` });
+        }}>{getTranslation(language).ui.beginnerMode}</Button>
       </div>
       <article
         ref={setArticleElement}

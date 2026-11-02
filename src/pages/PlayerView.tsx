@@ -99,7 +99,7 @@ const PlayerView = () => {
   const [spyCards, setSpyCards] = useState<RevealCard[]>([]);
   const [mimeReveal, setMimeReveal] = useState(false);
   const [mimeCards, setMimeCards] = useState<RevealCard[]>([]);
-  const [phaseInfo, setPhaseInfo] = useState<{ phase: "night" | "day" | "tribunal"; number: number } | null>(null);
+  const [phaseInfo, setPhaseInfo] = useState<{ phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean } | null>(null);
   const [timerState, setTimerState] = useState<{ phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null>(null);
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState>(() => normalizePlayerActionState(null));
   const [assassinationMode, setAssassinationMode] = useState(false);
@@ -289,7 +289,7 @@ const PlayerView = () => {
           const lang = (roomData as { language?: string }).language;
           if (isLanguage(lang)) setLanguage(lang);
           const durable = roomData as unknown as {
-            phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
+            phase_state?: { phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean } | null;
             timer_state?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;
             game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat">; gameLog?: unknown } | null;
             player_action_state?: PlayerActionState | null;
@@ -1653,6 +1653,7 @@ const PlayerView = () => {
         onOpenChange={setRulebookOpen}
         language={language}
         roleId={rulebookRoleId}
+        beginnerMode={phaseInfo?.beginnerMode ?? false}
       />
       <GameOverModal
         open={!!gameOver && !gameOverDismissed}

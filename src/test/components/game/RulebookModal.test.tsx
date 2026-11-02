@@ -5,6 +5,15 @@ import { RulebookModal } from "@/components/game/RulebookModal";
 import { SkinPackProvider } from "@/components/game/SkinPackProvider";
 
 describe("RulebookModal", () => {
+  it("opens an in-game Traveller card, then returns to the restricted First Time Game list", async () => {
+    HTMLElement.prototype.scrollTo = vi.fn();
+    render(<MemoryRouter><SkinPackProvider><RulebookModal open onOpenChange={vi.fn()} language="en" roleId="t01" beginnerMode /></SkinPackProvider></MemoryRouter>);
+    expect(document.querySelector('article#t01')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /view all characters/i })[0]);
+    await waitFor(() => expect(document.querySelector('article#e01')).toBeInTheDocument());
+    expect(document.querySelector('article#t01')).not.toBeInTheDocument();
+    expect(document.querySelector('article#v28')).not.toBeInTheDocument();
+  });
   beforeEach(() => vi.stubGlobal("ResizeObserver", class {
     observe() {}
     unobserve() {}

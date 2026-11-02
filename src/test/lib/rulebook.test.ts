@@ -1,10 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { ALL_ROLE_IDS } from "@/lib/roles";
+import { BEGINNER_CHARACTER_IDS } from "@/lib/beginnerMode";
 import { getRoleLabel } from "@/lib/i18n";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID } from "@/lib/rulebook";
 import { RULEBOOK_CHARACTERS, RULEBOOK_CHARACTER_ORDER, RULEBOOK_TEXT, type RulebookCharacter, type RulebookSectionBlock } from "@/lib/rulebookContent";
 
 describe("in-app rulebook rendering", () => {
+  it("limits the First Time Game lists and script while preserving direct Traveller cards", () => {
+    const html = getRulebookHtml("en", null, { beginnerMode: true });
+    for (const id of BEGINNER_CHARACTER_IDS) expect(html).toContain(`id="${id}"`);
+    for (const id of RULEBOOK_CHARACTER_ORDER.filter((id) => !BEGINNER_CHARACTER_IDS.has(id))) {
+      expect(html).not.toContain(`id="${id}"`);
+    }
+    expect(html).not.toContain('id="normal-v28"');
+    expect(html).toContain('id="normal-v03"');
+    expect(getRulebookHtml("en", "t01", { beginnerMode: true })).toContain('id="t01"');
+  });
   it("renders the full rulebook from structured local content with styled character rows", () => {
     const html = getRulebookHtml("pt");
 

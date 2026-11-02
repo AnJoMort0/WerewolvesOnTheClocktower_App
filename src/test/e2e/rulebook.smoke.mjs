@@ -71,11 +71,21 @@ try {
   await cdp.evaluate(page, "document.querySelectorAll('img').forEach(image => image.loading = 'eager')");
   await cdp.wait(page, "[...document.images].filter(image => image.getAttribute('src')).every(image => image.complete && image.naturalWidth > 0)");
   await cdp.evaluate(page, "document.fonts.ready");
+  const beginnerPage = await cdp.page(`${base}${prefix}?lang=en&mode=beginner`);
+  await cdp.wait(beginnerPage, "!!document.querySelector('article[lang=en]') && !!document.getElementById('v03')");
+  assert.equal(await cdp.evaluate(beginnerPage, "document.getElementById('t01') === null && document.getElementById('v28') === null && !!document.getElementById('x.s01')"), true);
+  await cdp.click(beginnerPage, "Français");
+  await cdp.wait(beginnerPage, "!!document.querySelector('article[lang=fr]')");
+  assert.equal(await cdp.evaluate(beginnerPage, "new URLSearchParams(location.search).get('mode')"), "beginner");
+  await cdp.click(beginnerPage, "Règles");
+  await cdp.wait(beginnerPage, "new URLSearchParams(location.search).get('mode') === null && !!document.getElementById('t01')");
+  await cdp.click(beginnerPage, "Mode Débutant");
+  await cdp.wait(beginnerPage, "new URLSearchParams(location.search).get('mode') === 'beginner' && !document.getElementById('t01')");
   assert.deepEqual(errors, [], "Browser exceptions");
   assert.deepEqual(externalRequests, [], "External requests");
   assert.deepEqual(missing.filter(path => !path.endsWith('/favicon.ico')), [], "Broken static assets");
   assert.ok(!requests.some(path => /\/api\/|\/gm\/|\/join|\/play\//.test(path)), "Game backend requested");
-  console.log("PASS: Pages subpath, character anchors and refresh, three languages, artwork, fonts and lore work without game/backend/external requests.");
+  console.log("PASS: Pages subpath, beginner link, character anchors and refresh, three languages, artwork, fonts and lore work without game/backend/external requests.");
 } finally {
   if (cdp) { await cdp.call("Browser.close").catch(() => {}); cdp.socket.close(); }
   if (browser && browser.exitCode === null) { browser.kill(); await new Promise(done => browser.once("exit", done)); }

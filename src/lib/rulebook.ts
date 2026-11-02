@@ -1,4 +1,5 @@
 import { ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { BEGINNER_CHARACTER_IDS } from "@/lib/beginnerMode";
 import { getTranslation, type Language } from "@/lib/i18n";
 import {
   getRulebookSkinOptions,
@@ -32,6 +33,7 @@ export const RULEBOOK_TOP_ID = "rulebook-top";
 export const RULEBOOK_SUMMARY_ID = "rulebook-summary";
 
 export interface RulebookRenderOptions {
+  beginnerMode?: boolean;
   skinPackId?: SkinPackId;
   skinPreviewOverrides?: Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>;
 }
@@ -120,8 +122,9 @@ function roleAlt(character: RulebookCharacter, lang: Language): string {
   return character.name[lang];
 }
 
-function characterIdsForGroup(groupId: RulebookGroupId): RulebookCharacterId[] {
-  return RULEBOOK_CHARACTER_ORDER.filter((characterId) => RULEBOOK_CHARACTERS[characterId].group === groupId);
+function characterIdsForGroup(groupId: RulebookGroupId, beginnerMode = false): RulebookCharacterId[] {
+  return RULEBOOK_CHARACTER_ORDER.filter((characterId) => RULEBOOK_CHARACTERS[characterId].group === groupId
+    && (!beginnerMode || BEGINNER_CHARACTER_IDS.has(characterId)));
 }
 
 function renderSectionBlocks(blocks: readonly RulebookSectionBlock[]): string {
@@ -149,7 +152,7 @@ function renderSectionBlock(block: RulebookSectionBlock): string {
   return "";
 }
 
-function renderNightScript(lang: Language): string {
+function renderNightScript(lang: Language, beginnerMode = false): string {
   const labels = getTranslation(lang).ui.rulebookUi.nightScript;
   const phases = [
     ["firstNight", labels.firstNight],
@@ -162,6 +165,7 @@ function renderNightScript(lang: Language): string {
       <h3 id="rulebook-${phase}">${renderInline(label)}</h3>
       <ul class="rulebook-night-script-list">
         ${RULEBOOK_NIGHT_SCRIPT[phase]
+          .filter((line) => !beginnerMode || line.refs.some((ref) => ref === "general" || BEGINNER_CHARACTER_IDS.has(ref)))
           .map((line) => `<li id="${escapeAttribute(line.id)}">${renderInline(line.text[lang])}</li>`)
           .join("")}
       </ul>
@@ -172,7 +176,7 @@ function renderNightScript(lang: Language): string {
 function renderCharacterIndex(lang: Language, options: RulebookRenderOptions = {}): string {
   const groups = RULEBOOK_TEXT.groups
     .map((group) => {
-      const characterIds = characterIdsForGroup(group.id);
+      const characterIds = characterIdsForGroup(group.id, options.beginnerMode);
       if (characterIds.length === 0) return "";
 
       const renderLinks = (ids: RulebookCharacterId[]) => ids
@@ -231,7 +235,7 @@ function renderCharacterIndex(lang: Language, options: RulebookRenderOptions = {
 function renderCharacterTables(lang: Language, options: RulebookRenderOptions = {}): string {
   return RULEBOOK_TEXT.groups
     .map((group) => {
-      const characters = characterIdsForGroup(group.id).map((characterId) => RULEBOOK_CHARACTERS[characterId]);
+      const characters = characterIdsForGroup(group.id, options.beginnerMode).map((characterId) => RULEBOOK_CHARACTERS[characterId]);
       if (characters.length === 0) return "";
 
       const rows = group.id === "evil"
@@ -367,7 +371,7 @@ function renderFullRulebook(lang: Language, options: RulebookRenderOptions = {})
     ${renderCharacterIndex(lang, options)}
     <section class="rulebook-basics">${renderSectionBlocks(RULEBOOK_TEXT.sections[lang])}</section>
     ${renderCharacterTables(lang, options)}
-    ${renderNightScript(lang)}
+    ${renderNightScript(lang, options.beginnerMode)}
   `;
 }
 

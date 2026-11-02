@@ -52,10 +52,14 @@ try {
   const gm = await cdp.page(base);
   await cdp.evaluate(gm, "localStorage.setItem('preferred_language', 'en')");
   await cdp.call("Page.reload", {}, gm);
+  await cdp.wait(gm, "!!document.querySelector('[aria-label=\"Beginner Mode\"]')");
+  await cdp.evaluate(gm, "document.querySelector('[aria-label=\"Beginner Mode\"]').click()");
   await cdp.click(gm, "Start LAN game");
   await cdp.wait(gm, "location.pathname.startsWith('/gm/') && document.body.innerText.includes('players in the room')");
   const roomId = await cdp.evaluate(gm, "location.pathname.split('/').pop()");
   const game = await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" });
+  await cdp.wait(gm, "document.querySelector('#beginner-toggle')?.getAttribute('aria-checked') === 'true'");
+  await cdp.wait(gm, `JSON.parse(localStorage.getItem('wotct_gm_snapshot_${roomId}') || '{}').beginnerMode === true`);
   console.log("Created LAN room through the home screen.");
 
   const phones = [];
@@ -76,6 +80,9 @@ try {
   for (const [seat, player] of roster.entries()) await query({ table: "players", operation: "update", filters: [["id", player.id]], values: { seat_position: seat } });
   await cdp.click(gm, "Confirm & Assign Roles");
   await cdp.wait(gm, "document.body.innerText.includes('Send Roles to Players')");
+  const beginnerRoles = await cdp.evaluate(gm, `Object.values(JSON.parse(localStorage.getItem('wotct_gm_snapshot_${roomId}')).roleAssignments)`);
+  assert.ok(beginnerRoles.every(role => ["e01", "e02", "e03", "e04", "v01", "v02", "v03", "v06", "v07", "v08", "v10", "v11", "v13", "v14", "v17", "v18", "m01", "m02", "m04", "s01", "s02", "f01", "f02", "l01", "l02", "l04", "l05", "l06"].includes(role)));
+  assert.equal((await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" })).phase_state.beginnerMode, true);
   // Use a deterministic lot for the role-specific smoke test after exercising random assignment.
   const roles = ["v26", "m01", "m02", "v03", "v05", "v08", "v10", "e02"];
   const assignments = Object.fromEntries(roster.map((player, index) => [player.id, roles[index]]));
@@ -91,6 +98,10 @@ try {
   await cdp.wait(phones[1], "document.body.innerText.includes('Werewolf')");
   roster = await query({ table: "players", filters: [["room_id", roomId]] });
   assert.ok(roster.filter(player => ["Monkey", "Wolf"].includes(player.name)).every(player => player.is_ready));
+  await cdp.evaluate(phones[0], "document.querySelector('button[aria-label=Rulebook]').click()");
+  await cdp.wait(phones[0], "!!document.querySelector('[role=dialog] article#e01')");
+  assert.equal(await cdp.evaluate(phones[0], "document.querySelector('[role=dialog] article#v28') === null && document.querySelector('[role=dialog] article#t01') === null"), true);
+  await cdp.evaluate(phones[0], "document.querySelector('[role=dialog] button[aria-label=Close]').click()");
   console.log("Joined from isolated phone browsers; assigned and delivered roles; readiness updates reached the server.");
 
   const travellerPhone = await cdp.page(`${base}/join/${game.code}`);
@@ -106,8 +117,15 @@ try {
   const unassignedTraveller = (await query({ table: "players", filters: [["room_id", roomId]] }))
     .find(player => player.name === "Late Traveller");
   assert.ok(unassignedTraveller);
-  await query({ table: "players", operation: "update", filters: [["id", unassignedTraveller.id]],
-    values: { traveller_role: "t04", traveller_alignment: "evil" } });
+  await cdp.wait(gm, "[...document.querySelectorAll('h3')].some(heading => heading.textContent === 'Late Traveller' && heading.closest('section')?.querySelector('[role=combobox]'))");
+  await cdp.evaluate(gm, `(() => {
+    const heading = [...document.querySelectorAll('h3')].find(heading => heading.textContent === 'Late Traveller');
+    const selector = heading?.closest('section')?.querySelector('[role=combobox]');
+    if (!selector) throw new Error('Traveller role selector is missing');
+    selector.click();
+  })()`);
+  await cdp.wait(gm, "[...document.querySelectorAll('[role=option]')].some(option => option.textContent.includes(\"t04. Devil's Advocate\"))");
+  await cdp.evaluate(gm, `[...document.querySelectorAll('[role=option]')].find(option => option.textContent.includes("t04. Devil's Advocate")).click()`);
   await cdp.wait(gm, `document.body.innerText.includes("t04. Devil's Advocate")`);
   await cdp.click(gm, "Confirm");
   await cdp.wait(travellerPhone, "document.body.innerText.includes('You are a Villager') || document.body.innerText.includes('You are an Evil Being')");

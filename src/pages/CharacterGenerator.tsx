@@ -33,15 +33,15 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function rulebookUrl(roleId: RoleId, language: Language): string {
+function rulebookUrl(roleId: RoleId, language: Language, beginnerMode = false): string {
   const origin = typeof window === "undefined" ? "" : window.location.origin;
-  return `${origin}/rulebook/${roleId}?lang=${language}`;
+  return `${origin}/rulebook/${roleId}?lang=${language}${beginnerMode ? "&mode=beginner" : ""}`;
 }
 
-function richPayload(roleId: RoleId, language: Language, skinPackId: SkinPackId): { html: string; text: string } {
+function richPayload(roleId: RoleId, language: Language, skinPackId: SkinPackId, beginnerMode = false): { html: string; text: string } {
   const label = getRoleLabel(roleId, language);
   const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
-  const url = rulebookUrl(roleId, language);
+  const url = rulebookUrl(roleId, language, beginnerMode);
   const copy = getTranslation(language).ui.characterGenerator;
   const text = format(copy.messageWithRulebook, { id: roleId, name: label, url });
   const prefix = copy.richMessagePrefix;
@@ -99,6 +99,7 @@ export default function CharacterGeneratorPage() {
   const text = getTranslation(language).ui.characterGenerator;
   const [playerCount, setPlayerCount] = useState("10");
   const [advancedEnabled, setAdvancedEnabled] = useState(false);
+  const [beginnerMode, setBeginnerMode] = useState(searchParams.get("mode") === "beginner");
   const [roleIds, setRoleIds] = useState<RoleId[]>([]);
   const [status, setStatus] = useState(text.empty);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -107,7 +108,7 @@ export default function CharacterGeneratorPage() {
   const [colossusNightSeed, setColossusNightSeed] = useState(Math.random);
   const [lockedLines, setLockedLines] = useState<Set<string>>(new Set());
 
-  const payloads = useMemo(() => roleIds.map((roleId) => richPayload(roleId, language, skinPackId)), [roleIds, language, skinPackId]);
+  const payloads = useMemo(() => roleIds.map((roleId) => richPayload(roleId, language, skinPackId, beginnerMode)), [roleIds, language, skinPackId, beginnerMode]);
   const warnings = useMemo(() => roleIds.length > 0 ? validateRoleSelection(roleIds, language) : [], [roleIds, language]);
   const activeRoles = useMemo(() => new Set(roleIds), [roleIds]);
   const scriptLines = useMemo(() => {
@@ -134,7 +135,7 @@ export default function CharacterGeneratorPage() {
       return;
     }
 
-    setRoleIds(assignRoles(count, advancedEnabled, getActiveSeasonalRoleIds(skinPackId)));
+    setRoleIds(assignRoles(count, advancedEnabled, getActiveSeasonalRoleIds(skinPackId), beginnerMode));
     setColossusNightSeed(Math.random());
     setStatus("");
     setCompletedLines(new Set());
@@ -200,7 +201,7 @@ export default function CharacterGeneratorPage() {
             <div className="flex items-center gap-2">
               <SkinPackSelectButton language={language} />
               <Button asChild variant="outline" size="sm">
-                <Link to={`/rulebook?lang=${language}`}>
+                <Link to={`/rulebook?lang=${language}${beginnerMode ? "&mode=beginner" : ""}`}>
                   <BookOpen className="mr-2 h-4 w-4" />
                   {t("rulebook", language)}
                 </Link>
@@ -208,7 +209,7 @@ export default function CharacterGeneratorPage() {
             </div>
           </header>
 
-          <section className="grid gap-3 rounded-lg border border-border/60 bg-card/60 p-3 md:grid-cols-[minmax(140px,180px)_1fr_auto] md:items-end">
+          <section className="grid gap-3 rounded-lg border border-border/60 bg-card/60 p-3 md:grid-cols-[minmax(140px,180px)_1fr_1fr_auto] md:items-end">
             <div className="space-y-2">
               <Label htmlFor="character-count" className="font-display text-xs uppercase tracking-widest text-muted-foreground">
                 {text.players}
@@ -230,10 +231,21 @@ export default function CharacterGeneratorPage() {
             <label className="flex items-center gap-2 rounded-md border border-border/50 bg-secondary/50 px-3 py-2 text-sm text-muted-foreground">
               <Checkbox
                 checked={advancedEnabled}
+                disabled={beginnerMode}
                 onCheckedChange={(checked) => setAdvancedEnabled(checked === true)}
                 className="h-4 w-4 border-primary data-[state=checked]:bg-primary"
               />
               <span>{text.advanced}</span>
+            </label>
+
+            <label className="flex items-center gap-2 rounded-md border border-border/50 bg-secondary/50 px-3 py-2 text-sm text-muted-foreground">
+              <Checkbox checked={beginnerMode} onCheckedChange={(checked) => {
+                const enabled = checked === true;
+                setBeginnerMode(enabled);
+                if (enabled) setAdvancedEnabled(false);
+                setRoleIds([]);
+              }} className="h-4 w-4 border-primary data-[state=checked]:bg-primary" />
+              <span>{getTranslation(language).ui.beginnerMode}</span>
             </label>
 
             <Button type="button" onClick={generate} className="h-10 font-display tracking-wider">
@@ -291,7 +303,7 @@ export default function CharacterGeneratorPage() {
                   const label = getRoleLabel(roleId, language);
                   const payload = payloads[index];
                   const keyPrefix = `${index}-${roleId}`;
-                  const url = rulebookUrl(roleId, language);
+                  const url = rulebookUrl(roleId, language, beginnerMode);
                   const roleImage = resolveRoleImage(roleId, { skinPackId }).src;
 
                   return (
@@ -305,7 +317,7 @@ export default function CharacterGeneratorPage() {
 
                       <div className="flex items-center gap-3">
                         <Link
-                          to={`/rulebook/${roleId}?lang=${language}`}
+                          to={`/rulebook/${roleId}?lang=${language}${beginnerMode ? "&mode=beginner" : ""}`}
                           className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-primary/40 bg-secondary"
                           title={text.rulebook}
                         >
@@ -313,7 +325,7 @@ export default function CharacterGeneratorPage() {
                         </Link>
                         <div className="min-w-0 flex-1 space-y-2">
                           <h3 className="truncate font-display text-lg text-foreground">{label}</h3>
-                          <RoleSelector value={roleId} onChange={(nextRole) => changeRole(index, nextRole)} advancedEnabled={advancedEnabled} />
+                          <RoleSelector value={roleId} onChange={(nextRole) => changeRole(index, nextRole)} advancedEnabled={advancedEnabled} beginnerMode={beginnerMode} />
                         </div>
                       </div>
 

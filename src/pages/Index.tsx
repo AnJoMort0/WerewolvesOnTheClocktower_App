@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Users, Crown, BookOpen, Download, QrCode } from "lucide-react";
 import { CharacterGeneratorButton } from "@/components/game/CharacterGeneratorButton";
@@ -38,6 +39,7 @@ const Index = () => {
   const [hostPin, setHostPin] = useState("");
   const [lanHost, setLanHost] = useState(getLanConfig()?.host ?? false);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [beginnerMode, setBeginnerMode] = useState(false);
   const lan = getLanConfig();
   const [language, setLanguage] = useState<Language>(() => {
     const stored = localStorage.getItem("preferred_language");
@@ -60,7 +62,7 @@ const Index = () => {
         .single();
 
       if (data && !error) {
-        navigate(`/gm/${data.id}`);
+        navigate(`/gm/${data.id}`, { state: { beginnerMode } });
         setLoading(false);
         return;
       }
@@ -149,6 +151,10 @@ const Index = () => {
               }}>{lanText[language].unlock}</Button>
             </div>
           )}
+          <label className="flex items-center justify-center gap-3 text-sm font-display text-foreground">
+            <Switch checked={beginnerMode} onCheckedChange={setBeginnerMode} aria-label={getTranslation(language).ui.beginnerMode} />
+            {getTranslation(language).ui.beginnerMode}
+          </label>
           <Button
             onClick={createRoom}
             disabled={loading || (!!lan && !lanHost)}
@@ -178,6 +184,10 @@ const Index = () => {
               >
                 <BookOpen className="mr-2 h-3.5 w-3.5" />
                 {t("rulebook", language)}
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => navigate(`/rulebook?lang=${language}&mode=beginner`)} className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground">
+                <BookOpen className="mr-2 h-3.5 w-3.5" />
+                {getTranslation(language).ui.beginnerMode}
               </Button>
               {!isInstalled && !lan && (
                 <Button

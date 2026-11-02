@@ -36,6 +36,10 @@ Read the rules in your language, explore the characters, or jump straight to the
 | Français | [Lire](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=fr) | [Personnages](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=fr#rulebook-summary) | [Scripts de nuit](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=fr#rulebook-night-script) |
 | Português (Portugal) | [Ler](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=pt) | [Personagens](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=pt#rulebook-summary) | [Guiões noturnos](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=pt#rulebook-night-script) |
 
+**Beginner Mode** is for groups learning the game. It uses a smaller selection of familiar characters while keeping the same core rules and random-assignment balance. Its rulebook explains how to play, then shows only the characters and night-script lines available in this mode. Travellers are left out of that shorter rulebook, though the Narrator can still add one during a game.
+
+Share the Beginner Mode rulebook: [English](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=en&mode=beginner) · [Français](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=fr&mode=beginner) · [Português (Portugal)](https://anjomort0.github.io/WerewolvesOnTheClocktower_App/?lang=pt&mode=beginner).
+
 <p align="center">☾　◆　☽</p>
 
 ## See the game

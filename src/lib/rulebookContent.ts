@@ -1133,19 +1133,19 @@ export const RULEBOOK_CHARACTERS = {
         group: "villager",
         team: "villagers",
         name: {
-            pt: `Domador do Cisne`,
-            fr: `Maître du Cygne`,
+            pt: `Domador dos Cisnes`,
+            fr: `Maître des Cygnes`,
             en: `Swan Tamer`
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, o Domador do Cisne descobre quantos pares de Criaturas Malvadas vivas e vizinhas existem na Aldeia.`
+                `<red>A cada noite</red>, o Domador dos Cisnes descobre quantos pares de Criaturas Malvadas vizinhas existem na Aldeia.`
             ],
             fr: [
-                `<red>Chaque nuit</red>, le Maître du Cygne apprend combien de paires de Créatures Maléfiques vivantes et voisines se trouvent dans le Village.`
+                `<red>Chaque nuit</red>, le Maître des Cygnes apprend combien de paires de Créatures Maléfiques voisines se trouvent dans le Village.`
             ],
             en: [
-                `<red>Each night</red>, the Swan Tamer learns how many pairs of living neighboring Evil Beings exist in the Village.`
+                `<red>Each night</red>, the Swan Tamer learns how many pairs of neighboring Evil Beings exist in the Village.`
             ]
         },
         details: [
@@ -4333,9 +4333,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "first-v28",
             refs: ["v28"],
             text: {
-                pt: `O Domador do Cisne acorda e o Narrador mostra com os dedos quantos pares de Criaturas Malvadas vivas e vizinhas existem na Aldeia.`,
-                fr: `Le Maître du Cygne se réveille et le Narrateur lui montre avec les doigts combien de paires de Créatures Maléfiques vivantes et voisines se trouvent dans le Village.`,
-                en: `The Swan Tamer wakes up and the Narrator shows them with their fingers how many pairs of living neighboring Evil Beings exist in the Village.`
+                pt: `O Domador dos Cisnes acorda e o Narrador mostra com os dedos quantos pares de Criaturas Malvadas vizinhas existem na Aldeia.`,
+                fr: `Le Maître des Cygnes se réveille et le Narrateur lui montre avec les doigts combien de paires de Créatures Maléfiques voisines se trouvent dans le Village.`,
+                en: `The Swan Tamer wakes up and the Narrator shows them with their fingers how many pairs of neighboring Evil Beings exist in the Village.`
             }
         },
         {
@@ -4629,16 +4629,16 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             text: {
                 pt: `O Domador do Corvo acorda e é-lhe revelado o número de Criaturas Malvadas que ainda vivem na Aldeia (ou o Corvo está confuso).`,
                 fr: `Le Maître du Corbeau se réveille et apprend le nombre de Créatures Maléfiques en jeu. (ou si le Corbeau est confus)`,
-                en: `The Raven Tamer wakes up and learns how many Evil Beings are still alive in the Village, or the Raven is confused.`
+                en: `The Raven Tamer wakes up and learns how many Evil Beings are still alive in the Village (or the Raven is confused).`
             }
         },
         {
             id: "normal-v28",
             refs: ["v28"],
             text: {
-                pt: `O Domador do Cisne acorda e o Narrador mostra com os dedos quantos pares de Criaturas Malvadas vivas e vizinhas existem na Aldeia.`,
-                fr: `Le Maître du Cygne se réveille et le Narrateur lui montre avec les doigts combien de paires de Créatures Maléfiques vivantes et voisines se trouvent dans le Village.`,
-                en: `The Swan Tamer wakes up and the Narrator shows them with their fingers how many pairs of living neighboring Evil Beings exist in the Village.`
+                pt: `O Domador dos Cisnes acorda e o Narrador mostra com os dedos quantos pares de Criaturas Malvadas vizinhas existem na Aldeia.`,
+                fr: `Le Maître des Cygnes se réveille et le Narrateur lui montre avec les doigts combien de paires de Créatures Maléfiques voisines se trouvent dans le Village.`,
+                en: `The Swan Tamer wakes up and the Narrator shows them with their fingers how many pairs of neighboring Evil Beings exist in the Village.`
             }
         },
         {

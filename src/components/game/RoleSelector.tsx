@@ -1,4 +1,5 @@
 import { ROLES, ALL_ROLE_IDS, TRAVELLER_ROLES, type RoleId } from "@/lib/roles";
+import { BEGINNER_ROLE_SET } from "@/lib/beginnerMode";
 import { useRoleLabel } from "@/lib/i18n";
 import { RULEBOOK_CHARACTER_ORDER } from "@/lib/rulebookContent";
 import { resolveRoleImage } from "@/lib/skinPacks";
@@ -21,15 +22,17 @@ interface RoleSelectorProps {
   onChange: (role: RoleId) => void;
   advancedEnabled?: boolean;
   travellerOnly?: boolean;
+  beginnerMode?: boolean;
 }
 
-export const RoleSelector = ({ value, onChange, advancedEnabled = true, travellerOnly = false }: RoleSelectorProps) => {
+export const RoleSelector = ({ value, onChange, advancedEnabled = true, travellerOnly = false, beginnerMode = false }: RoleSelectorProps) => {
   const roleLabel = useRoleLabel();
   const { skinPackId } = useSkinPack();
   const filteredIds = travellerOnly
     ? RULEBOOK_ORDERED_ROLE_IDS.filter((id) => TRAVELLER_ROLES.includes(id))
     : RULEBOOK_ORDERED_ROLE_IDS.filter((id) => (
       (!TRAVELLER_ROLES.includes(id) || id === value)
+      && (!beginnerMode || BEGINNER_ROLE_SET.has(id) || id === value)
       && (advancedEnabled || ROLES[id].category !== "a" || id === value)
     ));
 

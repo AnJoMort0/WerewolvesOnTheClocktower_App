@@ -23,6 +23,7 @@ export type RoomDisplaySnapshot = {
   roomId: string;
   roomCode: string;
   language: Language;
+  beginnerMode?: boolean;
   status: string;
   players: RoomDisplayPlayer[];
   phase: "night" | "day" | "tribunal";

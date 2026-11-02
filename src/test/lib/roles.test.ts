@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { assignRoles, canRandomlyAssignRole, EXTRA_DEATH_ROLES, INFO_ROLES, LIMITED_USE_ROLES, MIME_COPY_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES, TRAVELLER_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { BEGINNER_ROLE_SET } from "@/lib/beginnerMode";
 
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "s02"];
 const IMPLEMENTED_NEW_ROLES: RoleId[] = ["v24", "v25", "m06", "m07", "l05", "l06"];
@@ -9,6 +10,15 @@ function wolfRolesFor(playerCount: number) {
 }
 
 describe("assignRoles werewolf balance", () => {
+  it("uses only the First Time Game characters while retaining normal wolf counts and core roles", () => {
+    for (const count of [8, 10, 12, 16, 24, 40, 100]) {
+      const roles = assignRoles(count, true, ["m07", "v28", "l03"], true);
+      expect(roles).toHaveLength(count);
+      expect(roles.every((role) => BEGINNER_ROLE_SET.has(role))).toBe(true);
+      expect(roles.filter((role) => WEREWOLF_ROLES.includes(role))).toHaveLength(count < 12 ? 2 : Math.floor(count / 4));
+      expect(roles).toEqual(expect.arrayContaining(["e02", "e03", "e04"]));
+    }
+  });
   it("registers new rulebook roles for manual assignment", () => {
     for (const roleId of IMPLEMENTED_NEW_ROLES) {
       expect(ROLES).toHaveProperty(roleId);

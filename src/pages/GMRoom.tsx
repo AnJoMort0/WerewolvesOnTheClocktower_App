@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -163,7 +163,7 @@ type Room = {
   status: string;
   language?: Language;
   player_action_state?: PlayerActionState | null;
-  phase_state?: { phase: "night" | "day" | "tribunal"; number: number } | null;
+  phase_state?: { phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean } | null;
   timer_state?: TimerSyncState | null;
   timer_defaults?: TimerDefaults | null;
 };
@@ -197,6 +197,7 @@ type GMSnapshot = {
   rolesAssigned: boolean;
   pendingChanges: boolean;
   advancedEnabled: boolean;
+  beginnerMode?: boolean;
   nightNumber: number;
   playerStatuses: Record<string, PlayerStatus>;
   permanentlyDead: string[];
@@ -446,6 +447,7 @@ const NIGHT_START_CLEARED_EFFECTS: StatusEffect[] = ["vote_against", "vote_doubl
 
 const GMRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
+  const location = useLocation();
   const { skinPackId } = useSkinPack();
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -468,6 +470,7 @@ const GMRoom = () => {
     if (typeof window === "undefined" || !roomId) return false;
     return window.localStorage.getItem(`${GM_ADVANCED_STORAGE_PREFIX}${roomId}`) === "1";
   });
+  const [beginnerMode, setBeginnerMode] = useState(() => (location.state as { beginnerMode?: boolean } | null)?.beginnerMode === true);
 
   // Night & status tracking
   const [nightNumber, setNightNumber] = useState(1);
@@ -1448,6 +1451,7 @@ const GMRoom = () => {
       setRolesAssigned(!!snapshot.rolesAssigned);
       setPendingChanges(!!snapshot.pendingChanges);
       setAdvancedEnabled(!!snapshot.advancedEnabled);
+      setBeginnerMode(!!snapshot.beginnerMode);
       setNightNumber(snapshot.nightNumber ?? 1);
       setPlayerStatuses(snapshot.playerStatuses ?? {});
       setPermanentlyDead(new Set(snapshot.permanentlyDead ?? []));
@@ -1533,6 +1537,7 @@ const GMRoom = () => {
       rolesAssigned,
       pendingChanges,
       advancedEnabled,
+      beginnerMode,
       nightNumber,
       playerStatuses,
       permanentlyDead: Array.from(permanentlyDead),
@@ -1610,6 +1615,7 @@ const GMRoom = () => {
     rolesAssigned,
     pendingChanges,
     advancedEnabled,
+    beginnerMode,
     nightNumber,
     playerStatuses,
     permanentlyDead,
@@ -1694,6 +1700,7 @@ const GMRoom = () => {
       roomId,
       roomCode: room.code,
       language: room.language ?? "pt",
+      beginnerMode,
       status: room.status,
       players: players.map(({ id, name, seat_position, character, is_alive, is_traveller, traveller_role }) => ({
         id,
@@ -1730,6 +1737,7 @@ const GMRoom = () => {
     room,
     gmSnapshotLoaded,
     players,
+    beginnerMode,
     gameCyclePhase,
     dayPhase,
     nightNumber,
@@ -1821,7 +1829,7 @@ const GMRoom = () => {
     if (!roomId || !gmSnapshotLoaded) return;
     // When in the day cycle, the effective phase shown to players is dayPhase (day or tribunal).
     const effectivePhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
-    const phaseState = { phase: effectivePhase, number: nightNumber };
+    const phaseState = { phase: effectivePhase, number: nightNumber, beginnerMode };
     const ch = supabase.channel(`room-phase-${roomId}`);
     ch.send({
       type: "broadcast",
@@ -1829,7 +1837,7 @@ const GMRoom = () => {
       payload: phaseState,
     });
     void supabase.from("rooms").update({ phase_state: phaseState }).eq("id", roomId);
-  }, [roomId, gmSnapshotLoaded, gameCyclePhase, dayPhase, nightNumber]);
+  }, [roomId, gmSnapshotLoaded, gameCyclePhase, dayPhase, nightNumber, beginnerMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1881,6 +1889,7 @@ const GMRoom = () => {
         setTimerDefaults(normalizeTimerDefaults(fetchedRoom.timer_defaults));
         if (fetchedRoom.timer_state) setSyncedTimerState(fetchedRoom.timer_state);
         if (fetchedRoom.phase_state) {
+          setBeginnerMode(!!fetchedRoom.phase_state.beginnerMode);
           setNightNumber(fetchedRoom.phase_state.number);
           if (fetchedRoom.phase_state.phase === "night") {
             setGameCyclePhase("night");
@@ -2553,7 +2562,7 @@ const GMRoom = () => {
     }
 
     const seatedPlayers = [...players].sort((a, b) => (a.seat_position ?? 0) - (b.seat_position ?? 0));
-    const roles = assignRoles(seatedPlayers.length, advancedEnabled, getActiveSeasonalRoleIds(skinPackId));
+    const roles = assignRoles(seatedPlayers.length, advancedEnabled, getActiveSeasonalRoleIds(skinPackId), beginnerMode);
     const assignments: Record<string, RoleId> = {};
     seatedPlayers.forEach((p, i) => {
       assignments[p.id] = roles[i];
@@ -7475,6 +7484,7 @@ const GMRoom = () => {
                             value={baseRoleId}
                             onChange={(role) => changeRole(player.id, role)}
                             advancedEnabled={advancedEnabled}
+                            beginnerMode={beginnerMode}
                             travellerOnly={player.is_traveller}
                           />
                         </div>
@@ -7624,8 +7634,17 @@ const GMRoom = () => {
 
               {!rolesConfirmed && (
                 <div className="flex items-center gap-2">
-                  <Switch id="advanced-toggle" checked={advancedEnabled} onCheckedChange={setAdvancedEnabled} />
+                  <Switch id="advanced-toggle" checked={advancedEnabled} onCheckedChange={setAdvancedEnabled} disabled={beginnerMode} />
                   <Label htmlFor="advanced-toggle" className="font-display text-sm cursor-pointer">{tt("advancedMode")}</Label>
+                </div>
+              )}
+              {!rolesAssigned && (
+                <div className="flex items-center gap-2">
+                  <Switch id="beginner-toggle" checked={beginnerMode} onCheckedChange={(enabled) => {
+                    setBeginnerMode(enabled);
+                    if (enabled) setAdvancedEnabled(false);
+                  }} />
+                  <Label htmlFor="beginner-toggle" className="font-display text-sm cursor-pointer">{tt("beginnerMode")}</Label>
                 </div>
               )}
 
@@ -7706,7 +7725,7 @@ const GMRoom = () => {
                             </span>
                           </span>
                           {isDuplicate && <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />}
-                          <RoleSelector value={roleId} onChange={(role) => changeRole(player.id, role)} advancedEnabled={advancedEnabled} />
+                          <RoleSelector value={roleId} onChange={(role) => changeRole(player.id, role)} advancedEnabled={advancedEnabled} beginnerMode={beginnerMode} />
                         </div>
                       );
                     })}
@@ -7822,6 +7841,7 @@ const GMRoom = () => {
         onOpenChange={setRulebookOpen}
         language={lang}
         roleId={rulebookRoleId}
+        beginnerMode={beginnerMode}
       />
 
       <GameLogModal

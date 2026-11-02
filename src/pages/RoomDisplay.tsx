@@ -162,7 +162,7 @@ export default function RoomDisplay() {
           illusionPlayerId={snapshot.illusionPlayerId}
           illusionPlayerIds={new Set(snapshot.illusionPlayerIds ?? (snapshot.illusionPlayerId ? [snapshot.illusionPlayerId] : []))}
         />
-        <RulebookModal open={rulebookOpen} onOpenChange={setRulebookOpen} language={language} />
+        <RulebookModal open={rulebookOpen} onOpenChange={setRulebookOpen} language={language} beginnerMode={snapshot.beginnerMode ?? false} />
         <GameOverModal
           open={!!snapshot.gameOver && snapshot.gameOver.id !== dismissedGameOverId}
           kind={snapshot.gameOver?.kind ?? null}
