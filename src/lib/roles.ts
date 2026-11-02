@@ -5,6 +5,7 @@ import e04Img from "@/assets/display/roles/e04.webp";
 import v01Img from "@/assets/display/roles/v01.webp";
 import v02Img from "@/assets/display/roles/v02.webp";
 import v03Img from "@/assets/display/roles/v03.webp";
+import v28Img from "@/assets/display/roles/v28.webp";
 import v04Img from "@/assets/display/roles/v04.webp";
 import v05Img from "@/assets/display/roles/v05.webp";
 import v26Img from "@/assets/display/roles/v26.webp";
@@ -79,6 +80,7 @@ const ROLE_DEFINITIONS = {
   v01: { id: "v01", label: "Little Girl", image: v01Img, category: "v" },
   v02: { id: "v02", label: "Bear Tamer", image: v02Img, category: "v" },
   v03: { id: "v03", label: "Raven Tamer", image: v03Img, category: "v" },
+  v28: { id: "v28", label: "Swan Tamer", image: v28Img, category: "v" },
   v04: { id: "v04", label: "Fox Tamer", image: v04Img, category: "v" },
   v05: { id: "v05", label: "Bunny Tamer", image: v05Img, category: "v" },
   v26: { id: "v26", label: "Monkey Tamer", image: v26Img, category: "v" },
@@ -178,16 +180,16 @@ export function isDetectableWerewolfRole(roleId: RoleId): boolean {
 export const WEB_IMMUNE_ROLES: RoleId[] = ["v10", "v18", "v22"];
 
 export const MIME_COPY_ROLES: RoleId[] = [
-  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03",  "v04",  "v05", "v26",  "v08",  "v09", "v27",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02", "m07",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06",  "l06"
+  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03", "v28",  "v04",  "v05", "v26",  "v08",  "v09", "v27",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02", "m07",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06",  "l06"
 ];
 
 /** Information characters — randomizer tries to include at least one of these. */
-export const INFO_ROLES: RoleId[] = ["v02", "v03", "v04", "v05", "v26", "v06", "v22", "v23", "v25"];
+export const INFO_ROLES: RoleId[] = ["v02", "v03", "v28", "v04", "v05", "v26", "v06", "v22", "v23", "v25"];
 
 const ESSENTIAL_SINGLES: RoleId[] = ["e02", "e03", "e04"];
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "s02"];
 const VILLAGER_UNIQUE: RoleId[] = [
-  "v01", "v02", "v03", "v04", "v05", "v26", "v06", "v07", "v08", "v08b", "v09", "v27", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25"
+  "v01", "v02", "v03", "v28", "v04", "v05", "v26", "v06", "v07", "v08", "v08b", "v09", "v27", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25"
 ];
 const ADVANCED_ROLES: RoleId[] = ["a01", "a02", "a03", "a04", "a05", "a06", "as01b"];
 const OTHER_UNIQUE: RoleId[] = ["m04", "m05", "s01", "f01", "f02"];

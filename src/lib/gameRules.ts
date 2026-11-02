@@ -72,6 +72,20 @@ export function getGuaranteedWrongCount(actual: number): number {
   return actual === 0 ? 1 : actual - 1;
 }
 
+/** Count each edge between neighboring living Evil Beings around the seating circle. */
+export function countAdjacentEvilPairs(orderedLivingPlayerIds: readonly string[], evilPlayerIds: ReadonlySet<string>): number {
+  const count = orderedLivingPlayerIds.length;
+  if (count < 2) return 0;
+  // With only two survivors the left and right neighbor are the same person.
+  const edges = count === 2 ? 1 : count;
+  let pairs = 0;
+  for (let index = 0; index < edges; index += 1) {
+    if (evilPlayerIds.has(orderedLivingPlayerIds[index])
+      && evilPlayerIds.has(orderedLivingPlayerIds[(index + 1) % count])) pairs += 1;
+  }
+  return pairs;
+}
+
 export function getCircularDistances(
   observerPlayerId: string,
   orderedPlayerIds: string[],

@@ -65,7 +65,7 @@ describe("RulebookModal", () => {
     expect(screen.queryByRole("dialog", { name: "Behind the story" })).not.toBeInTheDocument();
 
     fireEvent.click(sentence);
-    expect(await screen.findByRole("dialog", { name: "Behind the story" })).toHaveTextContent("poisoning the Little Girl made her die immediately");
+    expect(await screen.findByRole("dialog", { name: "Behind the story" })).toHaveTextContent("poisoning the Little Girl made her die instantly");
     expect(sentence).toHaveAttribute("aria-expanded", "true");
     fireEvent.keyDown(document.activeElement!, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Behind the story" })).not.toBeInTheDocument());

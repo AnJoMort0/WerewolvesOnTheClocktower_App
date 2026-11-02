@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canWhiteWolfTarget,
+  countAdjacentEvilPairs,
   getCircularDistances,
   getGuaranteedWrongCount,
   getLittleGirlAnswerKind,
@@ -31,6 +32,20 @@ describe("poisoned information rules", () => {
     for (let actual = 0; actual <= 20; actual += 1) {
       expect(getGuaranteedWrongCount(actual)).not.toBe(actual);
     }
+  });
+});
+
+describe("Swan Tamer neighboring pairs", () => {
+  it("counts overlapping pairs and the circular boundary", () => {
+    const seats = ["evil-a", "evil-b", "evil-c", "good", "evil-d"];
+    expect(countAdjacentEvilPairs(seats, new Set(["evil-a", "evil-b", "evil-c", "evil-d"]))).toBe(3);
+  });
+
+  it("counts neighbors after dead players are omitted, with no duplicate two-player edge", () => {
+    const evil = new Set(["evil-a", "evil-b"]);
+    expect(countAdjacentEvilPairs(["evil-a", "evil-b", "good"], evil)).toBe(1);
+    expect(countAdjacentEvilPairs(["evil-a", "evil-b"], evil)).toBe(1);
+    expect(countAdjacentEvilPairs(["evil-a"], evil)).toBe(0);
   });
 });
 

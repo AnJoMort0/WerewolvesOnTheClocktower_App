@@ -25,10 +25,6 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] Add an origin line to every character
-  * [ ] In the same line as "Lore" button in the rulebook add to the right side with a very small font the origin of each character written "Based on: [origin_1]/[origin_2]". If it's an original character only don't put the "Based on", just "Original character".
-  * [ ] I added the origins to rulebookContents, change how they are formated if you need to make it work
-
 * [ ] First time mode: A base game mode with a limited selection of characters mostly based on Miller's Hollow but that still introduced some of the most advanced features of WOTCT, for new players trying the game for the first time
   * [ ] Should have a rulebook version of this mode available in both the normal app and in the github pages version that can be linked and send to people to read (a button to open a new page maybe?)
   * [ ] When creating a new game, LAN, online or analogue, there should be a toggle to activate "Beginner Mode" or "First Time Game" or whatever the name should be

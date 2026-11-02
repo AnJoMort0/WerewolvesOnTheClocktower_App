@@ -15,7 +15,7 @@ import { useLanguage, getScripts, getDynamic, getEffectLabel, getRoleLabel, getT
 import { EVIL_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
-import { getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
+import { countAdjacentEvilPairs, getCircularDistances, getGuaranteedWrongCount } from "@/lib/gameRules";
 import poisonedIcon from "@/assets/display/icons/poisoned.webp";
 import cursedIcon from "@/assets/display/icons/cursed.webp";
 import { toast } from "sonner";
@@ -1018,7 +1018,22 @@ export const NightScript = ({
     return undefined;
   };
 
+  const getSwanDynamicText = (line: ScriptLine, sourcePlayerId: string): string => {
+    const livingInSeatOrder = players
+      .filter((player) => player.seat_position !== null && !_permanentlyDeadPlayerIds.has(player.id))
+      .sort((left, right) => left.seat_position! - right.seat_position!)
+      .map((player) => player.id);
+    const evilPlayerIds = new Set(livingInSeatOrder.filter(countsAsEvilBeing));
+    const actual = countAdjacentEvilPairs(livingInSeatOrder, evilPlayerIds);
+    const shown = isPlayerActingPoisoned(sourcePlayerId) ? getGuaranteedWrongCount(actual) : actual;
+    return `${line.text.replace(/\.$/, "")}: ${shown}`;
+  };
+
   const getDynamicText = (line: ScriptLine, sourcePlayerId?: string | null, dogWolfLine = false, mimeLine = false): string | undefined => {
+    if (line.requires?.length === 1 && line.requires[0] === "v28") {
+      const swanPlayerId = sourcePlayerId ?? (actorCopiedRole === "v28" ? actorPlayerId : null);
+      return swanPlayerId ? getSwanDynamicText(line, swanPlayerId) : undefined;
+    }
     if (dogWolfLine && sourcePlayerId) {
       const dogText = getDogDynamicText(line, sourcePlayerId);
       if (dogText) return dogText;
@@ -1437,7 +1452,7 @@ export const NightScript = ({
         return item;
       }) };
     });
-  }, [boneCollectorAbilityRole, boneCollectorCopiedRole, boneCollectorHasWebbedPlayer, boneCollectorPlayerId, colossusNightSeed, nightNumber, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource]);
+  }, [boneCollectorAbilityRole, boneCollectorCopiedRole, boneCollectorHasWebbedPlayer, boneCollectorPlayerId, colossusNightSeed, nightNumber, filterLine, roleAssignments, effectivelyDead, _permanentlyDeadPlayerIds, prophecyGhostPlayerIds, localizedScripts, lang, sectionLabels, actorCopiedRole, actorPlayerId, actorCopyNoticeNight, actorPowerState.shamanCharges, actorPowerState.foxDisabled, baseRoleAssignments, conditionKeys, shouldShowFortuneTellerLine, shouldShowMimeCopiedLine, deathTriggeredSourcePlayerIds, drunkardMechanicPlayerIds, drunkardReplacementRole, poisonedPlayerIds, mimeMechanicalRole, mimePlayerId, dogWolfPlayerIds, dogWolfStates, abilityRoleAssignments, independentPowerStates, isPlayerActingPoisoned, spiderCaughtBySource, _playerEffects]);
 
   const getItemParticipants = useCallback((item: ScriptRenderItem): string[] => {
     const sourcePlayerId = item.sourcePlayerId ?? (item.actorLine || item.actorNotice ? actorPlayerId : item.mimeLine ? mimePlayerId : null);

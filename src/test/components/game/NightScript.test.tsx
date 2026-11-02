@@ -25,6 +25,38 @@ const baseProps = {
 
 const phoneModeSelector = (mode: string) => `[data-phone-mode="${mode}"]`;
 
+describe("Swan Tamer night information", () => {
+  it("counts living evil neighbors, treats the (Were)wolf Tamer as hidden, and lies when poisoned", () => {
+    const props = { ...baseProps, activeRoles: new Set(["v28" as const, "e01" as const, "m06" as const]),
+      roleAssignments: { swan: "v28" as const, wolfA: "e01" as const, wolfB: "e01" as const, hidden: "m06" as const, villager: "v01" as const },
+      players: ["swan", "wolfA", "wolfB", "hidden", "villager"].map((id, seat_position) => ({ id, name: id, seat_position })) };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    expect(container.textContent).toMatch(/Swan Tamer.*Village: 1/);
+
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props} poisonedPlayerIds={new Set(["swan"])} /></LanguageContext.Provider>);
+    expect(container.textContent).toMatch(/Swan Tamer.*Village: 0/);
+
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props} permanentlyDead={new Set(["hidden", "villager"])} /></LanguageContext.Provider>);
+    expect(container.textContent).toMatch(/Swan Tamer.*Village: 1/);
+  });
+
+  it("gives independent Swan results to Mime, Actor, and Dog copies", () => {
+    const props = { ...baseProps, nightNumber: 3,
+      activeRoles: new Set(["v28" as const, "a03" as const, "a04" as const, "a02" as const, "e01" as const]),
+      roleAssignments: { swan: "v28" as const, actor: "v28" as const, mime: "a03" as const, dog: "v28" as const, wolfA: "e01" as const, wolfB: "e01" as const },
+      baseRoleAssignments: { swan: "v28" as const, actor: "a04" as const, mime: "a03" as const, dog: "a02" as const, wolfA: "e01" as const, wolfB: "e01" as const },
+      abilityRoleAssignments: { swan: "v28" as const, actor: "v28" as const, mime: "v28" as const, dog: "v28" as const, wolfA: "e01" as const, wolfB: "e01" as const },
+      actorPlayerId: "actor", actorCopiedRole: "v28" as const, actorCopyNoticeNight: 1,
+      mimePlayerId: "mime", mimeMechanicalRole: "v28" as const,
+      dogWolfPlayerIds: ["dog"], dogWolfStates: { dog: createDogWolfState("swan") },
+      players: ["swan", "actor", "mime", "dog", "wolfA", "wolfB"].map((id, seat_position) => ({ id, name: id, seat_position })),
+      poisonedPlayerIds: new Set(["mime"]) };
+    const { container } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    expect(container.textContent?.match(/Village: 1/g)).toHaveLength(3);
+    expect(container.textContent?.match(/Village: 0/g)).toHaveLength(1);
+  });
+});
+
 describe("NightScript phone controls", () => {
   it("opens the Gambler guess and crosses out a poisoned Gambler without offering the action", () => {
     const onPhoneToggle = vi.fn();
