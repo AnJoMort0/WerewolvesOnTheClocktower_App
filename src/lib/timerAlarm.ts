@@ -1,3 +1,5 @@
+import type { TimerProjection } from "@/lib/timerState";
+
 export type TimerAlarmState = {
   phase: "day" | "tribunal";
   timerDone: boolean;
@@ -55,4 +57,17 @@ export function playTimerAlarm() {
 
 export function shouldPlayTimerAlarm(previous: TimerAlarmState | null, current: TimerAlarmState): boolean {
   return previous?.phase === current.phase && !previous.timerDone && current.timerDone;
+}
+
+/** Recovery after sleep or refresh must display expiry without replaying its sound. */
+export function shouldPlayProjectedTimerAlarm(
+  previous: TimerProjection | null,
+  current: TimerProjection,
+  observation: "live" | "recovery",
+  visible: boolean,
+): boolean {
+  return observation === "live" && visible
+    && previous?.phase === current.phase
+    && previous.phaseNumber === current.phaseNumber
+    && previous.isRunning && !previous.timerDone && current.timerDone;
 }
