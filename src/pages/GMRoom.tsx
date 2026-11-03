@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -447,7 +447,6 @@ const NIGHT_START_CLEARED_EFFECTS: StatusEffect[] = ["vote_against", "vote_doubl
 
 const GMRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
-  const location = useLocation();
   const { skinPackId } = useSkinPack();
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -470,7 +469,7 @@ const GMRoom = () => {
     if (typeof window === "undefined" || !roomId) return false;
     return window.localStorage.getItem(`${GM_ADVANCED_STORAGE_PREFIX}${roomId}`) === "1";
   });
-  const [beginnerMode, setBeginnerMode] = useState(() => (location.state as { beginnerMode?: boolean } | null)?.beginnerMode === true);
+  const [beginnerMode, setBeginnerMode] = useState(false);
 
   // Night & status tracking
   const [nightNumber, setNightNumber] = useState(1);

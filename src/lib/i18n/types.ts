@@ -437,6 +437,7 @@ export interface UIStrings {
   confirmChanges: string;
   advancedMode: string;
   beginnerMode: string;
+  completeRulebook: string;
   devTestPlayers: string;
   waitingForPlayers: string;
   devTestPlayersAdded: string;

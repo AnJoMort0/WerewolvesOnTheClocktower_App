@@ -325,6 +325,7 @@ export const fr: Translation = {
     confirmChanges: "Confirmer les Modifications",
     advancedMode: "Mode Avancé",
     beginnerMode: "Mode Débutant",
+    completeRulebook: "Règles complètes",
     devTestPlayers: "Dev : Ajouter 8 joueurs test",
     waitingForPlayers: "En attente des joueurs…",
     devTestPlayersAdded: "joueurs de test ajoutés !",

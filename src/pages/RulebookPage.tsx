@@ -70,6 +70,13 @@ export default function RulebookPage({ standalone = false }: { standalone?: bool
     });
   };
 
+  const switchRulebookMode = () => {
+    const next = new URLSearchParams(searchParams);
+    if (beginnerMode) next.delete("mode");
+    else next.set("mode", "beginner");
+    navigate({ search: `?${next.toString()}` });
+  };
+
   const leaveRulebook = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -91,7 +98,7 @@ export default function RulebookPage({ standalone = false }: { standalone?: bool
       >
         <X className="h-5 w-5" />
       </Button>}
-      <div className="mx-auto mb-4 flex max-w-6xl items-center justify-between gap-3">
+      <div className="mx-auto mb-4 flex max-w-6xl flex-wrap items-center justify-between gap-3">
         {standalone ? <div className="flex flex-wrap gap-2" aria-label="Language">
           {([['en', 'English'], ['pt', 'Português'], ['fr', 'Français']] as const).map(([code, label]) => (
             <Button key={code} size="sm" variant={language === code ? "default" : "secondary"}
@@ -108,21 +115,13 @@ export default function RulebookPage({ standalone = false }: { standalone?: bool
             {t("backHome", language)}
           </Link>
         </Button>}
-        <div className={standalone ? undefined : "pr-14 sm:pr-0"}>
+        <div className={`flex items-center gap-2 ${standalone ? "" : "pr-14 sm:pr-0"}`}>
+          <Button type="button" size="sm" variant="ghost" onClick={switchRulebookMode}
+            className="h-9 px-2 text-xs font-display text-muted-foreground hover:text-foreground">
+            {beginnerMode ? getTranslation(language).ui.completeRulebook : getTranslation(language).ui.beginnerMode}
+          </Button>
           <SkinPackSelectButton language={language} />
         </div>
-      </div>
-      <div className="mx-auto mb-4 flex max-w-6xl justify-center gap-2">
-        <Button type="button" size="sm" variant={beginnerMode ? "secondary" : "default"} onClick={() => {
-          const next = new URLSearchParams(searchParams);
-          next.delete("mode");
-          navigate({ search: `?${next.toString()}` });
-        }}>{t("rulebook", language)}</Button>
-        <Button type="button" size="sm" variant={beginnerMode ? "default" : "secondary"} onClick={() => {
-          const next = new URLSearchParams(searchParams);
-          next.set("mode", "beginner");
-          navigate({ search: `?${next.toString()}` });
-        }}>{getTranslation(language).ui.beginnerMode}</Button>
       </div>
       <article
         ref={setArticleElement}

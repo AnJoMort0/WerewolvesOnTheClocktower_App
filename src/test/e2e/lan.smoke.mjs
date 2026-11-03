@@ -52,10 +52,10 @@ try {
   const gm = await cdp.page(base);
   await cdp.evaluate(gm, "localStorage.setItem('preferred_language', 'en')");
   await cdp.call("Page.reload", {}, gm);
-  await cdp.wait(gm, "!!document.querySelector('[aria-label=\"Beginner Mode\"]')");
-  await cdp.evaluate(gm, "document.querySelector('[aria-label=\"Beginner Mode\"]').click()");
   await cdp.click(gm, "Start LAN game");
   await cdp.wait(gm, "location.pathname.startsWith('/gm/') && document.body.innerText.includes('players in the room')");
+  await cdp.wait(gm, "!!document.querySelector('#beginner-toggle')");
+  await cdp.evaluate(gm, "document.querySelector('#beginner-toggle').click()");
   const roomId = await cdp.evaluate(gm, "location.pathname.split('/').pop()");
   const game = await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" });
   await cdp.wait(gm, "document.querySelector('#beginner-toggle')?.getAttribute('aria-checked') === 'true'");

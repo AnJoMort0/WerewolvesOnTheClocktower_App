@@ -77,7 +77,7 @@ try {
   await cdp.click(beginnerPage, "Français");
   await cdp.wait(beginnerPage, "!!document.querySelector('article[lang=fr]')");
   assert.equal(await cdp.evaluate(beginnerPage, "new URLSearchParams(location.search).get('mode')"), "beginner");
-  await cdp.click(beginnerPage, "Règles");
+  await cdp.click(beginnerPage, "Règles complètes");
   await cdp.wait(beginnerPage, "new URLSearchParams(location.search).get('mode') === null && !!document.getElementById('t01')");
   await cdp.click(beginnerPage, "Mode Débutant");
   await cdp.wait(beginnerPage, "new URLSearchParams(location.search).get('mode') === 'beginner' && !document.getElementById('t01')");
