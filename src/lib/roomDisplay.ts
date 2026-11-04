@@ -3,6 +3,7 @@ import { normalizeStatusEffectSet, type StatusEffect } from "@/lib/effects";
 import { normalizeGameLogEvents, type GameLogEvent } from "@/lib/gameLog";
 import type { Language, WinKind } from "@/lib/i18n";
 import type { RoleId } from "@/lib/roles";
+import type { TimerState } from "@/lib/timerState";
 
 export const ROOM_DISPLAY_STORAGE_PREFIX = "wotct_room_display_";
 export const ROOM_DISPLAY_SNAPSHOT_VERSION = 1;
@@ -28,12 +29,7 @@ export type RoomDisplaySnapshot = {
   players: RoomDisplayPlayer[];
   phase: "night" | "day" | "tribunal";
   phaseNumber: number;
-  timerState: {
-    phase: "day" | "tribunal";
-    timeLeft: number;
-    isRunning: boolean;
-    timerDone: boolean;
-  } | null;
+  timerState: TimerState | null;
   roleAssignments: Record<string, RoleId>;
   playerStatuses: Record<string, PlayerStatus>;
   permanentlyDead: string[];

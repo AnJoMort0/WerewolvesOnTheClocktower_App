@@ -21,7 +21,9 @@ import evilBeingIcon from "@/assets/display/icons/evil_being.webp";
 import werewolfIcon from "@/assets/display/icons/werewolf.webp";
 import soloIcon from "@/assets/display/icons/solo.webp";
 import { clearPlayerSession, getPlayerSession, touchPlayerSession } from "@/lib/playerSession";
-import { playTimerAlarm, shouldPlayTimerAlarm, unlockTimerAlarm, type TimerAlarmState } from "@/lib/timerAlarm";
+import { unlockTimerAlarm } from "@/lib/timerAlarm";
+import { parseTimerState, type TimerState } from "@/lib/timerState";
+import { useProjectedRoomTimer } from "@/hooks/useProjectedRoomTimer";
 import { parsePlayerCharacter, shouldShowActorBadge } from "@/lib/actor";
 import { parsePlayerCharacterMetadata } from "@/lib/playerCharacter";
 import { createPlayerActionRequest, normalizePlayerActionState, upsertPowerUses, type PlayerActionKind, type PlayerActionState } from "@/lib/playerActions";
@@ -100,7 +102,9 @@ const PlayerView = () => {
   const [mimeReveal, setMimeReveal] = useState(false);
   const [mimeCards, setMimeCards] = useState<RevealCard[]>([]);
   const [phaseInfo, setPhaseInfo] = useState<{ phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean } | null>(null);
-  const [timerState, setTimerState] = useState<{ phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null>(null);
+  const [timerState, setTimerState] = useState<TimerState | null>(null);
+  const timerRevisionRef = useRef(-1);
+  const projectedTimer = useProjectedRoomTimer(timerState, phaseInfo, true);
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState>(() => normalizePlayerActionState(null));
   const [assassinationMode, setAssassinationMode] = useState(false);
   const [assassinationTargetId, setAssassinationTargetId] = useState<string | null>(null);
@@ -128,7 +132,6 @@ const PlayerView = () => {
   }, [phone.session?.id]);
   const playerRef = useRef<typeof player>(null);
   const gameOverEventRef = useRef<string | null>(null);
-  const previousTimerAlarmStateRef = useRef<TimerAlarmState | null>(null);
   const resolvedPlayerActionRequestIdsRef = useRef<Set<string>>(new Set());
   const fakePlayerActionPendingTimeoutRef = useRef<number | null>(null);
   useEffect(() => { playerRef.current = player; }, [player]);
@@ -178,12 +181,15 @@ const PlayerView = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (!timerState) return;
-    const current = { phase: timerState.phase, timerDone: timerState.timerDone };
-    if (shouldPlayTimerAlarm(previousTimerAlarmStateRef.current, current)) playTimerAlarm();
-    previousTimerAlarmStateRef.current = current;
-  }, [timerState]);
+  const applyPhaseAndTimer = useCallback((phase: unknown, timer: unknown) => {
+    const parsed = parseTimerState(timer);
+    if (!parsed || parsed.revision <= timerRevisionRef.current || !phase || typeof phase !== "object") return;
+    const nextPhase = phase as { phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean };
+    if (nextPhase.phase !== parsed.phase || nextPhase.number !== parsed.phaseNumber) return;
+    timerRevisionRef.current = parsed.revision;
+    setPhaseInfo(nextPhase);
+    setTimerState(parsed);
+  }, []);
 
   useEffect(() => {
     if (!playerId || !player?.room_id) return;
@@ -290,13 +296,16 @@ const PlayerView = () => {
           if (isLanguage(lang)) setLanguage(lang);
           const durable = roomData as unknown as {
             phase_state?: { phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean } | null;
-            timer_state?: { phase: "day" | "tribunal"; timeLeft: number; isRunning: boolean; timerDone: boolean } | null;
+            timer_state?: TimerState | null;
             game_over_state?: { kind: WinKind; perPlayer?: Record<string, "victory" | "defeat">; gameLog?: unknown } | null;
             player_action_state?: PlayerActionState | null;
           };
           applyRoomPlayerActionState(durable.player_action_state);
-          if (durable.phase_state) setPhaseInfo(durable.phase_state);
-          if (durable.timer_state) setTimerState(durable.timer_state);
+          if (roomData.status === "lobby") {
+            timerRevisionRef.current = -1;
+            setPhaseInfo(null);
+            setTimerState(null);
+          } else applyPhaseAndTimer(durable.phase_state, durable.timer_state);
           if (durable.game_over_state?.kind) {
             const outcome = durable.game_over_state.perPlayer?.[playerId] ?? "defeat";
             gameOverEventRef.current = `${durable.game_over_state.kind}:${outcome}`;
@@ -389,8 +398,11 @@ const PlayerView = () => {
             if ("player_action_state" in payload.new) {
               applyRoomPlayerActionState(payload.new.player_action_state);
             }
-            if (payload.new.phase_state) setPhaseInfo(payload.new.phase_state);
-            if (payload.new.timer_state) setTimerState(payload.new.timer_state);
+            if (payload.new.status === "lobby") {
+              timerRevisionRef.current = -1;
+              setPhaseInfo(null);
+              setTimerState(null);
+            } else applyPhaseAndTimer(payload.new.phase_state, payload.new.timer_state);
             const durableGameOver = payload.new.game_over_state as {
               kind?: WinKind;
               perPlayer?: Record<string, "victory" | "defeat">;
@@ -518,18 +530,6 @@ const PlayerView = () => {
           }
         }).subscribe();
 
-      // Phase sync from GM (Noite/Dia/Tribunal X)
-      const phaseCh = supabase.channel(`room-phase-${roomId}`)
-        .on("broadcast", { event: "phase" }, (payload) => {
-          setPhaseInfo(payload.payload);
-        }).subscribe();
-
-      // Live Day/Tribunal timer sync from GM
-      const timerCh = supabase.channel(`room-timer-${roomId}`)
-        .on("broadcast", { event: "timer" }, (payload) => {
-          setTimerState(payload.payload);
-        }).subscribe();
-
       const gameOverCh = supabase.channel(`game-over-${roomId}`)
         .on("broadcast", { event: "game-over" }, (payload) => {
           const d = payload.payload as {
@@ -600,8 +600,6 @@ const PlayerView = () => {
         supabase.removeChannel(spiderCh);
         supabase.removeChannel(spyCh);
         supabase.removeChannel(mimeCh);
-        supabase.removeChannel(phaseCh);
-        supabase.removeChannel(timerCh);
         supabase.removeChannel(gameOverCh);
         supabase.removeChannel(playerActionCh);
       };
@@ -614,7 +612,7 @@ const PlayerView = () => {
       if (playersChannel) supabase.removeChannel(playersChannel);
       if (fortuneTellerChannel) supabase.removeChannel(fortuneTellerChannel);
     };
-  }, [applyRoomPlayerActionState, clearFakePlayerActionPending, playerId, navigate, player?.room_id]);
+  }, [applyPhaseAndTimer, applyRoomPlayerActionState, clearFakePlayerActionPending, playerId, navigate, player?.room_id]);
 
   // Persist hidden state across reloads
   useEffect(() => {
@@ -1184,12 +1182,12 @@ const PlayerView = () => {
                 {phaseInfo.phase === "night" && (
                   <p className="text-xs text-muted-foreground italic">{t("nightFalls", language)}</p>
                 )}
-                {phaseInfo.phase !== "night" && timerState && timerState.phase === phaseInfo.phase && (
+                {projectedTimer && (
                   <>
-                    <div className={`font-display text-4xl tracking-wider mt-1 ${timerState.timeLeft <= 30 ? "text-destructive animate-pulse" : "text-foreground"}`}>
-                      {String(Math.floor(timerState.timeLeft / 60)).padStart(2, "0")}:{String(timerState.timeLeft % 60).padStart(2, "0")}
+                    <div className={`font-display text-4xl tracking-wider mt-1 ${projectedTimer.timeLeft <= 30 ? "text-destructive animate-pulse" : "text-foreground"}`}>
+                      {String(Math.floor(projectedTimer.timeLeft / 60)).padStart(2, "0")}:{String(projectedTimer.timeLeft % 60).padStart(2, "0")}
                     </div>
-                    {timerState.timerDone && (
+                    {projectedTimer.timerDone && (
                       <p className="font-display text-yellow-400 text-xs">
                         {phaseInfo.phase === "day" ? t("dayTimerEnded", language) : t("tribunalTimerEnded", language)}
                       </p>

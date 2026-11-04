@@ -1,7 +1,7 @@
 import { setTimeout as delay } from "node:timers/promises";
 
 export class CDP {
-  constructor(socket, { base, errors = [], externalRequests = [] }) {
+  constructor(socket, { base, allowedOrigins = [], interceptRequest = null, errors = [], externalRequests = [] }) {
     this.socket = socket; this.next = 0; this.pending = new Map();
     socket.addEventListener("message", ({ data }) => {
       const message = JSON.parse(data);
@@ -13,8 +13,9 @@ export class CDP {
       } else if (message.method === "Runtime.exceptionThrown") {
         errors.push(message.params.exceptionDetails.exception?.description ?? message.params.exceptionDetails.text);
       } else if (message.method === "Fetch.requestPaused") {
+        if (interceptRequest?.(message, this)) return;
         const url = message.params.request.url;
-        const remote = /^https?:/.test(url) && new URL(url).origin !== base;
+        const remote = /^https?:/.test(url) && ![base, ...allowedOrigins].includes(new URL(url).origin);
         if (remote) externalRequests.push(url);
         void this.call(remote ? "Fetch.failRequest" : "Fetch.continueRequest", {
           requestId: message.params.requestId, ...(remote ? { errorReason: "BlockedByClient" } : {}),

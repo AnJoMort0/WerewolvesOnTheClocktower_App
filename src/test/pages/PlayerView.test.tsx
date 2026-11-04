@@ -46,7 +46,12 @@ const backend = vi.hoisted(() => {
             return result.then(resolve, reject);
           }
           const data = table === "rooms"
-            ? { status: "playing", language: "en", player_action_state: null, phase_state: { phase: state.phaseKind, number: state.phase }, timer_state: null, game_over_state: null }
+            ? { status: "playing", language: "en", player_action_state: null,
+              phase_state: { phase: state.phaseKind, number: state.phase },
+              timer_state: { version: 2, revision: state.phase, phase: state.phaseKind, phaseNumber: state.phase,
+                status: state.phaseKind === "night" ? "inactive" : "paused",
+                remainingMs: state.phaseKind === "night" ? 0 : 300000,
+                deadlineAt: null, lastMutationId: "phase" }, game_over_state: null }
             : [{ id: "player", name: "Human", seat_position: 0, is_alive: state.alive,
               is_traveller: state.traveller, traveller_state: state.travellerState, traveller_role: state.travellerRole }];
           return Promise.resolve({ data, error: null }).then(resolve, reject);
@@ -72,6 +77,7 @@ const backend = vi.hoisted(() => {
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   from: backend.from, channel: backend.channel,
+  rpc: async () => ({ data: Date.now(), error: null }),
   removeChannel: (channel: Parameters<typeof backend.channels.delete>[0]) => { backend.channels.delete(channel); return Promise.resolve("ok"); },
 } }));
 
@@ -130,6 +136,34 @@ describe("player recovery and room isolation", () => {
     const ownChannel = Array.from(backend.channels).find((channel) => channel.topic === "player-player")!;
     act(() => ownChannel.subscriber?.("SUBSCRIBED"));
     await waitFor(() => expect(screen.getByText("Night 2")).toBeInTheDocument());
+  });
+
+  it("ignores an older room event so its phase cannot expose the previous timer", async () => {
+    backend.state.phase = 2;
+    showPlayer();
+    await loaded();
+    await waitFor(() => expect(screen.getByText("Night 2")).toBeInTheDocument());
+    const roomChannel = Array.from(backend.channels).find((channel) => channel.topic === "room-room-status")!;
+    const updated = roomChannel.listeners.find((listener) => listener.filter.event === "UPDATE")!;
+    act(() => updated.handler({ new: {
+      status: "playing", phase_state: { phase: "day", number: 1 },
+      timer_state: { version: 2, revision: 1, phase: "day", phaseNumber: 1,
+        status: "paused", remainingMs: 300000, deadlineAt: null, lastMutationId: "old" },
+    } }));
+    expect(screen.getByText("Night 2")).toBeInTheDocument();
+    expect(screen.queryByText("05:00")).toBeNull();
+  });
+
+  it("clears the previous phase and timer when the room returns to the lobby", async () => {
+    backend.state.phaseKind = "day";
+    showPlayer();
+    await loaded();
+    await waitFor(() => expect(screen.getByText("Day 1")).toBeInTheDocument());
+    const roomChannel = Array.from(backend.channels).find((channel) => channel.topic === "room-room-status")!;
+    const updated = roomChannel.listeners.find((listener) => listener.filter.event === "UPDATE")!;
+    act(() => updated.handler({ new: { status: "lobby", phase_state: null, timer_state: null } }));
+    expect(screen.queryByText("Day 1")).toBeNull();
+    expect(screen.queryByText("05:00")).toBeNull();
   });
 
   it("ignores another player's deletion but handles its own deletion", async () => {

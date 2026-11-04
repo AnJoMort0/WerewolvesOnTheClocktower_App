@@ -115,6 +115,9 @@ import immunityIcon from "@/assets/display/icons/immunity_full.webp";
 import villagerIcon from "@/assets/display/icons/villager.webp";
 import { ROLE_DRAG_ACTIONS as SHARED_ROLE_DRAG_ACTIONS } from "@/lib/roleActions";
 import { pickTravellerAlignment, pickTravellerRole, type TravellerAlignment, type TravellerState } from "@/lib/travellers";
+import { acceptTimerRevision, parseTimerState, type TimerState } from "@/lib/timerState";
+import { useProjectedRoomTimer } from "@/hooks/useProjectedRoomTimer";
+import { transitionWithRecovery } from "@/lib/timerTransitionClient";
 
 const JOIN_BASE_URL_STORAGE_KEY = "wotct_join_base_url";
 const GM_ADVANCED_STORAGE_PREFIX = "wotct_gm_advanced_";
@@ -164,15 +167,8 @@ type Room = {
   language?: Language;
   player_action_state?: PlayerActionState | null;
   phase_state?: { phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean } | null;
-  timer_state?: TimerSyncState | null;
+  timer_state?: TimerState | null;
   timer_defaults?: TimerDefaults | null;
-};
-
-type TimerSyncState = {
-  phase: "day" | "tribunal";
-  timeLeft: number;
-  isRunning: boolean;
-  timerDone: boolean;
 };
 
 type TimerDefaults = {
@@ -238,7 +234,7 @@ type GMSnapshot = {
   motherCurseChangeUsed: boolean;
   astronomerBlocksWerewolvesTonight: boolean;
   hideScreenMode: boolean;
-  syncedTimerState: TimerSyncState | null;
+  syncedTimerState: TimerState | null;
   completedScriptLineKeys: string[];
   completedScriptLineActors?: Record<string, string[]>;
   colossusUsedPlayerIds?: string[];
@@ -550,7 +546,13 @@ const GMRoom = () => {
   const [motherCurseChangeUsed, setMotherCurseChangeUsed] = useState(false);
   const [astronomerBlocksWerewolvesTonight, setAstronomerBlocksWerewolvesTonight] = useState(false);
   const [hideScreenMode, setHideScreenMode] = useState(false);
-  const [syncedTimerState, setSyncedTimerState] = useState<TimerSyncState | null>(null);
+  const [syncedTimerState, setSyncedTimerState] = useState<TimerState | null>(null);
+  const syncedTimerRef = useRef<TimerState | null>(null);
+  const durablePhaseRef = useRef<Room["phase_state"]>(null);
+  const [roomTimerLoaded, setRoomTimerLoaded] = useState<string | null>(null);
+  const [timerPending, setTimerPending] = useState(false);
+  const [timerUncertain, setTimerUncertain] = useState(false);
+  const timerTransitionBusy = useRef(false);
   const [hiddenTimerEditing, setHiddenTimerEditing] = useState(false);
   const [hiddenTimerMinutes, setHiddenTimerMinutes] = useState("0");
   const [hiddenTimerSeconds, setHiddenTimerSeconds] = useState("0");
@@ -1491,7 +1493,7 @@ const GMRoom = () => {
       setMotherCurseChangeUsed(!!snapshot.motherCurseChangeUsed);
       setAstronomerBlocksWerewolvesTonight(!!snapshot.astronomerBlocksWerewolvesTonight);
       setHideScreenMode(!!snapshot.hideScreenMode);
-      setSyncedTimerState(snapshot.syncedTimerState ?? null);
+      // The room row, fetched below, is authoritative for timer recovery.
       setCompletedScriptLineKeys(new Set(snapshot.completedScriptLineKeys ?? []));
       setCompletedScriptLineActors(snapshot.completedScriptLineActors ?? {});
       setColossusUsedPlayerIds(new Set(snapshot.colossusUsedPlayerIds ?? []));
@@ -1823,21 +1825,6 @@ const GMRoom = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [objectiveRoleAssignments, playerEffects]);
-  // Broadcast current game phase to player devices (so they can show Noite/Dia/Tribunal X)
-  useEffect(() => {
-    if (!roomId || !gmSnapshotLoaded) return;
-    // When in the day cycle, the effective phase shown to players is dayPhase (day or tribunal).
-    const effectivePhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
-    const phaseState = { phase: effectivePhase, number: nightNumber, beginnerMode };
-    const ch = supabase.channel(`room-phase-${roomId}`);
-    ch.send({
-      type: "broadcast",
-      event: "phase",
-      payload: phaseState,
-    });
-    void supabase.from("rooms").update({ phase_state: phaseState }).eq("id", roomId);
-  }, [roomId, gmSnapshotLoaded, gameCyclePhase, dayPhase, nightNumber, beginnerMode]);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     const value = joinBaseOverride.trim();
@@ -1848,33 +1835,120 @@ const GMRoom = () => {
     }
   }, [joinBaseOverride]);
 
-  const handleTimerSync = useCallback((state: TimerSyncState) => {
-    setSyncedTimerState((current) => {
-      if (current
-        && current.phase === state.phase
-        && current.timeLeft === state.timeLeft
-        && current.isRunning === state.isRunning
-        && current.timerDone === state.timerDone) return current;
-      return state;
-    });
-    if (!roomId) return;
-    void supabase.channel(`room-timer-${roomId}`).send({
-      type: "broadcast", event: "timer", payload: state,
-    });
-    void supabase.from("rooms").update({ timer_state: state }).eq("id", roomId);
-  }, [roomId]);
+  const applyDurableTimer = useCallback((value: unknown) => {
+    const parsed = parseTimerState(value);
+    if (!parsed) return;
+    syncedTimerRef.current = acceptTimerRevision(syncedTimerRef.current, parsed);
+    setSyncedTimerState(syncedTimerRef.current);
+  }, []);
 
-  const handleTimerDefaultsChange = useCallback((defaults: TimerDefaults) => {
-    const next = normalizeTimerDefaults(defaults);
-    setTimerDefaults(next);
-    setRoom((current) => current ? { ...current, timer_defaults: next } : current);
-    if (!roomId) return;
-    void supabase.from("rooms").update({ timer_defaults: next }).eq("id", roomId);
-  }, [roomId]);
+  const recoverTimer = useCallback(async (preserveLocalPhase = false) => {
+    if (!roomId) return false;
+    const { data, error } = await supabase.from("rooms")
+      .select("status, phase_state, timer_state, timer_defaults").eq("id", roomId).single();
+    if (error || !data) return false;
+    const durable = data as unknown as Pick<Room, "status" | "phase_state" | "timer_state" | "timer_defaults">;
+    const incoming = parseTimerState(durable.timer_state);
+    if (incoming && syncedTimerRef.current && incoming.revision < syncedTimerRef.current.revision) return false;
+    durablePhaseRef.current = durable.phase_state;
+    if (durable.status === "lobby" && !incoming) {
+      syncedTimerRef.current = null;
+      setSyncedTimerState(null);
+    }
+    applyDurableTimer(durable.timer_state);
+    setTimerDefaults(normalizeTimerDefaults(durable.timer_defaults));
+    setRoom((current) => current ? { ...current, ...durable } : current);
+    if (durable.phase_state && !preserveLocalPhase) {
+      setBeginnerMode(!!durable.phase_state.beginnerMode);
+      setNightNumber(durable.phase_state.number);
+      if (durable.phase_state.phase === "night") setGameCyclePhase("night");
+      else {
+        setGameCyclePhase("day");
+        setDayPhase(durable.phase_state.phase);
+      }
+    }
+    setRoomTimerLoaded(roomId);
+    setTimerUncertain(false);
+    return true;
+  }, [roomId, applyDurableTimer]);
+
+  const runTimerTransition = useCallback(async (
+    action: "set_phase" | "start" | "pause" | "reset" | "set_duration",
+    phase: "night" | "day" | "tribunal",
+    phaseNumber: number,
+    duration?: number,
+    mode?: boolean,
+  ) => {
+    if (!roomId || roomTimerLoaded !== roomId || timerUncertain || timerTransitionBusy.current) return;
+    timerTransitionBusy.current = true;
+    setTimerPending(true);
+    const send = async () => supabase.rpc("transition_room_timer", {
+      p_room_id: roomId,
+      p_action: action,
+      p_expected_revision: syncedTimerRef.current?.revision ?? 0,
+      p_mutation_id: crypto.randomUUID(),
+      p_phase: phase,
+      p_phase_number: phaseNumber,
+      p_beginner_mode: action === "set_phase" ? mode : undefined,
+      p_duration_seconds: duration,
+    });
+    const phaseMatches = () => durablePhaseRef.current?.phase === phase
+      && durablePhaseRef.current.number === phaseNumber
+      && (action !== "set_phase" || !!durablePhaseRef.current.beginnerMode === !!mode);
+    let outcome = await transitionWithRecovery(send, () => recoverTimer(action === "set_phase"));
+    if (action === "set_phase" && outcome.kind === "recovered" && !phaseMatches()) {
+      // The first request did not commit. Retry once, based on the recovered revision.
+      outcome = await transitionWithRecovery(send, () => recoverTimer(false));
+    }
+    if (outcome.kind === "applied") {
+      const result = outcome.data as { timerState: unknown; phaseState?: Room["phase_state"]; timerDefaults?: TimerDefaults };
+      if (result.phaseState) durablePhaseRef.current = result.phaseState;
+      applyDurableTimer(result.timerState);
+      if (result.timerDefaults) setTimerDefaults(normalizeTimerDefaults(result.timerDefaults));
+      setRoom((current) => current ? {
+        ...current, phase_state: result.phaseState ?? current.phase_state,
+        timer_state: parseTimerState(result.timerState),
+        timer_defaults: normalizeTimerDefaults(result.timerDefaults),
+      } : current);
+      if (action === "set_phase" && result.phaseState) {
+        setBeginnerMode(!!result.phaseState.beginnerMode);
+        setNightNumber(result.phaseState.number);
+        if (result.phaseState.phase === "night") setGameCyclePhase("night");
+        else { setGameCyclePhase("day"); setDayPhase(result.phaseState.phase); }
+      }
+    } else {
+      const reachedPhase = action === "set_phase" && outcome.kind === "recovered" && phaseMatches();
+      const uncertain = action === "set_phase" ? !reachedPhase : outcome.kind === "uncertain";
+      setTimerUncertain(uncertain);
+      if (uncertain) toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
+    }
+    timerTransitionBusy.current = false;
+    setTimerPending(false);
+  }, [roomId, roomTimerLoaded, timerUncertain, recoverTimer, applyDurableTimer, room?.language]);
+
+  const effectiveTimerPhase = gameCyclePhase === "day" ? dayPhase : "night";
+  const projectedTimer = useProjectedRoomTimer(syncedTimerState,
+    { phase: effectiveTimerPhase, number: nightNumber }, true);
+  const handleTimerAction = useCallback((action: "start" | "pause" | "reset" | "set_duration", duration?: number) => {
+    if (effectiveTimerPhase === "night" || !projectedTimer || timerPending || timerUncertain) return;
+    void runTimerTransition(action, effectiveTimerPhase, nightNumber, duration);
+  }, [effectiveTimerPhase, projectedTimer, timerPending, timerUncertain, runTimerTransition, nightNumber]);
+
+  useEffect(() => {
+    if (!gmSnapshotLoaded || roomTimerLoaded !== roomId || room?.status === "finished" || timerPending || timerUncertain) return;
+    const durable = room?.phase_state;
+    if (durable?.phase === effectiveTimerPhase && durable.number === nightNumber
+      && !!durable.beginnerMode === beginnerMode && syncedTimerRef.current) return;
+    void runTimerTransition("set_phase", effectiveTimerPhase, nightNumber, undefined, beginnerMode);
+  }, [gmSnapshotLoaded, roomId, roomTimerLoaded, timerPending, timerUncertain, room?.status, room?.phase_state,
+    effectiveTimerPhase, nightNumber, beginnerMode, runTimerTransition]);
 
   // Fetch room
   useEffect(() => {
     if (!roomId) return;
+    syncedTimerRef.current = null;
+    setSyncedTimerState(null);
+    setRoomTimerLoaded(null);
     const fetchRoom = async () => {
       const { data } = await supabase
         .from("rooms")
@@ -1883,10 +1957,11 @@ const GMRoom = () => {
         .single();
       if (data) {
         const fetchedRoom = data as unknown as Room;
+        durablePhaseRef.current = fetchedRoom.phase_state;
         setRoom(fetchedRoom);
         setPlayerActionState(normalizePlayerActionState(fetchedRoom.player_action_state));
         setTimerDefaults(normalizeTimerDefaults(fetchedRoom.timer_defaults));
-        if (fetchedRoom.timer_state) setSyncedTimerState(fetchedRoom.timer_state);
+        applyDurableTimer(fetchedRoom.timer_state);
         if (fetchedRoom.phase_state) {
           setBeginnerMode(!!fetchedRoom.phase_state.beginnerMode);
           setNightNumber(fetchedRoom.phase_state.number);
@@ -1897,16 +1972,34 @@ const GMRoom = () => {
             setDayPhase(fetchedRoom.phase_state.phase);
           }
         }
+        setRoomTimerLoaded(roomId);
       }
     };
     fetchRoom();
-  }, [roomId]);
+  }, [roomId, applyDurableTimer]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    const recover = () => {
+      if (document.visibilityState !== "hidden" && !timerTransitionBusy.current) void recoverTimer();
+    };
+    window.addEventListener("focus", recover);
+    window.addEventListener("online", recover);
+    document.addEventListener("visibilitychange", recover);
+    return () => {
+      window.removeEventListener("focus", recover);
+      window.removeEventListener("online", recover);
+      document.removeEventListener("visibilitychange", recover);
+    };
+  }, [roomId, recoverTimer]);
 
   useEffect(() => {
     if (!roomId) return;
     let active = true;
     const applyRoomUpdate = (nextRoom: Partial<Room>) => {
       if (!active) return;
+      const incomingTimer = parseTimerState(nextRoom.timer_state);
+      if (incomingTimer && syncedTimerRef.current && incomingTimer.revision < syncedTimerRef.current.revision) return;
       if ("player_action_state" in nextRoom) {
         const incomingState = normalizePlayerActionState(nextRoom.player_action_state);
         const nextState = pruneResolvedPlayerActionState(incomingState);
@@ -1915,11 +2008,15 @@ const GMRoom = () => {
           void supabase.from("rooms").update({ player_action_state: nextState }).eq("id", roomId);
         }
       }
+      if ("timer_state" in nextRoom) applyDurableTimer(nextRoom.timer_state);
+      if (nextRoom.phase_state) durablePhaseRef.current = nextRoom.phase_state;
       setRoom((current) => current ? {
         ...current,
         status: typeof nextRoom.status === "string" ? nextRoom.status : current.status,
         language: nextRoom.language ?? current.language,
         player_action_state: "player_action_state" in nextRoom ? nextRoom.player_action_state ?? null : current.player_action_state,
+        phase_state: nextRoom.phase_state ?? current.phase_state,
+        timer_defaults: nextRoom.timer_defaults ?? current.timer_defaults,
       } : current);
     };
     const channel = supabase
@@ -1938,14 +2035,21 @@ const GMRoom = () => {
       });
 
     return () => { active = false; supabase.removeChannel(channel); };
-  }, [pruneResolvedPlayerActionState, roomId]);
+  }, [pruneResolvedPlayerActionState, roomId, applyDurableTimer]);
 
   // Fetch & subscribe to players
   useEffect(() => {
     if (!roomId) return;
     let active = true;
+    let fetching = false;
+    let dirty = false;
 
     const fetchPlayers = async () => {
+      if (fetching) { dirty = true; return; }
+      fetching = true;
+      try {
+        do {
+          dirty = false;
       const { data } = await supabase
         .from("players")
         .select("id, name, seat_position, character, is_alive, is_ready, last_seen_at, is_traveller, traveller_state, traveller_role, traveller_alignment")
@@ -1995,6 +2099,10 @@ const GMRoom = () => {
           }
         }
       }
+        } while (dirty && active);
+      } finally {
+        fetching = false;
+      }
     };
     fetchPlayers();
 
@@ -2005,7 +2113,7 @@ const GMRoom = () => {
         { event: "*", schema: "public", table: "players", filter: `room_id=eq.${roomId}` },
         () => fetchPlayers()
       )
-      .subscribe((status) => { if (getLanConfig() && status === "SUBSCRIBED") void fetchPlayers(); });
+      .subscribe((status) => { if (status === "SUBSCRIBED") void fetchPlayers(); });
 
     return () => { active = false; supabase.removeChannel(channel); };
   }, [roomId, room?.status]);
@@ -2083,6 +2191,7 @@ const GMRoom = () => {
     setMotherCurseChangeUsed(false);
     setAstronomerBlocksWerewolvesTonight(false);
     setHideScreenMode(false);
+    syncedTimerRef.current = null;
     setSyncedTimerState(null);
     setSpiderRevealOpen(false);
     setSpiderRevealCards([]);
@@ -2170,7 +2279,7 @@ const GMRoom = () => {
 
     clearLocalGameState();
     clearGMSnapshot();
-    setRoom((prev) => (prev ? { ...prev, status: "lobby", player_action_state: null } : prev));
+    setRoom((prev) => (prev ? { ...prev, status: "lobby", phase_state: null, timer_state: null, player_action_state: null } : prev));
     setPlayers((prev) => prev.map((player) => ({
       ...player,
       character: null,
@@ -6446,7 +6555,7 @@ const GMRoom = () => {
   }, [roomId]);
   const effectiveGMPhase = gameCyclePhase === "day" ? dayPhase : gameCyclePhase;
   useEffect(() => setHiddenTimerEditing(false), [effectiveGMPhase]);
-  const visibleTimerState = effectiveGMPhase !== "night" && syncedTimerState?.phase === effectiveGMPhase ? syncedTimerState : null;
+  const visibleTimerState = projectedTimer;
   const formatTimerValue = (seconds: number) =>
     `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
   const beginHiddenTimerEdit = () => {
@@ -6463,8 +6572,7 @@ const GMRoom = () => {
     if (Number.isNaN(minutes) || minutes < 0 || minutes > 30 || seconds < 0 || seconds > 59) return;
     const duration = minutes * 60 + seconds;
     if (duration <= 0) return;
-    handleTimerDefaultsChange({ ...timerDefaults, [effectiveGMPhase]: duration });
-    dayPanelRef.current?.setDuration(duration);
+    handleTimerAction("set_duration", duration);
     setHiddenTimerEditing(false);
   };
   const victoryPlayers = useMemo<VictoryPlayer[]>(() => players
@@ -6944,7 +7052,8 @@ const GMRoom = () => {
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => dayPanelRef.current?.toggleTimer()}
+                            disabled={timerPending || timerUncertain}
+                            onClick={() => handleTimerAction(visibleTimerState.isRunning ? "pause" : "start")}
                             title={visibleTimerState.isRunning ? tt("pauseTimer") : tt("startTimer")}
                             aria-label={visibleTimerState.isRunning ? tt("pauseTimer") : tt("startTimer")}
                           >
@@ -6953,7 +7062,8 @@ const GMRoom = () => {
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => dayPanelRef.current?.resetTimer()}
+                            disabled={timerPending || timerUncertain}
+                            onClick={() => handleTimerAction("reset")}
                             title={tt("resetTimer")}
                             aria-label={tt("resetTimer")}
                           >
@@ -6962,7 +7072,7 @@ const GMRoom = () => {
                         </>
                       )}
                       {!hiddenTimerEditing ? (
-                        <Button size="icon" variant="ghost" onClick={beginHiddenTimerEdit}>
+                        <Button size="icon" variant="ghost" disabled={timerPending || timerUncertain} onClick={beginHiddenTimerEdit}>
                           <Settings className="h-4 w-4" />
                         </Button>
                       ) : (
@@ -7082,9 +7192,9 @@ const GMRoom = () => {
                     dayDeadNames={dayDeadNames}
                     dayDefaultSeconds={timerDefaults.day}
                     tribunalDefaultSeconds={timerDefaults.tribunal}
-                    onDefaultsChange={handleTimerDefaultsChange}
-                    initialTimerState={syncedTimerState}
-                    onTimerSync={handleTimerSync}
+                    timer={projectedTimer}
+                    timerPending={timerPending || timerUncertain}
+                    onTimerAction={handleTimerAction}
                     completedLineKeys={completedScriptLineKeys}
                     onLineCompletedChange={(key, completed) => handleScriptLineCompleted(key, completed, null)}
                   />
