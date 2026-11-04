@@ -64,6 +64,19 @@ type CurrentPlayer = {
 };
 
 const FAKE_PLAYER_ACTION_PENDING_MS = 10000;
+type RoomPhaseInfo = { phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean };
+
+function parseRoomPhase(value: unknown): RoomPhaseInfo | null {
+  if (!value || typeof value !== "object") return null;
+  const phase = value as Partial<RoomPhaseInfo>;
+  if ((phase.phase !== "night" && phase.phase !== "day" && phase.phase !== "tribunal")
+    || !Number.isSafeInteger(phase.number) || (phase.number ?? 0) < 1) return null;
+  return { phase: phase.phase, number: phase.number!, beginnerMode: !!phase.beginnerMode };
+}
+
+function phaseOrder(phase: RoomPhaseInfo): number {
+  return phase.number * 3 + (phase.phase === "night" ? 0 : phase.phase === "day" ? 1 : 2);
+}
 type PlayerDeviceActionMode = "v10" | "v18" | "v23";
 
 const PlayerView = () => {
@@ -101,7 +114,8 @@ const PlayerView = () => {
   const [spyCards, setSpyCards] = useState<RevealCard[]>([]);
   const [mimeReveal, setMimeReveal] = useState(false);
   const [mimeCards, setMimeCards] = useState<RevealCard[]>([]);
-  const [phaseInfo, setPhaseInfo] = useState<{ phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean } | null>(null);
+  const [phaseInfo, setPhaseInfo] = useState<RoomPhaseInfo | null>(null);
+  const phaseInfoRef = useRef<RoomPhaseInfo | null>(null);
   const [timerState, setTimerState] = useState<TimerState | null>(null);
   const timerRevisionRef = useRef(-1);
   const projectedTimer = useProjectedRoomTimer(timerState, phaseInfo, true);
@@ -181,14 +195,29 @@ const PlayerView = () => {
     };
   }, []);
 
-  const applyPhaseAndTimer = useCallback((phase: unknown, timer: unknown) => {
+  const applyPhaseAndTimer = useCallback((phase: unknown, timer: unknown, authoritativeRead = false) => {
+    const nextPhase = parseRoomPhase(phase);
+    if (!nextPhase) {
+      phaseInfoRef.current = null;
+      setPhaseInfo(null);
+      setTimerState(null);
+      return;
+    }
+    const previous = phaseInfoRef.current;
+    const newerPhase = !previous || phaseOrder(nextPhase) > phaseOrder(previous);
+    if (previous && phaseOrder(nextPhase) < phaseOrder(previous)) return;
     const parsed = parseTimerState(timer);
-    if (!parsed || parsed.revision <= timerRevisionRef.current || !phase || typeof phase !== "object") return;
-    const nextPhase = phase as { phase: "night" | "day" | "tribunal"; number: number; beginnerMode?: boolean };
-    if (nextPhase.phase !== parsed.phase || nextPhase.number !== parsed.phaseNumber) return;
-    timerRevisionRef.current = parsed.revision;
-    setPhaseInfo(nextPhase);
-    setTimerState(parsed);
+    const newerTimer = !!parsed && parsed.revision > timerRevisionRef.current;
+    if (newerPhase || newerTimer || (authoritativeRead && (!parsed || parsed.revision >= timerRevisionRef.current))) {
+      phaseInfoRef.current = nextPhase;
+      setPhaseInfo(nextPhase);
+    }
+    if (newerTimer) {
+      timerRevisionRef.current = parsed.revision;
+      setTimerState(parsed.phase === nextPhase.phase && parsed.phaseNumber === nextPhase.number ? parsed : null);
+    } else if (newerPhase || !parsed) {
+      setTimerState(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -303,9 +332,10 @@ const PlayerView = () => {
           applyRoomPlayerActionState(durable.player_action_state);
           if (roomData.status === "lobby") {
             timerRevisionRef.current = -1;
+            phaseInfoRef.current = null;
             setPhaseInfo(null);
             setTimerState(null);
-          } else applyPhaseAndTimer(durable.phase_state, durable.timer_state);
+          } else applyPhaseAndTimer(durable.phase_state, durable.timer_state, true);
           if (durable.game_over_state?.kind) {
             const outcome = durable.game_over_state.perPlayer?.[playerId] ?? "defeat";
             gameOverEventRef.current = `${durable.game_over_state.kind}:${outcome}`;
@@ -400,6 +430,7 @@ const PlayerView = () => {
             }
             if (payload.new.status === "lobby") {
               timerRevisionRef.current = -1;
+              phaseInfoRef.current = null;
               setPhaseInfo(null);
               setTimerState(null);
             } else applyPhaseAndTimer(payload.new.phase_state, payload.new.timer_state);

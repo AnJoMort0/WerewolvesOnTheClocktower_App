@@ -13,6 +13,8 @@ const backend = vi.hoisted(() => {
   const state = {
     failOwn: false, missing: false, ownReads: 0, phase: 1,
     phaseKind: "night" as "night" | "day" | "tribunal",
+    phaseOverride: undefined as unknown,
+    timerOverride: undefined as unknown,
     character: "v01",
     alive: true,
     traveller: false,
@@ -47,11 +49,11 @@ const backend = vi.hoisted(() => {
           }
           const data = table === "rooms"
             ? { status: "playing", language: "en", player_action_state: null,
-              phase_state: { phase: state.phaseKind, number: state.phase },
-              timer_state: { version: 2, revision: state.phase, phase: state.phaseKind, phaseNumber: state.phase,
+              phase_state: state.phaseOverride === undefined ? { phase: state.phaseKind, number: state.phase } : state.phaseOverride,
+              timer_state: state.timerOverride === undefined ? { version: 2, revision: state.phase, phase: state.phaseKind, phaseNumber: state.phase,
                 status: state.phaseKind === "night" ? "inactive" : "paused",
                 remainingMs: state.phaseKind === "night" ? 0 : 300000,
-                deadlineAt: null, lastMutationId: "phase" }, game_over_state: null }
+                deadlineAt: null, lastMutationId: "phase" } : state.timerOverride, game_over_state: null }
             : [{ id: "player", name: "Human", seat_position: 0, is_alive: state.alive,
               is_traveller: state.traveller, traveller_state: state.travellerState, traveller_role: state.travellerRole }];
           return Promise.resolve({ data, error: null }).then(resolve, reject);
@@ -77,7 +79,6 @@ const backend = vi.hoisted(() => {
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   from: backend.from, channel: backend.channel,
-  rpc: async () => ({ data: Date.now(), error: null }),
   removeChannel: (channel: Parameters<typeof backend.channels.delete>[0]) => { backend.channels.delete(channel); return Promise.resolve("ok"); },
 } }));
 
@@ -91,11 +92,61 @@ beforeEach(() => {
   Object.assign(backend.state, {
     failOwn: false, missing: false, ownReads: 0, phase: 1, phaseKind: "night", character: "v01", alive: true,
     traveller: false, travellerState: null, travellerRole: null, travellerAlignment: null, pending: null,
+    phaseOverride: undefined, timerOverride: undefined,
   });
 });
 afterEach(() => { cleanup(); backend.channels.clear(); vi.restoreAllMocks(); });
 
 describe("player recovery and room isolation", () => {
+  it.each([
+    ["null", null],
+    ["invalid", { version: 2, revision: 4, phase: "day", phaseNumber: 1, status: "running", deadlineAt: null }],
+    ["legacy", { phase: "day", timeLeft: 120, isRunning: true, timerDone: false }],
+    ["mismatched", { version: 2, revision: 4, phase: "tribunal", phaseNumber: 1, status: "paused", remainingMs: 120000, deadlineAt: null, lastMutationId: "other" }],
+  ])("shows the authoritative phase when timer data is %s", async (_case, timer) => {
+    backend.state.phaseKind = "day";
+    backend.state.timerOverride = timer;
+    showPlayer();
+    await waitFor(() => expect(screen.getByText("Day 1")).toBeInTheDocument());
+    expect(screen.queryByText("02:00")).toBeNull();
+  });
+
+  it("shows a Realtime phase update when the timer field is missing", async () => {
+    showPlayer();
+    await loaded();
+    const roomChannel = Array.from(backend.channels).find((channel) => channel.topic === "room-room-status")!;
+    const updated = roomChannel.listeners.find((listener) => listener.filter.event === "UPDATE")!;
+    act(() => updated.handler({ new: { status: "playing", phase_state: { phase: "day", number: 1 } } }));
+    expect(screen.getByText("Day 1")).toBeInTheDocument();
+    expect(screen.queryByText("05:00")).toBeNull();
+  });
+
+  it("does not invent a phase when the room has none, even with a valid timer", async () => {
+    backend.state.phaseOverride = null;
+    backend.state.timerOverride = { version: 2, revision: 4, phase: "day", phaseNumber: 1,
+      status: "paused", remainingMs: 120000, deadlineAt: null, lastMutationId: "orphan" };
+    showPlayer();
+    await loaded();
+    expect(screen.queryByText("Day 1")).toBeNull();
+    expect(screen.queryByText("02:00")).toBeNull();
+  });
+
+  it("keeps a newer timer revision while rejecting a stale same-phase event", async () => {
+    backend.state.phaseKind = "day";
+    backend.state.timerOverride = { version: 2, revision: 5, phase: "day", phaseNumber: 1,
+      status: "paused", remainingMs: 300000, deadlineAt: null, lastMutationId: "new" };
+    showPlayer();
+    await waitFor(() => expect(screen.getByText("05:00")).toBeInTheDocument());
+    const roomChannel = Array.from(backend.channels).find((channel) => channel.topic === "room-room-status")!;
+    const updated = roomChannel.listeners.find((listener) => listener.filter.event === "UPDATE")!;
+    act(() => updated.handler({ new: { status: "playing", phase_state: { phase: "day", number: 1 },
+      timer_state: { version: 2, revision: 4, phase: "day", phaseNumber: 1,
+        status: "paused", remainingMs: 120000, deadlineAt: null, lastMutationId: "old" } } }));
+    expect(screen.getByText("Day 1")).toBeInTheDocument();
+    expect(screen.getByText("05:00")).toBeInTheDocument();
+    expect(screen.queryByText("02:00")).toBeNull();
+  });
+
   it("keeps a transient fetch failure recoverable and loads current state when the network returns", async () => {
     backend.state.failOwn = true;
     showPlayer();
@@ -152,6 +203,17 @@ describe("player recovery and room isolation", () => {
     } }));
     expect(screen.getByText("Night 2")).toBeInTheDocument();
     expect(screen.queryByText("05:00")).toBeNull();
+  });
+
+  it("ignores a stale phase event even when that event has no timer", async () => {
+    backend.state.phase = 2;
+    showPlayer();
+    await waitFor(() => expect(screen.getByText("Night 2")).toBeInTheDocument());
+    const roomChannel = Array.from(backend.channels).find((channel) => channel.topic === "room-room-status")!;
+    const updated = roomChannel.listeners.find((listener) => listener.filter.event === "UPDATE")!;
+    act(() => updated.handler({ new: { status: "playing", phase_state: { phase: "day", number: 1 }, timer_state: null } }));
+    expect(screen.getByText("Night 2")).toBeInTheDocument();
+    expect(screen.queryByText("Day 1")).toBeNull();
   });
 
   it("clears the previous phase and timer when the room returns to the lobby", async () => {
