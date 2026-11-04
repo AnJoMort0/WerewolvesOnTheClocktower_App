@@ -250,6 +250,97 @@ export function createLanServer({ distDir, dataDir, joinBaseUrl, pin = String(Ma
     return { data: cardinality ? data[0] ?? null : data, error: null };
   }
 
+  function transitionRoomTimer(session, args) {
+    hostOnly(session);
+    const { p_room_id: roomId, p_action: action, p_expected_revision: expectedRevision,
+      p_mutation_id: mutationId, p_phase: phase, p_phase_number: phaseNumber,
+      p_beginner_mode: beginnerMode, p_duration_seconds: durationSeconds } = args ?? {};
+    if (!["set_phase", "start", "pause", "reset", "set_duration", "complete"].includes(action)
+      || typeof mutationId !== "string" || mutationId.length < 1 || mutationId.length > 100
+      || !Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw failure("TIMER_INVALID_COMMAND");
+    const room = roomFor(roomId);
+    const current = room.timer_state;
+    if (current && (current.version !== 2 || !Number.isSafeInteger(current.revision))) throw failure("TIMER_STATE_UNSUPPORTED");
+    const revision = current?.revision ?? 0;
+    const now = Date.now();
+    const result = (changed, phaseState, timerState, defaults) => ({ data: {
+      phaseState, timerState, timerDefaults: defaults, serverNowMs: now, changed,
+    }, error: null });
+    if (current?.lastMutationId === mutationId) return result(false, room.phase_state, current, room.timer_defaults);
+    if (expectedRevision !== revision) throw failure("TIMER_STALE_REVISION", "TIMER_STALE_REVISION", 409);
+
+    let phaseState = room.phase_state;
+    let timerState = current;
+    let defaults = room.timer_defaults ?? {};
+    const defaultSeconds = timerPhase => {
+      const configured = defaults[timerPhase];
+      return Number.isSafeInteger(configured) && configured >= 1 && configured <= 1859
+        ? configured : timerPhase === "day" ? 300 : 180;
+    };
+    const nextTimer = (timerPhase, number, status, remainingMs, deadlineAt = null) => ({
+      version: 2, revision: revision + 1, phase: timerPhase, phaseNumber: number,
+      status, remainingMs, deadlineAt, lastMutationId: mutationId,
+    });
+
+    if (action === "set_phase") {
+      if (!["night", "day", "tribunal"].includes(phase) || !Number.isSafeInteger(phaseNumber)
+        || phaseNumber < 1 || typeof beginnerMode !== "boolean") throw failure("TIMER_INVALID_PHASE");
+      const phaseChanged = phaseState?.phase !== phase || phaseState?.number !== phaseNumber;
+      phaseState = { phase, number: phaseNumber, beginnerMode };
+      if (phaseChanged || !current || current.phase !== phase || current.phaseNumber !== phaseNumber) {
+        timerState = phase === "night"
+          ? nextTimer(phase, phaseNumber, "inactive", 0)
+          : nextTimer(phase, phaseNumber, "paused", defaultSeconds(phase) * 1000);
+      } else if (!equal(phaseState, room.phase_state)) {
+        timerState = { ...current, revision: revision + 1, lastMutationId: mutationId };
+      }
+    } else {
+      if (!["day", "tribunal"].includes(phase) || !Number.isSafeInteger(phaseNumber) || phaseNumber < 1
+        || phaseState?.phase !== phase || phaseState?.number !== phaseNumber
+        || !current || current.phase !== phase || current.phaseNumber !== phaseNumber) throw failure("TIMER_PHASE_MISMATCH");
+      const configuredMs = defaultSeconds(phase) * 1000;
+      if (action === "set_duration") {
+        if (!Number.isSafeInteger(durationSeconds) || durationSeconds < 1 || durationSeconds > 1859) throw failure("TIMER_INVALID_DURATION");
+        defaults = { ...defaults, [phase]: durationSeconds };
+        if (current.status !== "paused" || current.remainingMs !== durationSeconds * 1000) {
+          timerState = nextTimer(phase, phaseNumber, "paused", durationSeconds * 1000);
+        } else if (!equal(defaults, room.timer_defaults)) {
+          timerState = { ...current, revision: revision + 1, lastMutationId: mutationId };
+        }
+      } else if (action === "reset") {
+        if (current.status !== "paused" || current.remainingMs !== configuredMs) {
+          timerState = nextTimer(phase, phaseNumber, "paused", configuredMs);
+        }
+      } else if (action === "start") {
+        if (current.status !== "running" || Date.parse(current.deadlineAt) <= now) {
+          const remainingMs = current.status === "paused" && current.remainingMs > 0 ? current.remainingMs : configuredMs;
+          timerState = nextTimer(phase, phaseNumber, "running", remainingMs, new Date(now + remainingMs).toISOString());
+        }
+      } else if ((action === "pause" || action === "complete") && current.status === "running") {
+        const remainingMs = Math.max(0, Date.parse(current.deadlineAt) - now);
+        if (action === "pause" || remainingMs === 0) {
+          timerState = nextTimer(phase, phaseNumber, remainingMs === 0 ? "done" : "paused", remainingMs);
+        }
+      }
+    }
+
+    const changed = !equal(phaseState, room.phase_state) || !equal(timerState, room.timer_state)
+      || !equal(defaults, room.timer_defaults);
+    if (changed) {
+      const previous = structuredClone(room);
+      Object.assign(room, { phase_state: phaseState, timer_state: timerState, timer_defaults: defaults,
+        last_activity_at: new Date(now).toISOString() });
+      if (!equal(previous.phase_state, phaseState)) {
+        for (const key of Object.keys(state.broadcasts)) {
+          if (state.broadcasts[key].roomId === room.id && /reveal-/.test(key)) delete state.broadcasts[key];
+        }
+      }
+      save();
+      change("rooms", "UPDATE", room, previous);
+    }
+    return result(changed, phaseState, timerState, defaults);
+  }
+
   function removeRoomData(roomId) {
     const players = state.players.filter(player => player.room_id === roomId);
     state.players = state.players.filter(player => player.room_id !== roomId);
@@ -327,6 +418,14 @@ export function createLanServer({ distDir, dataDir, joinBaseUrl, pin = String(Ma
             }
             save(); break;
           case "/api/lan/rpc": {
+            if (body.name === "get_server_time") {
+              result.data = Date.now();
+              break;
+            }
+            if (body.name === "transition_room_timer") {
+              result = transitionRoomTimer(session, body.args);
+              break;
+            }
             hostOnly(session);
             if (body.name !== "cleanup_old_rooms") throw failure("Unknown procedure.");
             const match = String(body.args?.retention ?? "24 hours").match(/^(\d+)\s+(hour|day)s?$/);

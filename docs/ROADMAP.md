@@ -17,7 +17,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
-* [ ] 
+* [ ] The accent colour being red, makes it so all the borders of the app are red, making it specially difficult to look at a glance to the circle and quickly check what is evil what is villager, change that, at least for the character borders and names, without ruining the theme of the page of course
 
 ## Balance Changes
 

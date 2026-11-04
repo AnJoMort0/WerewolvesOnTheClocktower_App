@@ -14,6 +14,8 @@ import { getRoomDisplayStorageKey, readRoomDisplaySnapshot, type RoomDisplaySnap
 import { normalizeStatusEffectSet } from "@/lib/effects";
 import type { StatusEffect } from "@/lib/effects";
 import type { RoleId } from "@/lib/roles";
+import { parseTimerState } from "@/lib/timerState";
+import { useProjectedRoomTimer } from "@/hooks/useProjectedRoomTimer";
 
 function formatTimer(seconds: number) {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -62,9 +64,8 @@ export default function RoomDisplay() {
     Object.entries(snapshot?.playerEffects ?? {}).map(([playerId, effects]) => [playerId, normalizeStatusEffectSet(effects)]),
   ) as Record<string, Set<StatusEffect>>, [snapshot?.playerEffects]);
   const totalSlots = Math.max(snapshot?.players.filter((player) => player.seat_position !== null).length ?? 0, 1);
-  const visibleTimer = snapshot?.phase !== "night" && snapshot?.timerState?.phase === snapshot?.phase
-    ? snapshot.timerState
-    : null;
+  const visibleTimer = useProjectedRoomTimer(parseTimerState(snapshot?.timerState),
+    snapshot ? { phase: snapshot.phase, number: snapshot.phaseNumber } : null);
 
   if (!snapshot) {
     return (

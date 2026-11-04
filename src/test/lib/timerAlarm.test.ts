@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { shouldPlayTimerAlarm } from "@/lib/timerAlarm";
+import { shouldPlayProjectedTimerAlarm, shouldPlayTimerAlarm } from "@/lib/timerAlarm";
+import type { TimerProjection } from "@/lib/timerState";
 
 describe("shouldPlayTimerAlarm", () => {
   it("fires once when the current phase timer changes from active to done", () => {
@@ -19,5 +20,26 @@ describe("shouldPlayTimerAlarm", () => {
       { phase: "day", timerDone: false },
       { phase: "tribunal", timerDone: true },
     )).toBe(false);
+  });
+});
+
+describe("projected timer alarm", () => {
+  const running: TimerProjection = {
+    phase: "day", phaseNumber: 2, revision: 4, timeLeft: 1,
+    remainingMs: 500, isRunning: true, timerDone: false,
+  };
+  const expired: TimerProjection = { ...running, timeLeft: 0, remainingMs: 0, isRunning: false, timerDone: true };
+
+  it("sounds once for a live, visible expiry of the same phase timer", () => {
+    expect(shouldPlayProjectedTimerAlarm(running, expired, "live", true)).toBe(true);
+    expect(shouldPlayProjectedTimerAlarm(expired, expired, "live", true)).toBe(false);
+  });
+
+  it("stays silent for refresh, wake, hidden expiry and phase changes", () => {
+    expect(shouldPlayProjectedTimerAlarm(null, expired, "live", true)).toBe(false);
+    expect(shouldPlayProjectedTimerAlarm(running, expired, "recovery", true)).toBe(false);
+    expect(shouldPlayProjectedTimerAlarm(running, expired, "live", false)).toBe(false);
+    expect(shouldPlayProjectedTimerAlarm(running, { ...expired, phaseNumber: 3 }, "live", true)).toBe(false);
+    expect(shouldPlayProjectedTimerAlarm(running, { ...expired, phase: "tribunal" }, "live", true)).toBe(false);
   });
 });
