@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -64,6 +64,7 @@ beforeEach(async () => {
   await start();
 });
 afterEach(async () => {
+  vi.restoreAllMocks();
   for (const stream of streams.splice(0)) stream.abort();
   await lan.close();
   if (!root.startsWith(resolve(tmpdir(), "wotct-lan-test-"))) throw new Error("Unexpected test directory");
@@ -71,6 +72,147 @@ afterEach(async () => {
 });
 
 describe("offline LAN server", () => {
+  it("lets phones read server time but limits timer mutations to the GM", async () => {
+    const gm = await device(true), phone = await device();
+    const game = await room(gm);
+    const clock = await phone.request("rpc", { name: "get_server_time" });
+    expect(clock.status).toBe(200);
+    expect(Math.abs(clock.data - Date.now())).toBeLessThan(5_000);
+    const denied = await phone.request("rpc", { name: "transition_room_timer", args: {
+      p_room_id: game.id, p_action: "set_phase", p_expected_revision: 0,
+      p_mutation_id: "phase-1", p_phase: "day", p_phase_number: 1, p_beginner_mode: false,
+    } });
+    expect(denied.status).toBe(403);
+    expect((await gm.query({ table: "rooms", filters: [["id", game.id]], cardinality: "single" })).data.timer_state).toBeNull();
+  });
+
+  it("writes phase and timer atomically, ignores duplicates, and rejects stale revisions", async () => {
+    const gm = await device(true), phone = await device();
+    const game = await room(gm);
+    await player(phone, game.id, "Alice");
+    const messages = await listen(phone, "f".repeat(32));
+    const run = (args: object) => gm.request("rpc", { name: "transition_room_timer", args: { p_room_id: game.id, ...args } });
+    const first = await run({ p_action: "set_phase", p_expected_revision: 0,
+      p_mutation_id: "phase-day", p_phase: "day", p_phase_number: 1, p_beginner_mode: false });
+    expect(first.data).toMatchObject({ changed: true, phaseState: { phase: "day", number: 1 },
+      timerState: { version: 2, revision: 1, phase: "day", status: "paused", remainingMs: 300_000 } });
+    await expect.poll(() => messages.length).toBe(1);
+    expect(messages[0]).toMatchObject({ type: "postgres_changes", eventType: "UPDATE",
+      new: { phase_state: { phase: "day", number: 1 }, timer_state: { phase: "day", revision: 1 } } });
+    expect((await run({ p_action: "set_phase", p_expected_revision: 0,
+      p_mutation_id: "phase-day", p_phase: "day", p_phase_number: 1, p_beginner_mode: false })).data.changed).toBe(false);
+    expect((await run({ p_action: "set_phase", p_expected_revision: 0,
+      p_mutation_id: "old-phase", p_phase: "tribunal", p_phase_number: 1, p_beginner_mode: false })).status).toBe(409);
+    expect((await run({ p_action: "set_phase", p_expected_revision: 1,
+      p_mutation_id: "same-phase", p_phase: "day", p_phase_number: 1, p_beginner_mode: false })).data.changed).toBe(false);
+    expect(messages).toHaveLength(1);
+
+    const mode = await run({ p_action: "set_phase", p_expected_revision: 1,
+      p_mutation_id: "mode-on", p_phase: "day", p_phase_number: 1, p_beginner_mode: true });
+    expect(mode.data).toMatchObject({ changed: true, phaseState: { beginnerMode: true },
+      timerState: { phase: "day", revision: 2, status: "paused", remainingMs: 300_000 } });
+    expect((await run({ p_action: "set_phase", p_expected_revision: 1,
+      p_mutation_id: "mode-off-stale", p_phase: "day", p_phase_number: 1, p_beginner_mode: false })).status).toBe(409);
+    const tribunal = await run({ p_action: "set_phase", p_expected_revision: 2,
+      p_mutation_id: "tribunal", p_phase: "tribunal", p_phase_number: 1, p_beginner_mode: true });
+    expect(tribunal.data).toMatchObject({ changed: true, phaseState: { phase: "tribunal" },
+      timerState: { phase: "tribunal", revision: 3, status: "paused", remainingMs: 180_000 } });
+    await expect.poll(() => messages.length).toBe(3);
+    expect(messages[2]).toMatchObject({ new: { phase_state: { phase: "tribunal" }, timer_state: { phase: "tribunal" } } });
+    expect((await gm.query({ table: "rooms", filters: [["id", game.id]], cardinality: "single" })).data.timer_state).toEqual(tribunal.data.timerState);
+  });
+
+  it("uses server deadlines for pause, resume and completion with no tick writes", async () => {
+    const gm = await device(true), phone = await device();
+    const game = await room(gm);
+    await player(phone, game.id, "Alice");
+    const messages = await listen(phone, "1".repeat(32));
+    const run = (action: string, revision: number, id: string, extra: object = {}) => gm.request("rpc", {
+      name: "transition_room_timer", args: { p_room_id: game.id, p_action: action,
+        p_expected_revision: revision, p_mutation_id: id, p_phase: "day", p_phase_number: 1,
+        p_beginner_mode: false, ...extra },
+    });
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    await run("set_phase", 0, "phase");
+    const started = await run("start", 1, "start");
+    expect(started.data).toMatchObject({ changed: true, serverNowMs: 1_000_000,
+      timerState: { revision: 2, status: "running", remainingMs: 300_000,
+        deadlineAt: new Date(1_300_000).toISOString() } });
+    await expect.poll(() => messages.length).toBe(2);
+    clock.mockReturnValue(1_006_500);
+    expect((await run("complete", 2, "too-early")).data.changed).toBe(false);
+    const paused = await run("pause", 2, "pause");
+    expect(paused.data.timerState).toMatchObject({ revision: 3, status: "paused", remainingMs: 293_500, deadlineAt: null });
+    clock.mockReturnValue(1_100_000);
+    const resumed = await run("start", 3, "resume");
+    expect(resumed.data.timerState).toMatchObject({ revision: 4, status: "running", remainingMs: 293_500,
+      deadlineAt: new Date(1_393_500).toISOString() });
+    clock.mockReturnValue(1_393_500);
+    const completed = await run("complete", 4, "complete");
+    expect(completed.data.timerState).toMatchObject({ revision: 5, status: "done", remainingMs: 0, deadlineAt: null });
+    expect((await run("complete", 4, "complete")).data.changed).toBe(false);
+    await expect.poll(() => messages.length).toBe(5);
+    clock.mockReturnValue(1_500_000);
+    expect((await gm.query({ table: "rooms", filters: [["id", game.id]], cardinality: "single" })).data.timer_state.status).toBe("done");
+    expect(messages).toHaveLength(5);
+    expect(JSON.parse(readFileSync(lan.databaseFile, "utf8")).rooms[0].timer_state.status).toBe("done");
+  });
+
+  it("updates duration and timer together, makes unchanged resets free, and serializes conflicting commands", async () => {
+    const gm = await device(true);
+    const game = await room(gm);
+    const run = (action: string, revision: number, id: string, extra: object = {}) => gm.request("rpc", {
+      name: "transition_room_timer", args: { p_room_id: game.id, p_action: action,
+        p_expected_revision: revision, p_mutation_id: id, p_phase: "day", p_phase_number: 1,
+        p_beginner_mode: false, ...extra },
+    });
+    await run("set_phase", 0, "phase");
+    const defaultOnly = await run("set_duration", 1, "default-only", { p_duration_seconds: 300 });
+    expect(defaultOnly.data).toMatchObject({ changed: true, timerDefaults: { day: 300 },
+      timerState: { revision: 2, status: "paused", remainingMs: 300_000 } });
+    expect((await run("start", 1, "stale-after-default")).status).toBe(409);
+    const duration = await run("set_duration", 2, "duration", { p_duration_seconds: 90 });
+    expect(duration.data).toMatchObject({ changed: true, timerDefaults: { day: 90 },
+      timerState: { revision: 3, status: "paused", remainingMs: 90_000 } });
+    expect((await run("reset", 3, "same-reset")).data.changed).toBe(false);
+    expect((await run("set_duration", 3, "same-duration", { p_duration_seconds: 90 })).data.changed).toBe(false);
+    const [first, second] = await Promise.all([run("start", 3, "start-a"), run("start", 3, "start-b")]);
+    expect([first.status, second.status].sort()).toEqual([200, 409]);
+    const saved = (await gm.query({ table: "rooms", filters: [["id", game.id]], cardinality: "single" })).data;
+    expect(saved.timer_defaults.day).toBe(90);
+    expect(saved.timer_state).toMatchObject({ revision: 4, status: "running" });
+    expect((await run("pause", 4, "wrong-phase", { p_phase: "tribunal" })).error.message).toBe("TIMER_PHASE_MISMATCH");
+    expect((await run("set_duration", 4, "bad-duration", { p_duration_seconds: 0 })).error.message).toBe("TIMER_INVALID_DURATION");
+    const editedWhileRunning = await run("set_duration", 4, "shorter", { p_duration_seconds: 60 });
+    expect(editedWhileRunning.data).toMatchObject({ timerDefaults: { day: 60 },
+      timerState: { revision: 5, status: "paused", remainingMs: 60_000 } });
+    await run("start", 5, "restart");
+    expect((await run("reset", 6, "reset")).data.timerState).toMatchObject({
+      revision: 7, status: "paused", remainingMs: 60_000,
+    });
+    const night = await run("set_phase", 7, "night", { p_phase: "night", p_phase_number: 2 });
+    expect(night.data).toMatchObject({ phaseState: { phase: "night", number: 2 },
+      timerState: { revision: 8, phase: "night", status: "inactive", remainingMs: 0 } });
+    expect((await run("start", 8, "old-day")).error.message).toBe("TIMER_PHASE_MISMATCH");
+  });
+
+  it("keeps a running server deadline across a LAN server restart", async () => {
+    const gm = await device(true);
+    const game = await room(gm);
+    const args = { p_room_id: game.id, p_phase: "day", p_phase_number: 1, p_beginner_mode: false };
+    await gm.request("rpc", { name: "transition_room_timer", args: {
+      ...args, p_action: "set_phase", p_expected_revision: 0, p_mutation_id: "phase",
+    } });
+    const running = await gm.request("rpc", { name: "transition_room_timer", args: {
+      ...args, p_action: "start", p_expected_revision: 1, p_mutation_id: "start",
+    } });
+    await lan.close();
+    await start();
+    const restoredGM = await device(true);
+    const restored = (await restoredGM.query({ table: "rooms", filters: [["id", game.id]], cardinality: "single" })).data;
+    expect(restored.timer_state).toEqual(running.data.timerState);
+    expect(Date.parse(restored.timer_state.deadlineAt)).toBeGreaterThan(Date.now());
+  });
   it("stops with connected phones and an unfinished request, preserving the room for restart", async () => {
     const gm = await device(true), phone = await device();
     const game = await room(gm);

@@ -24,6 +24,7 @@
     "preview": "vite preview --config config/vite.config.ts",
     "preview:lan": "vite preview --config config/vite.config.ts --host 0.0.0.0",
     "test": "vitest run --config config/vitest.config.ts",
+    "test:timer-local": "node scripts/test-local-timer-rpc.mjs",
     "test:watch": "vitest --config config/vitest.config.ts",
     "test:lan-browser": "node src/test/e2e/lan.smoke.mjs",
     "test:touch-browser": "node src/test/e2e/touch-drag.smoke.mjs",

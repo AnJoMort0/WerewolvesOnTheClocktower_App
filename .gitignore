@@ -17,6 +17,8 @@ dist-ssr
 .build/
 .lan/
 .lan-runtime/
+supabase/.branches/
+supabase/.temp/start-secrets/
 lan-kit/
 release/
 *.local

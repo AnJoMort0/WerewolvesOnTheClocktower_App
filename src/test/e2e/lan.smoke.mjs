@@ -200,7 +200,14 @@ try {
   await cdp.wait(gm, "!!document.querySelector('button .lucide-play')");
   await cdp.evaluate(gm, "document.querySelector('button .lucide-play').closest('button').click()");
   await cdp.wait(phones[0], "document.body.innerText.includes('04:59') || document.body.innerText.includes('04:58')");
-  const updated = await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" });
+  // The existing UI broadcasts first and writes the room separately; wait for that write.
+  let updated;
+  const timerSavedDeadline = Date.now() + 5000;
+  do {
+    updated = await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" });
+    if (updated.timer_state?.timeLeft < 300) break;
+    await delay(100);
+  } while (Date.now() < timerSavedDeadline);
   assert.equal(updated.phase_state.phase, "day");
   assert.equal(updated.timer_state.isRunning, true);
   assert.ok(updated.timer_state.timeLeft < 300);

@@ -84,7 +84,7 @@ The root retains npm's manifests, the editor's `tsconfig.json`, shadcn's `compon
 
 - Node.js 20 or 22. `.nvmrc` pins the project to Node 22.
 - npm 10 or newer.
-- Optional: Supabase CLI, needed only when applying or inspecting database migrations from a computer.
+- Docker Desktop for optional local Supabase migration tests. The Supabase CLI is included in development dependencies.
 
 ## First-time setup
 
@@ -261,6 +261,23 @@ The current production project reference is:
 ```text
 ahbkwclivorvwndnmblz
 ```
+
+### Test migrations locally
+
+With Docker Desktop running, install dependencies and start the local Supabase stack from the repository root:
+
+```sh
+npm ci
+npx --no-install supabase start
+```
+
+The CLI applies the committed migrations to the local database when it starts. To replay them from a clean **local** database after editing a migration, run `npx --no-install supabase db reset --local --no-seed`. Then run `npm run test:timer-local` to check the timer RPC contract as the `anon` database role. That test uses the local Docker database container and rolls back its test room. Run the focused timer and LAN tests with:
+
+```sh
+npm test -- src/test/lib/timerState.test.ts src/test/lib/timerAlarm.test.ts src/test/server/lan.test.ts src/test/integrations/lanClient.test.ts
+```
+
+Use `npx --no-install supabase migration list --local` to inspect the local migration history. These commands require no production credentials and do not use the linked project. Keep any keys printed by `supabase start` out of commits.
 
 ### Reuse the current production backend
 

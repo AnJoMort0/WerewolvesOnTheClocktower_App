@@ -4,7 +4,6 @@ import {
   parseTimerState,
   projectServerNow,
   projectTimerState,
-  recoverLegacyTimerState,
   sampleTimerClock,
   type TimerState,
 } from "@/lib/timerState";
@@ -56,18 +55,6 @@ describe("timer state and clock projection", () => {
     expect(projectServerNow(sample!, 150)).toBe(startedAt);
     expect(sampleTimerClock(startedAt, 300, 100)).toBeNull();
     expect(sampleTimerClock(Number.NaN, 100, 200)).toBeNull();
-  });
-
-  it("recovers legacy running timers paused and never assigns them to a different phase", () => {
-    const legacy = { phase: "day", timeLeft: 42, isRunning: true, timerDone: false };
-    expect(recoverLegacyTimerState(legacy, day)).toEqual({
-      version: 2, revision: 0, phase: "day", phaseNumber: 2,
-      status: "paused", remainingMs: 42_000, deadlineAt: null, lastMutationId: null,
-    });
-    expect(recoverLegacyTimerState({ ...legacy, timeLeft: 0 }, day)?.status).toBe("done");
-    expect(recoverLegacyTimerState({ ...legacy, timerDone: true }, day)?.status).toBe("done");
-    expect(recoverLegacyTimerState(legacy, { phase: "tribunal", number: 2 })).toBeNull();
-    expect(recoverLegacyTimerState({ ...legacy, version: 3 }, day)).toBeNull();
   });
 
   it("accepts valid v2 state and rejects malformed or unknown versions", () => {

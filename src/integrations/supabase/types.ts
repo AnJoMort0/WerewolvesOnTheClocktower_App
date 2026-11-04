@@ -132,6 +132,23 @@ export type Database = {
         }
         Returns: number
       }
+      get_server_time: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      transition_room_timer: {
+        Args: {
+          p_room_id: string
+          p_action: "set_phase" | "start" | "pause" | "reset" | "set_duration" | "complete"
+          p_expected_revision: number
+          p_mutation_id: string
+          p_phase?: "night" | "day" | "tribunal"
+          p_phase_number?: number
+          p_beginner_mode?: boolean
+          p_duration_seconds?: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

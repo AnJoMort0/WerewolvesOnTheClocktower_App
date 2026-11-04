@@ -22,6 +22,21 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("LAN browser transport", () => {
+  it("routes timer RPCs through the local server without a new channel", async () => {
+    const client = createLanClient();
+    await client.rpc("get_server_time");
+    await client.rpc("transition_room_timer", {
+      p_room_id: "room", p_action: "start", p_expected_revision: 1,
+      p_mutation_id: "start-1", p_phase: "day", p_phase_number: 1,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls.map(call => call[0])).toEqual(["/api/lan/rpc", "/api/lan/rpc"]);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({
+      name: "transition_room_timer", args: { p_action: "start", p_expected_revision: 1 },
+    });
+    expect(Stream.instances).toHaveLength(0);
+  });
+
   it("executes discarded mutations and awaited mutations exactly once after filters are added", async () => {
     const client = createLanClient();
     void client.from("players").update({ is_ready: true }).eq("id", "alice");

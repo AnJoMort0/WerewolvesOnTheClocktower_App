@@ -38,7 +38,7 @@ const isPhase = (value: unknown): value is TimerPhase =>
 const isActivePhase = (value: unknown): value is ActiveTimerPhase =>
   value === "day" || value === "tribunal";
 
-/** Decode a durable v2 timer. An unknown version must not be mistaken for a legacy timer. */
+/** Decode a durable v2 timer. */
 export function parseTimerState(value: unknown): TimerState | null {
   if (!isRecord(value) || value.version !== 2) return null;
   const { revision, phase, phaseNumber, status, remainingMs, deadlineAt, lastMutationId } = value;
@@ -54,27 +54,6 @@ export function parseTimerState(value: unknown): TimerState | null {
     if (!isActivePhase(phase) || deadlineAt !== null || (status === "done" && remainingMs !== 0)) return null;
   } else return null;
   return value as TimerState;
-}
-
-/** Legacy running timers have no deadline; preserve their saved value, paused. */
-export function recoverLegacyTimerState(value: unknown, currentPhase: TimerPhaseState): TimerState | null {
-  if (!isRecord(value) || "version" in value || !isActivePhase(value.phase)
-    || value.phase !== currentPhase.phase || !Number.isSafeInteger(currentPhase.number) || currentPhase.number < 1
-    || !Number.isSafeInteger(value.timeLeft) || (value.timeLeft as number) < 0
-    || typeof value.isRunning !== "boolean" || typeof value.timerDone !== "boolean") return null;
-  const remainingMs = (value.timeLeft as number) * 1000;
-  if (!Number.isSafeInteger(remainingMs)) return null;
-  const done = value.timerDone || remainingMs === 0;
-  return {
-    version: 2,
-    revision: 0,
-    phase: value.phase,
-    phaseNumber: currentPhase.number,
-    status: done ? "done" : "paused",
-    remainingMs: done ? 0 : remainingMs,
-    deadlineAt: null,
-    lastMutationId: null,
-  };
 }
 
 /** Use the request midpoint to bound uncertainty from network round-trip time. */
