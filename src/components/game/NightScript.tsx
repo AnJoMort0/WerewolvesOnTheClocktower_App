@@ -33,6 +33,7 @@ export type ScriptActionLine = {
   sourcePlayerId?: string | null;
   participantIds: string[];
   progressOrder: number | null;
+  countsAsAction: boolean;
 };
 
 const DRAG_ACTION_BY_ROLE: Partial<Record<RoleId, string>> = {
@@ -100,6 +101,7 @@ interface NightScriptProps {
   onScriptRolesVisible?: (roles: RoleId[]) => void;
   completedLineKeys?: Set<string>;
   onLineCompletedChange?: (key: string, completed: boolean, progressOrder: number | null, participantIds?: string[]) => void;
+  onPowerUseChange?: (role: RoleId, sourcePlayerId: string, used: boolean, useIndex: number) => void;
   colossusNightSeed?: number;
   onScriptLinesChange?: (lines: ScriptActionLine[]) => void;
   autoCompleteRole?: RoleId | null;
@@ -266,6 +268,7 @@ function ScriptLineDisplay({
   werewolvesAttackFailsText,
   lineCompleted,
   onLineCompletedChange,
+  onPowerUseChange,
   actorLine,
   replaceAllRoleTokens,
   actorCopiedRole,
@@ -327,6 +330,7 @@ function ScriptLineDisplay({
   werewolvesAttackFailsText: string;
   lineCompleted: boolean;
   onLineCompletedChange: (completed: boolean) => void;
+  onPowerUseChange: (used: boolean, useIndex?: number) => void;
   actorLine?: boolean;
   replaceAllRoleTokens?: boolean;
   actorCopiedRole?: RoleId | null;
@@ -432,6 +436,7 @@ function ScriptLineDisplay({
 
   const handleShamanCheck = (index: number) => {
     // Shaman can always tick checkbox; only drag-drop resurrect is blocked when poisoned
+    onPowerUseChange(shamanCharges <= index, index);
     onShamanChargeToggle(index);
   };
 
@@ -564,7 +569,11 @@ function ScriptLineDisplay({
             <Checkbox
               checked={isMonkeyLine ? monkeyDisabled : foxDisabled}
               aria-label={t("powerExhausted", lang)}
-              onCheckedChange={() => isMonkeyLine ? onMonkeyDisabledToggle?.() : onFoxDisabledToggle?.()}
+              onCheckedChange={() => {
+                onPowerUseChange(!(isMonkeyLine ? monkeyDisabled : foxDisabled));
+                if (isMonkeyLine) onMonkeyDisabledToggle?.();
+                else onFoxDisabledToggle?.();
+              }}
               className="h-5 w-5 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
             />
             <span className="text-xs text-muted-foreground">{t("powerExhausted", lang)}</span>
@@ -575,54 +584,54 @@ function ScriptLineDisplay({
         {isParanoidLine && !mimeLine && onParanoidChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
-              <Checkbox key={idx} checked={(paranoidCharges ?? 0) > idx} onCheckedChange={() => onParanoidChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+              <Checkbox key={idx} checked={(paranoidCharges ?? 0) > idx} onCheckedChange={() => { onPowerUseChange((paranoidCharges ?? 0) <= idx, idx); onParanoidChargeToggle(idx); }} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             ))}
           </div>
         )}
         {isAngelLine && !mimeLine && onAngelChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
-              <Checkbox key={idx} checked={(angelCharges ?? 0) > idx} onCheckedChange={() => onAngelChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+              <Checkbox key={idx} checked={(angelCharges ?? 0) > idx} onCheckedChange={() => { onPowerUseChange((angelCharges ?? 0) <= idx, idx); onAngelChargeToggle(idx); }} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             ))}
           </div>
         )}
         {isBigBadWolfLine && onBigBadWolfChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
-              <Checkbox key={idx} checked={(bigBadWolfCharges ?? 0) > idx} onCheckedChange={() => onBigBadWolfChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+              <Checkbox key={idx} checked={(bigBadWolfCharges ?? 0) > idx} onCheckedChange={() => { onPowerUseChange((bigBadWolfCharges ?? 0) <= idx, idx); onBigBadWolfChargeToggle(idx); }} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             ))}
           </div>
         )}
         {isCupidLine && showCupidCheckboxes && onCupidChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
-              <Checkbox key={idx} checked={(cupidCharges ?? 0) > idx} onCheckedChange={() => onCupidChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+              <Checkbox key={idx} checked={(cupidCharges ?? 0) > idx} onCheckedChange={() => { onPowerUseChange((cupidCharges ?? 0) <= idx, idx); onCupidChargeToggle(idx); }} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             ))}
           </div>
         )}
         {isVampireWolfLine && onVampireWolfToggle != null && (
           <div className="flex items-center gap-2 mt-2">
-            <Checkbox checked={!!vampireWolfUsed} aria-label={t("powerUsed", lang)} onCheckedChange={() => onVampireWolfToggle()} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+            <Checkbox checked={!!vampireWolfUsed} aria-label={t("powerUsed", lang)} onCheckedChange={() => { onPowerUseChange(!vampireWolfUsed); onVampireWolfToggle(); }} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             <span className="text-xs text-muted-foreground">{t("powerUsed", lang)}</span>
           </div>
         )}
         {isJudgeLine && onJudgeChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
-              <Checkbox key={idx} checked={(judgeCharges ?? 0) > idx} onCheckedChange={() => onJudgeChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+              <Checkbox key={idx} checked={(judgeCharges ?? 0) > idx} onCheckedChange={() => { onPowerUseChange((judgeCharges ?? 0) <= idx, idx); onJudgeChargeToggle(idx); }} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             ))}
           </div>
         )}
         {isAccuserLine && onAccuserChargeToggle != null && (
           <div className="flex items-center gap-2 mt-2">
             {[0, 1].map((idx) => (
-              <Checkbox key={idx} checked={(accuserCharges ?? 0) > idx} onCheckedChange={() => onAccuserChargeToggle(idx)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+              <Checkbox key={idx} checked={(accuserCharges ?? 0) > idx} onCheckedChange={() => { onPowerUseChange((accuserCharges ?? 0) <= idx, idx); onAccuserChargeToggle(idx); }} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             ))}
           </div>
         )}
         {isMotherLine && onMotherCurseChangeToggle != null && (
           <div className="mt-2 flex items-center gap-2">
-            <Checkbox checked={motherCurseChangeUsed} onCheckedChange={onMotherCurseChangeToggle}
+            <Checkbox checked={motherCurseChangeUsed} onCheckedChange={() => { onPowerUseChange(!motherCurseChangeUsed); onMotherCurseChangeToggle(); }}
               aria-label={t("powerUsed", lang)}
               className="h-5 w-5 border-fuchsia-400 data-[state=checked]:border-fuchsia-500 data-[state=checked]:bg-fuchsia-500" />
             <span className="text-xs text-muted-foreground">{t("powerUsed", lang)}</span>
@@ -690,6 +699,7 @@ export const NightScript = ({
   onScriptRolesVisible,
   completedLineKeys = EMPTY_COMPLETED_LINE_KEYS,
   onLineCompletedChange,
+  onPowerUseChange,
   autoCompleteRole = null,
   colossusNightSeed = 0.5,
   onScriptLinesChange,
@@ -1476,6 +1486,8 @@ export const NightScript = ({
     onScriptLinesChange?.(scriptLines.flatMap((section) => section.items.map((item) => ({
       key: item.key, requires: item.line.requires ?? [], sourcePlayerId: item.sourcePlayerId,
       participantIds: getItemParticipants(item), progressOrder: item.progressOrder,
+      countsAsAction: (!!item.line.phoneMode && item.line.phoneMode !== PHONE_MODE.WEREWOLF_ALLIES)
+        || !!item.line.requires?.some((role) => ["v26", "m01", "m02", "m03", "s01"].includes(role)),
     }))));
   }, [onScriptLinesChange, scriptLines, getItemParticipants]);
 
@@ -1634,6 +1646,11 @@ export const NightScript = ({
                 werewolvesAttackFailsText={dyn.werewolvesAttackFails}
                 lineCompleted={completedLineKeys.has(item.key)}
                 onLineCompletedChange={(completed) => onLineCompletedChange?.(item.key, completed, item.progressOrder, getItemParticipants(item))}
+                onPowerUseChange={(used, useIndex = 0) => {
+                  const role = item.line.requires?.length === 1 ? item.line.requires[0] : null;
+                  const actorId = sourcePlayerId ?? getItemParticipants(item)[0];
+                  if (role && actorId) onPowerUseChange?.(role, actorId, used, useIndex);
+                }}
                 actorLine={item.actorLine}
                 replaceAllRoleTokens={item.replaceAllRoleTokens}
                 actorCopiedRole={actorCopiedRole}

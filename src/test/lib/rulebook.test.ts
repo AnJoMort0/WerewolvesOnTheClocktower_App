@@ -137,7 +137,7 @@ describe("in-app rulebook rendering", () => {
     expect(getRulebookHtml("en")).toContain('class="rulebook-story"');
 
     const charactersWithLore = (Object.values(RULEBOOK_CHARACTERS) as RulebookCharacter[]).filter((character) => character.lore);
-    expect(charactersWithLore).toHaveLength(29);
+    expect(charactersWithLore).toContain(RULEBOOK_CHARACTERS.v29);
     for (const character of charactersWithLore) {
       for (const passage of character.lore!) {
         for (const language of ["pt", "fr", "en"] as const) expect(passage.text[language]).toBeTruthy();

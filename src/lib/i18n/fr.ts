@@ -19,6 +19,7 @@ export const fr: Translation = {
     v02: "Maître de l'Ours",
     v03: "Maître du Corbeau",
     v28: "Maître des Cygnes",
+    v29: "Détective Privé",
     v04: "Maître du Renard",
     v05: "Maître des Lapins",
     v26: "Maître du Singe",
@@ -88,6 +89,7 @@ export const fr: Translation = {
       { text: "Le {Maître du Singe} se réveille et choisit un joueur dont la carte lui sera révélée.", requires: ["v26"] },
       { text: "L'{Ancien du Village} se réveille et choisit un joueur qui aura automatiquement 2 votes contre lui au prochain Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
       { text: "L'{Avocat du Diable} se réveille et choisit un joueur. Ce joueur est immunisé contre l'exécution pendant la journée suivante. L'{Avocat du Diable} ne peut pas choisir le même joueur deux fois pendant la partie.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
+      { text: "Le {Détective Privé} se réveille et choisit trois joueurs vivants voisins. Le Narrateur indique combien d’entre eux ont agi cette nuit.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
       { text: "À la fin de cette nuit, un hurlement se fait entendre. Le Village sait alors que les Loups-garous se sont révélés et qu'ils ont faim. Le Village se réveille méfiant envers tout le monde." },
     ],
     secondNight: [
@@ -145,6 +147,7 @@ export const fr: Translation = {
       { text: "La {Petite Fille} se réveille et voit comment les victimes de cette nuit sont mortes.", requires: ["v01"], conditionKey: "hasRedXPlayers" },
       { text: "Le {Prophète} se réveille et indique, en pointant, un joueur qu'il pense être mort cette nuit. S'il a raison, le joueur sera touché pour savoir qu'il peut garder son pouvoir, même en tant que Fantôme, pendant le jour suivant et la nuit suivante.", requires: ["v19"], conditionKey: "hasRedXPlayers", phoneMode: PHONE_MODE.PROPHET_MARK },
       { text: "Le {Maître de l'Araignée} se réveille. Les rôles de tous les joueurs qui ont été pris dans la toile cette nuit lui sont alors révélés.", requires: ["v23"], conditionKey: "spiderHasCaught" },
+      { text: "Le {Détective Privé} se réveille et choisit trois joueurs vivants voisins. Le Narrateur indique combien d’entre eux ont agi cette nuit.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
     ],
   },
 

@@ -18,13 +18,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
-* [ ] In the Rulebook:
-  * [ ] Remove the extras from the character list
-  * [ ] What is currently as content in the extras, becomes a paragraph of rules in a new section called character types
-  * [ ] Sort character types with:
-    * [ ] Ghosts information is moved to be with the ghost rules
-    * [ ] Alignements: Villager, Evil Being, Werewolf and Traveller
-    * [ ] Character types created by other characters: Lover, Traitor, Betrayed, Enemy and then Soldier
+* [ ] 
 
 ## Balance Changes
 

@@ -369,6 +369,31 @@ describe("phone synchronization across GM and player devices", () => {
     expect(restored.result.current.session?.foxReveal?.targetPlayerId).toBe("target");
   });
 
+  it("keeps the Investigator's count private and restores it after a GM reload", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const investigation: PhoneWorld = { packBlocked: false, players: [
+      { ...player("investigator", "v29"), seat_position: 0 },
+      { ...player("acted", "e03"), seat_position: 1, actedTonight: true },
+      { ...player("center", "v01"), seat_position: 2 },
+      { ...player("wolf", "e01"), seat_position: 3, actedTonight: true },
+    ] };
+    const props = { roomId: "room", contextKey: "playing:night:2", enabled: true, world: investigation, onAction, onComplete };
+    const gm = renderHook(() => useGMPhoneActions(props));
+    const device = renderHook(() => usePlayerPhoneActions("room", "investigator"));
+    const bystander = renderHook(() => usePlayerPhoneActions("room", "center"));
+    act(() => gm.result.current.toggle(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK, "investigator-line", "investigator"));
+    act(() => device.result.current.send("confirm", "center"));
+    expect(device.result.current.session?.investigatorReveal?.count).toBe(2);
+    expect(bystander.result.current.session).toBeNull();
+    expect(onAction).not.toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledOnce();
+    gm.unmount();
+    const restored = renderHook(() => useGMPhoneActions(props));
+    expect(restored.result.current.session?.investigatorReveal?.count).toBe(2);
+    act(() => restored.result.current.toggle(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK, "investigator-line", "investigator"));
+    expect(restored.result.current.session?.investigatorReveal?.count).toBe(2);
+  });
+
   it("accepts a Monkey selection from the phone and recovers a lost reveal response", () => {
     const onAction = vi.fn(), onComplete = vi.fn();
     const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };

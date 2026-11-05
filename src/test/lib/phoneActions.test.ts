@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { getScripts } from "@/lib/i18n";
 import type { RoleId } from "@/lib/roles";
 import {
-  applyPhoneCommand, getFoxTargetPlayerIds, getHuntConsensus, getPhoneMinimumTargetCount, getPhoneParticipants,
+  applyPhoneCommand, getCompletedPhoneActionParticipants, getFoxTargetPlayerIds, getHuntConsensus, getPhoneMinimumTargetCount, getPhoneParticipants,
   getPhoneTargetCount, getPhoneView, getRoleActionPhoneConfig, getScriptPhoneMode,
-  reconcilePhoneSession, resolveFoxReveal, resolveGypsyReveal,
+  reconcilePhoneSession, resolveFoxReveal, resolveGypsyReveal, resolveInvestigatorReveal,
   type PhonePlayer, type PhoneSession, type PhoneWorld,
 } from "@/lib/phoneActions";
 
@@ -37,6 +37,43 @@ describe("GM-controlled phone rules", () => {
     const scripts = getScripts(language);
     expect(scripts.firstNight.find((line) => line.requires?.includes("v04"))?.phoneMode).toBe(PHONE_MODE.FOX_TAMER_CHECK);
     expect(scripts.normalNight.find((line) => line.requires?.includes("v04"))?.phoneMode).toBe(PHONE_MODE.FOX_TAMER_CHECK);
+  });
+
+  it.each(["pt", "fr", "en"] as const)("registers the Investigator on both nights in %s", (language) => {
+    const scripts = getScripts(language);
+    expect(scripts.firstNight.find((line) => line.requires?.includes("v29"))?.phoneMode).toBe(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK);
+    expect(scripts.normalNight.find((line) => line.requires?.includes("v29"))?.phoneMode).toBe(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK);
+    expect(scripts.firstNight.at(-2)?.requires).toContain("v29");
+    expect(scripts.normalNight.at(-1)?.requires).toContain("v29");
+  });
+
+  it("counts performed night actions for the Investigator, including poisoned attempts and copied powers", () => {
+    const investigation: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("mime", "v29", { seat_position: 0, objectiveRole: "a03", mime: true }),
+      phonePlayer("acted", "e03", { seat_position: 1, actedTonight: true, actingPoisoned: true }),
+      phonePlayer("idle", "v28", { seat_position: 2 }),
+      phonePlayer("wolf", "e01", { seat_position: 3, actedTonight: true }),
+      phonePlayer("ghost", "v02", { seat_position: 4, dead: true, actedTonight: true }),
+    ] };
+    expect(getPhoneParticipants(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK, "mime", investigation)).toEqual(["mime"]);
+    expect(resolveInvestigatorReveal("mime", "idle", investigation)).toEqual({
+      targetPlayerId: "idle", playerIds: ["acted", "idle", "wolf"], count: 2,
+    });
+    const session: PhoneSession = { id: "investigation", lineKey: "normal-v29", mode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK,
+      sourcePlayerId: "mime", participantIds: ["mime"], votes: {}, sequences: {} };
+    const result = applyPhoneCommand(session, "mime", { id: "check", sessionId: session.id, sequence: 1,
+      type: "confirm", targetPlayerId: "idle" }, investigation);
+    expect(result.session?.investigatorReveal?.count).toBe(2);
+    expect(result.completedSession).toBeTruthy();
+    expect(getPhoneView(result.session, "wolf", investigation)).toBeNull();
+    expect(getPhoneView(result.session, "mime", investigation)?.investigatorReveal?.count).toBe(2);
+    expect(applyPhoneCommand(result.session, "mime", { id: "again", sessionId: session.id, sequence: 2,
+      type: "confirm", targetPlayerId: "wolf" }, investigation).completedSession).toBeUndefined();
+    investigation.players[0].actingPoisoned = true;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const count = resolveInvestigatorReveal("mime", "idle", investigation)?.count;
+      expect([0, 1, 3]).toContain(count);
+    }
   });
 
   it.each(["pt", "fr", "en"] as const)("registers Spider Tamer controls for the first web and its replacement in %s", (language) => {
@@ -497,6 +534,11 @@ describe("GM-controlled phone rules", () => {
       player.id === "wolf" ? { ...player, actingPoisoned: true } : player
     )) };
     expect(getPhoneParticipants(PHONE_MODE.WEREWOLF_HUNT, null, poisonedWorld)).toEqual(["wolf", "hiddenWolf", "puppeteer"]);
+    const poisonedPuppeteerWorld = { ...world, players: world.players.map((player) => (
+      player.id === "puppeteer" ? { ...player, actingPoisoned: true, canWake: false } : player
+    )) };
+    expect(getPhoneParticipants(PHONE_MODE.WEREWOLF_HUNT, null, poisonedPuppeteerWorld)).toEqual(["wolf", "hiddenWolf"]);
+    expect(getPhoneView(hunt(), "wolf", poisonedPuppeteerWorld)?.players.find((player) => player.id === "puppeteer")?.marker).toBeNull();
     let session = hunt();
     for (const id of session.participantIds) {
       session = applyPhoneCommand(session, id, {
@@ -549,9 +591,12 @@ describe("GM-controlled phone rules", () => {
     const command = { id: "save", sessionId: session.id, sequence: 1, type: "confirm" as const, targetPlayerId: "victim" };
     expect(applyPhoneCommand(session, "shaman", command, changed).action?.targetPlayerId).toBe("victim");
     expect(applyPhoneCommand(session, "shaman", { ...command, targetPlayerId: "ghost" }, changed).action).toBeUndefined();
-    expect(applyPhoneCommand(session, "shaman", { ...command, type: "ignore" }, changed)).toMatchObject({
+    const ignored = applyPhoneCommand(session, "shaman", { ...command, type: "ignore" }, changed);
+    expect(ignored).toMatchObject({
       session: { completed: true, ignored: true },
       completedSession: { completed: true, ignored: true },
     });
+    expect(getCompletedPhoneActionParticipants(ignored.completedSession!)).toEqual([]);
+    expect(getCompletedPhoneActionParticipants(applyPhoneCommand(session, "shaman", command, changed).completedSession!)).toEqual(["shaman"]);
   });
 });

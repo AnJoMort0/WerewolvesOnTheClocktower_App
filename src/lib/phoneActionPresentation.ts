@@ -41,6 +41,7 @@ export const PHONE_ACTION_PRESENTATION: Record<PhoneMode, PhoneActionPresentatio
   [PHONE_MODE.SHAMAN_SAVE]: { icon: ShieldPlus, iconClass: "text-moon" },
   [PHONE_MODE.MONKEY_TAMER_REVEAL]: { icon: Eye, iconClass: "text-sky-300" },
   [PHONE_MODE.FOX_TAMER_CHECK]: { icon: PawPrint, iconClass: "text-amber-400" },
+  [PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK]: { icon: SearchCheck, iconClass: "text-sky-300" },
   [PHONE_MODE.GYPSY_POISON_CHECK]: { icon: SearchCheck, iconClass: "text-purple-300" },
   [PHONE_MODE.PYROMANIAC_BURN]: { icon: Flame, iconClass: "text-orange-400" },
   [PHONE_MODE.SPIDER_TAMER_WEB]: { icon: Waypoints, iconClass: "text-cyan-400" },

@@ -19,6 +19,7 @@ export const en: Translation = {
     v02: "Bear Tamer",
     v03: "Raven Tamer",
     v28: "Swan Tamer",
+    v29: "Private Investigator",
     v04: "Fox Tamer",
     v05: "Bunny Tamer",
     v26: "Monkey Tamer",
@@ -88,6 +89,7 @@ export const en: Translation = {
       { text: "The {Monkey Tamer} wakes up and chooses a player whose card will be revealed.", requires: ["v26"] },
       { text: "The {Village Elder} wakes up and chooses a player who will automatically have 2 votes against them at the next Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
       { text: "The {Devil's Advocate} wakes up and chooses a player. That player is immune to execution during the next day. The {Devil's Advocate} cannot choose the same player twice during the game.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
+      { text: "The {Private Investigator} wakes up and selects three neighboring living players. The Narrator shows how many of them acted tonight.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
       { text: "At the end of the night, a howl is heard. The Village now knows that the Werewolves have revealed themselves and are hungry. The Village wakes up suspicious of everyone." },
     ],
     secondNight: [
@@ -145,6 +147,7 @@ export const en: Translation = {
       { text: "The {Little Girl} wakes up and sees how each of tonight's victims died.", requires: ["v01"], conditionKey: "hasRedXPlayers" },
       { text: "The {Prophet} wakes up and points at a player they believe died tonight. If correct, that player is touched to learn that they may keep their power as a Ghost during the following day and night.", requires: ["v19"], conditionKey: "hasRedXPlayers", phoneMode: PHONE_MODE.PROPHET_MARK },
       { text: "The {Spider Tamer} wakes up and is shown the roles of all players caught in the web tonight.", requires: ["v23"], conditionKey: "spiderHasCaught" },
+      { text: "The {Private Investigator} wakes up and selects three neighboring living players. The Narrator shows how many of them acted tonight.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
     ],
   },
 

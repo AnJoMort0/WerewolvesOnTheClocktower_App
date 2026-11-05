@@ -241,12 +241,68 @@ describe("NightScript phone controls", () => {
     const { container } = render(<LanguageContext.Provider value="en"><NightScript {...baseProps} nightNumber={3}
       activeRoles={new Set(["e01", "v06", "e02"])} roleAssignments={{ wolf: "e01", puppet: "v06", witch: "e02" }}
       players={[{ id: "wolf", name: "Wolf", seat_position: 0 }, { id: "puppet", name: "Puppet", seat_position: 1 }, { id: "witch", name: "Witch", seat_position: 2 }]}
-      onPhoneToggle={vi.fn()} onLineCompletedChange={onLineCompletedChange} onScriptLinesChange={onScriptLinesChange} /></LanguageContext.Provider>);
+      poisonedPlayerIds={new Set(["puppet"])} onPhoneToggle={vi.fn()} onLineCompletedChange={onLineCompletedChange} onScriptLinesChange={onScriptLinesChange} /></LanguageContext.Provider>);
     const hunt = container.querySelector(phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT))!.closest('[draggable="true"]')!;
     fireEvent.click(hunt.querySelector('[data-line-checkbox]')!);
-    expect(onLineCompletedChange).toHaveBeenCalledWith(expect.stringContaining("3:normal:"), true, expect.any(Number), ["wolf", "puppet"]);
+    expect(onLineCompletedChange).toHaveBeenCalledWith(expect.stringContaining("3:normal:"), true, expect.any(Number), ["wolf"]);
     expect(onScriptLinesChange).toHaveBeenLastCalledWith(expect.arrayContaining([
-      expect.objectContaining({ requires: ["e02"], participantIds: ["witch"] }),
+      expect.objectContaining({ requires: ["e02"], participantIds: ["witch"], countsAsAction: true }),
+      expect.objectContaining({ requires: expect.arrayContaining(["e01"]), participantIds: ["wolf"], countsAsAction: true }),
+    ]));
+  });
+
+  it("records a Shaman action only when a use checkbox is checked", () => {
+    const onLineCompletedChange = vi.fn(), onPowerUseChange = vi.fn();
+    const props = { ...baseProps, nightNumber: 3, conditionKeys: { hasRedXPlayers: true }, activeRoles: new Set(["e03" as const]), roleAssignments: { shaman: "e03" as const },
+      players: [{ id: "shaman", name: "Shaman", seat_position: 0 }], onLineCompletedChange, onPowerUseChange };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    const line = container.querySelector('[data-line-checkbox]')!.closest('[draggable]')!;
+    fireEvent.click(line.querySelector('[data-line-checkbox]')!);
+    expect(onLineCompletedChange).toHaveBeenCalledWith(expect.any(String), true, expect.any(Number), ["shaman"]);
+    expect(onPowerUseChange).not.toHaveBeenCalled();
+
+    onLineCompletedChange.mockClear();
+    fireEvent.click(line.querySelector('button[role="checkbox"]:not([data-line-checkbox])')!);
+    expect(onPowerUseChange).toHaveBeenCalledWith("e03", "shaman", true, 0);
+
+    onPowerUseChange.mockClear();
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props} shamanCharges={1} /></LanguageContext.Provider>);
+    fireEvent.click(container.querySelector('button[role="checkbox"]:not([data-line-checkbox])')!);
+    expect(onPowerUseChange).toHaveBeenCalledWith("e03", "shaman", false, 0);
+  });
+
+  it("does not count a Big Bad Werewolf's read tick or an undone use as a new action", () => {
+    const onLineCompletedChange = vi.fn(), onPowerUseChange = vi.fn();
+    const props = { ...baseProps, nightNumber: 3, activeRoles: new Set(["m01" as const]),
+      roleAssignments: { wolf: "m01" as const }, players: [{ id: "wolf", name: "Wolf", seat_position: 0 }],
+      conditionKeys: { bigBadWolfHasCharges: true }, onLineCompletedChange, onPowerUseChange, onBigBadWolfChargeToggle: vi.fn() };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    const line = [...container.querySelectorAll('[data-line-checkbox]')].map((box) => box.closest('[draggable]')!)
+      .find((item) => item.textContent?.includes("disguise"))!;
+    fireEvent.click(line.querySelector('[data-line-checkbox]')!);
+    expect(onPowerUseChange).not.toHaveBeenCalled();
+
+    onLineCompletedChange.mockClear();
+    fireEvent.click(line.querySelector('button[role="checkbox"]:not([data-line-checkbox])')!);
+    expect(onPowerUseChange).toHaveBeenCalledWith("m01", "wolf", true, 0);
+
+    onPowerUseChange.mockClear();
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props} bigBadWolfCharges={1} /></LanguageContext.Provider>);
+    const usedLine = [...container.querySelectorAll('[data-line-checkbox]')].map((box) => box.closest('[draggable]')!)
+      .find((item) => item.textContent?.includes("disguise"))!;
+    fireEvent.click(usedLine.querySelector('button[role="checkbox"]:not([data-line-checkbox])')!);
+    expect(onPowerUseChange).toHaveBeenCalledWith("m01", "wolf", false, 0);
+  });
+
+  it("marks Investigator selection as an action but Swan information as passive", () => {
+    const onScriptLinesChange = vi.fn();
+    render(<LanguageContext.Provider value="en"><NightScript {...baseProps} nightNumber={3}
+      activeRoles={new Set(["v29", "v28"])} roleAssignments={{ investigator: "v29", swan: "v28" }}
+      players={[{ id: "investigator", name: "Investigator", seat_position: 0 }, { id: "swan", name: "Swan", seat_position: 1 }]}
+      onScriptLinesChange={onScriptLinesChange} /></LanguageContext.Provider>);
+    expect(onScriptLinesChange).toHaveBeenLastCalledWith(expect.arrayContaining([
+      expect.objectContaining({ requires: ["v29"], countsAsAction: true }),
+      expect.objectContaining({ requires: ["v28"], countsAsAction: false }),
     ]));
   });
 

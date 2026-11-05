@@ -33,6 +33,7 @@ import { usePlayerPhoneActions } from "@/hooks/usePhoneActions";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
+import { InvestigatorRevealModal } from "@/components/game/InvestigatorRevealModal";
 import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
 import { GamblerGuessModal } from "@/components/game/GamblerGuessModal";
 import { TravellerAlignmentModal } from "@/components/game/TravellerAlignmentModal";
@@ -1235,6 +1236,10 @@ const PlayerView = () => {
                   onReopen={() => phone.send("reopen")} onRoleClick={(roleId) => openRulebook(roleId)} />
               ) : phone.session?.mode === PHONE_MODE.FOX_TAMER_CHECK && roomStatus === "playing" ? (
                 <FoxRevealModal key={phone.session.id} session={phone.session} language={language} embedded
+                  pending={phone.pending} connected={phone.connected}
+                  onConfirm={(id) => phone.send("confirm", id)} />
+              ) : phone.session?.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK && roomStatus === "playing" ? (
+                <InvestigatorRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} />
               ) : phone.session?.mode === PHONE_MODE.GYPSY_POISON_CHECK && roomStatus === "playing" ? (

@@ -27,6 +27,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const revision = useRef(Date.now());
   const monkeySessions = useRef<Record<string, PhoneSession>>({});
   const foxSessions = useRef<Record<string, PhoneSession>>({});
+  const investigatorSessions = useRef<Record<string, PhoneSession>>({});
   const gypsySessions = useRef<Record<string, PhoneSession>>({});
   const gamblerSessions = useRef<Record<string, PhoneSession>>({});
   const storageKey = roomId ? `wotct_phone_${roomId}` : null;
@@ -66,6 +67,12 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
       }
       foxSessions.current[next.lineKey] = next;
     }
+    if (next?.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK) {
+      for (const [key, entry] of Object.entries(investigatorSessions.current)) {
+        if (entry.sourcePlayerId === next.sourcePlayerId) delete investigatorSessions.current[key];
+      }
+      investigatorSessions.current[next.lineKey] = next;
+    }
     if (next?.mode === PHONE_MODE.GYPSY_POISON_CHECK) {
       for (const [key, entry] of Object.entries(gypsySessions.current)) {
         if (entry.sourcePlayerId === next.sourcePlayerId) delete gypsySessions.current[key];
@@ -86,6 +93,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
           session: next,
           monkeySessions: monkeySessions.current,
           foxSessions: foxSessions.current,
+          investigatorSessions: investigatorSessions.current,
           gypsySessions: gypsySessions.current,
           gamblerSessions: gamblerSessions.current,
         }));
@@ -98,6 +106,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     let restored: PhoneSession | null = null;
     monkeySessions.current = {};
     foxSessions.current = {};
+    investigatorSessions.current = {};
     gypsySessions.current = {};
     gamblerSessions.current = {};
     if (storageKey && enabled) {
@@ -118,6 +127,15 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
             if (entry?.mode === PHONE_MODE.FOX_TAMER_CHECK && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
               const valid = reconcilePhoneSession(entry, current.current.world);
               if (valid) foxSessions.current[key] = valid;
+            }
+          }
+        }
+        if (stored?.contextKey === contextKey && stored.investigatorSessions && typeof stored.investigatorSessions === "object") {
+          for (const [key, value] of Object.entries(stored.investigatorSessions)) {
+            const entry = value as PhoneSession;
+            if (entry?.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK && entry.id && Array.isArray(entry.participantIds) && entry.votes && entry.sequences) {
+              const valid = reconcilePhoneSession(entry, current.current.world);
+              if (valid) investigatorSessions.current[key] = valid;
             }
           }
         }
@@ -205,6 +223,12 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
       const cached = reconcilePhoneSession(saved ?? null, current.current.world);
       if (cached) { commit({ ...cached, lineKey, progressOrder, visible: true }); return true; }
     }
+    if (mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK) {
+      const saved = investigatorSessions.current[lineKey] ?? Object.values(investigatorSessions.current)
+        .find((entry) => entry.sourcePlayerId === sourcePlayerId);
+      const cached = reconcilePhoneSession(saved ?? null, current.current.world);
+      if (cached) { commit({ ...cached, lineKey, progressOrder, visible: true }); return true; }
+    }
     if (mode === PHONE_MODE.GYPSY_POISON_CHECK) {
       const saved = gypsySessions.current[lineKey] ?? Object.values(gypsySessions.current)
         .find((entry) => entry.sourcePlayerId === sourcePlayerId);
@@ -276,6 +300,9 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
   const confirmFox = useCallback((targetPlayerId: string) => {
     if (current.current.session?.mode === PHONE_MODE.FOX_TAMER_CHECK) sendGM("confirm", targetPlayerId);
   }, [sendGM]);
+  const confirmInvestigator = useCallback((targetPlayerId: string) => {
+    if (current.current.session?.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK) sendGM("confirm", targetPlayerId);
+  }, [sendGM]);
   const confirmGypsy = useCallback((targetPlayerId: string) => {
     if (current.current.session?.mode === PHONE_MODE.GYPSY_POISON_CHECK) sendGM("confirm", targetPlayerId);
   }, [sendGM]);
@@ -309,10 +336,10 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     current.current.onComplete?.(revealed);
   }, [commit]);
   const close = useCallback(() => commit(null), [commit]);
-  const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; gypsySessions.current = {}; gamblerSessions.current = {}; commit(null); }, [commit]);
+  const reset = useCallback(() => { monkeySessions.current = {}; foxSessions.current = {}; investigatorSessions.current = {}; gypsySessions.current = {}; gamblerSessions.current = {}; commit(null); }, [commit]);
   const monkeySourceIds = Object.values(monkeySessions.current)
     .filter((entry) => entry.monkeyReveal && entry.sourcePlayerId).map((entry) => entry.sourcePlayerId!);
-  return { session: active, toggle, close, reset, confirmMonkey, confirmFox, confirmGypsy, sendGM, resolveColossus, resolvePriest, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
+  return { session: active, toggle, close, reset, confirmMonkey, confirmFox, confirmInvestigator, confirmGypsy, sendGM, resolveColossus, resolvePriest, monkeySourceIds, consensus: getHuntConsensus(active), resolveHunt };
 }
 
 export function usePlayerPhoneActions(roomId?: string, playerId?: string) {

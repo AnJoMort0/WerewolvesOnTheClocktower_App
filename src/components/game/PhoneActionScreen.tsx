@@ -71,7 +71,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   }, [session.id]);
   const isRoleAction = isRoleActionPhoneMode(session.mode);
   const roleActionConfig = isRoleActionPhoneMode(session.mode) ? getRoleActionPhoneConfig(session.mode) : null;
-  const selected = session.foxReveal?.targetPlayerId ?? session.gypsyReveal?.targetPlayerId ?? session.priestReveal?.targetPlayerId ?? session.pendingTargetPlayerId
+  const selected = session.foxReveal?.targetPlayerId ?? session.investigatorReveal?.targetPlayerId ?? session.gypsyReveal?.targetPlayerId ?? session.priestReveal?.targetPlayerId ?? session.pendingTargetPlayerId
     ?? (selectedPlayerId !== undefined ? selectedPlayerId
       : session.mode === PHONE_MODE.WEREWOLF_HUNT && !gmControlled ? session.votes[playerId] : selectedId);
   const target = session.players.find((p) => p.id === selected && p.selectable);
@@ -91,8 +91,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const roleMinimumSelectionCount = session.minTargetCount ?? roleSelectionCount;
   const highlightsEligibility = session.mode === PHONE_MODE.COLOSSUS_RETALIATION
     || session.mode === PHONE_MODE.PYROMANIAC_BURN;
-  const neighborhoodTargetIds = new Set((session.mode === PHONE_MODE.FOX_TAMER_CHECK || session.mode === PHONE_MODE.GYPSY_POISON_CHECK) && selected
-    ? session.foxReveal?.playerIds ?? session.gypsyReveal?.playerIds ?? getFoxTargetPlayerIds(players, selected)
+  const neighborhoodTargetIds = new Set((session.mode === PHONE_MODE.FOX_TAMER_CHECK || session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK || session.mode === PHONE_MODE.GYPSY_POISON_CHECK) && selected
+    ? session.foxReveal?.playerIds ?? session.investigatorReveal?.playerIds ?? session.gypsyReveal?.playerIds ?? getFoxTargetPlayerIds(players, selected)
     : []);
   const mapHeight = Math.max(MAP_MIN_HEIGHT, players.length * PLAYER_ARC_SPACE);
   const verticalRadius = mapHeight / 2 - PLAYER_EDGE_SPACE;
@@ -104,6 +104,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const title = appearance?.title ?? (viewingCurseNotice ? text.curse
     : session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? getTranslation(language).roleLabels.v26
     : session.mode === PHONE_MODE.FOX_TAMER_CHECK ? getTranslation(language).roleLabels.v04
+    : session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK ? getTranslation(language).roleLabels.v29
     : session.mode === PHONE_MODE.GYPSY_POISON_CHECK ? getTranslation(language).roleLabels.v12
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB ? getTranslation(language).roleLabels.v23
     : session.mode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE ? getTranslation(language).roleLabels.m07
@@ -121,6 +122,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     ? { border: "border-moon/50 ring-moon/10", accent: "text-moon" }
     : session.mode === PHONE_MODE.FOX_TAMER_CHECK
     ? { border: "border-amber-500/50 ring-amber-500/10", accent: "text-amber-300" }
+    : session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK
+    ? { border: "border-sky-500/50 ring-sky-500/10", accent: "text-sky-300" }
     : session.mode === PHONE_MODE.GYPSY_POISON_CHECK
     ? { border: "border-purple-500/50 ring-purple-500/10", accent: "text-purple-300" }
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB
@@ -189,6 +192,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 disabled={readOnly || !!session.pendingTargetPlayerId || !!session.approvalResult || !player.selectable || !connected || (pending && session.mode !== PHONE_MODE.WEREWOLF_HUNT)}
                 onClick={() => (session.mode === PHONE_MODE.WEREWOLF_HUNT && !gmControlled)
                   || session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK
+                  || session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK
                   || session.mode === PHONE_MODE.GYPSY_POISON_CHECK || selectsImmediately
                   ? onSend("select", player.id) : isRoleAction
                   ? setSelectedIds((current) => current.includes(player.id)

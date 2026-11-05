@@ -19,6 +19,7 @@ export const pt: Translation = {
     v02: "Domador do Urso",
     v03: "Domador do Corvo",
     v28: "Domador dos Cisnes",
+    v29: "Detetive Privado",
     v04: "Domador da Raposa",
     v05: "Domador dos Coelhos",
     v26: "Domador do Macaco",
@@ -88,6 +89,7 @@ export const pt: Translation = {
       { text: "O {Domador do Macaco} acorda e escolhe um jogador cuja carta lhe será revelada.", requires: ["v26"] },
       { text: "O {Chefe da Aldeia} acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
       { text: "O {Advogado do Diabo} acorda e escolhe um jogador. Esse jogador fica imune a execução durante o próximo dia. O {Advogado do Diabo} não pode escolher o mesmo jogador duas vezes durante o jogo.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
+      { text: "O {Detetive Privado} acorda e escolhe três jogadores vivos vizinhos. O Narrador indica quantos deles agiram nesta noite.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
       { text: "No fim desta noite ouve-se um uivar. A Aldeia sabe então que os Lobisomens se revelaram e estão com fome. A Aldeia acorda desconfiada de toda a gente." },
     ],
     secondNight: [
@@ -145,6 +147,7 @@ export const pt: Translation = {
       { text: "A {Menina} acorda e vê como as vítimas desta noite morreram.", requires: ["v01"], conditionKey: "hasRedXPlayers" },
       { text: "O {Profeta} acorda e indica, ao apontar um jogador que acha que morreu esta noite. Se estiver correto, o jogador será tocado, para saber que pode guardar o seu poder, mesmo como Fantasma, durante o próximo dia e a noite.", requires: ["v19"], conditionKey: "hasRedXPlayers", phoneMode: PHONE_MODE.PROPHET_MARK },
       { text: "O {Domador da Aranha} acorda e é-lhe mostrado todos os papéis dos jogadores que foram apanhados pela teia esta noite.", requires: ["v23"], conditionKey: "spiderHasCaught" },
+      { text: "O {Detetive Privado} acorda e escolhe três jogadores vivos vizinhos. O Narrador indica quantos deles agiram nesta noite.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
     ],
   },
 

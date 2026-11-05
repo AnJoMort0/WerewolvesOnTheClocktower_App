@@ -1164,6 +1164,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `Acredita ser tão gracioso como os seus cisnes.`,
+                fr: `Il se croit aussi gracieux que ses cygnes.`,
+                en: `He believes himself to be as graceful as his swans.`
+            } },
+        ],
         origin: {
             pt: [`Cozinheiro`, BOCT],
             fr: [`Chef`, BOCT],
@@ -1628,6 +1635,13 @@ export const RULEBOOK_CHARACTERS = {
             },
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `É um lutador experiente que queria levar uma reforma tranquila. Infelizmente, parece que ainda não acabou de atirar adversários ao chão.`,
+                fr: `C’est un lutteur chevronné qui rêvait d’une retraite paisible. Hélas, il semble ne pas en avoir fini avec les prises de corps sur ses adversaires.`,
+                en: `He's a seasoned wrestler who wanted to leave a peaceful retired life. Alas, it seems he is not done body slamming adversaries.`
+            } },
+        ],
         origin: {
             pt: [`Colosso`, WOMH],
             fr: [`Colosse`, WOMH],
@@ -1723,6 +1737,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `É impressionante como é fácil manipular uma votação quando se está no poder.`,
+                fr: `Il est étonnant de voir à quel point il est facile de truquer un vote quand on détient le pouvoir.`,
+                en: `It's amazing how easy it is for someone in power to rig the votes.`
+            } },
+        ],
         origin: {
             pt: [`Ancião`, WOMH, `Corvo`, WOMH],
             fr: [`Ancien`, WOMH, `Corbeau`, WOMH],
@@ -1769,6 +1790,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `Intrusa curiosa, a Cigana tem o hábito de beber as bebidas dos outros aldeões. A propósito, descobriu que o veneno aumenta a sua influência.`,
+                fr: `Intruse curieuse, la Gitane a l’habitude de boire les boissons des autres villageois. D’ailleurs, elle a découvert que le poison renforçait son influence.`,
+                en: `A curious tresspasser, the Gypsy has a habit of drinking other townsfolk's beverages. On a related note, she discovered poison heightens her influence.`
+            } },
+        ],
         origin: {
             pt: [`Cigana`, WOMH, WOTCT],
             fr: [`Gitane`, WOMH, WOTCT],
@@ -1873,6 +1901,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `O Acusador teve de atirar as culpas para outra pessoa quando reparou nos olhares desconfiados que lhe lançavam no tribunal.`,
+                fr: `L’Accusateur a dû rejeter la faute sur quelqu’un d’autre lorsqu’il a remarqué les regards soupçonneux qu’on lui lançait au tribunal.`,
+                en: `The Accuser just had to throw the blame on someone else when he saw people eyeing him suspiciously in the courthouse.`
+            } },
+        ],
         origin: {
             pt: [`Bode Expiatório`, WOMH, WOTCT],
             fr: [`Bouc émissaire`, WOMH, WOTCT],
@@ -2086,6 +2121,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `De alguma forma, ficou preso aqui em baixo.`,
+                fr: `D’une manière ou d’une autre, il s’est retrouvé coincé ici-bas.`,
+                en: `Somehow, he got stuck down here.`
+            } },
+        ],
         origin: {
             pt: [`Anjo`, WOMH],
             fr: [`Ange`, WOMH],
@@ -2254,6 +2296,40 @@ export const RULEBOOK_CHARACTERS = {
         origin: WOTCT,
     },
 
+    // v29 | Private Investigator
+    "v29": {
+        id: "v29",
+        group: "villager",
+        team: "villagers",
+        name: { pt: `Detetive Privado`, fr: `Détective Privé`, en: `Private Investigator` },
+        mainDescription: {
+            pt: [`<red>A cada noite</red>, o Detetive Privado escolhe três jogadores vivos vizinhos e descobre quantos deles agiram nessa noite.`],
+            fr: [`<red>Chaque nuit</red>, le Détective Privé choisit trois joueurs vivants voisins et apprend combien d'entre eux ont agi cette nuit-là.`],
+            en: [`<red>Each night</red>, the Private Investigator selects three neighboring living players and learns how many of them acted that night.`]
+        },
+        details: [{
+            title: {
+                pt: `Se envenenado:`,
+                fr: `Si empoisonné :`,
+                en: `If poisoned:` },
+            description: {
+                pt: `Recebe a informação errada.`,
+                fr: `Reçoit de fausses informations.`,
+                en: `Receives incorrect information.` }
+        }],
+        objective: VILLAGER_OBJECTIVE,
+        lore: [{ text: {
+                pt: `Foi contratado pelo Ancião da Aldeia para encontrar quem foge aos impostos.`,
+                fr: `Il a été engagé par l’Ancien du Village pour retrouver les fraudeurs fiscaux.`,
+                en: `He was hired by the Village Elder to locate tax evaders.`
+            } }],
+        origin: {
+            pt: [`Criada`, BOCT],
+            fr: [`Femme de Chambre`, BOCT],
+            en: [`Chambermaid`, BOCT]
+        },
+    },
+
     // v22 | Boy
     "v22": {
         id: "v22",
@@ -2371,7 +2447,7 @@ export const RULEBOOK_CHARACTERS = {
         mainDescription: {
             pt: [
                 `<red>Cada noite</red>, o Vinicultor <red>escolhe se quer</red> envenenar um jogador durante um dia e uma noite, mas esse jogador também será imune.`,
-                `O jogador afetado terá problemas ao usar os seus poderes (recebe informações erradas).`,
+                `O jogador afetado terá problemas ao usar os seus poderes (recebe a informações errada).`,
             ],
             fr: [
                 `<red>Chaque nuit</red>, le Vigneron <red>choisit s’il souhaite</red> empoisonner un joueur pendant un jour et une nuit. Ce joueur sera également immune.`,
@@ -2397,6 +2473,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `Depois de conhecer o Vinicultor, é legítimo perguntar se o ingrediente secreto dos venenos da Bruxa Má não será simplesmente álcool.`,
+                fr: `Après avoir rencontré le Vigneron, on peut se demander si l’ingrédient secret des poisons de la Méchante Sorcière n’est pas tout simplement l’alcool.`,
+                en: `One must wonder, after meeting the Vintner, wether the Evil Witch's secret ingredient for her poisons isn't simply alcohol.`
+            } },
+        ],
         origin: WOTCT,
     },
 
@@ -2439,6 +2522,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `Apesar da sua autoridade religiosa, o Padre prefere não se meter nos assuntos do tribunal. «Dai a César o que é de César», ou algo do género. Na verdade, prefere as cusquices do confessionário.`,
+                fr: `Malgré son autorité religieuse, le Prêtre préfère ne pas se mêler des affaires du tribunal. « Rendez à César ce qui est à César », ou quelque chose comme ça. En réalité, il préfère les commérages du confessionnal.`,
+                en: `Despite his religious authority, the Priest tends not to meddle with the court. "Give back to Caeser what belongs to Caeser", or something like that. Really, he just prefers the gossip from the confessionary booth.`
+            } },
+        ],
         origin: WOTCT,
     },
 
@@ -2559,6 +2649,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         details: [WEREWOLF_POISON_DETAIL],
         objective: EVIL_BEING_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `É vampiro e lobisomem. Fazes ideia de como isso é difícil para alguém habituado a temperar com alho e a comer com talheres de prata?`,
+                fr: `Il est à la fois vampire et loup-garou. Vous imaginez à quel point c’est difficile pour quelqu’un qui a l’habitude d’assaisonner ses plats à l’ail et de manger avec des couverts en argent ?`,
+                en: `He's a vampire and a werewolf. Do you realise how difficult that is for someone used to seasoning with garlic and eating using silverware?`
+            } },
+        ],
         origin: {
             pt: [`Pai Infecto dos Lobos`, WOMH],
             fr: [`Infect Père des Loups`, WOMH],
@@ -2702,6 +2799,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         details: [WEREWOLF_POISON_DETAIL],
         objective: EVIL_BEING_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `O nome não engana: o Domador de Lob(isomens) é mesmo um humano normal. No entanto, tem um lobo licantropo que assume forma humana à noite.`,
+                fr: `Son nom ne ment pas : le Maître du Loup(-garou) est bel et bien un humain ordinaire. Il possède toutefois un loup lycanthrope qui prend forme humaine la nuit.`,
+                en: `The name is not misleading, the (Were)wolf Tamer really is a normal human. He does however own a lycanthrope wolf that turns humanoid at night.`
+            } },
+        ],
         origin: WOTCT
     },
 
@@ -3020,6 +3124,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `Os aldeões estão tão habituados a entrar na brincadeira que até se esqueceram de que ele é o Bêbado. Quanto ao próprio Bêbado, tem quase a certeza de que possui vários animais e de que viu um morto numa bola de cristal… Não se lembra é de alguma vez ter tido uma bola de cristal.`,
+                fr: `Les villageois ont tellement l’habitude de jouer le jeu qu’ils ont même oublié qu’il est l’Ivrogne. Quant à l’Ivrogne lui-même, il est presque sûr de posséder plusieurs animaux et d’avoir vu un mort dans une boule de cristal… Il ne se souvient pas d’avoir eu une boule de cristal.`,
+                en: `The townsfolk are so used to playing along with him that they even forgot he was the Drunkard. As for the Drunkard himself, he's pretty sure he owns multiple animals, and that he saw a vision of a dead man in a crystal ball… He doesn't remember owning a crystal ball.`
+            } },
+        ],
         origin: {
             pt: [`Idiota da Aldeia`, WOMH, `Bêbado`, BOCT],
             fr: [`Idiot du Village`, WOMH, `Ivrogne`, BOCT],
@@ -3122,8 +3233,148 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [{ text: { pt: `...`, fr: `...`, en: `...` } }],
         origin: WOTCT,
     },
+
+    /**
+    // a07 | Washerwoman
+    "a07": {
+        id: "a07",
+        group: "complex",
+        team: "villagers",
+        name: {
+            pt: `Lavadeira`,
+            fr: `Lavandière`,
+            en: `Washerwoman`
+        },
+        mainDescription: {
+            pt: [
+                `<red>A cada noite</red>, a Lavadeira escolhe um jogador e descobre o estado da sua roupa. O Narrador indica com os dedos os números correspondentes à lista abaixo. A roupa de um mesmo jogador pode apresentar mais do que uma característica.`
+            ],
+            fr: [
+                `<red>Chaque nuit</red>, la Lavandière choisit un joueur et découvre l'état de ses vêtements. Le Narrateur indique avec ses doigts les numéros correspondant à la liste ci-dessous. Les vêtements d'un même joueur <red>peuvent présenter plusieurs caractéristiques.</red>`
+            ],
+            en: [
+                `<red>Each night</red>, the Washerwoman chooses a player and learns the state of their clothes. The Narrator indicates the corresponding numbers from the list below using his fingers. A single player's clothes <red>can have more than one attribute.</red>`
+            ]
+        },
+        details: [
+            {
+                title: {
+                    pt: `1 — Ensanguentada:`,
+                    fr: `1 — Ensanglantés :`,
+                    en: `1 — Bloodied:`
+                },
+                description: {
+                    pt: `- O jogador assassinou alguém (com sucesso ou não), mas não é um Lobisomem.
+- O jogador é o _Marionetista_ e agiu com os Lobisomens.
+- O jogador foi assassinado.
+- O jogador foi salvo pelo _Chaman_, pelo _Lobisomem Vampiro_ ou pela _Serva Devota_.
+- O jogador é o _Chaman_ e agiu.
+- O jogador é o _Domador do Macaco_ e perdeu o seu poder.
+- O jogador é o _Sonâmbulo_ e visitou um jogador cuja roupa está ensanguentada.`,
+                    fr: `- Le joueur a assassiné quelqu'un (avec succès ou non), mais n'est pas un Loup-garou.
+- Le joueur est le _Marionnettiste_ et a agi avec les Loups-garous.
+- Le joueur a été assassiné.
+- Le joueur a été sauvé par le _Chaman_, le _Loup-garou Vampire_ ou la _Servante Dévouée_.
+- Le joueur est le _Chaman_ et a agi.
+- Le joueur est le _Maître du Singe_ et a perdu son pouvoir.
+- Le joueur est le _Somnambule_ et a rendu visite à un joueur dont les vêtements sont ensanglantés.`,
+                    en: `- The player assassinated someone (successfully or not) but is not a Werewolf.
+- The player is the _Puppeteer_ and acted with the Werewolves.
+- The player was assassinated.
+- The player was saved by the _Shaman_, the _Vampire Werewolf_, or the _Devout Servant_.
+- The player is the _Shaman_ and acted.
+- The player is the _Monkey Tamer_ and lost their power.
+- The player is the _Sleepwalker_ and visited a player whose clothes are bloodied.`
+                }
+            },
+            {
+                title: {
+                    pt: `2 — Manchada:`,
+                    fr: `2 — Tachés :`,
+                    en: `2 — Stained:`
+                },
+                description: {
+                    pt: `- O jogador envenenou alguém.
+- O jogador foi envenenado por alguém.
+- O jogador é o _Bêbado_.
+- O jogador é o _Anjo_ ou o _Rouba-Túmulos_ e agiu nesta noite ou no dia anterior.`,
+                    fr: `- Le joueur a empoisonné quelqu'un.
+- Le joueur a été empoisonné par quelqu'un.
+- Le joueur est l'_Ivrogne_.
+- Le joueur est l'_Ange_ ou le _Pilleur de Tombes_ et a agi cette nuit ou la veille.`,
+                    en: `- The player poisoned someone.
+- The player was poisoned by someone.
+- The player is the _Drunkard_.
+- The player is the _Angel_ or the _Grave Robber_ and acted this night or the previous day.`
+                }
+            },
+            {
+                title: {
+                    pt: `3 — Chamuscada:`,
+                    fr: `3 — Carbonisés :`,
+                    en: `3 — Charred:`
+                },
+                description: {
+                    pt: `- O jogador é o _Piromaníaco_ e agiu.
+- O jogador foi queimado pelo _Piromaníaco_ nesta noite ou anteriormente e já não tem o seu poder.
+- O jogador é o _Faroleiro_.`,
+                    fr: `- Le joueur est le _Pyromane_ et a agi.
+- Le joueur a été brûlé par le _Pyromane_ cette nuit ou auparavant et ne possède plus son pouvoir.
+- Le joueur est le _Falotier_.`,
+                    en: `- The player is the _Pyromaniac_ and acted.
+- The player was burned by the _Pyromaniac_ this night or earlier and no longer has their power.
+- The player is the _Lamplighter_.`
+                }
+            },
+            {
+                title: {
+                    pt: `4 — Danificada:`,
+                    fr: `4 — Abîmés :`,
+                    en: `4 — Damaged:`
+                },
+                description: {
+                    pt: `- O jogador é um Lobisomem.
+- O jogador foi assassinado.
+- O jogador foi assassinado, mas foi salvo pelo _Chaman_, pelo _Lobisomem Vampiro_ ou pela Imunidade.
+- O jogador foi atingido por uma flecha do _Cupido_ ou do _Cupido Malvado_.`,
+                    fr: `- Le joueur est un Loup-garou.
+- Le joueur a été assassiné.
+- Le joueur a été assassiné, mais a été sauvé par le _Chaman_, le _Loup-garou Vampire_ ou l'Immunité.
+- Le joueur a été touché par une flèche de _Cupidon_ ou du _Méchant Cupidon_.`,
+                    en: `- The player is a Werewolf.
+- The player was assassinated.
+- The player was assassinated but was saved by the _Shaman_, the _Vampire Werewolf_, or Immunity.
+- The player was hit by an arrow from _Cupid_ or _Evil Cupid_.`
+                }
+            },
+            {
+                title: {
+                    pt: `Se envenenada:`,
+                    fr: `Si empoisonnée :`,
+                    en: `If poisoned:`
+                },
+                description: {
+                    pt: `Recebe a informação errada.`,
+                    fr: `Reçoit de fausses informations.`,
+                    en: `Receives incorrect information.`
+                }
+            }
+        ],
+        objective: VILLAGER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `A Lavadeira é a rainha das cusquices. A roupa de uma pessoa diz muito sobre quem ela é, sobretudo quando está ensanguentada, manchada de vinho e furada por uma bala.`,
+                    fr: `La Lavandière est la reine des commérages. Les vêtements d’une personne en disent long sur elle, surtout lorsqu’ils sont ensanglantés, tachés de vin et troués par une balle.`,
+                    en: `The Washerwoman is the queen of gossip. A person's attire says a lot about who they are, especially when the attire in question is bloodied and wine-stained, and punctured by a bullet hole.`
+                }
+            }
+        ],
+        origin: WOTCT,
+    }, */
 
     // a04 | Actor
     "a04": {
@@ -3228,6 +3479,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_FLEX_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `Ladrão de Túmulos é um nome tão depreciativo. Ele limita-se a praticar trocas não consentidas de bens e roupas com os mortos.`,
+                fr: `Pilleur de Tombes, quel nom dégradant ! Il se contente de pratiquer des échanges non consentis de biens et de vêtements avec les morts.`,
+                en: `Grave Robber is such a demeaning name. He merely partakes in non-consensual exchange of goods and clothes with the dead.`
+            } },
+        ],
         origin: WOTCT,
     },
 
@@ -3344,6 +3602,13 @@ export const RULEBOOK_CHARACTERS = {
             fr: `Que l’Arnacœur et le Traître soient les derniers survivants.`,
             en: `The Secret Lover and the Traitor must be the only survivors.`
         },
+        lore: [
+            { text: {
+                pt: `Está mais apaixonado pela ideia de separar um casal do que por qualquer uma das pessoas que o compõem.`,
+                fr: `Il est davantage amoureux de l’idée de briser un couple que de l’un ou l’autre de ses membres.`,
+                en: `He is more in love with the idea of breaking a couple up than in either part of the couple itself.`
+            } },
+        ],
         origin: {
             pt: [`Arnacoeur`, WOMH],
             fr: [`Arnacœur`, WOMH],
@@ -3537,6 +3802,44 @@ export const RULEBOOK_CHARACTERS = {
         },
     },
 
+    /**
+    // t06 | Bureaucrat
+    "t06": {
+        id: "t06",
+        group: "traveller",
+        team: "traveller",
+        name: { pt: `Burocrata`, fr: `Bureaucrate`, en: `Bureaucrat` },
+        mainDescription: {
+            pt: [
+                `<red>Duas vezes por jogo, no início do Tribunal,</red> o Burocrata pode pedir <red>publicamente</red> que os votos desse Tribunal sejam anónimos.`,
+                `O pedido deve ser feito antes de começar as nomeações.`
+            ],
+            fr: [
+                `<red>Deux fois par partie, au début du Tribunal,</red> le Bureaucrate peut demander <red>publiquement</red> que les votes de ce Tribunal soient anonymes.`,
+                `La demande doit être faite avant le début des nominations.`
+            ],
+            en: [
+                `<red>Twice per game, at the start of the Tribunal,</red> the Bureaucrat may <red>publicly</red> request that the votes in that Tribunal be anonymous.`,
+                `The request must be made before nominations begin.`
+            ]
+        },
+        details: [{
+            title: {
+                pt: `Se envenenado:`,
+                fr: `Si empoisonné :`,
+                en: `If poisoned:` },
+            description: {
+                pt: `O poder não funciona.`,
+                fr: `Le pouvoir ne fonctionne pas.`,
+                en: `The power does not work.` }
+        }],
+        objective: TRAVELLER_OBJECTIVE,
+        origin: {
+            pt: [`Tocador de Realejo`, BOCT],
+            fr: [`Joueur d'Orgue de Barbarie`, BOCT],
+            en: [`Organ Grinder`, BOCT] },
+    },*/
+
     // ---- LAME CHARACTERS -----------------------------------------
 
     // l01 | Ordinary Townsfolk
@@ -3710,6 +4013,13 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         objective: VILLAGER_OBJECTIVE,
+        lore: [
+            { text: {
+                pt: `Sabem que podem sempre refugiar-se em casa uns dos outros quando há ventos fortes ou ataques de Lobisomens.`,
+                fr: `Ils savent qu’ils peuvent toujours se réfugier les uns chez les autres en cas de vents violents ou d’attaques de Loups-garous.`,
+                en: `They know they can always run to one another's homes in case of heavy winds or Werewolf attacks.`
+            } },
+        ],
         origin: {
             pt: [`Três Irmãos`, WOMH],
             fr: [`Trois Frères`, WOMH],
@@ -4107,6 +4417,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "v06",
     "v20",
     "v21",
+    "v29",
     "v25",
     "v16",
     "v07",
@@ -4137,10 +4448,11 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "f01",
     "f02",
     "a01",
-    "a02",
     "a03",
+    //"a07",
     "a04",
     "a05",
+    "a02",
     "a06",
     "as01b",
     "l01",
@@ -4153,7 +4465,8 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "t02",
     "t03",
     "t04",
-    "t05"
+    "t05",
+    //"t06"
 ] as RulebookCharacterId[];
 // ============================================================================
 // PRINTED NIGHT SCRIPTS — these also feed the analog character generator
@@ -4316,6 +4629,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             }
         },
         {
+            id: "first-v29",
+            refs: ["v29"],
+            text: {
+                pt: `O Detetive Privado acorda e escolhe três jogadores vivos vizinhos e o Narrador indica quantos deles agiram nesta noite.`,
+                fr: `Le Détective Privé se réveille et choisit trois joueurs vivants voisins et le Narrateur indique combien d'entre eux ont agi cette nuit.`,
+                en: `The Private Investigator wakes up and selects three neighboring living players, and the Narrator indicates how many of them acted tonight.`
+            }
+        },
+        {
             id: "first-general.3",
             refs: ["general"],
             text: {
@@ -4323,7 +4645,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 fr: `À la fin de la nuit, le Village entend le hurlement d'un loup. Les Villageois savent que les Loups-garous sont en ville et se réveillent méfiants.`,
                 en: `At the end of the night, a howl is heard. The Village knows that the Werewolves have revealed themselves and are hungry, and everyone wakes up suspicious.`
             }
-        }
+        },
     ],
     // SECOND NIGHT — actions specific to the first normal night
     secondNight: [
@@ -4798,6 +5120,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 en: `The Grave Robber wakes up / does not wake up if there are no victims. The victims are shown, and the Grave Robber points at one or shows a thumbs-down to choose whether to take a victim’s place.`
             }
         },
+        /**{
+            id: "normal-a07",
+            refs: ["a07"],
+            text: {
+                pt: `A Lavadeira acorda e escolhe um jogador. O Narrador indica com os dedos mostrando números, o estado da roupa desse jogador.`,
+                fr: `La Lavandière se réveille et choisit un joueur. Le Narrateur lui indique avec les doigts en montrant des chiffres, l'état des vêtements de ce joueur.`,
+                en: `The Washerwoman wakes up and chooses a player. The Narrator shows with the fingers indicating numbers, the condition of that player's clothes.`
+            }
+        },*/
         {
             id: "normal-v01",
             refs: ["v01"],
@@ -4826,6 +5157,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             }
         },
         {
+            id: "normal-v29",
+            refs: ["v29"],
+            text: {
+                pt: `O Detetive Privado acorda e escolhe três jogadores vivos vizinhos e o Narrador indica quantos deles agiram nesta noite.`,
+                fr: `Le Détective Privé se réveille et choisit trois joueurs vivants voisins et le Narrateur indique combien d'entre eux ont agi cette nuit.`,
+                en: `The Private Investigator wakes up and selects three neighboring living players, and the Narrator indicates how many of them acted tonight.`
+            }
+        },
+        {
             id: "normal-v07.2",
             refs: ["v07"],
             text: {
@@ -4833,6 +5173,6 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 fr: `(Si le Chevalier Rouillé est mort pendant la nuit, assassiner le Loup-garou le plus proche au début du prochain Tribunal.)`,
                 en: `(If the Rusted Knight died during the night, assassinate the nearest Werewolf at the start of the next Tribunal.)`
             }
-        }
+        },
     ]
 } as const satisfies Record<RulebookNightPhase, readonly RulebookNightScriptLine[]>;
