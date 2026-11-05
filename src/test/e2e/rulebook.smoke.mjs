@@ -73,7 +73,7 @@ try {
   await cdp.evaluate(page, "document.fonts.ready");
   const beginnerPage = await cdp.page(`${base}${prefix}?lang=en&mode=beginner`);
   await cdp.wait(beginnerPage, "!!document.querySelector('article[lang=en]') && !!document.getElementById('v03')");
-  assert.equal(await cdp.evaluate(beginnerPage, "document.getElementById('t01') === null && document.getElementById('v28') === null && !!document.getElementById('x.s01')"), true);
+  assert.equal(await cdp.evaluate(beginnerPage, "document.getElementById('t01') === null && document.getElementById('v28') === null && !!document.getElementById('character-type-lover')"), true);
   await cdp.click(beginnerPage, "Français");
   await cdp.wait(beginnerPage, "!!document.querySelector('article[lang=fr]')");
   assert.equal(await cdp.evaluate(beginnerPage, "new URLSearchParams(location.search).get('mode')"), "beginner");

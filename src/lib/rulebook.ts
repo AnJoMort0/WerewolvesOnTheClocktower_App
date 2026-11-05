@@ -7,23 +7,24 @@ import {
   type RulebookSkinPreviewValue,
   type SkinPackId,
 } from "@/lib/skinPacks";
-import x01Card from "@/assets/display/extras/x01_card.webp";
-import x02Card from "@/assets/display/extras/x02_card.webp";
-import x021Card from "@/assets/display/extras/x021_card.webp";
-import xtCard from "@/assets/display/extras/x.t_card.webp";
-import x03Card from "@/assets/display/extras/x03_card.webp";
-import xv09Card from "@/assets/display/extras/xv09_card.webp";
-import xs01Card from "@/assets/display/extras/xs01_card.webp";
-import xAs01b1Card from "@/assets/display/extras/x.as01b.1_card.webp";
-import xAs01b2Card from "@/assets/display/extras/x.as01b.2_card.webp";
-import xm05Card from "@/assets/display/extras/xm05_card.webp";
+import villagerCard from "@/assets/display/extras/villager_card.webp";
+import evilBeingCard from "@/assets/display/extras/evil_being_card.webp";
+import werewolfCard from "@/assets/display/extras/werewolf_card.webp";
+import travellerCard from "@/assets/display/extras/traveller_card.webp";
+import loverCard from "@/assets/display/extras/lover_card.webp";
+import traitorCard from "@/assets/display/extras/traitor_card.webp";
+import betrayedCard from "@/assets/display/extras/betrayed_card.webp";
+import enemyCard from "@/assets/display/extras/enemy_card.webp";
+import soldierCard from "@/assets/display/extras/soldier_card.webp";
 import {
   RULEBOOK_CHARACTERS,
+  RULEBOOK_CHARACTER_TYPES,
   RULEBOOK_CHARACTER_ORDER,
   RULEBOOK_NIGHT_SCRIPT,
   RULEBOOK_TEXT,
   type RulebookCharacter,
   type RulebookCharacterId,
+  type RulebookCharacterTypeId,
   type RulebookGroupId,
   type RulebookSectionBlock,
   type RulebookTeam,
@@ -38,17 +39,16 @@ export interface RulebookRenderOptions {
   skinPreviewOverrides?: Partial<Record<RulebookCharacterId, RulebookSkinPreviewValue>>;
 }
 
-const EXTRA_CARD_IMAGES: Partial<Record<RulebookCharacterId, string>> = {
-  x01: x01Card,
-  x02: x02Card,
-  "x02.1": x021Card,
-  "x.t": xtCard,
-  x03: x03Card,
-  "x.v09": xv09Card,
-  "x.s01": xs01Card,
-  "x.as01b.1": xAs01b1Card,
-  "x.as01b.2": xAs01b2Card,
-  "x.m05": xm05Card,
+const CHARACTER_TYPE_IMAGES: Record<RulebookCharacterTypeId, string> = {
+  villager: villagerCard,
+  evilBeing: evilBeingCard,
+  werewolf: werewolfCard,
+  traveller: travellerCard,
+  lover: loverCard,
+  traitor: traitorCard,
+  betrayed: betrayedCard,
+  enemy: enemyCard,
+  soldier: soldierCard,
 };
 
 const TEAM_FACTION_CLASS: Record<RulebookTeam, string> = {
@@ -58,7 +58,6 @@ const TEAM_FACTION_CLASS: Record<RulebookTeam, string> = {
   flexible: "faction-flex",
   villagersFlex: "faction-shifting",
   traveller: "faction-traveller",
-  extra: "faction-extra",
 };
 
 function escapeHtml(value: string): string {
@@ -115,7 +114,7 @@ function roleImage(characterId: RulebookCharacterId, options: RulebookRenderOpti
       options.skinPreviewOverrides?.[characterId] ?? "device",
     ).src;
   }
-  return EXTRA_CARD_IMAGES[characterId];
+  return undefined;
 }
 
 function roleAlt(character: RulebookCharacter, lang: Language): string {
@@ -129,6 +128,33 @@ function characterIdsForGroup(groupId: RulebookGroupId, beginnerMode = false): R
 
 function renderSectionBlocks(blocks: readonly RulebookSectionBlock[]): string {
   return blocks.map((block) => renderSectionBlock(block)).join("\n");
+}
+
+function renderCharacterTypes(lang: Language, beginnerMode = false): string {
+  const alignmentTypes: RulebookCharacterTypeId[] = beginnerMode
+    ? ["villager", "evilBeing", "werewolf"]
+    : ["villager", "evilBeing", "werewolf", "traveller"];
+  const createdTypes: RulebookCharacterTypeId[] = beginnerMode
+    ? ["lover"]
+    : ["lover", "traitor", "betrayed", "enemy", "soldier"];
+  const renderType = (id: RulebookCharacterTypeId) => {
+    const type = RULEBOOK_CHARACTER_TYPES[id];
+    return `<article class="rulebook-type" id="character-type-${id}">
+      <img src="${escapeAttribute(CHARACTER_TYPE_IMAGES[id])}" alt="" loading="lazy" draggable="false" />
+      <div><h4>${renderInline(type.name[lang])}</h4>
+        ${renderParagraphs(type.mainDescription[lang])}
+        ${type.details.map((detail) => `<p><strong>${renderInline(detail.title[lang])}</strong> ${renderInline(detail.description[lang])}</p>`).join("")}
+        ${type.objective ? `<p><strong>${renderInline(getTranslation(lang).ui.rulebookUi.objectiveLabel)}</strong> ${renderInline(type.objective[lang])}</p>` : ""}
+      </div>
+    </article>`;
+  };
+  return `<section class="rulebook-character-types" aria-labelledby="character-types">
+    <h3 id="character-types">${renderInline(RULEBOOK_TEXT.characterTypes.heading[lang])}</h3>
+    <h4>${renderInline(RULEBOOK_TEXT.characterTypes.alignments[lang])}</h4>
+    ${alignmentTypes.map(renderType).join("")}
+    <h4>${renderInline(RULEBOOK_TEXT.characterTypes.created[lang])}</h4>
+    ${createdTypes.map(renderType).join("")}
+  </section>`;
 }
 
 function renderSectionBlock(block: RulebookSectionBlock): string {
@@ -366,10 +392,14 @@ function renderSkinPreviewSelect(characterId: RulebookCharacterId, lang: Languag
 }
 
 function renderFullRulebook(lang: Language, options: RulebookRenderOptions = {}): string {
+  const generalRules = RULEBOOK_TEXT.sections[lang];
+  const phaseIndex = generalRules.findIndex((block) => block.type === "h3" && block.id === "phases");
   return `
     <h1 id="${RULEBOOK_TOP_ID}">${renderInline(RULEBOOK_TEXT.title[lang])}</h1>
     ${renderCharacterIndex(lang, options)}
-    <section class="rulebook-basics">${renderSectionBlocks(RULEBOOK_TEXT.sections[lang])}</section>
+    <section class="rulebook-basics">${renderSectionBlocks(generalRules.slice(0, phaseIndex))}
+      ${renderCharacterTypes(lang, options.beginnerMode)}
+      ${renderSectionBlocks(generalRules.slice(phaseIndex))}</section>
     ${renderCharacterTables(lang, options)}
     ${renderNightScript(lang, options.beginnerMode)}
   `;

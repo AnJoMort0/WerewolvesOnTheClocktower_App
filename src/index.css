@@ -373,6 +373,38 @@
   .rulebook-content .rulebook-basics li { margin: 0.45rem 0; }
   .rulebook-content .rulebook-basics h4 { margin: 1.2rem 0 0.4rem; }
 
+  .rulebook-content .rulebook-character-types {
+    margin: 2rem 0;
+  }
+
+  .rulebook-content .rulebook-character-types > h4 {
+    color: hsl(var(--gold));
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    margin: 1.5rem 0 0.6rem;
+  }
+
+  .rulebook-content .rulebook-type {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+    padding: 0.9rem 0;
+    border-top: 1px solid hsl(var(--gold) / 0.25);
+    scroll-margin-top: 1rem;
+  }
+
+  .rulebook-content .rulebook-type img {
+    width: 72px;
+    border-radius: 0.3rem;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .rulebook-content .rulebook-type h4 { margin: 0 0 0.35rem; }
+  .rulebook-content .rulebook-type p { margin: 0.4rem 0; }
+
   .rulebook-content .rule-lore,
   .rulebook-content .rulebook-story {
     color: #dbc18a;

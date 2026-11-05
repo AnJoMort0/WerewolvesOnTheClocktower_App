@@ -24,10 +24,10 @@ import type { Language } from "@/lib/i18n";
      cover them with focused tests. Run: npm test, npx tsc --noEmit, npm run lint,
      and npm run build.
 
-  To add a rulebook-only extra card:
-  - Use an x-prefixed RulebookCharacterId, add its image import and mapping in
-    src/lib/rulebook.ts, then add its card and display order here. Do not add it
-    to src/lib/roles.ts unless players can actually be assigned that card.
+  To add a character type explanation:
+  - Add its localized text to RULEBOOK_CHARACTER_TYPES and an illustration to
+    src/assets/extras with a descriptive filename. Add the display image and
+    reading order in src/lib/rulebook.ts. These are not assignable roles.
 
   Content field notes:
   - Edit RULEBOOK_TEXT.sections for general rulebook text.
@@ -60,17 +60,15 @@ import type { Language } from "@/lib/i18n";
   - For adaptations, add alternating character-name/source pairs for each language:
     origin: { en: [`Witch`, WOMH, `Poisoner`, BOCT], ... }.
   - Add WOTCT after a pair when an adaptation is also partly original.
-  - Rulebook-only extra cards may omit origin because they are states or group references,
-    rather than playable characters.
   - Character entries have id/name landmarks below; display order is separate.
 */
 // ============================================================================
 // CONTENT TYPES
 // ============================================================================
 
-export type RulebookCharacterId = RoleId | "x01" | "x02" | "x02.1" | "x.t" | "x03" | "x.v09" | "x.s01" | "x.as01b.1" | "x.as01b.2" | "x.m05";
-export type RulebookGroupId = "essential" | "villager" | "evil" | "solo" | "flexible" | "complex" | "traveller" | "lame" | "extra";
-export type RulebookTeam = "villagers" | "evilBeing" | "solo" | "flexible" | "villagersFlex" | "traveller" | "extra";
+export type RulebookCharacterId = RoleId;
+export type RulebookGroupId = "essential" | "villager" | "evil" | "solo" | "flexible" | "complex" | "traveller" | "lame";
+export type RulebookTeam = "villagers" | "evilBeing" | "solo" | "flexible" | "villagersFlex" | "traveller";
 export type LocalizedText = Record<Language, string>;
 export type RulebookOrigin = LocalizedText | Record<Language, readonly (string | LocalizedText)[]>;
 export type RulebookSectionBlock = {
@@ -206,6 +204,11 @@ export const RULEBOOK_TEXT = {
         werewolves: { pt: `Lobisomens`, fr: `Loups-garous`, en: `Werewolves` },
         allies: { pt: `Aliados`, fr: `Alliés`, en: `Allies` }
     },
+    characterTypes: {
+        heading: { pt: `Tipos de Personagem`, fr: `Types de personnages`, en: `Character Types` },
+        alignments: { pt: `Alinhamentos`, fr: `Alignements`, en: `Alignments` },
+        created: { pt: `Criados por outras personagens`, fr: `Créés par d'autres personnages`, en: `Created by other characters` },
+    },
     groups: [
         { id: "essential", label: { pt: `Personagens Essenciais`, fr: `Personnages essentiels`, en: `Essential Characters` } },
         { id: "villager", label: { pt: `Aldeões`, fr: `Villageois`, en: `Villagers` } },
@@ -214,8 +217,7 @@ export const RULEBOOK_TEXT = {
         { id: "flexible", label: { pt: `Personagens Flexíveis`, fr: `Personnages flexibles`, en: `Flexible Characters` } },
         { id: "complex", label: { pt: `Personagens Complexos`, fr: `Personnages complexes`, en: `Complex Characters` } },
         { id: "lame", label: { pt: `Personagens Forretas`, fr: `Personnages nuls`, en: `Lame Characters` } },
-        { id: "traveller", label: { pt: `Viajantes`, fr: `Voyageurs`, en: `Travellers` } },
-        { id: "extra", label: { pt: `Tipos de Personagem`, fr: `Types de Personnages`, en: `Character Types` } }
+        { id: "traveller", label: { pt: `Viajantes`, fr: `Voyageurs`, en: `Travellers` } }
     ],
     teamLabels: {
         villagers: { pt: `Aldeões`, fr: `Villageois`, en: `Villagers` },
@@ -223,8 +225,7 @@ export const RULEBOOK_TEXT = {
         solo: { pt: `Solo`, fr: `Solo`, en: `Solo` },
         flexible: { pt: `Flexível`, fr: `Flexible`, en: `Flexible` },
         villagersFlex: { pt: `Aldeões / Flexível`, fr: `Villageois / Flexible`, en: `Villagers / Flexible` },
-        traveller: { pt: `Viajante`, fr: `Voyageur`, en: `Traveller` },
-        extra: { pt: `Extra`, fr: `Extra`, en: `Extra` }
+        traveller: { pt: `Viajante`, fr: `Voyageur`, en: `Traveller` }
     },
     sections: {
         // PORTUGUESE — general rules
@@ -2477,16 +2478,16 @@ export const RULEBOOK_CHARACTERS = {
                     en: `No one would ever suspect a poor old grandmother. Well, no one except those rowdy children.`
                 },
                 explanation: {
-                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho". O design da carta é inspirado na aparência do Lobo Mau do filme "Shrek".`,
-                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge". Le design de la carte est inspiré de l'apparence du Grand Méchant Loup dans le film "Shrek".`,
-                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood. The card design is inspired by the appearance of the Big Bad Wolf in the movie "Shrek".`
+                    pt: `Referência ao conto de fadas "O Capuchinho Vermelho", que inspirou o novo poder do Lobisomem Mau e a personagem original "Capuchinho Vermelho".`,
+                    fr: `Référence au conte de fées "Le Petit Chaperon Rouge", qui a inspiré le nouveau pouvoir du Méchant Loup-garou et le personnage original "Petit Chaperon Rouge".`,
+                    en: `Reference to the fairy tale "Little Red Riding Hood," which inspired the new ability of the Big Bad Werewolf and the original character Little Red Riding Hood.`
                 }
             },
         ],
         origin: {
-            pt: [`Lobo Mau`, WOMH, WOTCT],
-            fr: [`Grand-Méchant-Loup`, WOMH, WOTCT],
-            en: [`Big Bad Wolf`, WOMH, WOTCT]
+            pt: [`Lobo Mau`, WOMH, WOTCT, 'Design: Lobo Mau do "Shrek"'],
+            fr: [`Grand-Méchant-Loup`, WOMH, WOTCT, 'Design: Grand Méchant Loup de "Shrek"'],
+            en: [`Big Bad Wolf`, WOMH, WOTCT, 'Design: Big Bad Wolf from "Shrek"']
         },
     },
 
@@ -3805,13 +3806,15 @@ export const RULEBOOK_CHARACTERS = {
         },
     },
 
-    // ---- EXTRA CHARACTERS -----------------------------------------
+} as const satisfies Record<RulebookCharacterId, RulebookCharacter>;
 
-    // x01 | Villagers
-    "x01": {
-        id: "x01",
-        group: "extra",
-        team: "extra",
+export type RulebookCharacterTypeId = "villager" | "evilBeing" | "werewolf" | "traveller" | "lover" | "traitor" | "betrayed" | "enemy" | "soldier";
+
+export const RULEBOOK_CHARACTER_TYPES = {
+    // ---- CHARACTER TYPES -----------------------------------------
+
+    // Villagers
+    villager: {
         name: {
             pt: `Aldeões`,
             fr: `Villageois`,
@@ -3832,11 +3835,8 @@ export const RULEBOOK_CHARACTERS = {
         objective: VILLAGER_OBJECTIVE
     },
 
-    // x02 | Evil Beings
-    "x02": {
-        id: "x02",
-        group: "extra",
-        team: "extra",
+    // Evil Beings
+    evilBeing: {
         name: {
             pt: `Criaturas Malvadas`,
             fr: `Créatures Maléfiques`,
@@ -3860,11 +3860,8 @@ export const RULEBOOK_CHARACTERS = {
         objective: EVIL_BEING_OBJECTIVE
     },
 
-    // x02.1 | Werewolves
-    "x02.1": {
-        id: "x02.1",
-        group: "extra",
-        team: "extra",
+    // Werewolves
+    werewolf: {
         name: {
             pt: `Lobisomens`,
             fr: `Loups-garous`,
@@ -3888,11 +3885,8 @@ export const RULEBOOK_CHARACTERS = {
         objective: EVIL_BEING_OBJECTIVE
     },
 
-    // x.t
-    "x.t": {
-        id: "x.t",
-        group: "extra",
-        team: "extra",
+    // traveller
+    traveller: {
         name: {
             pt: `Viajantes`,
             fr: `Voyageurs`,
@@ -3922,49 +3916,8 @@ export const RULEBOOK_CHARACTERS = {
         objective: TRAVELLER_OBJECTIVE
     },
 
-    // x03 | Ghosts
-    "x03": {
-        id: "x03",
-        group: "extra",
-        team: "extra",
-        name: {
-            pt: `Fantasmas`,
-            fr: `Fantômes`,
-            en: `Ghosts`
-        },
-        mainDescription: {
-            pt: [
-                `Há dois tipos de morte: <red>EXECUÇÃO</red> (condenados pela aldeia) ou <red>ASSASSINATO</red> (mortos pelo poder de um personagem).`,
-                `Quando um jogador é morto durante a noite, só morre mesmo de manhã, ao acordar, assim durante aquela noite podem continuar a usar os seus poderes.`,
-                `Os jogadores mortos transformam-se em Fantasmas, que podem continuar a comunicar com a Aldeia durante o dia, mas não podem falar ou votar no Tribunal e <red>perdem todos os poderes que tinham</red>, salvo indicação em contrário na ficha de personagem.`,
-                `<red>Os Fantasmas TAMBÉM DORMEM À NOITE</red>.`,
-            ],
-            fr: [
-                `Il existe deux types de mort : <red>EXÉCUTION</red> (condamnés par le village) ou <red>ASSASSINAT</red> (tués par le pouvoir d'un personnage).`,
-                `Lorsqu'un joueur est tué pendant la nuit, il ne meurt réellement que le matin, au réveil, et peut donc continuer à utiliser ses pouvoirs pendant la nuit.`,
-                `Les joueurs morts se transforment en Fantômes, qui peuvent continuer à communiquer avec le village pendant la journée, mais ne peuvent ni parler ni voter au Tribunal, et <red>perdent tous les pouvoirs qu'ils avaient</red> (sauf indication contraire dans la fiche de personnage).`,
-                `<red>Les Fantômes DORMENT ÉGALEMENT LA NUIT</red>.`,
-            ],
-            en: [
-                `There are two kinds of death: <red>EXECUTION</red> (condemned by the village) and <red>ASSASSINATION</red> (killed by a character’s power).`,
-                `When a player is killed during the night, they do not truly die until morning, when the village wakes up. They may therefore continue using their powers during that night.`,
-                `Dead players become Ghosts. They may continue communicating with the village during the day, but may not speak or vote at the Tribunal and <red>lose every power they had</red>, unless their character card says otherwise.`,
-                `<red>GHOSTS ALSO SLEEP AT NIGHT</red>.`
-            ]
-        },
-        details: [],
-        objective: {
-            pt: `Fantasmas guardam o mesmo objetivo que enquanto vivos.`,
-            fr: `Les Fantômes gardent le même objectif que lorsqu'ils étaient vivants.`,
-            en: `Ghosts keep the same objective they had while alive.`
-        }
-    },
-
-    // x.v09 | Soldier
-    "x.v09": {
-        id: "x.v09",
-        group: "extra",
-        team: "extra",
+    // Soldier
+    soldier: {
         name: {
             pt: `Soldado`,
             fr: `Soldat`,
@@ -4005,11 +3958,8 @@ export const RULEBOOK_CHARACTERS = {
         }
     },
 
-    // x.s01 | Lover
-    "x.s01": {
-        id: "x.s01",
-        group: "extra",
-        team: "extra",
+    // Lover
+    lover: {
         name: {
             pt: `Namorado`,
             fr: `Amoureux`,
@@ -4043,11 +3993,8 @@ export const RULEBOOK_CHARACTERS = {
         }
     },
 
-    // x.as01b.1 | Traitor
-    "x.as01b.1": {
-        id: "x.as01b.1",
-        group: "extra",
-        team: "extra",
+    // Traitor
+    traitor: {
         name: {
             pt: `Traidor`,
             fr: `Traître`,
@@ -4081,11 +4028,8 @@ export const RULEBOOK_CHARACTERS = {
         }
     },
 
-    // x.as01b.2 | Betrayed
-    "x.as01b.2": {
-        id: "x.as01b.2",
-        group: "extra",
-        team: "extra",
+    // Betrayed
+    betrayed: {
         name: {
             pt: `Traído`,
             fr: `Trahi`,
@@ -4113,11 +4057,8 @@ export const RULEBOOK_CHARACTERS = {
         }
     },
 
-    // x.m05 | Enemy
-    "x.m05": {
-        id: "x.m05",
-        group: "extra",
-        team: "extra",
+    // Enemy
+    enemy: {
         name: {
             pt: `Inimigo`,
             fr: `Ennemi`,
@@ -4144,7 +4085,8 @@ export const RULEBOOK_CHARACTERS = {
             en: `Does not change.`
         }
     }
-} as const satisfies Record<RulebookCharacterId, RulebookCharacter>;
+} as const satisfies Record<RulebookCharacterTypeId, Pick<RulebookCharacter, "name" | "mainDescription" | "details" | "objective">>;
+
 // ============================================================================
 // DISPLAY ORDER — this controls both the index and character sections
 // ============================================================================
@@ -4211,17 +4153,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "t02",
     "t03",
     "t04",
-    "t05",
-    "x01",
-    "x02",
-    "x02.1",
-    "x.t",
-    "x03",
-    "x.v09",
-    "x.s01",
-    "x.as01b.1",
-    "x.as01b.2",
-    "x.m05"
+    "t05"
 ] as RulebookCharacterId[];
 // ============================================================================
 // PRINTED NIGHT SCRIPTS — these also feed the analog character generator

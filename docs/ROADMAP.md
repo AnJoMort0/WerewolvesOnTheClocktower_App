@@ -10,7 +10,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Decisions
 
-* [ ] Should the Vampire Werewolf be webbed?
+* [ ] 
 
 ## Critical Fixes
 
@@ -18,14 +18,22 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Fixes
 
-* [ ] The accent colour being red, makes it so all the borders of the app are red, making it specially difficult to look at a glance to the circle and quickly check what is evil what is villager, change that, at least for the character borders and names, without ruining the theme of the page of course
+* [ ] In the Rulebook:
+  * [ ] Remove the extras from the character list
+  * [ ] What is currently as content in the extras, becomes a paragraph of rules in a new section called character types
+  * [ ] Sort character types with:
+    * [ ] Ghosts information is moved to be with the ghost rules
+    * [ ] Alignements: Villager, Evil Being, Werewolf and Traveller
+    * [ ] Character types created by other characters: Lover, Traitor, Betrayed, Enemy and then Soldier
 
 ## Balance Changes
 
-* [ ] 
+* [ ] The Spider Tamer should see the Vampire Werewolf and the Werewolf Seer if they choose to use their powers on a webbed werewolf victim
+* [ ] Bias the results of the randomly assigned roles very slightly so prerequisite roles can appear more often, for example once the Hunter is added into the pool there a small higher chance that the Little Red Riding Hood appears too, same for the Secret Lover
 
 ## Additions
 
+* [ ] 
   
 ## Future Plans
 

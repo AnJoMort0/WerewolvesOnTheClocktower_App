@@ -185,7 +185,7 @@ export const MIME_COPY_ROLES: RoleId[] = [
 ];
 
 /** Information characters — randomizer tries to include at least one of these. */
-export const INFO_ROLES: RoleId[] = ["v02", "v03", "v28", "v04", "v05", "v26", "v06", "v22", "v23", "v25"];
+export const INFO_ROLES: RoleId[] = ["v02", "v03", "v28", "v04", "v05", "v26", "v23", "v06", "v22", "v25"];
 
 const ESSENTIAL_SINGLES: RoleId[] = ["e02", "e03", "e04"];
 const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "s02"];
@@ -199,10 +199,10 @@ const LAME_SINGLES: RoleId[] = ["l02", "l05", "l06"];
 /** Alternate deaths: tetanus, Hunter/Soldier/Colossus revenge, Paranoid assassination,
  * Lovers' suicide, White Wolf's solo kill, and the Servant's sacrifice.
  * Poison and burning suppress powers; they do not directly kill. */
-export const EXTRA_DEATH_ROLES: RoleId[] = ["v07", "v08", "v09", "v27", "v10", "s01", "s02", "l06"];
+export const EXTRA_DEATH_ROLES: RoleId[] = ["v07", "v08", "v09", "v27", "v10", "v15", "s01", "s02", "l06"];
 
 /** Keep this shared with the Lamplighter reveal: these powers have finite uses. */
-export const LIMITED_USE_ROLES: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "m03", "m07", "v13", "v14", "v23"];
+export const LIMITED_USE_ROLES: RoleId[] = ["e03", "v10", "v18", "m01", "s01", "m03", "m07", "v13", "v14", "v23", "a04"];
 
 /** Roles with no unconditional recurring night line. First-night introductions
  * do not expose them throughout the game; conditional wakeups remain hidden. */

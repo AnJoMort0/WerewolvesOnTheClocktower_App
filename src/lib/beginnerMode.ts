@@ -8,7 +8,5 @@ export const BEGINNER_ROLE_IDS: readonly RoleId[] = [
   "l01", "l02", "l04", "l05", "l06",
 ];
 
-export const BEGINNER_EXTRA_IDS = ["x01", "x02", "x02.1", "x03", "x.s01"] as const;
-
-export const BEGINNER_CHARACTER_IDS: ReadonlySet<string> = new Set([...BEGINNER_ROLE_IDS, ...BEGINNER_EXTRA_IDS]);
+export const BEGINNER_CHARACTER_IDS: ReadonlySet<string> = new Set(BEGINNER_ROLE_IDS);
 export const BEGINNER_ROLE_SET: ReadonlySet<RoleId> = new Set(BEGINNER_ROLE_IDS);

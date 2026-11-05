@@ -23,7 +23,16 @@ describe("in-app rulebook rendering", () => {
     expect(html).toContain('class="role-row faction-evil" id="e01"');
     expect(html).toContain('class="role-row faction-traveller" id="t01"');
     expect(html).toContain("rule-red");
-    expect(html).toContain("x.as01b.1_card.webp");
+    expect(html).toContain("traitor_card.webp");
+    expect(html).toContain('id="character-types"');
+    expect(html.indexOf('id="character-types"')).toBeLessThan(html.indexOf('id="phases"'));
+    for (const type of ["villager", "evilBeing", "werewolf", "traveller", "lover", "traitor", "betrayed", "enemy", "soldier"]) {
+      expect(html).toContain(`id="character-type-${type}"`);
+    }
+    const page = document.createElement("main");
+    page.innerHTML = html;
+    expect(page.querySelectorAll('.rulebook-index-link[href^="#x"]')).toHaveLength(0);
+    expect(page.querySelectorAll(".role-row.faction-extra")).toHaveLength(0);
     expect(html).toContain('class="rulebook-night-script-link" href="#rulebook-night-script"');
     expect(html).toContain("Ir para os guiões da noite");
     expect(html).toContain('id="rulebook-night-script"');
@@ -43,6 +52,16 @@ describe("in-app rulebook rendering", () => {
     expect(html).toContain('id="v01"');
     expect(html).toContain("character-table-single");
     expect(html).not.toContain('id="e01"');
+  });
+
+  it("keeps Beginner Mode character types to the original introductory selection", () => {
+    const html = getRulebookHtml("en", null, { beginnerMode: true });
+    for (const type of ["villager", "evilBeing", "werewolf", "lover"]) {
+      expect(html).toContain(`id="character-type-${type}"`);
+    }
+    for (const type of ["traveller", "traitor", "betrayed", "enemy", "soldier"]) {
+      expect(html).not.toContain(`id="character-type-${type}"`);
+    }
   });
 
   it("keeps every playable role represented in the rulebook order", () => {
