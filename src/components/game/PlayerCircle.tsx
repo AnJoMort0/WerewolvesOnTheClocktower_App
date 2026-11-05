@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crosshair, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
+import { CHARACTER_ACCENT, getCharacterAffiliation } from "@/lib/characterAccent";
 import { useRoleLabel, useT, useLanguage, getEffectLabel, getToast } from "@/lib/i18n";
 import { resolveRoleImage } from "@/lib/skinPacks";
 import { useSkinPack } from "@/lib/skinPackContext";
@@ -301,14 +302,22 @@ export const PlayerCircle = ({
   };
 
   const getBorderClass = (playerId: string) => {
-    if (hideSensitiveInfo) return "border-primary/40";
+    if (hideSensitiveInfo) return CHARACTER_ACCENT.unknown.border;
     const status = playerStatuses[playerId];
     const effects = _playerEffects[playerId] || new Set<StatusEffect>();
     if (effects.has("burned")) return "border-orange-500";
     if (illusionPlayerIds.has(playerId)) return "border-purple-500";
     if (poisonedPlayerIds.has(playerId)) return "border-green-500";
     if (status === "dead-this-night") return "border-destructive";
-    return "border-primary/40";
+    return getAccent(playerId).border;
+  };
+
+  const getAccent = (playerId: string) => {
+    if (hideSensitiveInfo) return CHARACTER_ACCENT.unknown;
+    const baseRoleId = baseRoleAssignments?.[playerId] ?? roleAssignments?.[playerId];
+    const objectiveRoleId = objectiveRoleAssignments?.[playerId] ?? baseRoleId;
+    return CHARACTER_ACCENT[getCharacterAffiliation(baseRoleId, objectiveRoleId,
+      _playerEffects[playerId] ?? new Set<StatusEffect>(), nightNumber)];
   };
 
   const getGlowStyle = (playerId: string): React.CSSProperties => {
@@ -473,6 +482,7 @@ export const PlayerCircle = ({
           else if (isActor && onActorPowerStateChange) onActorPowerStateChange(state);
         };
         const effects = seated && !hideSensitiveInfo ? (_playerEffects[seated.id] || new Set<StatusEffect>()) : new Set<StatusEffect>();
+        const accent = seated ? getAccent(seated.id) : CHARACTER_ACCENT.unknown;
         const defaultObjectiveEffects = seated ? getDefaultObjectiveEffects(seated.id) : [];
         const effectsList = hideSensitiveInfo ? [] : [
           ...defaultObjectiveEffects,
@@ -565,7 +575,7 @@ export const PlayerCircle = ({
                   <img
                     src={getRoleImage("a04")}
                     alt={roleLabel("a04")}
-                    className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-primary object-cover shadow"
+                    className="absolute -bottom-1 -left-1 h-6 w-6 rounded border border-border object-cover shadow"
                   />
                 )}
                 {isActor && actorCopiesDrunkard && role !== "a01" && (
@@ -604,11 +614,11 @@ export const PlayerCircle = ({
                   />
                 )}
               </div>
-              <span className={`text-xs font-body max-w-[80px] truncate text-center mt-1 ${isThisPoisoned ? "text-green-400" : isThisIllusion ? "text-purple-400" : ""}`}>
+              <span className={`text-xs font-body max-w-[80px] truncate text-center mt-1 ${accent.text}`}>
                 {seated.name}
               </span>
               {(isGM || !!publicRole) && roleDef && (
-                <span className={`text-[10px] font-display leading-tight ${isThisPoisoned ? "text-green-400" : isThisIllusion ? "text-purple-400" : "text-primary"}`}>
+                <span className={`text-[10px] font-display leading-tight ${accent.text}`}>
                   {role ? roleLabel(role) : ""}
                 </span>
               )}

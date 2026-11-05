@@ -6,6 +6,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 * [ ] Touch screen compatibility
 * [ ] Find out what "Clear previous rooms" button does.
+* [ ] Check if the disappearing timer fix worked
 
 ## Decisions
 
@@ -25,13 +26,6 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Additions
 
-* [ ] First time mode: A base game mode with a limited selection of characters mostly based on Miller's Hollow but that still introduced some of the most advanced features of WOTCT, for new players trying the game for the first time
-  * [ ] Should have a rulebook version of this mode available in both the normal app and in the github pages version that can be linked and send to people to read (a button to open a new page maybe?)
-  * [ ] When creating a new game, LAN, online or analogue, there should be a toggle to activate "Beginner Mode" or "First Time Game" or whatever the name should be
-  * [ ] The characters in this beginner mode should still explain their normal rules but omit the travellers and only have the following selection of characters:
-    * [ ] e01, e02, e03, e04, v01, v02, v03, v06, v07, v08, v10, v11, v13, v14, v17, v18, m01, m02, m04, s01, s02, f01, f02, l01, l02, l04, l05, l06 with the same random assignement rules of the normal game
-    * [ ] the extras in the rulebook should be x01, x02, x02.1, x03, x.s01
-  * [ ] When playing the game in this mode the GM can still add all travellers since that is in control of the GM (and so their entry ust show up when clicking on them in game), but when opening the rulebook, clicking on characters to see them and then click on view all, selecting characters to send to players, etc, there should only have the Beginner Mode selection of characters.
   
 ## Future Plans
 
@@ -42,10 +36,6 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
   * [x] Puissante Mère des Loups
 * [ ] New characters as the art is created
 * [ ] Small beautifying of the page: Make all the pages (GM and Players) change colours during the day/night (at night keep the current dark theme, during the day change it to light theme but in the same aesthetic and during the Tribunal change it to a more mysterious late of day type vibe), make the code future proof so we can also add small features to it in the future (for example, if there are no deaths in the morning, it's more bright, but if there were deaths in the morning, it becomes more dark/bloodied/bad weather, stuff like that, to make it fun and dynamic)
-
-## Tried to fix, never worked
-
-* [ ] Timers stop showing the player's devices when they reload the page, or sometimes randomly.
 
 ## Human Playtest Notes
 

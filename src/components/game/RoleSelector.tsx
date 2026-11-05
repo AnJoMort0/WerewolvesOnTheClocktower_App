@@ -23,9 +23,10 @@ interface RoleSelectorProps {
   advancedEnabled?: boolean;
   travellerOnly?: boolean;
   beginnerMode?: boolean;
+  accentTextClass?: string;
 }
 
-export const RoleSelector = ({ value, onChange, advancedEnabled = true, travellerOnly = false, beginnerMode = false }: RoleSelectorProps) => {
+export const RoleSelector = ({ value, onChange, advancedEnabled = true, travellerOnly = false, beginnerMode = false, accentTextClass }: RoleSelectorProps) => {
   const roleLabel = useRoleLabel();
   const { skinPackId } = useSkinPack();
   const filteredIds = travellerOnly
@@ -38,7 +39,7 @@ export const RoleSelector = ({ value, onChange, advancedEnabled = true, travelle
 
   return (
     <Select value={value} onValueChange={(v) => onChange(v as RoleId)}>
-      <SelectTrigger className="w-[190px] h-8 text-xs font-display">
+      <SelectTrigger className={`w-[190px] h-8 text-xs font-display ${accentTextClass ?? ""}`}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

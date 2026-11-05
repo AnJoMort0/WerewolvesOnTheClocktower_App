@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PlayerCircle } from "@/components/game/PlayerCircle";
 import { AddPlayerForm } from "@/components/game/AddPlayerForm";
 import { RoleSelector } from "@/components/game/RoleSelector";
+import { CHARACTER_ACCENT, getCharacterAffiliation } from "@/lib/characterAccent";
 import { NightScript } from "@/components/game/NightScript";
 import { DayTribunalPanel, type DayTribunalPanelHandle } from "@/components/game/DayTribunalPanel";
 import { PlayerStatusPopover } from "@/components/game/PlayerStatusPopover";
@@ -7239,6 +7240,7 @@ const GMRoom = () => {
                       const isWerewolfTurned = effects.has("werewolf_turned");
                       const isEvilBeing = effects.has("evil_being");
                       const objectiveRoleId = objectiveRoleAssignments[player.id] ?? mechanicalRoleId;
+                      const accent = CHARACTER_ACCENT[getCharacterAffiliation(baseRoleId ?? roleId, objectiveRoleId, effects, nightNumber)];
                       const defaultObjectiveEffects: StatusEffect[] = objectiveRoleId
                         ? WEREWOLF_ROLES.includes(objectiveRoleId)
                           ? ["werewolf_turned"]
@@ -7262,11 +7264,11 @@ const GMRoom = () => {
                         ? "border-green-500"
                         : status === "dead-this-night"
                         ? "border-destructive"
-                        : "border-border";
+                        : accent.border;
 
                       const rowContent = (
                         <div
-                          className={`flex items-center gap-2 bg-card border rounded-lg p-2 ${borderClass} ${isPermanentDead ? "opacity-40 grayscale" : ""} ${hasHostileObjectiveMarker ? "shadow-[0_0_12px_hsl(var(--destructive)/0.45)]" : ""} ${listDragProps.draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+                          className={`flex items-center gap-2 bg-card border border-l-4 rounded-lg p-2 ${borderClass} ${isPermanentDead ? "opacity-40 grayscale" : ""} ${hasHostileObjectiveMarker ? "shadow-[0_0_12px_hsl(var(--destructive)/0.45)]" : ""} ${listDragProps.draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
                           onDrop={(e) => handleListDrop(e, player.id)}
                           onDragEnter={handleListDragOver}
                           onDragOver={handleListDragOver}
@@ -7325,7 +7327,7 @@ const GMRoom = () => {
                                )}
                             </div>
                           )}
-                          <span className={`font-body text-sm flex-1 truncate ${isThisPoisoned ? "text-green-400" : isThisIllusion ? "text-purple-400" : ""}`}>{player.name}</span>
+                          <span className={`font-body text-sm flex-1 truncate ${accent.text}`}>{player.name}</span>
                           {/* Status effect icons */}
                           {visibleEffectIcons.length > 0 && (
                             <div className="flex gap-0.5 flex-shrink-0">
@@ -7594,6 +7596,7 @@ const GMRoom = () => {
                             onChange={(role) => changeRole(player.id, role)}
                             advancedEnabled={advancedEnabled}
                             beginnerMode={beginnerMode}
+                            accentTextClass={accent.text}
                             travellerOnly={player.is_traveller}
                           />
                         </div>

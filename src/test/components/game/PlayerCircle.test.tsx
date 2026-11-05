@@ -7,6 +7,29 @@ import { ROLES } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 
 describe("PlayerCircle drag and power controls", () => {
+  it("distinguishes GM affiliations while keeping public circles neutral", () => {
+    const players = [
+      { id: "bear", name: "Bear", seat_position: 0, character: "v02", is_alive: true },
+      { id: "wolf", name: "Wolf", seat_position: 1, character: "e01", is_alive: true },
+      { id: "thief", name: "Thief", seat_position: 2, character: "f01", is_alive: true },
+      { id: "dog", name: "Dog", seat_position: 3, character: "a02", is_alive: true },
+    ];
+    const roleAssignments = { bear: "v02" as const, wolf: "e01" as const, thief: "f01" as const, dog: "a02" as const };
+    const { getByAltText, getByText, rerender } = render(<PlayerCircle isGM isPlaying totalSlots={4}
+      players={players} onDropPlayer={vi.fn()} roleAssignments={roleAssignments}
+      objectiveRoleAssignments={{ ...roleAssignments, dog: "e01" }} />);
+    expect(getByAltText(getRoleLabel("v02", "pt")).parentElement).toHaveClass("border-sky-400/75");
+    expect(getByAltText(getRoleLabel("e01", "pt")).parentElement).toHaveClass("border-rose-500/90");
+    expect(getByAltText(getRoleLabel("f01", "pt")).parentElement).toHaveClass("border-amber-400/75");
+    expect(getByAltText(getRoleLabel("a02", "pt")).parentElement).toHaveClass("border-rose-500/90");
+    expect(getByText("Bear")).toHaveClass("text-sky-200");
+    expect(getByText("Wolf")).toHaveClass("text-rose-300");
+
+    rerender(<PlayerCircle totalSlots={4} players={players} onDropPlayer={vi.fn()}
+      roleAssignments={roleAssignments} hideSensitiveInfo />);
+    expect(getByText("Bear")).toHaveClass("text-foreground");
+    expect(getByText("Wolf")).toHaveClass("text-foreground");
+  });
   it("drags Monkey and ready Colossus copies with their own source IDs", () => {
     const { container, rerender } = render(<PlayerCircle isGM isPlaying totalSlots={4} onDropPlayer={vi.fn()}
       players={["colossus", "actor", "monkey", "waiting"].map((id, seat_position) => ({ id, name: id, seat_position, character: "v27", is_alive: true }))}
