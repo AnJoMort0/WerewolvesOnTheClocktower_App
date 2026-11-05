@@ -614,7 +614,7 @@ export const PlayerCircle = ({
                   />
                 )}
               </div>
-              <span className={`text-xs font-body max-w-[80px] truncate text-center mt-1 ${accent.text}`}>
+              <span className="text-xs font-body max-w-[80px] truncate text-center mt-1 text-foreground">
                 {seated.name}
               </span>
               {(isGM || !!publicRole) && roleDef && (

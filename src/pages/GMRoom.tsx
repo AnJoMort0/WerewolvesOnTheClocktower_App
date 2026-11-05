@@ -7327,7 +7327,7 @@ const GMRoom = () => {
                                )}
                             </div>
                           )}
-                          <span className={`font-body text-sm flex-1 truncate ${accent.text}`}>{player.name}</span>
+                          <span className="font-body text-sm flex-1 truncate text-foreground">{player.name}</span>
                           {/* Status effect icons */}
                           {visibleEffectIcons.length > 0 && (
                             <div className="flex gap-0.5 flex-shrink-0">

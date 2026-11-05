@@ -22,8 +22,8 @@ describe("PlayerCircle drag and power controls", () => {
     expect(getByAltText(getRoleLabel("e01", "pt")).parentElement).toHaveClass("border-rose-500/90");
     expect(getByAltText(getRoleLabel("f01", "pt")).parentElement).toHaveClass("border-amber-400/75");
     expect(getByAltText(getRoleLabel("a02", "pt")).parentElement).toHaveClass("border-rose-500/90");
-    expect(getByText("Bear")).toHaveClass("text-green-400");
-    expect(getByText("Wolf")).toHaveClass("text-rose-400");
+    expect(getByText("Bear")).toHaveClass("text-foreground");
+    expect(getByText("Wolf")).toHaveClass("text-foreground");
 
     rerender(<PlayerCircle totalSlots={4} players={players} onDropPlayer={vi.fn()}
       roleAssignments={roleAssignments} hideSensitiveInfo />);
