@@ -18,12 +18,12 @@ describe("PlayerCircle drag and power controls", () => {
     const { getByAltText, getByText, rerender } = render(<PlayerCircle isGM isPlaying totalSlots={4}
       players={players} onDropPlayer={vi.fn()} roleAssignments={roleAssignments}
       objectiveRoleAssignments={{ ...roleAssignments, dog: "e01" }} />);
-    expect(getByAltText(getRoleLabel("v02", "pt")).parentElement).toHaveClass("border-sky-400/75");
+    expect(getByAltText(getRoleLabel("v02", "pt")).parentElement).toHaveClass("border-green-500/80");
     expect(getByAltText(getRoleLabel("e01", "pt")).parentElement).toHaveClass("border-rose-500/90");
     expect(getByAltText(getRoleLabel("f01", "pt")).parentElement).toHaveClass("border-amber-400/75");
     expect(getByAltText(getRoleLabel("a02", "pt")).parentElement).toHaveClass("border-rose-500/90");
-    expect(getByText("Bear")).toHaveClass("text-sky-200");
-    expect(getByText("Wolf")).toHaveClass("text-rose-300");
+    expect(getByText("Bear")).toHaveClass("text-green-400");
+    expect(getByText("Wolf")).toHaveClass("text-rose-400");
 
     rerender(<PlayerCircle totalSlots={4} players={players} onDropPlayer={vi.fn()}
       roleAssignments={roleAssignments} hideSensitiveInfo />);

@@ -4,9 +4,9 @@ import type { StatusEffect } from "@/lib/effects";
 export type CharacterAffiliation = "villager" | "evil" | "independent" | "unknown";
 
 export const CHARACTER_ACCENT: Record<CharacterAffiliation, { border: string; text: string }> = {
-  villager: { border: "border-sky-400/75", text: "text-sky-200" },
-  evil: { border: "border-rose-500/90", text: "text-rose-300" },
-  independent: { border: "border-amber-400/75", text: "text-amber-200" },
+  villager: { border: "border-green-500/80", text: "text-green-400" },
+  evil: { border: "border-rose-500/90", text: "text-rose-400" },
+  independent: { border: "border-amber-400/75", text: "text-amber-400" },
   unknown: { border: "border-border/70", text: "text-foreground" },
 };
 
