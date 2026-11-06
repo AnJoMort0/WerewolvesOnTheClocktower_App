@@ -2303,9 +2303,9 @@ export const RULEBOOK_CHARACTERS = {
         team: "villagers",
         name: { pt: `Detetive Privado`, fr: `Détective Privé`, en: `Private Investigator` },
         mainDescription: {
-            pt: [`<red>A cada noite</red>, o Detetive Privado escolhe três jogadores vivos vizinhos e descobre quantos deles agiram nessa noite.`],
-            fr: [`<red>Chaque nuit</red>, le Détective Privé choisit trois joueurs vivants voisins et apprend combien d'entre eux ont agi cette nuit-là.`],
-            en: [`<red>Each night</red>, the Private Investigator selects three neighboring living players and learns how many of them acted that night.`]
+            pt: [`<red>A cada noite</red>, o Detetive Privado escolhe três jogadores vizinhos e descobre quantos deles agiram nessa noite.`],
+            fr: [`<red>Chaque nuit</red>, le Détective Privé choisit trois joueurs voisins et apprend combien d'entre eux ont agi cette nuit-là.`],
+            en: [`<red>Each night</red>, the Private Investigator selects three neighboring players and learns how many of them acted that night.`]
         },
         details: [{
             title: {
@@ -3802,7 +3802,6 @@ export const RULEBOOK_CHARACTERS = {
         },
     },
 
-    /**
     // t06 | Bureaucrat
     "t06": {
         id: "t06",
@@ -3838,7 +3837,7 @@ export const RULEBOOK_CHARACTERS = {
             pt: [`Tocador de Realejo`, BOCT],
             fr: [`Joueur d'Orgue de Barbarie`, BOCT],
             en: [`Organ Grinder`, BOCT] },
-    },*/
+    },
 
     // ---- LAME CHARACTERS -----------------------------------------
 
@@ -4466,7 +4465,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "t03",
     "t04",
     "t05",
-    //"t06"
+    "t06"
 ] as RulebookCharacterId[];
 // ============================================================================
 // PRINTED NIGHT SCRIPTS — these also feed the analog character generator
@@ -4632,9 +4631,9 @@ export const RULEBOOK_NIGHT_SCRIPT = {
             id: "first-v29",
             refs: ["v29"],
             text: {
-                pt: `O Detetive Privado acorda e escolhe três jogadores vivos vizinhos e o Narrador indica quantos deles agiram nesta noite.`,
-                fr: `Le Détective Privé se réveille et choisit trois joueurs vivants voisins et le Narrateur indique combien d'entre eux ont agi cette nuit.`,
-                en: `The Private Investigator wakes up and selects three neighboring living players, and the Narrator indicates how many of them acted tonight.`
+                pt: `O Detetive Privado acorda e escolhe três jogadores vizinhos e o Narrador indica quantos deles agiram nesta noite.`,
+                fr: `Le Détective Privé se réveille et choisit trois joueurs voisins et le Narrateur indique combien d'entre eux ont agi cette nuit.`,
+                en: `The Private Investigator wakes up and selects three neighboring players, and the Narrator indicates how many of them acted tonight.`
             }
         },
         {

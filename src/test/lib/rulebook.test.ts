@@ -54,6 +54,16 @@ describe("in-app rulebook rendering", () => {
     expect(html).not.toContain('id="e01"');
   });
 
+  it("shows the Bureaucrat in all languages without a night script line", () => {
+    for (const language of ["en", "pt", "fr"] as const) {
+      const html = getRulebookHtml(language, "t06");
+      expect(html).toContain('id="t06"');
+      expect(html).toContain(RULEBOOK_CHARACTERS.t06.name[language]);
+      expect(html).not.toContain('id="normal-t06"');
+    }
+    expect(RULEBOOK_CHARACTER_ORDER.at(-1)).toBe("t06");
+  });
+
   it("keeps Beginner Mode character types to the original introductory selection", () => {
     const html = getRulebookHtml("en", null, { beginnerMode: true });
     for (const type of ["villager", "evilBeing", "werewolf", "lover"]) {

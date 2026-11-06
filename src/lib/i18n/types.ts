@@ -489,6 +489,7 @@ export interface UIStrings {
   has2VotesAgainst: string; // "tem 2 votos contra."
   votesDouble: string;      // "vota a dobrar."
   noVote: string;           // "não tem voto."
+  bureaucratPoisoned: string;
   currentObjective: string;
   objectiveLovers: string;
   objectiveEvilBeing: string;

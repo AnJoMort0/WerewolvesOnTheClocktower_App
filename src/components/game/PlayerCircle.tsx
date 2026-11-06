@@ -56,6 +56,8 @@ interface PlayerCircleProps {
   colossusReadyPlayerIds?: Set<string>;
   usedTravellerPowerIds?: Set<string>;
   onTravellerPowerUsedToggle?: (playerId: string) => void;
+  bureaucratUsesByPlayer?: Record<string, number>;
+  onBureaucratUseToggle?: (playerId: string, index: number) => void;
   baseRoleAssignments?: Record<string, RoleId>;
   objectiveRoleAssignments?: Record<string, RoleId>;
   playerStatuses?: Record<string, PlayerStatus>;
@@ -137,6 +139,8 @@ export const PlayerCircle = ({
   colossusReadyPlayerIds = new Set(),
   usedTravellerPowerIds = new Set(),
   onTravellerPowerUsedToggle,
+  bureaucratUsesByPlayer = {},
+  onBureaucratUseToggle,
   baseRoleAssignments,
   objectiveRoleAssignments,
   playerStatuses = {},
@@ -692,6 +696,19 @@ export const PlayerCircle = ({
                     className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                   />
                   <span className="text-[8px] leading-none text-muted-foreground">{t("powerUsed")}</span>
+                </div>
+              )}
+              {isGM && !isPermanentlyDead && mechanicalRole === "t06" && onBureaucratUseToggle && (
+                <div className="flex items-center gap-1 mt-0.5" onClick={(event) => event.stopPropagation()}>
+                  {[0, 1].map((index) => (
+                    <Checkbox
+                      key={index}
+                      checked={(bureaucratUsesByPlayer[seated.id] ?? 0) > index}
+                      aria-label={`${t("powerUsed")} ${index + 1}`}
+                      onCheckedChange={() => onBureaucratUseToggle(seated.id, index)}
+                      className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                    />
+                  ))}
                 </div>
               )}
               {/* Cupid (s01) protection charges */}

@@ -10,7 +10,7 @@ const actions = {
 
 export const en: Translation = {
   roleLabels: {
-    t01: "Lawyer", t02: "Gambler", t03: "Gunslinger", t04: "Devil's Advocate", t05: "Bone Collector",
+    t01: "Lawyer", t02: "Gambler", t03: "Gunslinger", t04: "Devil's Advocate", t05: "Bone Collector", t06: "Bureaucrat",
     e01: "Werewolf",
     e02: "Evil Witch",
     e03: "Shaman",
@@ -508,6 +508,7 @@ export const en: Translation = {
     has2VotesAgainst: "has 2 votes against them.",
     votesDouble: "has a double vote.",
     noVote: "has no vote.",
+    bureaucratPoisoned: "is poisoned and cannot make the votes anonymous at this Tribunal.",
     currentObjective: "Current objective: {objective}",
     objectiveLovers: "win with the Lovers",
     objectiveEvilBeing: "win with the Evil Beings",

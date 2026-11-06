@@ -245,6 +245,7 @@ type GMSnapshot = {
   scriptActionLineKeys?: string[];
   colossusUsedPlayerIds?: string[];
   usedTravellerPowerIds?: string[];
+  bureaucratUsesByPlayer?: Record<string, number>;
   colossusNightSeed?: number;
   werewolfDeathFlags?: Record<string, boolean>;
   gameLogEvents: GameLogEvent[];
@@ -610,6 +611,7 @@ const GMRoom = () => {
   colossusUsedRef.current = colossusUsedPlayerIds;
   const [colossusNightSeed, setColossusNightSeed] = useState(Math.random);
   const [usedTravellerPowerIds, setUsedTravellerPowerIds] = useState<Set<string>>(new Set());
+  const [bureaucratUsesByPlayer, setBureaucratUsesByPlayer] = useState<Record<string, number>>({});
   const [werewolfDeathFlags, setWerewolfDeathFlags] = useState<Record<string, boolean>>({});
   const monkeyDragRef = useRef<(sourcePlayerId: string, targetPlayerId: string) => void>(() => {});
   const scriptLinesRef = useRef<import("@/components/game/NightScript").ScriptActionLine[]>([]);
@@ -1512,6 +1514,7 @@ const GMRoom = () => {
       setScriptActionLineKeys(new Set(snapshot.scriptActionLineKeys ?? []));
       setColossusUsedPlayerIds(new Set(snapshot.colossusUsedPlayerIds ?? []));
       setUsedTravellerPowerIds(new Set(snapshot.usedTravellerPowerIds ?? []));
+      setBureaucratUsesByPlayer(snapshot.bureaucratUsesByPlayer ?? {});
       setColossusNightSeed(snapshot.colossusNightSeed ?? Math.random());
       setWerewolfDeathFlags(snapshot.werewolfDeathFlags ?? {});
       setGameLogEvents(normalizeGameLogEvents(snapshot.gameLogEvents));
@@ -1600,6 +1603,7 @@ const GMRoom = () => {
       scriptActionLineKeys: Array.from(scriptActionLineKeys),
       colossusUsedPlayerIds: Array.from(colossusUsedPlayerIds),
       usedTravellerPowerIds: Array.from(usedTravellerPowerIds),
+      bureaucratUsesByPlayer,
       colossusNightSeed,
       werewolfDeathFlags,
       monkeyDisabled,
@@ -1682,6 +1686,7 @@ const GMRoom = () => {
     scriptActionLineKeys,
     colossusUsedPlayerIds,
     usedTravellerPowerIds,
+    bureaucratUsesByPlayer,
     colossusNightSeed,
     werewolfDeathFlags,
     monkeyDisabled,
@@ -2222,6 +2227,7 @@ const GMRoom = () => {
     setScriptActionLineKeys(new Set());
     setColossusUsedPlayerIds(new Set());
     setUsedTravellerPowerIds(new Set());
+    setBureaucratUsesByPlayer({});
     setColossusNightSeed(Math.random());
     setWerewolfDeathFlags({});
     setScriptAutoComplete({ role: null, sourcePlayerIds: [], version: 0 });
@@ -2523,6 +2529,12 @@ const GMRoom = () => {
       toast.error(getToast("errRoomAction", (room?.language as Language) || "pt"));
       return;
     }
+    setBureaucratUsesByPlayer((previous) => {
+      if (!(playerId in previous)) return previous;
+      const next = { ...previous };
+      delete next[playerId];
+      return next;
+    });
     setPlayers((current) => current.map((player) => player.id === playerId
       ? { ...player, traveller_role: roleId }
       : player));
@@ -4212,6 +4224,13 @@ const GMRoom = () => {
       if (next.has(playerId)) next.delete(playerId);
       else next.add(playerId);
       return next;
+    });
+  }, []);
+
+  const toggleBureaucratUse = useCallback((playerId: string, index: number) => {
+    setBureaucratUsesByPlayer((previous) => {
+      const current = previous[playerId] ?? 0;
+      return { ...previous, [playerId]: current > index ? index : index + 1 };
     });
   }, []);
 
@@ -6436,6 +6455,11 @@ const GMRoom = () => {
 
     for (const poisonedId of poisonedPlayerIds) {
       const poisonedRole = abilityRoleAssignments[poisonedId];
+      if (poisonedRole === "t06" && !permanentlyDead.has(poisonedId)
+        && playerStatuses[poisonedId] !== "dead" && playerStatuses[poisonedId] !== "dead-this-night") {
+        const name = players.find((player) => player.id === poisonedId)?.name;
+        if (name) lines.push(`{${name}} ${t("bureaucratPoisoned", lng)}`);
+      }
       if (poisonedRole === "v12" && poisonedId !== mimePlayerId) {
         const name = players.find(p => p.id === poisonedId)?.name;
         if (name && !(playerEffects[poisonedId]?.has("vote_double"))) {
@@ -6970,6 +6994,8 @@ const GMRoom = () => {
                   colossusReadyPlayerIds={colossusReadyPlayerIds}
                   usedTravellerPowerIds={usedTravellerPowerIds}
                   onTravellerPowerUsedToggle={toggleTravellerPowerUsed}
+                  bureaucratUsesByPlayer={bureaucratUsesByPlayer}
+                  onBureaucratUseToggle={toggleBureaucratUse}
                   baseRoleAssignments={rolesAssigned ? roleAssignments : undefined}
                   objectiveRoleAssignments={rolesAssigned ? objectiveRoleAssignments : undefined}
                   playerStatuses={playerStatuses}
@@ -7471,6 +7497,19 @@ const GMRoom = () => {
                                 className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                               />
                               <span className="text-[9px] text-muted-foreground">{tt("powerUsed")}</span>
+                            </div>
+                          )}
+                          {mechanicalRoleId === "t06" && !isPermanentDead && (
+                            <div className="flex gap-1 flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+                              {[0, 1].map((index) => (
+                                <Checkbox
+                                  key={index}
+                                  checked={(bureaucratUsesByPlayer[player.id] ?? 0) > index}
+                                  aria-label={`${tt("powerUsed")} ${index + 1}`}
+                                  onCheckedChange={() => toggleBureaucratUse(player.id, index)}
+                                  className="h-4 w-4 rounded-none border-2 border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                />
+                              ))}
                             </div>
                           )}
                           {/* Paranoid charges */}

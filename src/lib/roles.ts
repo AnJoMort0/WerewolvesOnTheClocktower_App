@@ -62,6 +62,7 @@ import t02Img from "@/assets/display/roles/t02.webp";
 import t03Img from "@/assets/display/roles/t03.webp";
 import t04Img from "@/assets/display/roles/t04.webp";
 import t05Img from "@/assets/display/roles/t05.webp";
+import t06Img from "@/assets/display/roles/t06.webp";
 
 export type RoleCategory = "e" | "v" | "m" | "s" | "f" | "a" | "l" | "t";
 
@@ -138,6 +139,7 @@ const ROLE_DEFINITIONS = {
   t03: { id: "t03", label: "Gunslinger", image: t03Img, category: "t" },
   t04: { id: "t04", label: "Devil's Advocate", image: t04Img, category: "t" },
   t05: { id: "t05", label: "Bone Collector", image: t05Img, category: "t" },
+  t06: { id: "t06", label: "Bureaucrat", image: t06Img, category: "t" },
 } as const satisfies Record<string, RoleDefinition>;
 
 /** Playable role IDs are derived from the registry so a new role is declared only once. */
@@ -156,7 +158,7 @@ export const ROLES: Record<RoleId, RoleDef> = ROLE_DEFINITIONS;
 
 export const ALL_ROLE_IDS: RoleId[] = Object.keys(ROLES) as RoleId[];
 
-export const TRAVELLER_ROLES: RoleId[] = ["t01", "t02", "t03", "t04", "t05"];
+export const TRAVELLER_ROLES: RoleId[] = ["t01", "t02", "t03", "t04", "t05", "t06"];
 
 export function isUniqueRole(id: RoleId): boolean {
   return id !== "e01" && id !== "l01" && !TRAVELLER_ROLES.includes(id);

@@ -55,7 +55,7 @@ describe("skin packs", () => {
     }).variant).toBe("solo");
   });
 
-  it.each(["t01", "t02", "t03"] as const)("keeps %s neutral publicly and resolves its private Traveller alignment", (roleId) => {
+  it.each(["t01", "t02", "t03", "t06"] as const)("keeps %s neutral publicly and resolves its private Traveller alignment", (roleId) => {
     expect(resolveRoleImage(roleId, { skinPackId: "default" })).toEqual({
       src: ROLES[roleId].image,
       source: "default",

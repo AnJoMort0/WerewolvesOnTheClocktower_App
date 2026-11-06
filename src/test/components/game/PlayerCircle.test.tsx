@@ -7,6 +7,23 @@ import { ROLES } from "@/lib/roles";
 import { resolveRoleImage } from "@/lib/skinPacks";
 
 describe("PlayerCircle drag and power controls", () => {
+  it("shows two public Bureaucrat uses only on the GM circle", () => {
+    const onBureaucratUseToggle = vi.fn();
+    const props = { isGM: true, isPlaying: true, totalSlots: 1, onDropPlayer: vi.fn(),
+      players: [{ id: "bureaucrat", name: "Bureaucrat", seat_position: 0, character: "t06", is_alive: true, is_traveller: true }],
+      roleAssignments: { bureaucrat: "t06" as const }, onBureaucratUseToggle };
+    const { getByRole, rerender, queryByRole } = render(<PlayerCircle {...props} />);
+    expect(getByRole("checkbox", { name: "Poder usado 1" })).not.toBeChecked();
+    expect(getByRole("checkbox", { name: "Poder usado 2" })).not.toBeChecked();
+    fireEvent.click(getByRole("checkbox", { name: "Poder usado 1" }));
+    expect(onBureaucratUseToggle).toHaveBeenCalledWith("bureaucrat", 0);
+    rerender(<PlayerCircle {...props} bureaucratUsesByPlayer={{ bureaucrat: 1 }} />);
+    expect(getByRole("checkbox", { name: "Poder usado 1" })).toBeChecked();
+    fireEvent.click(getByRole("checkbox", { name: "Poder usado 2" }));
+    expect(onBureaucratUseToggle).toHaveBeenCalledWith("bureaucrat", 1);
+    rerender(<PlayerCircle {...props} isGM={false} bureaucratUsesByPlayer={{ bureaucrat: 2 }} />);
+    expect(queryByRole("checkbox", { name: "Poder usado 1" })).toBeNull();
+  });
   it("distinguishes GM affiliations while keeping public circles neutral", () => {
     const players = [
       { id: "bear", name: "Bear", seat_position: 0, character: "v02", is_alive: true },
