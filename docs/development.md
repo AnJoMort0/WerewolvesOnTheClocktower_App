@@ -119,10 +119,14 @@ npm test
 npm run build
 ```
 
-After adding or changing original artwork in `src/assets/roles`,
-`src/assets/extras`, or `src/assets/icons`, run `npm run assets:optimize` and commit the generated
-`src/assets/display` copies. The app imports these smaller WebP files; the
-original PNGs remain available for editing. The README uses the optimised copies. The script preserves
+Add or update PNG/JPG/JPEG artwork in `src/assets` (typically `roles`, `extras`, or
+`icons`). While `npm run dev` (or `npm run dev:lan`)
+is running, Vite generates the matching WebP file in `src/assets/display` automatically.
+All Vite builds, including the app, rulebook, and LAN preparation, also generate missing or
+outdated display files before compiling. For a manual pass without starting Vite, run
+`npm run assets:optimize` (`-- --force` to regenerate all files). Commit the generated
+`src/assets/display` copies with the originals. The app imports these smaller WebP files;
+the originals remain available for editing. The README uses the optimised copies. The script preserves
 aspect ratios and transparency, avoids enlarging small images, and caps each
 edge at 512 pixels for cards and 128 pixels for icons. No image processing runs in a player's browser.
 
