@@ -3252,13 +3252,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A partir da segunda noite, todas as noites</red>, a Lavadeira escolhe um jogador e descobre o estado da sua roupa. O Narrador indica com os dedos os números correspondentes à lista abaixo. A roupa de um mesmo jogador pode apresentar mais do que uma característica.`
+                `<red>Cada noite</red>, a Lavadeira escolhe um jogador e descobre o estado da sua roupa. O Narrador indica com os dedos os números correspondentes à lista abaixo. A roupa de um mesmo jogador pode apresentar mais do que uma característica.`
             ],
             fr: [
-                `<red>Chaque nuit à partir de la deuxième</red>, la Lavandière choisit un joueur et découvre l'état de ses vêtements. Le Narrateur indique avec ses doigts les numéros correspondant à la liste ci-dessous. Les vêtements d'un même joueur <red>peuvent présenter plusieurs caractéristiques.</red>`
+                `<red>Chaque nuit</red>, la Lavandière choisit un joueur et découvre l'état de ses vêtements. Le Narrateur indique avec ses doigts les numéros correspondant à la liste ci-dessous. Les vêtements d'un même joueur <red>peuvent présenter plusieurs caractéristiques.</red>`
             ],
             en: [
-                `<red>Each night starting with the second</red>, the Washerwoman chooses a player and learns the state of their clothes. The Narrator indicates the corresponding numbers from the list below using his fingers. A single player's clothes <red>can have more than one attribute.</red>`
+                `<red>Each night</red>, the Washerwoman chooses a player and learns the state of their clothes. The Narrator indicates the corresponding numbers from the list below using his fingers. A single player's clothes <red>can have more than one attribute.</red>`
             ]
         },
         details: [
@@ -3270,7 +3270,7 @@ export const RULEBOOK_CHARACTERS = {
                 },
                 description: {
                     pt: `- O jogador assassinou alguém (com sucesso ou não).
-- O jogador é o _Marionetista_ e agiu com os Lobisomens.
+- O jogador é o _Marionetista_ e agiu com os _Lobisomens_.
 - O jogador foi assassinado.
 - O jogador foi salvo pelo _Chaman_, pelo _Lobisomem Vampiro_ ou pela _Serva Devota_.
 - O jogador é o _Chaman_ e agiu.
@@ -3278,7 +3278,7 @@ export const RULEBOOK_CHARACTERS = {
 - O jogador é o _Sonâmbulo_ e visitou um jogador cuja roupa está ensanguentada.
 - O jogador acolheu o _Sonâmbulo_ cujo a roupa está ensanguentada.`,
                     fr: `- Le joueur a assassiné quelqu'un (avec succès ou non).
-- Le joueur est le _Marionnettiste_ et a agi avec les Loups-garous.
+- Le joueur est le _Marionnettiste_ et a agi avec les _Loups-garous_.
 - Le joueur a été assassiné.
 - Le joueur a été sauvé par le _Chaman_, le _Loup-garou Vampire_ ou la _Servante Dévouée_.
 - Le joueur est le _Chaman_ et a agi.
@@ -3286,7 +3286,7 @@ export const RULEBOOK_CHARACTERS = {
 - Le joueur est le _Somnambule_ et a rendu visite à un joueur dont les vêtements sont ensanglantés.
 - Le joueur a accueilli le _Somnambule_ dont les vêtements sont ensanglantés.`,
                     en: `- The player assassinated someone (successfully or not).
-- The player is the _Puppeteer_ and acted with the Werewolves.
+- The player is the _Puppeteer_ and acted with the _Werewolves_.
 - The player was assassinated.
 - The player was saved by the _Shaman_, the _Vampire Werewolf_, or the _Devout Servant_.
 - The player is the _Shaman_ and acted.
@@ -3341,15 +3341,15 @@ export const RULEBOOK_CHARACTERS = {
                     en: `4 — Damaged:`
                 },
                 description: {
-                    pt: `- O jogador é um Lobisomem e agiu.
+                    pt: `- O jogador é um _Lobisomem_ e agiu.
 - O jogador foi assassinado.
 - O jogador foi assassinado, mas foi salvo pelo _Chaman_, pelo _Lobisomem Vampiro_ ou pela Imunidade.
 - O jogador foi atingido por uma flecha do _Cupido_ ou do _Cupido Malvado_.`,
-                    fr: `- Le joueur est un Loup-garou et a agi.
+                    fr: `- Le joueur est un _Loup-garou_ et a agi.
 - Le joueur a été assassiné.
 - Le joueur a été assassiné, mais a été sauvé par le _Chaman_, le _Loup-garou Vampire_ ou l'Immunité.
 - Le joueur a été touché par une flèche de _Cupidon_ ou du _Méchant Cupidon_.`,
-                    en: `- The player is a Werewolf and acted.
+                    en: `- The player is a _Werewolf_ and acted.
 - The player was assassinated.
 - The player was assassinated but was saved by the _Shaman_, the _Vampire Werewolf_, or Immunity.
 - The player was hit by an arrow from _Cupid_ or _Evil Cupid_.`
