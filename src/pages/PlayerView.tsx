@@ -35,6 +35,7 @@ import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
 import { ActionSelectionPrompt } from "@/components/game/ActionSelectionPrompt";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { InvestigatorRevealModal } from "@/components/game/InvestigatorRevealModal";
+import { WasherwomanRevealModal } from "@/components/game/WasherwomanRevealModal";
 import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
 import { GamblerGuessModal } from "@/components/game/GamblerGuessModal";
 import { TravellerAlignmentModal } from "@/components/game/TravellerAlignmentModal";
@@ -1231,6 +1232,10 @@ const PlayerView = () => {
                   onConfirm={(id) => phone.send("confirm", id)} />
               ) : phone.session?.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK && roomStatus === "playing" ? (
                 <InvestigatorRevealModal key={phone.session.id} session={phone.session} language={language} embedded
+                  pending={phone.pending} connected={phone.connected}
+                  onConfirm={(id) => phone.send("confirm", id)} />
+              ) : phone.session?.mode === PHONE_MODE.WASHERWOMAN_CHECK && roomStatus === "playing" ? (
+                <WasherwomanRevealModal key={phone.session.id} session={phone.session} language={language} embedded
                   pending={phone.pending} connected={phone.connected}
                   onConfirm={(id) => phone.send("confirm", id)} />
               ) : phone.session?.mode === PHONE_MODE.GYPSY_POISON_CHECK && roomStatus === "playing" ? (

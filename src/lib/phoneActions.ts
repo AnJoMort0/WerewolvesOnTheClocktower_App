@@ -2,6 +2,7 @@ import { EVIL_ROLES, ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import type { ScriptLine } from "@/lib/i18n/types";
 import { isColossusTarget } from "@/lib/colossus";
 import { PHONE_MODE, type PhoneMode } from "@/lib/phoneActionModes";
+import { clothingNumbers, wrongClothingNumbers, type ClothingEffect } from "@/lib/washerwoman";
 import { ROLE_DRAG_ACTIONS } from "@/lib/roleActions";
 
 const ROLE_ACTION_PHONE_MODES = {
@@ -61,6 +62,7 @@ export type GypsyReveal = {
   poisoned: boolean;
 };
 export type InvestigatorReveal = { targetPlayerId: string; playerIds: string[]; count: number };
+export type WasherwomanReveal = { targetPlayerId: string; numbers: number[] };
 export type PriestReveal = { targetPlayerId: string; roleId: RoleId };
 export type GamblerReveal = { playerIds: string[]; roleId: RoleId; correct: boolean };
 export function shouldExhaustMonkeyPower(reveal: MonkeyReveal, nightNumber: number): boolean {
@@ -86,6 +88,7 @@ export type PhonePlayer = {
   monkeyDisabled?: boolean;
   colossusReady?: boolean;
   actedTonight?: boolean;
+  clothing?: ClothingEffect[];
   host?: boolean;
   soldier?: boolean;
   lover?: boolean;
@@ -111,6 +114,7 @@ export type PhoneSession = {
   foxReveal?: FoxReveal;
   gypsyReveal?: GypsyReveal;
   investigatorReveal?: InvestigatorReveal;
+  washerwomanReveal?: WasherwomanReveal;
   priestReveal?: PriestReveal;
   gamblerReveal?: GamblerReveal;
   error?: "noSafeCard";
@@ -141,6 +145,7 @@ export type PhoneAction = {
   foxReveal?: FoxReveal;
   gypsyReveal?: GypsyReveal;
   investigatorReveal?: InvestigatorReveal;
+  washerwomanReveal?: WasherwomanReveal;
   gamblerReveal?: GamblerReveal;
 };
 export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participantIds"> & {
@@ -150,6 +155,7 @@ export type PhoneView = Pick<PhoneSession, "id" | "mode" | "votes" | "participan
   foxReveal?: FoxReveal;
   gypsyReveal?: GypsyReveal;
   investigatorReveal?: InvestigatorReveal;
+  washerwomanReveal?: WasherwomanReveal;
   priestReveal?: PriestReveal;
   gamblerReveal?: GamblerReveal;
   hasAdvancedRolesInGame?: boolean;
@@ -271,6 +277,14 @@ export function resolveInvestigatorReveal(sourcePlayerId: string, targetPlayerId
   return { targetPlayerId, playerIds, count };
 }
 
+export function resolveWasherwomanReveal(sourcePlayerId: string, targetPlayerId: string, world: PhoneWorld): WasherwomanReveal | null {
+  const source = world.players.find((player) => player.id === sourcePlayerId);
+  const target = world.players.find((player) => player.id === targetPlayerId);
+  if (!source || !target || target.dead) return null;
+  const actual = clothingNumbers(target.clothing ?? []);
+  return { targetPlayerId, numbers: source.actingPoisoned ? wrongClothingNumbers(actual) : actual };
+}
+
 export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | null, world: PhoneWorld): string[] {
   if (sourcePlayerId) {
     const player = world.players.find((p) => p.id === sourcePlayerId);
@@ -290,6 +304,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
       : mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? player.abilityRole === "v26" && !player.monkeyDisabled
       : mode === PHONE_MODE.FOX_TAMER_CHECK ? player.abilityRole === "v04" && !player.foxDisabled
       : mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK ? player.abilityRole === "v29"
+      : mode === PHONE_MODE.WASHERWOMAN_CHECK ? player.abilityRole === "a07"
       : mode === PHONE_MODE.GYPSY_POISON_CHECK ? player.abilityRole === "v12"
       : mode === PHONE_MODE.SPIDER_TAMER_WEB ? player.abilityRole === "v23"
       : mode === PHONE_MODE.PRIEST_CONFESSION ? player.abilityRole === "v25" && !player.actingPoisoned
@@ -333,6 +348,7 @@ export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boole
   if (session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL) return !session.monkeyReveal && !!(player.displayRole ?? player.abilityRole);
   if (session.mode === PHONE_MODE.FOX_TAMER_CHECK) return !session.foxReveal && !player.dead;
   if (session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK) return !session.investigatorReveal && !player.dead;
+  if (session.mode === PHONE_MODE.WASHERWOMAN_CHECK) return !session.washerwomanReveal && !player.dead;
   if (session.mode === PHONE_MODE.GYPSY_POISON_CHECK) return !session.gypsyReveal && !player.dead;
   // A Gambler may include Ghosts in the group; death does not reveal a card.
   if (session.mode === PHONE_MODE.GAMBLER_GUESS) return !session.gamblerReveal && !!(player.displayRole ?? player.abilityRole);
@@ -358,6 +374,9 @@ export function reconcilePhoneSession(session: PhoneSession | null, world: Phone
   }
   if (session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK && session.investigatorReveal) {
     return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v29") ? session : null;
+  }
+  if (session.mode === PHONE_MODE.WASHERWOMAN_CHECK && session.washerwomanReveal) {
+    return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "a07") ? session : null;
   }
   if (session.mode === PHONE_MODE.GYPSY_POISON_CHECK && session.gypsyReveal) {
     return world.players.some((p) => p.id === session.sourcePlayerId && p.abilityRole === "v12") ? session : null;
@@ -540,6 +559,13 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
     return { session: revealed, completedSession: revealed,
       action: { action: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK, targetPlayerId: target.id, sourcePlayerId: actorId, investigatorReveal } };
   }
+  if (session.mode === PHONE_MODE.WASHERWOMAN_CHECK && command.type === "confirm") {
+    const washerwomanReveal = resolveWasherwomanReveal(actorId, target.id, world);
+    if (!washerwomanReveal) return { session: next };
+    const revealed = { ...next, visible: true, washerwomanReveal };
+    return { session: revealed, completedSession: revealed,
+      action: { action: PHONE_MODE.WASHERWOMAN_CHECK, targetPlayerId: target.id, sourcePlayerId: actorId, washerwomanReveal } };
+  }
   if (session.mode === PHONE_MODE.GYPSY_POISON_CHECK && command.type === "confirm") {
     const result = resolveGypsyReveal(target.id, world);
     if (!result) return { session: next };
@@ -595,6 +621,7 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
     ignored: session.ignored,
     ...((session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK
       || session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK
+      || session.mode === PHONE_MODE.WASHERWOMAN_CHECK
       || session.mode === PHONE_MODE.GYPSY_POISON_CHECK || session.mode === PHONE_MODE.GAMBLER_GUESS) ? {
       visible: session.visible !== false,
       ...(session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL
@@ -603,6 +630,8 @@ export function getPhoneView(session: PhoneSession | null, viewerId: string, wor
         ? { foxReveal: session.foxReveal }
         : session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK
         ? { investigatorReveal: session.investigatorReveal }
+        : session.mode === PHONE_MODE.WASHERWOMAN_CHECK
+        ? { washerwomanReveal: session.washerwomanReveal }
         : session.mode === PHONE_MODE.GYPSY_POISON_CHECK
         ? { gypsyReveal: session.gypsyReveal }
         : { gamblerReveal: session.gamblerReveal }),

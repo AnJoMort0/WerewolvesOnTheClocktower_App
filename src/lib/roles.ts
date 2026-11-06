@@ -56,6 +56,7 @@ import a03Img from "@/assets/display/roles/a03.webp";
 import a04Img from "@/assets/display/roles/a04.webp";
 import a05Img from "@/assets/display/roles/a05.webp";
 import a06Img from "@/assets/display/roles/a06.webp";
+import a07Img from "@/assets/display/roles/a07.webp";
 import as01bImg from "@/assets/display/roles/as01b.webp";
 import t01Img from "@/assets/display/roles/t01.webp";
 import t02Img from "@/assets/display/roles/t02.webp";
@@ -127,6 +128,7 @@ const ROLE_DEFINITIONS = {
   a04: { id: "a04", label: "Actor", image: a04Img, category: "a" },
   a05: { id: "a05", label: "Grave Robber", image: a05Img, category: "a" },
   a06: { id: "a06", label: "Illusionist", image: a06Img, category: "a" },
+  a07: { id: "a07", label: "Washerwoman", image: a07Img, category: "a" },
   as01b: { id: "as01b", label: "Secret Lover", image: as01bImg, category: "a", requires: "s01" },
   l01: { id: "l01", label: "Ordinary Townsfolk", image: l01Img, category: "l" },
   l02: { id: "l02", label: "Wild Child", image: l02Img, category: "l" },
@@ -185,7 +187,7 @@ export function isDetectableWerewolfRole(roleId: RoleId): boolean {
 export const WEB_IMMUNE_ROLES: RoleId[] = ["v10", "v18", "v22"];
 
 export const MIME_COPY_ROLES: RoleId[] = [
-  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03", "v28", "v29",  "v04",  "v05", "v26",  "v08",  "v09", "v27",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02", "m07",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06",  "l06"
+  "e01",  "e02",  "e03",  "e04",  "v01",  "v02",  "v03", "v28", "v29",  "v04",  "v05", "v26",  "v08",  "v09", "v27",  "v10",  "v11",  "v12",  "v15",  "v17",  "v18",  "v20",  "v21",  "v24",  "m01",  "m02", "m07",  "f01",  "f02",  "s01",  "a01",  "a02",  "a05",  "a06", "a07", "l06"
 ];
 
 /** Information characters — randomizer tries to include at least one of these. */
@@ -196,7 +198,7 @@ const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "s02"];
 const VILLAGER_UNIQUE: RoleId[] = [
   "v01", "v02", "v03", "v28", "v29", "v04", "v05", "v26", "v06", "v07", "v08", "v08b", "v09", "v27", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25"
 ];
-const ADVANCED_ROLES: RoleId[] = ["a01", "a02", "a03", "a04", "a05", "a06", "as01b"];
+const ADVANCED_ROLES: RoleId[] = ["a01", "a02", "a03", "a04", "a05", "a06", "a07", "as01b"];
 const OTHER_UNIQUE: RoleId[] = ["m04", "m05", "s01", "f01", "f02"];
 const LAME_SINGLES: RoleId[] = ["l02", "l05", "l06"];
 
@@ -292,7 +294,8 @@ export function assignRoles(playerCount: number, advancedEnabled: boolean = fals
   // Balance: ensure at least one INFO character is in the villager pool.
   // Force-include one random INFO role first (if there's room).
   if (roles.length < playerCount) {
-    const shuffledInfo = weightedShuffle(INFO_ROLES.filter((id) => (!allowedRoles || allowedRoles.has(id)) && canRandomlyAssignRole(id, roles, playerCount)), (id) => preferredRoles.has(id) ? 1.25 : 1);
+    const shuffledInfo = weightedShuffle(INFO_ROLES.filter((id) => (advancedEnabled || !ADVANCED_ROLES.includes(id))
+      && (!allowedRoles || allowedRoles.has(id)) && canRandomlyAssignRole(id, roles, playerCount)), (id) => preferredRoles.has(id) ? 1.25 : 1);
     for (const id of shuffledInfo) {
       if (!assigned.has(id)) {
         roles.push(id);

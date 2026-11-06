@@ -397,6 +397,33 @@ describe("phone synchronization across GM and player devices", () => {
     expect(restored.result.current.session?.investigatorReveal?.count).toBe(2);
   });
 
+  it("keeps a Washerwoman result private across a GM reload and modal reopening", () => {
+    const onAction = vi.fn(), onComplete = vi.fn();
+    const inspection: PhoneWorld = { packBlocked: false, players: [
+      player("washerwoman", "a07"),
+      { ...player("victim", "v01"), redX: true, clothing: ["clothes_damaged"] },
+      player("bystander", "v02"),
+    ] };
+    const props = { roomId: "room", contextKey: "playing:night:2", enabled: true, world: inspection, onAction, onComplete };
+    const gm = renderHook(() => useGMPhoneActions(props));
+    const device = renderHook(() => usePlayerPhoneActions("room", "washerwoman"));
+    const bystander = renderHook(() => usePlayerPhoneActions("room", "bystander"));
+    act(() => gm.result.current.toggle(PHONE_MODE.WASHERWOMAN_CHECK, "washerwoman-line", "washerwoman"));
+    act(() => device.result.current.send("confirm", "victim"));
+    expect(device.result.current.session?.washerwomanReveal?.numbers).toEqual([4]);
+    expect(bystander.result.current.session).toBeNull();
+    expect(onAction).toHaveBeenCalledWith(expect.objectContaining({
+      action: PHONE_MODE.WASHERWOMAN_CHECK,
+      washerwomanReveal: expect.objectContaining({ numbers: [4] }),
+    }));
+    expect(onComplete).toHaveBeenCalledOnce();
+    gm.unmount();
+    const restored = renderHook(() => useGMPhoneActions(props));
+    expect(restored.result.current.session?.washerwomanReveal?.numbers).toEqual([4]);
+    act(() => restored.result.current.toggle(PHONE_MODE.WASHERWOMAN_CHECK, "washerwoman-line", "washerwoman"));
+    expect(restored.result.current.session?.washerwomanReveal?.numbers).toEqual([4]);
+  });
+
   it("accepts a Monkey selection from the phone and recovers a lost reveal response", () => {
     const onAction = vi.fn(), onComplete = vi.fn();
     const monkeyWorld: PhoneWorld = { ...world, players: [...world.players, player("monkey", "v26")] };

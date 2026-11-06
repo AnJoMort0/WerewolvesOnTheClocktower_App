@@ -71,7 +71,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   }, [session.id]);
   const isRoleAction = isRoleActionPhoneMode(session.mode);
   const roleActionConfig = isRoleActionPhoneMode(session.mode) ? getRoleActionPhoneConfig(session.mode) : null;
-  const selected = session.foxReveal?.targetPlayerId ?? session.investigatorReveal?.targetPlayerId ?? session.gypsyReveal?.targetPlayerId ?? session.priestReveal?.targetPlayerId ?? session.pendingTargetPlayerId
+  const selected = session.foxReveal?.targetPlayerId ?? session.investigatorReveal?.targetPlayerId ?? session.washerwomanReveal?.targetPlayerId ?? session.gypsyReveal?.targetPlayerId ?? session.priestReveal?.targetPlayerId ?? session.pendingTargetPlayerId
     ?? (selectedPlayerId !== undefined ? selectedPlayerId
       : session.mode === PHONE_MODE.WEREWOLF_HUNT && !gmControlled ? session.votes[playerId] : selectedId);
   const target = session.players.find((p) => p.id === selected && p.selectable);
@@ -105,6 +105,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     : session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL ? getTranslation(language).roleLabels.v26
     : session.mode === PHONE_MODE.FOX_TAMER_CHECK ? getTranslation(language).roleLabels.v04
     : session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK ? getTranslation(language).roleLabels.v29
+    : session.mode === PHONE_MODE.WASHERWOMAN_CHECK ? getTranslation(language).roleLabels.a07
     : session.mode === PHONE_MODE.GYPSY_POISON_CHECK ? getTranslation(language).roleLabels.v12
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB ? getTranslation(language).roleLabels.v23
     : session.mode === PHONE_MODE.MOTHER_OF_WEREWOLVES_CURSE ? getTranslation(language).roleLabels.m07
@@ -124,6 +125,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     ? { border: "border-amber-500/50 ring-amber-500/10", accent: "text-amber-300" }
     : session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK
     ? { border: "border-sky-500/50 ring-sky-500/10", accent: "text-sky-300" }
+    : session.mode === PHONE_MODE.WASHERWOMAN_CHECK
+    ? { border: "border-cyan-500/50 ring-cyan-500/10", accent: "text-cyan-300" }
     : session.mode === PHONE_MODE.GYPSY_POISON_CHECK
     ? { border: "border-purple-500/50 ring-purple-500/10", accent: "text-purple-300" }
     : session.mode === PHONE_MODE.SPIDER_TAMER_WEB

@@ -11,6 +11,7 @@ export const PHONE_MODE = {
   MONKEY_TAMER_REVEAL: "monkey-tamer-reveal",
   FOX_TAMER_CHECK: "fox-tamer-check",
   PRIVATE_INVESTIGATOR_CHECK: "private-investigator-check",
+  WASHERWOMAN_CHECK: "washerwoman-check",
   GYPSY_POISON_CHECK: "gypsy-poison-check",
   PYROMANIAC_BURN: "pyromaniac-burn",
   SPIDER_TAMER_WEB: "spider-tamer-web",

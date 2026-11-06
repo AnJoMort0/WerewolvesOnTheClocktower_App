@@ -201,6 +201,7 @@ export interface GameLogStrings {
   travellerDevilsAdvocate: string;
   travellerBoneCollectorCopy: string;
   investigatorCount: string;
+  washerwomanResult: string;
   swanCount: string;
   bureaucratUse: string;
   bureaucratUseReversed: string;

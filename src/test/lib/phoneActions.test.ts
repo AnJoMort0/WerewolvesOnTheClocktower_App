@@ -5,7 +5,7 @@ import type { RoleId } from "@/lib/roles";
 import {
   applyPhoneCommand, getCompletedPhoneActionParticipants, getFoxTargetPlayerIds, getHuntConsensus, getPhoneMinimumTargetCount, getPhoneParticipants,
   getPhoneTargetCount, getPhoneView, getRoleActionPhoneConfig, getScriptPhoneMode,
-  reconcilePhoneSession, resolveFoxReveal, resolveGypsyReveal, resolveInvestigatorReveal,
+  reconcilePhoneSession, resolveFoxReveal, resolveGypsyReveal, resolveInvestigatorReveal, resolveWasherwomanReveal,
   type PhonePlayer, type PhoneSession, type PhoneWorld,
 } from "@/lib/phoneActions";
 
@@ -43,8 +43,38 @@ describe("GM-controlled phone rules", () => {
     const scripts = getScripts(language);
     expect(scripts.firstNight.find((line) => line.requires?.includes("v29"))?.phoneMode).toBe(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK);
     expect(scripts.normalNight.find((line) => line.requires?.includes("v29"))?.phoneMode).toBe(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK);
-    expect(scripts.firstNight.at(-2)?.requires).toContain("v29");
-    expect(scripts.normalNight.at(-1)?.requires).toContain("v29");
+    expect(scripts.firstNight.findIndex((line) => line.requires?.includes("v29")))
+      .toBeLessThan(scripts.firstNight.findIndex((line) => line.requires?.includes("a07")));
+    expect(scripts.normalNight.findIndex((line) => line.requires?.includes("a07")))
+      .toBeLessThan(scripts.normalNight.findIndex((line) => line.requires?.includes("v29")));
+  });
+
+  it.each(["pt", "fr", "en"] as const)("registers the Washerwoman on both nights in %s", (language) => {
+    const scripts = getScripts(language);
+    expect(scripts.firstNight.find((line) => line.requires?.includes("a07"))?.phoneMode).toBe(PHONE_MODE.WASHERWOMAN_CHECK);
+    expect(scripts.normalNight.find((line) => line.requires?.includes("a07"))?.phoneMode).toBe(PHONE_MODE.WASHERWOMAN_CHECK);
+  });
+
+  it("lets a copied Washerwoman inspect living and red-X players, but keeps the result private", () => {
+    const inspection: PhoneWorld = { packBlocked: false, players: [
+      phonePlayer("mime", "a07", { objectiveRole: "a03", mime: true }),
+      phonePlayer("living", "v01", { clothing: ["clothes_bloodied", "clothes_damaged"] }),
+      phonePlayer("victim", "v02", { redX: true, clothing: ["clothes_damaged"] }),
+      phonePlayer("ghost", "v03", { dead: true, clothing: ["clothes_stained"] }),
+    ] };
+    expect(getPhoneParticipants(PHONE_MODE.WASHERWOMAN_CHECK, "mime", inspection)).toEqual(["mime"]);
+    expect(resolveWasherwomanReveal("mime", "living", inspection)?.numbers).toEqual([1, 4]);
+    const session: PhoneSession = { id: "inspection", lineKey: "normal-a07", mode: PHONE_MODE.WASHERWOMAN_CHECK,
+      sourcePlayerId: "mime", participantIds: ["mime"], votes: {}, sequences: {} };
+    const revealed = applyPhoneCommand(session, "mime", { id: "inspect", sessionId: session.id, sequence: 1,
+      type: "confirm", targetPlayerId: "victim" }, inspection);
+    expect(revealed.action?.washerwomanReveal?.numbers).toEqual([4]);
+    expect(getPhoneView(revealed.session, "mime", inspection)?.washerwomanReveal?.numbers).toEqual([4]);
+    expect(getPhoneView(revealed.session, "living", inspection)).toBeNull();
+    expect(applyPhoneCommand(session, "mime", { id: "ghost", sessionId: session.id, sequence: 1,
+      type: "confirm", targetPlayerId: "ghost" }, inspection).completedSession).toBeUndefined();
+    inspection.players[0].actingPoisoned = true;
+    expect(resolveWasherwomanReveal("mime", "living", inspection)?.numbers).not.toEqual([1, 4]);
   });
 
   it("counts performed night actions for the Investigator, including poisoned attempts and copied powers", () => {

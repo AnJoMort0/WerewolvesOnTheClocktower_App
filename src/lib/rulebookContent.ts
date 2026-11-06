@@ -3237,7 +3237,6 @@ export const RULEBOOK_CHARACTERS = {
         origin: WOTCT,
     },
 
-    /**
     // a07 | Washerwoman
     "a07": {
         id: "a07",
@@ -3374,7 +3373,7 @@ export const RULEBOOK_CHARACTERS = {
             }
         ],
         origin: WOTCT,
-    }, */
+    },
 
     // a04 | Actor
     "a04": {
@@ -4448,7 +4447,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "f02",
     "a01",
     "a03",
-    //"a07",
+    "a07",
     "a04",
     "a05",
     "a02",
@@ -4634,6 +4633,15 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `O Detetive Privado acorda e escolhe três jogadores vizinhos e o Narrador indica quantos deles agiram nesta noite.`,
                 fr: `Le Détective Privé se réveille et choisit trois joueurs voisins et le Narrateur indique combien d'entre eux ont agi cette nuit.`,
                 en: `The Private Investigator wakes up and selects three neighboring players, and the Narrator indicates how many of them acted tonight.`
+            }
+        },
+        {
+            id: "first-a07",
+            refs: ["a07"],
+            text: {
+                pt: `A Lavadeira acorda e escolhe um jogador. O Narrador indica com os dedos os números correspondentes ao estado da roupa desse jogador.`,
+                fr: `La Lavandière se réveille et choisit un joueur. Le Narrateur indique avec ses doigts les numéros correspondant à l'état de ses vêtements.`,
+                en: `The Washerwoman wakes up and chooses a player. The Narrator shows the numbers corresponding to the state of that player's clothes with his fingers.`
             }
         },
         {
@@ -5119,7 +5127,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 en: `The Grave Robber wakes up / does not wake up if there are no victims. The victims are shown, and the Grave Robber points at one or shows a thumbs-down to choose whether to take a victim’s place.`
             }
         },
-        /**{
+        {
             id: "normal-a07",
             refs: ["a07"],
             text: {
@@ -5127,7 +5135,7 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 fr: `La Lavandière se réveille et choisit un joueur. Le Narrateur lui indique avec les doigts en montrant des chiffres, l'état des vêtements de ce joueur.`,
                 en: `The Washerwoman wakes up and chooses a player. The Narrator shows with the fingers indicating numbers, the condition of that player's clothes.`
             }
-        },*/
+        },
         {
             id: "normal-v01",
             refs: ["v01"],
