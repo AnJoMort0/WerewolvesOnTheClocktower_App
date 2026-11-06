@@ -309,7 +309,10 @@ export function assignRoles(playerCount: number, advancedEnabled: boolean = fals
   const pool: RoleId[] = [...VILLAGER_UNIQUE, ...OTHER_UNIQUE, ...(advancedEnabled ? ADVANCED_ROLES : [])].filter((id) => !allowedRoles || allowedRoles.has(id));
   const fallbackPool: RoleId[] = ([...LAME_SINGLES, "l03", "l04"] as RoleId[]).filter((id) => !allowedRoles || allowedRoles.has(id));
   const weight = (id: RoleId) => (ADVANCED_ROLES.includes(id) ? 2 : 1)
-    * (preferredRoles.has(id) ? 1.25 : 1);
+    * (preferredRoles.has(id) ? 1.25 : 1)
+    // Once a parent is present, give its optional linked card a small nudge.
+    // Eligibility still controls when it can enter the pool; no slot is reserved.
+    * (ROLES[id].requires && assigned.has(ROLES[id].requires as RoleId) ? 1.15 : 1);
   const eligibleFrom = (candidates: RoleId[]) => candidates.filter((id) => !assigned.has(id)
     && roles.length + (ROLES[id].groupSize ?? 1) <= playerCount
     && canRandomlyAssignRole(id, roles, playerCount));

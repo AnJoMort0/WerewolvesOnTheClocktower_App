@@ -4202,12 +4202,53 @@ const GMRoom = () => {
     setScriptAutoComplete((current) => ({ role, sourcePlayerIds, version: current.version + 1 }));
   }, [gameCyclePhase, getCoupledActionPlayerIds]);
 
+  const recordSpiderCatch = useCallback((targetPlayerId: string, sourcePlayerId: string | null | undefined) => {
+    if (!sourcePlayerId || sourcePlayerId === targetPlayerId) return;
+    const sourceRole = abilityRoleAssignments[sourcePlayerId];
+    if (sourceRole && WEB_IMMUNE_ROLES.includes(sourceRole)) return;
+    const targetEffects = playerEffects[targetPlayerId];
+    if (!targetEffects?.has("webbed") && !targetEffects?.has("webbed_dog")) return;
+    const matchingSpiderIds = Object.entries(sourcedEffectTargets)
+      .filter(([, targets]) => targets.webbed === targetPlayerId || targets.webbed_dog === targetPlayerId)
+      .map(([spiderPlayerId]) => spiderPlayerId);
+    const spiderPlayerIds = matchingSpiderIds.length > 0
+      ? matchingSpiderIds
+      : Object.entries(abilityRoleAssignments)
+        .filter(([, role]) => role === "v23")
+        .map(([spiderPlayerId]) => spiderPlayerId);
+    setSpiderCaughtBySource((previous) => {
+      const next = { ...previous };
+      let changed = false;
+      for (const spiderPlayerId of spiderPlayerIds) {
+        const caughtPlayerIds = next[spiderPlayerId] ?? [];
+        if (!caughtPlayerIds.includes(sourcePlayerId)) {
+          next[spiderPlayerId] = [...caughtPlayerIds, sourcePlayerId];
+          changed = true;
+        }
+      }
+      return changed ? next : previous;
+    });
+    const caughtEffect: StatusEffect = dogWolfStates[sourcePlayerId] ? "caught_dog" : "caught";
+    setPlayerEffects((previous) => {
+      const effects = previous[sourcePlayerId] ?? new Set<StatusEffect>();
+      if (effects.has(caughtEffect)) return previous;
+      return { ...previous, [sourcePlayerId]: new Set([...effects, caughtEffect]) };
+    });
+  }, [abilityRoleAssignments, dogWolfStates, playerEffects, sourcedEffectTargets]);
+
   const setNightRoleUse = useCallback((role: RoleId, sourcePlayerId: string | null | undefined, used: boolean, useIndex = 0) => {
     const actorId = sourcePlayerId ?? getRolePlayerId(role);
     if (!actorId) return;
     if (used && (gameCyclePhase !== "night" || !scriptLinesRef.current.some((line) => (
       line.countsAsAction && line.requires.includes(role) && line.participantIds.includes(actorId)
     )))) return;
+    if (role === "m03" && used) {
+      const victimId = Object.entries(playerStatuses).find(([playerId, status]) => {
+        const source = killSources[playerId];
+        return status === "dead-this-night" && !!source && (source === "e01" || WEREWOLF_ROLES.includes(source as RoleId));
+      })?.[0];
+      if (victimId) recordSpiderCatch(victimId, actorId);
+    }
     const key = nightPowerUseKey(nightNumber, role, actorId, useIndex);
     setUsedNightPowerKeys((previous) => {
       if (previous.has(key) === used) return previous;
@@ -4216,7 +4257,7 @@ const GMRoom = () => {
       else next.delete(key);
       return next;
     });
-  }, [gameCyclePhase, getRolePlayerId, nightNumber]);
+  }, [gameCyclePhase, getRolePlayerId, killSources, nightNumber, playerStatuses, recordSpiderCatch]);
 
   const toggleTravellerPowerUsed = useCallback((playerId: string) => {
     setUsedTravellerPowerIds((previous) => {
@@ -4827,44 +4868,8 @@ const GMRoom = () => {
       if (sourcePlayerId) monkeyDragRef.current(sourcePlayerId, targetPlayerId);
       return;
     }
-    // Universal "caught" tagging — any drag onto a webbed player tags the source
-    const applyCaughtIfWebbed = () => {
-      if (!sourcePlayerId || sourcePlayerId === targetPlayerId) return;
-      const sourceRole = abilityRoleAssignments[sourcePlayerId];
-      if (sourceRole && WEB_IMMUNE_ROLES.includes(sourceRole)) return;
-      const targetEff = playerEffects[targetPlayerId];
-      if (targetEff?.has("webbed") || targetEff?.has("webbed_dog")) {
-        const matchingSpiderIds = Object.entries(sourcedEffectTargets)
-          .filter(([, targets]) => targets.webbed === targetPlayerId || targets.webbed_dog === targetPlayerId)
-          .map(([spiderPlayerId]) => spiderPlayerId);
-        const spiderPlayerIds = matchingSpiderIds.length > 0
-          ? matchingSpiderIds
-          : Object.entries(abilityRoleAssignments)
-            .filter(([, role]) => role === "v23")
-            .map(([spiderPlayerId]) => spiderPlayerId);
-        setSpiderCaughtBySource((previous) => {
-          const next = { ...previous };
-          for (const spiderPlayerId of spiderPlayerIds) {
-            const caughtPlayerIds = next[spiderPlayerId] ?? [];
-            if (!caughtPlayerIds.includes(sourcePlayerId)) {
-              next[spiderPlayerId] = [...caughtPlayerIds, sourcePlayerId];
-            }
-          }
-          return next;
-        });
-        const srcEff = playerEffects[sourcePlayerId] || new Set<StatusEffect>();
-        const caughtEffect: StatusEffect = dogWolfStates[sourcePlayerId] ? "caught_dog" : "caught";
-        if (!srcEff.has(caughtEffect)) {
-          setPlayerEffects((prev) => {
-            const next = { ...prev };
-            const cur = new Set(next[sourcePlayerId] || []);
-            cur.add(caughtEffect);
-            next[sourcePlayerId] = cur;
-            return next;
-          });
-        }
-      }
-    };
+    // Any action aimed at a webbed player tags its source for the Spider Tamer.
+    const applyCaughtIfWebbed = () => recordSpiderCatch(targetPlayerId, sourcePlayerId);
     if (action === "__catch__") {
       applyCaughtIfWebbed();
       return;
@@ -5566,7 +5571,7 @@ const GMRoom = () => {
       && (!dogEvilCupidState || nextDogEnemyCount >= 2)) {
       markScriptRoleAction(actionRole, sourcePlayerId);
     }
-  }, [actedTonightPlayerIds, beginBoneCollectorCopy, colossusReadyPlayerIds, usedTravellerPowerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, astronomerBlocksWerewolvesTonight, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, gameCyclePhase, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, recordGameEvent, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, motherCurseChangeUsed, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [actedTonightPlayerIds, beginBoneCollectorCopy, colossusReadyPlayerIds, usedTravellerPowerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, astronomerBlocksWerewolvesTonight, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, gameCyclePhase, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, recordGameEvent, recordSpiderCatch, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, motherCurseChangeUsed, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const phoneWorld = useMemo<PhoneWorld>(() => ({
     packBlocked: astronomerBlocksWerewolvesTonight,
@@ -6227,6 +6232,7 @@ const GMRoom = () => {
     if (!werewolfSeerVictim) return;
     const actualRole = roleAssignments[werewolfSeerVictim.id];
     const recipients = getRevealRecipientIds("m02", sourcePlayerId);
+    recordSpiderCatch(werewolfSeerVictim.id, sourcePlayerId ?? recipients[0]);
     const inPlayRoles = [...new Set(Object.values(roleAssignments))];
     const byPlayerId = Object.fromEntries(recipients.map((viewerPlayerId) => {
       let role = actualRole;
@@ -6255,7 +6261,7 @@ const GMRoom = () => {
       type: "broadcast", event: "lv-reveal",
       payload: { show: true, byPlayerId },
     });
-  }, [getRevealRecipientIds, handleIndependentPowerStateChange, handlePlayerStatusChange, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, werewolfSeerVictim, markScriptRoleAction, roleAssignments, roomId]);
+  }, [getRevealRecipientIds, handleIndependentPowerStateChange, handlePlayerStatusChange, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, werewolfSeerVictim, markScriptRoleAction, recordSpiderCatch, roleAssignments, roomId]);
 
   const handleCloseWerewolfSeerModal = useCallback(() => {
     setWerewolfSeerRevealOpen(false);

@@ -198,13 +198,21 @@ describe("random assignment eligibility", () => {
       });
       let advanced = 0;
       let seasonal = 0;
+      let hunter = 0;
+      let redRidingHood = 0;
+      let cupid = 0;
+      let secretLover = 0;
       for (let draw = 0; draw < 1500; draw++) {
         const roles = assignRoles(12, true, preferred);
         if (roles.some((id) => ROLES[id].category === "a")) advanced++;
         if (roles.includes("v24")) seasonal++;
+        if (roles.includes("v08")) hunter++;
+        if (roles.includes("v08b")) redRidingHood++;
+        if (roles.includes("s01")) cupid++;
+        if (roles.includes("as01b")) secretLover++;
       }
       random.mockRestore();
-      return { advanced, seasonal };
+      return { advanced, seasonal, hunter, redRidingHood, cupid, secretLover };
     };
     const baseline = sample();
     const preferred = sample(["v24"]);
@@ -212,5 +220,9 @@ describe("random assignment eligibility", () => {
     expect(baseline.advanced).toBeLessThan(1500);
     expect(preferred.seasonal).toBeGreaterThan(baseline.seasonal);
     expect(preferred.seasonal).toBeLessThan(1500);
+    expect(baseline.redRidingHood).toBeGreaterThan(0);
+    expect(baseline.redRidingHood).toBeLessThan(baseline.hunter);
+    expect(baseline.secretLover).toBeGreaterThan(0);
+    expect(baseline.secretLover).toBeLessThan(baseline.cupid);
   });
 });
