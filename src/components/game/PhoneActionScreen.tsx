@@ -183,7 +183,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
             ? text.cursedNotice
             : completedText
         }</strong>
-      </div> : <div className="min-w-0 overflow-hidden pb-1">
+      </div> : <div className="min-w-0 pb-1 touch-pan-y">
         <div
           data-testid="phone-action-map"
           className="relative mx-auto w-full max-w-[19rem]"

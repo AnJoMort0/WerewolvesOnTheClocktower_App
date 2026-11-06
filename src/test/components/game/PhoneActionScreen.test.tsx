@@ -264,7 +264,8 @@ describe("PhoneActionScreen", () => {
 
     const map = screen.getByTestId("phone-action-map");
     expect(map).toHaveClass("w-full", "max-w-[19rem]");
-    expect(map.parentElement).toHaveClass("overflow-hidden");
+    expect(map.parentElement).toHaveClass("touch-pan-y");
+    expect(map.parentElement).not.toHaveClass("overflow-hidden");
     expect(container.querySelector(".overflow-x-auto")).not.toBeInTheDocument();
     expect(map.querySelector("button")?.style.left).toMatch(/%$/);
   });

@@ -66,7 +66,6 @@ interface NightScriptProps {
   onFoxDisabledToggle: () => void;
   monkeyDisabled?: boolean;
   onMonkeyDisabledToggle?: () => void;
-  nightTargetedPlayerIds: Set<string>;
   conditionKeys?: Record<string, boolean>;
   playerEffects?: Record<string, Set<string>>;
   prophecyGhostPlayerIds?: Set<string>;
@@ -667,7 +666,6 @@ export const NightScript = ({
   onFoxDisabledToggle,
   monkeyDisabled = false,
   onMonkeyDisabledToggle,
-  nightTargetedPlayerIds,
   conditionKeys = {},
   playerEffects: _playerEffects = {},
   prophecyGhostPlayerIds = new Set(),
@@ -865,7 +863,7 @@ export const NightScript = ({
     const right = findNeighbor(1);
     const neighbors = [left, right].filter(Boolean) as typeof players;
     const relevantIds = [bunnyPlayerId, ...neighbors.map((n) => n.id)];
-    const wasTargeted = relevantIds.some((id) => nightTargetedPlayerIds.has(id));
+    const wasTargeted = relevantIds.some((id) => _playerEffects[id]?.has("alert"));
     const isBunnyPoisoned = isPlayerActingPoisoned(bunnyPlayerId);
 
     if (isBunnyPoisoned) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
@@ -876,7 +874,7 @@ export const NightScript = ({
     if (wasTargeted) return dyn.bunnyHeard;
 
     return `~~${dyn.bunnyNothing}~~`;
-  }, [roleAssignments, effectivelyDead, players, _permanentlyDeadPlayerIds, illusionPlayerIds, nightTargetedPlayerIds, dyn, isPlayerActingPoisoned]);
+  }, [roleAssignments, effectivelyDead, players, _permanentlyDeadPlayerIds, illusionPlayerIds, _playerEffects, dyn, isPlayerActingPoisoned]);
 
   const spiderConfusedText = useMemo(() => {
     const webbedPid = Object.entries(_playerEffects).find(([, e]) => e.has("webbed"))?.[0];
@@ -904,7 +902,8 @@ export const NightScript = ({
     // `accused_next` is the target selected at the most recent Tribunal and is
     // the information the Boy receives tonight. `accused` is only the lasting
     // history marker that prevents the Boy from selecting that player again.
-    const accusedPlayers = players.filter((player) => _playerEffects[player.id]?.has("accused_next"));
+    const accusedEffect = dogWolfStates[sourcePlayerId] ? "accused_next_dog" : "accused_next";
+    const accusedPlayers = players.filter((player) => _playerEffects[player.id]?.has(accusedEffect));
     if (accusedPlayers.length === 0) return undefined;
     const sourcePoisoned = isPlayerActingPoisoned(sourcePlayerId);
     const ui = getTranslation(lang).ui;
@@ -947,7 +946,7 @@ export const NightScript = ({
     if (role === "v05") {
       const neighbors = getLivingNeighbors(dogPlayerId);
       const relevantIds = [dogPlayerId, ...neighbors.map((neighbor) => neighbor.id)];
-      const wasTargeted = relevantIds.some((playerId) => nightTargetedPlayerIds.has(playerId));
+      const wasTargeted = relevantIds.some((playerId) => _playerEffects[playerId]?.has("alert"));
       if (isPlayerActingPoisoned(dogPlayerId)) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
       if (relevantIds.some((playerId) => illusionPlayerIds.has(playerId))) return dyn.bunnyConfused;
       return wasTargeted ? dyn.bunnyHeard : `~~${dyn.bunnyNothing}~~`;
@@ -999,7 +998,7 @@ export const NightScript = ({
     if (role === "v05") {
       const neighbors = getLivingNeighbors(sourcePlayerId);
       const relevantIds = [sourcePlayerId, ...neighbors.map((neighbor) => neighbor.id)];
-      const wasTargeted = relevantIds.some((playerId) => nightTargetedPlayerIds.has(playerId));
+      const wasTargeted = relevantIds.some((playerId) => _playerEffects[playerId]?.has("alert"));
       if (isPlayerActingPoisoned(sourcePlayerId)) return wasTargeted ? `~~${dyn.bunnyNothing}~~` : dyn.bunnyHeard;
       if (relevantIds.some((playerId) => illusionPlayerIds.has(playerId))) return dyn.bunnyConfused;
       return wasTargeted ? dyn.bunnyHeard : `~~${dyn.bunnyNothing}~~`;

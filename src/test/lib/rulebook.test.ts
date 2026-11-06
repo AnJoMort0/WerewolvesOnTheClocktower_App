@@ -3,7 +3,7 @@ import { ALL_ROLE_IDS } from "@/lib/roles";
 import { BEGINNER_CHARACTER_IDS } from "@/lib/beginnerMode";
 import { getRoleLabel } from "@/lib/i18n";
 import { getRulebookHtml, RULEBOOK_SUMMARY_ID } from "@/lib/rulebook";
-import { RULEBOOK_CHARACTERS, RULEBOOK_CHARACTER_ORDER, RULEBOOK_TEXT, type RulebookCharacter, type RulebookSectionBlock } from "@/lib/rulebookContent";
+import { RULEBOOK_CHARACTERS, RULEBOOK_CHARACTER_ORDER, RULEBOOK_NIGHT_SCRIPT, RULEBOOK_TEXT, type RulebookCharacter, type RulebookSectionBlock } from "@/lib/rulebookContent";
 
 describe("in-app rulebook rendering", () => {
   it("limits the First Time Game lists and script while preserving direct Traveller cards", () => {
@@ -54,6 +54,19 @@ describe("in-app rulebook rendering", () => {
     expect(html).not.toContain('id="e01"');
   });
 
+  it.each(["en", "pt", "fr"] as const)("separates Washerwoman categories and italicizes role names in %s", (language) => {
+    const page = document.createElement("main");
+    page.innerHTML = getRulebookHtml(language, "a07");
+    const groups = [...page.querySelectorAll("#a07 .role-detail-group")];
+    expect(groups).toHaveLength(4);
+    for (const group of groups) {
+      expect(group.querySelector(".role-detail-heading strong")?.textContent).toMatch(/^[1-4]/);
+      expect(group.querySelector(".role-detail-items p")?.textContent).toMatch(/^- /);
+      expect(group.querySelector(".role-detail-items em")?.textContent).toBeTruthy();
+    }
+    expect(page.querySelector("#a07 .role-description")?.textContent).not.toContain("_Shaman_");
+  });
+
   it("shows the Bureaucrat in all languages without a night script line", () => {
     for (const language of ["en", "pt", "fr"] as const) {
       const html = getRulebookHtml(language, "t06");
@@ -62,6 +75,13 @@ describe("in-app rulebook rendering", () => {
       expect(html).not.toContain('id="normal-t06"');
     }
     expect(RULEBOOK_CHARACTER_ORDER.at(-1)).toBe("t06");
+  });
+
+  it("calls the Washerwoman only from the second night", () => {
+    const html = getRulebookHtml("en", "a07");
+    expect(html).toContain("Each night starting with the second");
+    expect(RULEBOOK_NIGHT_SCRIPT.firstNight.some((line) => (line.refs as readonly string[]).includes("a07"))).toBe(false);
+    expect(RULEBOOK_NIGHT_SCRIPT.normalNight.some((line) => (line.refs as readonly string[]).includes("a07"))).toBe(true);
   });
 
   it("keeps Beginner Mode character types to the original introductory selection", () => {

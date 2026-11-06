@@ -2497,14 +2497,17 @@ export const RULEBOOK_CHARACTERS = {
             pt: [
                 `<red>Cada noite</red>, o Padre é chamado e <red>qualquer jogador, vivo ou Fantasma</red>, pode levantar a mão para se confessar.`,
                 `O Padre escolhe um jogador com a mão levantada e pode ver o papel desse jogador. Em troca, o jogador escolhido pode acordar e ver quem é o Padre.`,
+                `Se confessar ao Padre é uma maneira de purificar a alma e a roupa, pois quem se confessa ao Padre, terá a sua roupa limpa.`
             ],
             fr: [
                 `<red>Chaque nuit</red>, quand le Prêtre est réveillé, <red>tout joueur, vivant ou Fantôme</red>, peut lever la main pour se confesser.`,
                 `Le Prêtre choisit un joueur qui a levé la main et peut voir le rôle de ce joueur. En échange, le joueur choisi peut se réveiller et découvrir qui est le Prêtre.`,
+                `Se confesser au Prêtre est une façon de purifier l’âme et les vêtements, car celui qui se confesse au Prêtre aura ses vêtements nettoyés.`
             ],
             en: [
                 `<red>Each night</red>, the Priest is called, and <red>any player, living or a Ghost</red>, may raise a hand to confess.`,
-                `He chooses a player with a raised hand and may see that player's role. In return, the chosen player wakes up and sees who the Priest is.`
+                `He chooses a player with a raised hand and may see that player's role. In return, the chosen player wakes up and sees who the Priest is.`,
+                `Confessing to the Priest is a way to purify the soul and the clothes, as those who confess to the Priest will have their clothes cleaned.`
             ]
         },
         details: [
@@ -3249,13 +3252,13 @@ export const RULEBOOK_CHARACTERS = {
         },
         mainDescription: {
             pt: [
-                `<red>A cada noite</red>, a Lavadeira escolhe um jogador e descobre o estado da sua roupa. O Narrador indica com os dedos os números correspondentes à lista abaixo. A roupa de um mesmo jogador pode apresentar mais do que uma característica.`
+                `<red>A partir da segunda noite, todas as noites</red>, a Lavadeira escolhe um jogador e descobre o estado da sua roupa. O Narrador indica com os dedos os números correspondentes à lista abaixo. A roupa de um mesmo jogador pode apresentar mais do que uma característica.`
             ],
             fr: [
-                `<red>Chaque nuit</red>, la Lavandière choisit un joueur et découvre l'état de ses vêtements. Le Narrateur indique avec ses doigts les numéros correspondant à la liste ci-dessous. Les vêtements d'un même joueur <red>peuvent présenter plusieurs caractéristiques.</red>`
+                `<red>Chaque nuit à partir de la deuxième</red>, la Lavandière choisit un joueur et découvre l'état de ses vêtements. Le Narrateur indique avec ses doigts les numéros correspondant à la liste ci-dessous. Les vêtements d'un même joueur <red>peuvent présenter plusieurs caractéristiques.</red>`
             ],
             en: [
-                `<red>Each night</red>, the Washerwoman chooses a player and learns the state of their clothes. The Narrator indicates the corresponding numbers from the list below using his fingers. A single player's clothes <red>can have more than one attribute.</red>`
+                `<red>Each night starting with the second</red>, the Washerwoman chooses a player and learns the state of their clothes. The Narrator indicates the corresponding numbers from the list below using his fingers. A single player's clothes <red>can have more than one attribute.</red>`
             ]
         },
         details: [
@@ -3266,27 +3269,30 @@ export const RULEBOOK_CHARACTERS = {
                     en: `1 — Bloodied:`
                 },
                 description: {
-                    pt: `- O jogador assassinou alguém (com sucesso ou não), mas não é um Lobisomem.
+                    pt: `- O jogador assassinou alguém (com sucesso ou não).
 - O jogador é o _Marionetista_ e agiu com os Lobisomens.
 - O jogador foi assassinado.
 - O jogador foi salvo pelo _Chaman_, pelo _Lobisomem Vampiro_ ou pela _Serva Devota_.
 - O jogador é o _Chaman_ e agiu.
 - O jogador é o _Domador do Macaco_ e perdeu o seu poder.
-- O jogador é o _Sonâmbulo_ e visitou um jogador cuja roupa está ensanguentada.`,
-                    fr: `- Le joueur a assassiné quelqu'un (avec succès ou non), mais n'est pas un Loup-garou.
+- O jogador é o _Sonâmbulo_ e visitou um jogador cuja roupa está ensanguentada.
+- O jogador acolheu o _Sonâmbulo_ cujo a roupa está ensanguentada.`,
+                    fr: `- Le joueur a assassiné quelqu'un (avec succès ou non).
 - Le joueur est le _Marionnettiste_ et a agi avec les Loups-garous.
 - Le joueur a été assassiné.
 - Le joueur a été sauvé par le _Chaman_, le _Loup-garou Vampire_ ou la _Servante Dévouée_.
 - Le joueur est le _Chaman_ et a agi.
 - Le joueur est le _Maître du Singe_ et a perdu son pouvoir.
-- Le joueur est le _Somnambule_ et a rendu visite à un joueur dont les vêtements sont ensanglantés.`,
-                    en: `- The player assassinated someone (successfully or not) but is not a Werewolf.
+- Le joueur est le _Somnambule_ et a rendu visite à un joueur dont les vêtements sont ensanglantés.
+- Le joueur a accueilli le _Somnambule_ dont les vêtements sont ensanglantés.`,
+                    en: `- The player assassinated someone (successfully or not).
 - The player is the _Puppeteer_ and acted with the Werewolves.
 - The player was assassinated.
 - The player was saved by the _Shaman_, the _Vampire Werewolf_, or the _Devout Servant_.
 - The player is the _Shaman_ and acted.
 - The player is the _Monkey Tamer_ and lost their power.
-- The player is the _Sleepwalker_ and visited a player whose clothes are bloodied.`
+- The player is the _Sleepwalker_ and visited a player whose clothes are bloodied.
+- The player hosted the _Sleepwalker_ whose clothes are bloodied.`
                 }
             },
             {
@@ -3319,13 +3325,13 @@ export const RULEBOOK_CHARACTERS = {
                 description: {
                     pt: `- O jogador é o _Piromaníaco_ e agiu.
 - O jogador foi queimado pelo _Piromaníaco_ nesta noite ou anteriormente e já não tem o seu poder.
-- O jogador é o _Faroleiro_.`,
+- O jogador é o _Faroleiro_ e agiu.`,
                     fr: `- Le joueur est le _Pyromane_ et a agi.
 - Le joueur a été brûlé par le _Pyromane_ cette nuit ou auparavant et ne possède plus son pouvoir.
-- Le joueur est le _Falotier_.`,
+- Le joueur est le _Falotier_ et a agi.`,
                     en: `- The player is the _Pyromaniac_ and acted.
 - The player was burned by the _Pyromaniac_ this night or earlier and no longer has their power.
-- The player is the _Lamplighter_.`
+- The player is the _Lamplighter_ and acted.`
                 }
             },
             {
@@ -3335,15 +3341,15 @@ export const RULEBOOK_CHARACTERS = {
                     en: `4 — Damaged:`
                 },
                 description: {
-                    pt: `- O jogador é um Lobisomem.
+                    pt: `- O jogador é um Lobisomem e agiu.
 - O jogador foi assassinado.
 - O jogador foi assassinado, mas foi salvo pelo _Chaman_, pelo _Lobisomem Vampiro_ ou pela Imunidade.
 - O jogador foi atingido por uma flecha do _Cupido_ ou do _Cupido Malvado_.`,
-                    fr: `- Le joueur est un Loup-garou.
+                    fr: `- Le joueur est un Loup-garou et a agi.
 - Le joueur a été assassiné.
 - Le joueur a été assassiné, mais a été sauvé par le _Chaman_, le _Loup-garou Vampire_ ou l'Immunité.
 - Le joueur a été touché par une flèche de _Cupidon_ ou du _Méchant Cupidon_.`,
-                    en: `- The player is a Werewolf.
+                    en: `- The player is a Werewolf and acted.
 - The player was assassinated.
 - The player was assassinated but was saved by the _Shaman_, the _Vampire Werewolf_, or Immunity.
 - The player was hit by an arrow from _Cupid_ or _Evil Cupid_.`
@@ -4633,15 +4639,6 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 pt: `O Detetive Privado acorda e escolhe três jogadores vizinhos e o Narrador indica quantos deles agiram nesta noite.`,
                 fr: `Le Détective Privé se réveille et choisit trois joueurs voisins et le Narrateur indique combien d'entre eux ont agi cette nuit.`,
                 en: `The Private Investigator wakes up and selects three neighboring players, and the Narrator indicates how many of them acted tonight.`
-            }
-        },
-        {
-            id: "first-a07",
-            refs: ["a07"],
-            text: {
-                pt: `A Lavadeira acorda e escolhe um jogador. O Narrador indica com os dedos os números correspondentes ao estado da roupa desse jogador.`,
-                fr: `La Lavandière se réveille et choisit un joueur. Le Narrateur indique avec ses doigts les numéros correspondant à l'état de ses vêtements.`,
-                en: `The Washerwoman wakes up and chooses a player. The Narrator shows the numbers corresponding to the state of that player's clothes with his fingers.`
             }
         },
         {

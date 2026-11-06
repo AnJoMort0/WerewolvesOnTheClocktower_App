@@ -3,7 +3,7 @@ import { PHONE_MODE } from "@/lib/phoneActionModes";
 import type { CommonActionStrings, Translation } from "./types";
 
 const actions = {
-  open: "Open", close: "Close", reopen: "Reopen", yes: "YES", no: "NO",
+  open: "Open", close: "Close", reopen: "Reopen", minimize: "Minimize", yes: "YES", no: "NO",
   see: "See", choose: "Choose", confirm: "Confirm", accept: "Accept", deny: "Deny",
   ignore: "Ignore", save: "Save", enter: "Enter", exit: "Exit",
 } satisfies CommonActionStrings;
@@ -91,7 +91,6 @@ export const en: Translation = {
       { text: "The {Village Elder} wakes up and chooses a player who will automatically have 2 votes against them at the next Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
       { text: "The {Devil's Advocate} wakes up and chooses a player. That player is immune to execution during the next day. The {Devil's Advocate} cannot choose the same player twice during the game.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "The {Private Investigator} wakes up and selects three neighboring living players. The Narrator shows how many of them acted tonight.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
-      { text: "The {Washerwoman} wakes up and chooses a player. The Narrator shows the numbers corresponding to the state of that player's clothes.", requires: ["a07"], phoneMode: PHONE_MODE.WASHERWOMAN_CHECK },
       { text: "At the end of the night, a howl is heard. The Village now knows that the Werewolves have revealed themselves and are hungry. The Village wakes up suspicious of everyone." },
     ],
     secondNight: [
@@ -383,6 +382,9 @@ export const en: Translation = {
       prophecy: "Prophecy",
       accused: "Accused",
       accused_next: "Accused last Tribunal",
+      accused_dog: "Accused (Dog)",
+      accused_next_dog: "Accused last Tribunal (Dog)",
+      alert: "Alert",
       werewolf_turned: "Turned Werewolf",
       enemy: "Enemy",
       immunity_onetime: "One-Time Immunity",

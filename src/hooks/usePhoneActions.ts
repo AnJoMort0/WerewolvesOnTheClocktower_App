@@ -360,6 +360,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     }
     const revealed = { ...latest, pendingTargetPlayerId: undefined, priestReveal: { targetPlayerId, roleId } };
     commit(revealed);
+    current.current.onAction({ action: PHONE_MODE.PRIEST_CONFESSION, targetPlayerId, sourcePlayerId: latest.sourcePlayerId });
     current.current.onComplete?.(revealed);
   }, [commit]);
   const close = useCallback(() => commit(null), [commit]);

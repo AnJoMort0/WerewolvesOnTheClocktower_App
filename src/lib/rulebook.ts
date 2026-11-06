@@ -79,6 +79,8 @@ function renderInline(value: string): string {
     .replace(/&lt;red&gt;([\s\S]*?)&lt;\/red&gt;/g, '<span class="rule-red">$1</span>')
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([\s\S]*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(?<![\p{L}\p{N}])_([^_\n]+)_(?![\p{L}\p{N}])/gu, "<em>$1</em>")
+    .replace(/(?<![\p{L}\p{N}*])\*([^*\n]+)\*(?![\p{L}\p{N}*])/gu, "<em>$1</em>")
     .replace(
       /&lt;(https?:\/\/[^&\s]+)&gt;/g,
       (_match, href: string) => `<a href="${escapeAttribute(href)}" target="_blank" rel="noreferrer">${href}</a>`,
@@ -293,6 +295,10 @@ function renderCharacterRow(character: RulebookCharacter, lang: Language, option
     .map((detail) => {
       const title = detail.title[lang];
       const description = detail.description[lang];
+      if (/^\d+\s*[—-]/.test(title) && description.trimStart().startsWith("- ")) {
+        const items = description.split("\n").map((line) => `<p>${renderInline(line.trim())}</p>`).join("");
+        return `<div class="role-detail-group"><p class="role-detail-heading"><strong>${renderInline(title)}</strong></p><div class="role-detail-items">${items}</div></div>`;
+      }
       return `<p><strong>${renderInline(title)}</strong> ${renderInline(description)}</p>`;
     })
     .join("");

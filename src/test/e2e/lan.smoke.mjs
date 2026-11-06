@@ -55,8 +55,9 @@ try {
   await cdp.click(gm, "Start LAN game");
   await cdp.wait(gm, "location.pathname.startsWith('/gm/') && document.body.innerText.includes('players in the room')");
   await cdp.wait(gm, "!!document.querySelector('#beginner-toggle')");
-  await cdp.evaluate(gm, "document.querySelector('#beginner-toggle').click()");
   const roomId = await cdp.evaluate(gm, "location.pathname.split('/').pop()");
+  await cdp.wait(gm, `!!localStorage.getItem('wotct_gm_snapshot_${roomId}')`);
+  await cdp.evaluate(gm, "document.querySelector('#beginner-toggle').click()");
   const game = await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" });
   await cdp.wait(gm, "document.querySelector('#beginner-toggle')?.getAttribute('aria-checked') === 'true'");
   await cdp.wait(gm, `JSON.parse(localStorage.getItem('wotct_gm_snapshot_${roomId}') || '{}').beginnerMode === true`);
@@ -165,6 +166,12 @@ try {
   await cdp.wait(gm, "!!document.querySelector('button[aria-label=\"Monkey Tamer\"]')");
   await cdp.evaluate(gm, "document.querySelector('button[aria-label=\"Monkey Tamer\"]').click()");
   await cdp.wait(phones[0], "!!document.querySelector('[data-testid=phone-action-map] button[aria-label=Wolf]')");
+  await cdp.wait(gm, "!!document.querySelector('button[aria-label=Minimize]')");
+  await cdp.evaluate(gm, "document.querySelector('button[aria-label=Minimize]').click()");
+  await cdp.wait(gm, "[...document.querySelectorAll('button')].some(button => button.textContent.includes('Reopen'))");
+  assert.ok(await cdp.evaluate(phones[0], "!!document.querySelector('[data-testid=phone-action-map] button[aria-label=Wolf]')"), "Minimizing the GM modal closed the player action");
+  await cdp.click(gm, "Reopen");
+  await cdp.wait(gm, "!!document.querySelector('button[aria-label=Minimize]')");
   await cdp.evaluate(phones[0], "document.querySelector('[data-testid=phone-action-map] button[aria-label=Wolf]').click()");
   await cdp.wait(phones[0], "[...document.querySelectorAll('button')].some(button => button.textContent.trim() === 'Confirm' && !button.disabled)");
   await cdp.click(phones[0], "Confirm");

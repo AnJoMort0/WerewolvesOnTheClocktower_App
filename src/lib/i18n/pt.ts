@@ -3,7 +3,7 @@ import { PHONE_MODE } from "@/lib/phoneActionModes";
 import type { CommonActionStrings, Translation } from "./types";
 
 const actions = {
-  open: "Abrir", close: "Fechar", reopen: "Reabrir", yes: "SIM", no: "NÃO",
+  open: "Abrir", close: "Fechar", reopen: "Reabrir", minimize: "Minimizar", yes: "SIM", no: "NÃO",
   see: "Ver", choose: "Escolher", confirm: "Confirmar", accept: "Aceitar", deny: "Recusar",
   ignore: "Ignorar", save: "Salvar", enter: "Entrar", exit: "Sair",
 } satisfies CommonActionStrings;
@@ -91,7 +91,6 @@ export const pt: Translation = {
       { text: "O {Chefe da Aldeia} acorda e escolhe um jogador que automaticamente terá 2 votos contra ele no próximo Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
       { text: "O {Advogado do Diabo} acorda e escolhe um jogador. Esse jogador fica imune a execução durante o próximo dia. O {Advogado do Diabo} não pode escolher o mesmo jogador duas vezes durante o jogo.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "O {Detetive Privado} acorda e escolhe três jogadores vivos vizinhos. O Narrador indica quantos deles agiram nesta noite.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
-      { text: "A {Lavadeira} acorda e escolhe um jogador. O Narrador indica os números correspondentes ao estado da roupa desse jogador.", requires: ["a07"], phoneMode: PHONE_MODE.WASHERWOMAN_CHECK },
       { text: "No fim desta noite ouve-se um uivar. A Aldeia sabe então que os Lobisomens se revelaram e estão com fome. A Aldeia acorda desconfiada de toda a gente." },
     ],
     secondNight: [
@@ -383,6 +382,9 @@ export const pt: Translation = {
       prophecy: "Profecia",
       accused: "Acusado",
       accused_next: "Acusado no último Tribunal",
+      accused_dog: "Acusado (Cão)",
+      accused_next_dog: "Acusado no último Tribunal (Cão)",
+      alert: "Alerta",
       werewolf_turned: "Virar Lobisomem",
       enemy: "Inimigo",
       immunity_onetime: "Imunidade Única",

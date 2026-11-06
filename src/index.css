@@ -535,6 +535,9 @@
 
   .rulebook-content .role-description { width: 100%; }
   .rulebook-content .role-description p { margin: 0.38rem 0; }
+  .rulebook-content .role-detail-group { margin: 0.6rem 0; }
+  .rulebook-content .role-detail-group .role-detail-heading { margin-bottom: 0.1rem; }
+  .rulebook-content .role-detail-items p { margin: 0.16rem 0; }
   .rulebook-content .role-description .rule-red { color: #a61919; }
   .rulebook-content .role-description .role-objective {
     margin-top: 0.85rem;

@@ -20,7 +20,6 @@ const baseProps = {
   players: [{ id: "witch", name: "Witch", seat_position: 0 }],
   foxDisabled: false,
   onFoxDisabledToggle: vi.fn(),
-  nightTargetedPlayerIds: new Set<string>(),
 };
 
 const phoneModeSelector = (mode: string) => `[data-phone-mode="${mode}"]`;
@@ -524,6 +523,32 @@ describe("NightScript progress", () => {
 });
 
 describe("NightScript conditional behavior", () => {
+  it("uses the visible Alert status for the Bunny Tamer's neighbors", () => {
+    const props = { ...baseProps,
+      activeRoles: new Set(["v05" as const, "v01" as const]),
+      roleAssignments: { tamer: "v05" as const, left: "v01" as const, right: "v01" as const },
+      players: ["tamer", "left", "right"].map((id, seat_position) => ({ id, name: id, seat_position })),
+      playerEffects: { left: new Set(["alert"]) },
+    };
+    const { container, rerender } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    expect(container.textContent).toContain("The Bunny Tamer heard the frightened Bunnies tonight.");
+    rerender(<LanguageContext.Provider value="en"><NightScript {...props} playerEffects={{}} /></LanguageContext.Provider>);
+    expect(container.textContent).toContain("The Bunny Tamer heard nothing tonight.");
+  });
+
+  it("keeps the Dog's Boy accusation separate from the original Boy's answer", () => {
+    const props = { ...baseProps,
+      activeRoles: new Set(["v22" as const, "a02" as const, "e01" as const]),
+      roleAssignments: { boy: "v22" as const, dog: "a02" as const, wolf: "e01" as const },
+      abilityRoleAssignments: { boy: "v22" as const, dog: "v22" as const, wolf: "e01" as const },
+      objectiveRoleAssignments: { boy: "v22" as const, dog: "a02" as const, wolf: "e01" as const },
+      dogWolfPlayerIds: ["dog"], dogWolfStates: { dog: createDogWolfState("boy") },
+      players: ["boy", "dog", "wolf"].map((id, seat_position) => ({ id, name: id, seat_position })),
+      playerEffects: { wolf: new Set(["accused_next_dog"]) },
+    };
+    const { container } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+    expect(container.textContent?.match(/wolf: YES/g)).toHaveLength(1);
+  });
   it("shows an eye action on the Mime script line", () => {
     const onMimeReveal = vi.fn();
     const { container } = render(

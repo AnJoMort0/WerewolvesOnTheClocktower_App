@@ -48,6 +48,7 @@ import { buildJoinUrl, getDefaultJoinBaseUrl, normalizeJoinBaseUrl } from "@/lib
 import { getLanConfig } from "@/lib/lanMode";
 import { copyText } from "@/lib/clipboard";
 import { OpaqueModalBackdropContext } from "@/lib/modalBackdrop";
+import { GameModalMinimizeContext } from "@/lib/gameModalMinimize";
 import {
   canWhiteWolfTarget,
   getCircularDistances,
@@ -246,6 +247,7 @@ type GMSnapshot = {
   completedScriptLineActors?: Record<string, string[]>;
   usedNightPowerKeys?: string[];
   trackedActedTonightPlayerIds?: string[];
+  trackedAlertPlayerIds?: string[];
   actionTrackingVersion?: number;
   scriptActionLineKeys?: string[];
   colossusUsedPlayerIds?: string[];
@@ -560,6 +562,7 @@ const GMRoom = () => {
   const [motherCurseChangeUsed, setMotherCurseChangeUsed] = useState(false);
   const [astronomerBlocksWerewolvesTonight, setAstronomerBlocksWerewolvesTonight] = useState(false);
   const [hideScreenMode, setHideScreenMode] = useState(false);
+  const [minimizedGmActionId, setMinimizedGmActionId] = useState<string | null>(null);
   const [syncedTimerState, setSyncedTimerState] = useState<TimerState | null>(null);
   const syncedTimerRef = useRef<TimerState | null>(null);
   const durablePhaseRef = useRef<Room["phase_state"]>(null);
@@ -614,6 +617,7 @@ const GMRoom = () => {
   const [completedScriptLineActors, setCompletedScriptLineActors] = useState<Record<string, string[]>>({});
   const [usedNightPowerKeys, setUsedNightPowerKeys] = useState<Set<string>>(new Set());
   const [trackedActedTonightPlayerIds, setTrackedActedTonightPlayerIds] = useState<Set<string>>(new Set());
+  const [trackedAlertPlayerIds, setTrackedAlertPlayerIds] = useState<Set<string>>(new Set());
   const [colossusUsedPlayerIds, setColossusUsedPlayerIds] = useState<Set<string>>(new Set());
   const colossusUsedRef = useRef(colossusUsedPlayerIds);
   colossusUsedRef.current = colossusUsedPlayerIds;
@@ -1193,6 +1197,8 @@ const GMRoom = () => {
     if (assignedRoles.has("v17")) effects.push("immunity_full");
     if (assignedRoles.has("v19")) effects.push("prophecy");
     if (assignedRoles.has("v22") && !playerEffectsSet.has("accused")) effects.push("accused_next");
+    if (Object.keys(dogWolfStates).some((dogId) => abilityRoleAssignments[dogId] === "v22")
+      && !playerEffectsSet.has("accused_dog")) effects.push("accused_next_dog");
     if (assignedRoles.has("a05") && playerStatuses[playerId] === "dead-this-night" && playerRole !== "a05") effects.push("dug_up");
     // Vampiro: only available to red X victims of werewolves
     if (assignedRoles.has("m03") && !vampireWolfUsed) {
@@ -1226,8 +1232,9 @@ const GMRoom = () => {
       effects.push("webbed", "caught", "webbed_dog", "caught_dog");
     }
     if (assignedRoles.has("m07")) effects.push("cursed");
-    if (assignedRoles.has("v29")) effects.push("acted_tonight");
-    if (assignedRoles.has("a07")) effects.push(...WASHERWOMAN_CLOTHES);
+    if (assignedRoles.has("v29") || assignedRoles.has("v27")) effects.push("acted_tonight");
+    if (assignedRoles.has("v05")) effects.push("alert");
+    if (assignedRoles.has("a07") && !permanentlyDead.has(playerId)) effects.push(...WASHERWOMAN_CLOTHES);
     // f02 Espião — spied_on effect is manually assignable
     if (assignedRoles.has("f02")) {
       effects.push("spied_on");
@@ -1241,11 +1248,11 @@ const GMRoom = () => {
     }
 
     return effects;
-  }, [activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, effectiveActorCopiedRole, effectiveRoleAssignments, killSources, vampireWolfUsed, permanentlyDead, playerEffects, playerStatuses]);
+  }, [abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolUses, actorPlayerId, dogWolfStates, effectiveActorCopiedRole, effectiveRoleAssignments, killSources, vampireWolfUsed, permanentlyDead, playerEffects, playerStatuses]);
 
   const washerwomanInGame = rolesConfirmed && Object.values(abilityRoleAssignments).includes("a07");
   const markClothes = useCallback((playerId: string, effects: readonly ClothingEffect[], persistentCharred = false) => {
-    if (!washerwomanInGame || effects.length === 0) return;
+    if (!washerwomanInGame || effects.length === 0 || permanentlyDead.has(playerId)) return;
     if (persistentCharred && effects.includes("clothes_charred")) {
       setClothesPersistentCharredPlayerIds((previous) => previous.has(playerId) ? previous : new Set(previous).add(playerId));
     }
@@ -1260,27 +1267,37 @@ const GMRoom = () => {
       }
       return { ...previous, [playerId]: next };
     });
-  }, [washerwomanInGame]);
+  }, [permanentlyDead, washerwomanInGame]);
+  useEffect(() => {
+    if (!gmSnapshotLoaded || permanentlyDead.size === 0) return;
+    setClothesPersistentCharredPlayerIds((previous) => {
+      const next = new Set([...previous].filter((id) => !permanentlyDead.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+    setPlayerEffects((previous) => {
+      let changed = false;
+      const next = { ...previous };
+      for (const playerId of permanentlyDead) {
+        const effects = previous[playerId];
+        if (!effects || !WASHERWOMAN_CLOTHES.some((effect) => effects.has(effect))) continue;
+        next[playerId] = new Set([...effects].filter((effect) => !WASHERWOMAN_CLOTHES.includes(effect as ClothingEffect)));
+        changed = true;
+      }
+      return changed ? next : previous;
+    });
+  }, [gmSnapshotLoaded, permanentlyDead]);
   const currentClothesBaselineKey = useMemo(() => players.map((player) => [
     player.id,
-    WEREWOLF_ROLES.includes(objectiveRoleAssignments[player.id]) || !!playerEffects[player.id]?.has("werewolf_turned") ? "wolf" : "",
     roleAssignments[player.id] === "a01" ? "drunkard" : "",
-    roleAssignments[player.id] === "v21" ? "lamplighter" : "",
-    playerEffects[player.id]?.has("burned") ? "burned" : "",
-  ].join(":")).join("|"), [objectiveRoleAssignments, playerEffects, players, roleAssignments]);
+  ].join(":")).join("|"), [players, roleAssignments]);
   useEffect(() => {
     if (!gmSnapshotLoaded || !washerwomanInGame || clothesBaselineKey === currentClothesBaselineKey) return;
     for (const player of players) {
       const playerId = player.id;
-      if (WEREWOLF_ROLES.includes(objectiveRoleAssignments[playerId]) || playerEffects[playerId]?.has("werewolf_turned")) {
-        markClothes(playerId, ["clothes_damaged"]);
-      }
       if (roleAssignments[playerId] === "a01") markClothes(playerId, ["clothes_stained"]);
-      if (roleAssignments[playerId] === "v21") markClothes(playerId, ["clothes_charred"]);
-      if (playerEffects[playerId]?.has("burned")) markClothes(playerId, ["clothes_charred"], true);
     }
     setClothesBaselineKey(currentClothesBaselineKey);
-  }, [clothesBaselineKey, currentClothesBaselineKey, gmSnapshotLoaded, markClothes, objectiveRoleAssignments, playerEffects, players, roleAssignments, washerwomanInGame]);
+  }, [clothesBaselineKey, currentClothesBaselineKey, gmSnapshotLoaded, markClothes, players, roleAssignments, washerwomanInGame]);
   const previousClothesRelevantEffectsRef = useRef<Record<string, Set<StatusEffect>> | null>(null);
   useEffect(() => {
     if (!gmSnapshotLoaded) { previousClothesRelevantEffectsRef.current = null; return; }
@@ -1294,6 +1311,8 @@ const GMRoom = () => {
       if (["lover", "enemy", "enemy_dog"].some((effect) => effects.has(effect as StatusEffect) && !prior.has(effect as StatusEffect))) {
         markClothes(player.id, ["clothes_damaged"]);
       }
+      if (effects.has("tetanus") && !prior.has("tetanus")) markClothes(player.id, ["clothes_damaged", "clothes_stained"]);
+      if (effects.has("burned") && !prior.has("burned")) markClothes(player.id, ["clothes_charred"], true);
     }
   }, [gmSnapshotLoaded, markClothes, playerEffects, players, washerwomanInGame]);
   const previousClothesPoisonTargetsRef = useRef<Record<string, string> | null>(null);
@@ -1309,7 +1328,8 @@ const GMRoom = () => {
     }
   }, [gmSnapshotLoaded, markClothes, poisonTargetsBySource, washerwomanInGame]);
   const hostBloodiedKey = Object.entries(sourcedEffectTargets)
-    .filter(([, targets]) => !!targets.host && !!playerEffects[targets.host]?.has("clothes_bloodied"))
+    .filter(([sourceId, targets]) => !!targets.host && (playerEffects[targets.host]?.has("clothes_bloodied")
+      || playerEffects[sourceId]?.has("clothes_bloodied")))
     .map(([sourceId, targets]) => `${sourceId}:${targets.host}`).join("|");
   const previousHostBloodiedKeyRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1321,9 +1341,13 @@ const GMRoom = () => {
     for (const entry of hostBloodiedKey.split("|")) {
       if (priorEntries.has(entry)) continue;
       const sourceId = entry.split(":")[0];
-      if (abilityRoleAssignments[sourceId] === "v16") markClothes(sourceId, ["clothes_bloodied"]);
+      if (abilityRoleAssignments[sourceId] === "v16") {
+        markClothes(sourceId, ["clothes_bloodied"]);
+        const hostId = sourcedEffectTargets[sourceId]?.host;
+        if (hostId) markClothes(hostId, ["clothes_bloodied"]);
+      }
     }
-  }, [abilityRoleAssignments, gmSnapshotLoaded, hostBloodiedKey, markClothes, washerwomanInGame]);
+  }, [abilityRoleAssignments, gmSnapshotLoaded, hostBloodiedKey, markClothes, sourcedEffectTargets, washerwomanInGame]);
 
   const toggleEffect = useCallback((playerId: string, effect: StatusEffect, sourcePlayerId?: string | null) => {
     if (effect === "owner") {
@@ -1609,6 +1633,7 @@ const GMRoom = () => {
       setCompletedScriptLineActors(snapshot.actionTrackingVersion === 3 ? snapshot.completedScriptLineActors ?? {} : {});
       setUsedNightPowerKeys(new Set(snapshot.actionTrackingVersion === 3 ? snapshot.usedNightPowerKeys ?? [] : []));
       setTrackedActedTonightPlayerIds(new Set(snapshot.trackedActedTonightPlayerIds ?? []));
+      setTrackedAlertPlayerIds(new Set(snapshot.trackedAlertPlayerIds ?? []));
       setScriptActionLineKeys(new Set(snapshot.scriptActionLineKeys ?? []));
       setColossusUsedPlayerIds(new Set(snapshot.colossusUsedPlayerIds ?? []));
       setUsedTravellerPowerIds(new Set(snapshot.usedTravellerPowerIds ?? []));
@@ -1700,6 +1725,7 @@ const GMRoom = () => {
       completedScriptLineActors,
       usedNightPowerKeys: Array.from(usedNightPowerKeys),
       trackedActedTonightPlayerIds: Array.from(trackedActedTonightPlayerIds),
+      trackedAlertPlayerIds: Array.from(trackedAlertPlayerIds),
       actionTrackingVersion: 3,
       scriptActionLineKeys: Array.from(scriptActionLineKeys),
       colossusUsedPlayerIds: Array.from(colossusUsedPlayerIds),
@@ -1787,6 +1813,7 @@ const GMRoom = () => {
     completedScriptLineActors,
     usedNightPowerKeys,
     trackedActedTonightPlayerIds,
+    trackedAlertPlayerIds,
     scriptActionLineKeys,
     colossusUsedPlayerIds,
     usedTravellerPowerIds,
@@ -2321,6 +2348,7 @@ const GMRoom = () => {
     setMotherCurseChangeUsed(false);
     setAstronomerBlocksWerewolvesTonight(false);
     setHideScreenMode(false);
+    setMinimizedGmActionId(null);
     syncedTimerRef.current = null;
     setSyncedTimerState(null);
     setSpiderRevealOpen(false);
@@ -2330,6 +2358,8 @@ const GMRoom = () => {
     setCompletedScriptLineKeys(new Set());
     setCompletedScriptLineActors({});
     setUsedNightPowerKeys(new Set());
+    setTrackedActedTonightPlayerIds(new Set());
+    setTrackedAlertPlayerIds(new Set());
     setScriptActionLineKeys(new Set());
     setColossusUsedPlayerIds(new Set());
     setUsedTravellerPowerIds(new Set());
@@ -3633,10 +3663,15 @@ const GMRoom = () => {
         cleaned.delete("accused_next");
         cleaned.add("accused");
       }
+      if (cleaned.has("accused_next_dog")) {
+        cleaned.delete("accused_next_dog");
+        cleaned.add("accused_dog");
+      }
       cleaned.delete("acquitted");
       // 'caught' is a per-night marker — clear at night end
       cleaned.delete("caught");
       cleaned.delete("caught_dog");
+      cleaned.delete("alert");
       const dogSaviourTargeted = Object.values(dogWolfStates)
         .some((state) => state.powerState.saviourLastTarget === pid);
       if ((saviourLastTarget === pid || actorPowerState.saviourLastTarget === pid || mimePowerState.saviourLastTarget === pid || dogSaviourTargeted) && !hasVintnerImmunityTarget(pid)) {
@@ -3819,11 +3854,10 @@ const GMRoom = () => {
     for (const [id, effects] of Object.entries(newEffects)) {
       const cleaned = new Set(effects);
       for (const clothingEffect of WASHERWOMAN_CLOTHES) cleaned.delete(clothingEffect);
-      if (clothesPersistentCharredPlayerIds.has(id) || cleaned.has("burned") || roleAssignments[id] === "v21") {
+      if (clothesPersistentCharredPlayerIds.has(id)) {
         cleaned.add("clothes_charred");
       }
       if (roleAssignments[id] === "a01") cleaned.add("clothes_stained");
-      if (WEREWOLF_ROLES.includes(objectiveRoleAssignments[id]) || cleaned.has("werewolf_turned")) cleaned.add("clothes_damaged");
       newEffects[id] = cleaned;
     }
     setPlayerEffects(newEffects);
@@ -4998,10 +5032,15 @@ const GMRoom = () => {
       if (previous.has(id)) continue;
       const role = abilityRoleAssignments[id];
       if (role === "e03" || role === "v06") markClothes(id, ["clothes_bloodied"]);
+      if ((WEREWOLF_ROLES.includes(role) || objectiveRoleAssignments[id] && WEREWOLF_ROLES.includes(objectiveRoleAssignments[id]))
+        && !isPlayerActingPoisoned(id) && !permanentlyDead.has(id)
+        && !playerEffects[id]?.has("host") && !playerEffects[id]?.has("burned") && !playerEffects[id]?.has("cursed")) {
+        markClothes(id, ["clothes_bloodied", "clothes_damaged"]);
+      }
       if (role === "v15") markClothes(id, ["clothes_charred"]);
       if (role === "v18" || role === "a05") markClothes(id, ["clothes_stained"]);
     }
-  }, [abilityRoleAssignments, actedTonightPlayerIds, gmSnapshotLoaded, markClothes, washerwomanInGame]);
+  }, [abilityRoleAssignments, actedTonightPlayerIds, gmSnapshotLoaded, isPlayerActingPoisoned, markClothes, objectiveRoleAssignments, permanentlyDead, playerEffects, washerwomanInGame]);
   const exhaustedMonkeyIdsKey = Object.entries(abilityRoleAssignments)
     .filter(([id, role]) => role === "v26" && (independentPowerStates[id]?.monkeyDisabled ?? monkeyDisabled))
     .map(([id]) => id).join("|");
@@ -5017,18 +5056,20 @@ const GMRoom = () => {
     }
   }, [exhaustedMonkeyIdsKey, gmSnapshotLoaded, markClothes]);
   const investigatorInGame = Object.values(abilityRoleAssignments).includes("v29");
+  const colossusInGame = Object.values(abilityRoleAssignments).includes("v27");
   useEffect(() => {
     if (!gmSnapshotLoaded || room?.status !== "playing") return;
-    const nextTracked = investigatorInGame && gameCyclePhase === "night" ? actedTonightPlayerIds : new Set<string>();
+    const trackActors = investigatorInGame || colossusInGame;
+    const nextTracked = trackActors && gameCyclePhase === "night" ? actedTonightPlayerIds : new Set<string>();
     if ([...nextTracked].every((id) => trackedActedTonightPlayerIds.has(id))
       && [...trackedActedTonightPlayerIds].every((id) => nextTracked.has(id))
-      && (investigatorInGame || !Object.values(playerEffects).some((effects) => effects.has("acted_tonight")))) return;
+      && (trackActors || !Object.values(playerEffects).some((effects) => effects.has("acted_tonight")))) return;
     setPlayerEffects((previous) => {
       const next = { ...previous };
       for (const player of players) {
         const wasTracked = trackedActedTonightPlayerIds.has(player.id);
         const isTracked = nextTracked.has(player.id);
-        if (wasTracked === isTracked && (investigatorInGame || !previous[player.id]?.has("acted_tonight"))) continue;
+        if (wasTracked === isTracked && (trackActors || !previous[player.id]?.has("acted_tonight"))) continue;
         const effects = new Set(next[player.id] ?? []);
         if (isTracked) {
           effects.add("acted_tonight");
@@ -5039,7 +5080,31 @@ const GMRoom = () => {
       return next;
     });
     setTrackedActedTonightPlayerIds(new Set(nextTracked));
-  }, [actedTonightPlayerIds, gameCyclePhase, gmSnapshotLoaded, investigatorInGame, playerEffects, players, room?.status, trackedActedTonightPlayerIds]);
+  }, [actedTonightPlayerIds, colossusInGame, gameCyclePhase, gmSnapshotLoaded, investigatorInGame, playerEffects, players, room?.status, trackedActedTonightPlayerIds]);
+  const bunnyInGame = Object.values(abilityRoleAssignments).includes("v05");
+  useEffect(() => {
+    if (!gmSnapshotLoaded || room?.status !== "playing") return;
+    const nextTracked = bunnyInGame && gameCyclePhase === "night" ? nightTargetedPlayerIds : new Set<string>();
+    if ([...nextTracked].every((id) => trackedAlertPlayerIds.has(id))
+      && [...trackedAlertPlayerIds].every((id) => nextTracked.has(id))
+      && (bunnyInGame || !Object.values(playerEffects).some((effects) => effects.has("alert")))) return;
+    setPlayerEffects((previous) => {
+      const next = { ...previous };
+      for (const player of players) {
+        const wasTracked = trackedAlertPlayerIds.has(player.id);
+        const isTracked = nextTracked.has(player.id);
+        if (wasTracked === isTracked && (bunnyInGame || !previous[player.id]?.has("alert"))) continue;
+        const effects = new Set(next[player.id] ?? []);
+        if (isTracked) {
+          effects.add("alert");
+          suppressedEffectLogAddsRef.current.add(`${player.id}:alert`);
+        } else effects.delete("alert");
+        next[player.id] = effects;
+      }
+      return next;
+    });
+    setTrackedAlertPlayerIds(new Set(nextTracked));
+  }, [bunnyInGame, gameCyclePhase, gmSnapshotLoaded, nightTargetedPlayerIds, playerEffects, players, room?.status, trackedAlertPlayerIds]);
   const colossusAttackedPlayerIds = useMemo(() => players.filter((player) => (
     abilityRoleAssignments[player.id] === "v27" && playerStatuses[player.id] === "dead-this-night"
     && !!killSources[player.id] && (werewolfDeathFlags[player.id] ?? isWerewolfAttackSource(killSources[player.id], killSourcePlayerIds[player.id]))
@@ -5176,7 +5241,7 @@ const GMRoom = () => {
     if (actionRole === "v27") {
       const eligible = (id: string) => isColossusTarget({
         dead: permanentlyDead.has(id) || playerStatuses[id] === "dead", redX: playerStatuses[id] === "dead-this-night",
-        actedTonight: actedTonightPlayerIds.has(id), host: !!playerEffects[id]?.has("host"),
+        actedTonight: !!playerEffects[id]?.has("acted_tonight"), host: !!playerEffects[id]?.has("host"),
       });
       if (!sourcePlayerId || !colossusReadyPlayerIds.has(sourcePlayerId) || colossusUsedRef.current.has(sourcePlayerId) || !eligible(targetPlayerId)) return;
       // Spend the retaliation before resolving the kill, including a failed poisoned shot.
@@ -5184,7 +5249,7 @@ const GMRoom = () => {
       setColossusUsedPlayerIds(colossusUsedRef.current);
       const killId = resolveColossusTarget(players.map((player) => ({
         id: player.id, dead: permanentlyDead.has(player.id) || playerStatuses[player.id] === "dead",
-        redX: playerStatuses[player.id] === "dead-this-night", actedTonight: actedTonightPlayerIds.has(player.id), host: !!playerEffects[player.id]?.has("host"),
+        redX: playerStatuses[player.id] === "dead-this-night", actedTonight: !!playerEffects[player.id]?.has("acted_tonight"), host: !!playerEffects[player.id]?.has("host"),
       })), targetPlayerId, isPlayerActingPoisoned(sourcePlayerId));
       applyCaughtIfWebbed();
       if (killId) handlePlayerStatusChange(killId, "dead-this-night", publicSourceRole ?? "v27", sourcePlayerId);
@@ -5292,7 +5357,9 @@ const GMRoom = () => {
         toggleActionEffect(targetPlayerId, "prophecy");
       }
       else if (roleSource === "v22") {
-        if (!playerEffects[targetPlayerId]?.has("accused")) toggleActionEffect(targetPlayerId, "accused_next");
+        const dogBoy = !!sourcePlayerId && !!dogWolfStates[sourcePlayerId];
+        const usedEffect = dogBoy ? "accused_dog" : "accused";
+        if (!playerEffects[targetPlayerId]?.has(usedEffect)) toggleActionEffect(targetPlayerId, dogBoy ? "accused_next_dog" : "accused_next");
       }
       else if (roleSource === "v16") {
         // Sonâmbulo: if poisoned → random (excluding intended target & sleepwalker)
@@ -5736,6 +5803,8 @@ const GMRoom = () => {
           ? "dug_up_mime"
           : dogGraveRobber ? "dug_up_dog" : "dug_up";
         applySourcedEffect(a05Id, targetPlayerId, effectKey);
+        markClothes(a05Id, ["clothes_stained"]);
+        markClothes(targetPlayerId, ["clothes_stained"]);
         toast.success(getToast("okGraveRobber", (room?.language as Language) || "pt"));
       }
       else if (roleSource === "l06") {
@@ -5774,7 +5843,7 @@ const GMRoom = () => {
       && (!dogEvilCupidState || nextDogEnemyCount >= 2)) {
       markScriptRoleAction(actionRole, sourcePlayerId);
     }
-  }, [actedTonightPlayerIds, beginBoneCollectorCopy, colossusReadyPlayerIds, usedTravellerPowerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, astronomerBlocksWerewolvesTonight, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, gameCyclePhase, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, markClothes, recordGameEvent, recordTravellerPowerEvent, recordSpiderCatch, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, motherCurseChangeUsed, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [beginBoneCollectorCopy, colossusReadyPlayerIds, usedTravellerPowerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, astronomerBlocksWerewolvesTonight, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, gameCyclePhase, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, markClothes, recordGameEvent, recordTravellerPowerEvent, recordSpiderCatch, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, motherCurseChangeUsed, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const phoneWorld = useMemo<PhoneWorld>(() => ({
     packBlocked: astronomerBlocksWerewolvesTonight,
@@ -5878,7 +5947,20 @@ const GMRoom = () => {
       }
       return;
     }
-    if (action === PHONE_MODE.PRIEST_CONFESSION) return;
+    if (action === PHONE_MODE.PRIEST_CONFESSION) {
+      setClothesPersistentCharredPlayerIds((previous) => {
+        if (!previous.has(targetPlayerId)) return previous;
+        const next = new Set(previous);
+        next.delete(targetPlayerId);
+        return next;
+      });
+      setPlayerEffects((previous) => {
+        const existing = previous[targetPlayerId];
+        if (!existing || !WASHERWOMAN_CLOTHES.some((effect) => existing.has(effect))) return previous;
+        return { ...previous, [targetPlayerId]: new Set([...existing].filter((effect) => !WASHERWOMAN_CLOTHES.includes(effect as ClothingEffect))) };
+      });
+      return;
+    }
     if (isRoleActionPhoneMode(action)) {
       const { dragAction } = getRoleActionPhoneConfig(action);
       (targetPlayerIds ?? [targetPlayerId]).forEach((targetId) => {
@@ -6425,13 +6507,19 @@ const GMRoom = () => {
       setLamplighterPickedCharges(gmResult.charges);
     }
     setLamplighterRevealOpen(true);
+    for (const viewerPlayerId of recipients) {
+      if (!isPlayerActingPoisoned(viewerPlayerId) && !playerEffects[viewerPlayerId]?.has("host")
+        && !playerEffects[viewerPlayerId]?.has("burned") && !playerEffects[viewerPlayerId]?.has("cursed")) {
+        markClothes(viewerPlayerId, ["clothes_charred"]);
+      }
+    }
     markScriptRoleAction("v21", sourcePlayerId, recipients);
     if (!roomId) return;
     supabase.channel(`lamplighter-reveal-${roomId}`).send({
       type: "broadcast", event: "lamplighter-reveal",
       payload: { show: true, byPlayerId },
     });
-  }, [abilityRoleAssignments, players, permanentlyDead, getRevealRecipientIds, roleAssignments, independentPowerStates, shamanCharges, paranoidCharges, angelCharges, bigBadWolfCharges, cupidCharges, vampireWolfUsed, judgeCharges, accuserCharges, spiderDayChangeUsed, motherCurseChangeUsed, isPlayerActingPoisoned, illusionPlayerIds, markScriptRoleAction, roomId, room?.language]);
+  }, [abilityRoleAssignments, players, permanentlyDead, getRevealRecipientIds, roleAssignments, independentPowerStates, shamanCharges, paranoidCharges, angelCharges, bigBadWolfCharges, cupidCharges, vampireWolfUsed, judgeCharges, accuserCharges, spiderDayChangeUsed, motherCurseChangeUsed, isPlayerActingPoisoned, illusionPlayerIds, markClothes, markScriptRoleAction, playerEffects, roomId, room?.language]);
 
   const handleCloseLamplighterModal = useCallback(() => {
     setLamplighterRevealOpen(false);
@@ -6987,6 +7075,7 @@ const GMRoom = () => {
     && phone.session.mode !== PHONE_MODE.GAMBLER_GUESS
     ? getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld) : null;
   const playerActionModal: GMPlayerActionModalMode | null = completedPlayerActionMirror ?? actionMirrors.mode;
+  const activeGmActionId = phone.session?.id ?? playerActionModal?.id ?? null;
 
   return (
     <LanguageContext.Provider value={lang}>
@@ -7017,6 +7106,10 @@ const GMRoom = () => {
           onAcknowledge={() => void acknowledgeTravellerReveal(revealingTraveller.id)}
         />
       )}
+      <GameModalMinimizeContext.Provider value={activeGmActionId ? {
+        minimized: minimizedGmActionId === activeGmActionId,
+        onMinimize: () => setMinimizedGmActionId(activeGmActionId),
+      } : null}>
       {phone.session?.mode === PHONE_MODE.MONKEY_TAMER_REVEAL && !hideScreenMode && (
         <MonkeyRevealModal key={phone.session.id}
           session={getPhoneView(phone.session, phone.session.participantIds[0], phoneWorld)!}
@@ -7070,6 +7163,13 @@ const GMRoom = () => {
             actionMirrors.close(mode);
             void resolvePlayerActionRequest({ ...createPlayerActionRequest(mode.kind, mode.actorPlayerId, targetPlayerId), id: mode.id }, true);
           }} />
+      )}
+      </GameModalMinimizeContext.Provider>
+      {activeGmActionId && minimizedGmActionId === activeGmActionId && !hideScreenMode && !displayedPlayerActionRequest && (
+        <Button type="button" className="fixed bottom-5 right-5 z-40 rounded-full border border-gold/60 bg-card px-4 shadow-xl"
+          variant="secondary" onClick={() => setMinimizedGmActionId(null)}>
+          <Eye className="mr-2 h-4 w-4" />{getTranslation(lang).ui.actions.reopen}
+        </Button>
       )}
       <div className="w-full space-y-6">
         {/* Header */}
@@ -7467,7 +7567,6 @@ const GMRoom = () => {
                     onFoxDisabledToggle={() => setFoxDisabled((v) => !v)}
                     monkeyDisabled={monkeyDisabled}
                     onMonkeyDisabledToggle={() => setMonkeyDisabled((v) => !v)}
-                    nightTargetedPlayerIds={nightTargetedPlayerIds}
                     conditionKeys={conditionKeys}
                     playerEffects={playerEffects}
                     prophecyGhostPlayerIds={prophecyGhostPlayerIds}

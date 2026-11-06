@@ -227,12 +227,12 @@ describe("phone synchronization across GM and player devices", () => {
   });
 
   it("waits for GM approval before revealing a Priest confessor's character", () => {
-    const onComplete = vi.fn();
+    const onAction = vi.fn(), onComplete = vi.fn();
     const priestWorld: PhoneWorld = { ...world, players: [
       ...world.players, player("priest", "v25"), { ...player("ghost", "v03"), dead: true, canWake: false, displayRole: "v03" },
     ] };
     const gm = renderHook(() => useGMPhoneActions({
-      roomId: "room", contextKey: "playing:night:2", enabled: true, world: priestWorld, onAction: vi.fn(), onComplete,
+      roomId: "room", contextKey: "playing:night:2", enabled: true, world: priestWorld, onAction, onComplete,
     }));
     const priest = renderHook(() => usePlayerPhoneActions("room", "priest"));
     act(() => gm.result.current.toggle(PHONE_MODE.PRIEST_CONFESSION, "priest-line", "priest", 20));
@@ -242,9 +242,11 @@ describe("phone synchronization across GM and player devices", () => {
     expect(onComplete).not.toHaveBeenCalled();
     act(() => gm.result.current.resolvePriest(sessionId, "ghost", false));
     expect(priest.result.current.session?.pendingTargetPlayerId).toBeUndefined();
+    expect(onAction).not.toHaveBeenCalled();
     act(() => priest.result.current.send("confirm", "ghost"));
     act(() => gm.result.current.resolvePriest(sessionId, "ghost", true));
     expect(priest.result.current.session?.priestReveal).toEqual({ targetPlayerId: "ghost", roleId: "v03" });
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: PHONE_MODE.PRIEST_CONFESSION, sourcePlayerId: "priest", targetPlayerId: "ghost" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "priest-line", progressOrder: 20 }));
   });
 

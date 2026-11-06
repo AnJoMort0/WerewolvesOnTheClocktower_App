@@ -3,7 +3,7 @@ import { PHONE_MODE } from "@/lib/phoneActionModes";
 import type { CommonActionStrings, Translation } from "./types";
 
 const actions = {
-  open: "Ouvrir", close: "Fermer", reopen: "Rouvrir", yes: "OUI", no: "NON",
+  open: "Ouvrir", close: "Fermer", reopen: "Rouvrir", minimize: "Réduire", yes: "OUI", no: "NON",
   see: "Voir", choose: "Choisir", confirm: "Confirmer", accept: "Accepter", deny: "Refuser",
   ignore: "Ignorer", save: "Sauver", enter: "Entrer", exit: "Quitter",
 } satisfies CommonActionStrings;
@@ -91,7 +91,6 @@ export const fr: Translation = {
       { text: "L'{Ancien du Village} se réveille et choisit un joueur qui aura automatiquement 2 votes contre lui au prochain Tribunal.", requires: ["v11"], phoneMode: PHONE_MODE.VILLAGE_ELDER_ASSIGN_VOTES },
       { text: "L'{Avocat du Diable} se réveille et choisit un joueur. Ce joueur est immunisé contre l'exécution pendant la journée suivante. L'{Avocat du Diable} ne peut pas choisir le même joueur deux fois pendant la partie.", requires: ["t04"], phoneMode: PHONE_MODE.DEVIL_ADVOCATE_PROTECT },
       { text: "Le {Détective Privé} se réveille et choisit trois joueurs vivants voisins. Le Narrateur indique combien d’entre eux ont agi cette nuit.", requires: ["v29"], phoneMode: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK },
-      { text: "La {Lavandière} se réveille et choisit un joueur. Le Narrateur indique les numéros correspondant à l'état de ses vêtements.", requires: ["a07"], phoneMode: PHONE_MODE.WASHERWOMAN_CHECK },
       { text: "À la fin de cette nuit, un hurlement se fait entendre. Le Village sait alors que les Loups-garous se sont révélés et qu'ils ont faim. Le Village se réveille méfiant envers tout le monde." },
     ],
     secondNight: [
@@ -383,6 +382,9 @@ export const fr: Translation = {
       prophecy: "Prophétie",
       accused: "Accusé",
       accused_next: "Accusé au dernier Tribunal",
+      accused_dog: "Accusé (Chien)",
+      accused_next_dog: "Accusé au dernier Tribunal (Chien)",
+      alert: "Alerte",
       werewolf_turned: "Transformé en Loup-garou",
       enemy: "Ennemi",
       immunity_onetime: "Immunité Unique",

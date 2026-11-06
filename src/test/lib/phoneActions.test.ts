@@ -43,15 +43,14 @@ describe("GM-controlled phone rules", () => {
     const scripts = getScripts(language);
     expect(scripts.firstNight.find((line) => line.requires?.includes("v29"))?.phoneMode).toBe(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK);
     expect(scripts.normalNight.find((line) => line.requires?.includes("v29"))?.phoneMode).toBe(PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK);
-    expect(scripts.firstNight.findIndex((line) => line.requires?.includes("v29")))
-      .toBeLessThan(scripts.firstNight.findIndex((line) => line.requires?.includes("a07")));
+    expect(scripts.firstNight.some((line) => line.requires?.includes("a07"))).toBe(false);
     expect(scripts.normalNight.findIndex((line) => line.requires?.includes("a07")))
       .toBeLessThan(scripts.normalNight.findIndex((line) => line.requires?.includes("v29")));
   });
 
-  it.each(["pt", "fr", "en"] as const)("registers the Washerwoman on both nights in %s", (language) => {
+  it.each(["pt", "fr", "en"] as const)("registers the Washerwoman from night two in %s", (language) => {
     const scripts = getScripts(language);
-    expect(scripts.firstNight.find((line) => line.requires?.includes("a07"))?.phoneMode).toBe(PHONE_MODE.WASHERWOMAN_CHECK);
+    expect(scripts.firstNight.some((line) => line.requires?.includes("a07"))).toBe(false);
     expect(scripts.normalNight.find((line) => line.requires?.includes("a07"))?.phoneMode).toBe(PHONE_MODE.WASHERWOMAN_CHECK);
   });
 

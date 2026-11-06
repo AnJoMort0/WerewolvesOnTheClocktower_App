@@ -294,6 +294,7 @@ export interface CommonActionStrings {
   open: string;
   close: string;
   reopen: string;
+  minimize: string;
   yes: string;
   no: string;
   see: string;

@@ -24,6 +24,9 @@ import ownerIcon from "@/assets/display/icons/owner.webp";
 import soldierIcon from "@/assets/display/icons/soldier.webp";
 import spiedOnIcon from "@/assets/display/icons/spied_on.webp";
 import actedTonightIcon from "@/assets/display/icons/acted_tonight.webp";
+import alertIcon from "@/assets/display/icons/alert.webp";
+import dogVoteAccusedIcon from "@/assets/display/icons/vote_accused_dog.webp";
+import dogVoteAccusedLastTribunalIcon from "@/assets/display/icons/vote_accused_last_tribunal_dog.webp";
 import clothesBloodiedIcon from "@/assets/display/icons/clothes_bloodied.webp";
 import clothesStainedIcon from "@/assets/display/icons/clothes_stained.webp";
 import clothesCharredIcon from "@/assets/display/icons/clothes_charred.webp";
@@ -72,6 +75,9 @@ export const STATUS_EFFECT_ICONS: Record<StatusEffect, string> = {
   cursed: cursedIcon,
   spied_on: spiedOnIcon,
   acted_tonight: actedTonightIcon,
+  alert: alertIcon,
+  accused_dog: dogVoteAccusedIcon,
+  accused_next_dog: dogVoteAccusedLastTribunalIcon,
   clothes_bloodied: clothesBloodiedIcon,
   clothes_stained: clothesStainedIcon,
   clothes_charred: clothesCharredIcon,
