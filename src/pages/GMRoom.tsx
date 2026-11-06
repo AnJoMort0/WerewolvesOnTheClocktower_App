@@ -241,6 +241,7 @@ type GMSnapshot = {
   completedScriptLineKeys: string[];
   completedScriptLineActors?: Record<string, string[]>;
   usedNightPowerKeys?: string[];
+  trackedActedTonightPlayerIds?: string[];
   actionTrackingVersion?: number;
   scriptActionLineKeys?: string[];
   colossusUsedPlayerIds?: string[];
@@ -606,6 +607,7 @@ const GMRoom = () => {
   const [completedScriptLineKeys, setCompletedScriptLineKeys] = useState<Set<string>>(new Set());
   const [completedScriptLineActors, setCompletedScriptLineActors] = useState<Record<string, string[]>>({});
   const [usedNightPowerKeys, setUsedNightPowerKeys] = useState<Set<string>>(new Set());
+  const [trackedActedTonightPlayerIds, setTrackedActedTonightPlayerIds] = useState<Set<string>>(new Set());
   const [colossusUsedPlayerIds, setColossusUsedPlayerIds] = useState<Set<string>>(new Set());
   const colossusUsedRef = useRef(colossusUsedPlayerIds);
   colossusUsedRef.current = colossusUsedPlayerIds;
@@ -1218,6 +1220,7 @@ const GMRoom = () => {
       effects.push("webbed", "caught", "webbed_dog", "caught_dog");
     }
     if (assignedRoles.has("m07")) effects.push("cursed");
+    if (assignedRoles.has("v29")) effects.push("acted_tonight");
     // f02 Espião — spied_on effect is manually assignable
     if (assignedRoles.has("f02")) {
       effects.push("spied_on");
@@ -1511,6 +1514,7 @@ const GMRoom = () => {
       // be recovered reliably, so begin a fresh action record on restore.
       setCompletedScriptLineActors(snapshot.actionTrackingVersion === 3 ? snapshot.completedScriptLineActors ?? {} : {});
       setUsedNightPowerKeys(new Set(snapshot.actionTrackingVersion === 3 ? snapshot.usedNightPowerKeys ?? [] : []));
+      setTrackedActedTonightPlayerIds(new Set(snapshot.trackedActedTonightPlayerIds ?? []));
       setScriptActionLineKeys(new Set(snapshot.scriptActionLineKeys ?? []));
       setColossusUsedPlayerIds(new Set(snapshot.colossusUsedPlayerIds ?? []));
       setUsedTravellerPowerIds(new Set(snapshot.usedTravellerPowerIds ?? []));
@@ -1599,6 +1603,7 @@ const GMRoom = () => {
       completedScriptLineKeys: Array.from(completedScriptLineKeys),
       completedScriptLineActors,
       usedNightPowerKeys: Array.from(usedNightPowerKeys),
+      trackedActedTonightPlayerIds: Array.from(trackedActedTonightPlayerIds),
       actionTrackingVersion: 3,
       scriptActionLineKeys: Array.from(scriptActionLineKeys),
       colossusUsedPlayerIds: Array.from(colossusUsedPlayerIds),
@@ -1683,6 +1688,7 @@ const GMRoom = () => {
     completedScriptLineKeys,
     completedScriptLineActors,
     usedNightPowerKeys,
+    trackedActedTonightPlayerIds,
     scriptActionLineKeys,
     colossusUsedPlayerIds,
     usedTravellerPowerIds,
@@ -4148,7 +4154,7 @@ const GMRoom = () => {
   }, [dayPhase, gameCyclePhase, nightNumber]);
 
   const recordTravellerPowerEvent = useCallback((
-    role: "t02" | "t03" | "t04" | "t05",
+    role: "t02" | "t03" | "t04" | "t05" | "t06",
     actorPlayerId: string,
     targetPlayerIds: string[],
     detail: string,
@@ -4269,11 +4275,14 @@ const GMRoom = () => {
   }, []);
 
   const toggleBureaucratUse = useCallback((playerId: string, index: number) => {
+    const current = bureaucratUsesByPlayer[playerId] ?? 0;
+    const nextUses = current > index ? index : index + 1;
     setBureaucratUsesByPlayer((previous) => {
-      const current = previous[playerId] ?? 0;
-      return { ...previous, [playerId]: current > index ? index : index + 1 };
+      return { ...previous, [playerId]: nextUses };
     });
-  }, []);
+    const copy = getTranslation((room?.language as Language) || "pt").ui.gameLog;
+    recordTravellerPowerEvent("t06", playerId, [], nextUses > current ? copy.bureaucratUse : copy.bureaucratUseReversed);
+  }, [bureaucratUsesByPlayer, recordTravellerPowerEvent, room?.language]);
 
   useEffect(() => {
     const copiedRole = pendingActorCopyLogRef.current;
@@ -4684,6 +4693,11 @@ const GMRoom = () => {
   }, [abilityRoleAssignments, dogWolfStates, effectiveRoleAssignments, mimePlayerId, mimeWitchPoison, nightNumber, permanentlyDead, sourcedEffectTargets]);
 
   const handleScriptLineCompleted = useCallback((key: string, completed: boolean, progressOrder: number | null = null, participantIds: string[] = [], acted = false) => {
+    if (completed && !completedScriptLineKeys.has(key) && scriptLinesRef.current.find((line) => line.key === key)?.requires.includes("v28")) {
+      const actorId = participantIds.find((id) => abilityRoleAssignments[id] === "v28") ?? participantIds[0];
+      recordGameEvent({ action: "role_action", actor: actorId ? getPlayerLogSnapshot(actorId) : null,
+        actorRole: "v28", detail: getTranslation((room?.language as Language) || "pt").ui.gameLog.swanCount });
+    }
     setCompletedScriptLineKeys((prev) => {
       const next = new Set(prev);
       if (completed) next.add(key);
@@ -4697,7 +4711,7 @@ const GMRoom = () => {
       clearDueMimeWitchPoison(progressOrder);
       clearEffectsFromDeadSources(progressOrder);
     }
-  }, [clearDueMimeWitchPoison, clearEffectsFromDeadSources]);
+  }, [abilityRoleAssignments, clearDueMimeWitchPoison, clearEffectsFromDeadSources, completedScriptLineKeys, getPlayerLogSnapshot, recordGameEvent, room?.language]);
   completeScriptLineRef.current = handleScriptLineCompleted;
 
   const handleBigBadWolfChargeToggle = useCallback((idx: number) => {
@@ -4844,6 +4858,30 @@ const GMRoom = () => {
   const actedTonightPlayerIds = useMemo(() => {
     return getNightActors(completedScriptLineActors, scriptActionLineKeys, usedNightPowerKeys, nightNumber);
   }, [completedScriptLineActors, nightNumber, scriptActionLineKeys, usedNightPowerKeys]);
+  const investigatorInGame = Object.values(abilityRoleAssignments).includes("v29");
+  useEffect(() => {
+    if (!gmSnapshotLoaded || room?.status !== "playing") return;
+    const nextTracked = investigatorInGame && gameCyclePhase === "night" ? actedTonightPlayerIds : new Set<string>();
+    if ([...nextTracked].every((id) => trackedActedTonightPlayerIds.has(id))
+      && [...trackedActedTonightPlayerIds].every((id) => nextTracked.has(id))
+      && (investigatorInGame || !Object.values(playerEffects).some((effects) => effects.has("acted_tonight")))) return;
+    setPlayerEffects((previous) => {
+      const next = { ...previous };
+      for (const player of players) {
+        const wasTracked = trackedActedTonightPlayerIds.has(player.id);
+        const isTracked = nextTracked.has(player.id);
+        if (wasTracked === isTracked && (investigatorInGame || !previous[player.id]?.has("acted_tonight"))) continue;
+        const effects = new Set(next[player.id] ?? []);
+        if (isTracked) {
+          effects.add("acted_tonight");
+          suppressedEffectLogAddsRef.current.add(`${player.id}:acted_tonight`);
+        } else effects.delete("acted_tonight");
+        next[player.id] = effects;
+      }
+      return next;
+    });
+    setTrackedActedTonightPlayerIds(new Set(nextTracked));
+  }, [actedTonightPlayerIds, gameCyclePhase, gmSnapshotLoaded, investigatorInGame, playerEffects, players, room?.status, trackedActedTonightPlayerIds]);
   const colossusAttackedPlayerIds = useMemo(() => players.filter((player) => (
     abilityRoleAssignments[player.id] === "v27" && playerStatuses[player.id] === "dead-this-night"
     && !!killSources[player.id] && (werewolfDeathFlags[player.id] ?? isWerewolfAttackSource(killSources[player.id], killSourcePlayerIds[player.id]))
@@ -5571,7 +5609,7 @@ const GMRoom = () => {
       && (!dogEvilCupidState || nextDogEnemyCount >= 2)) {
       markScriptRoleAction(actionRole, sourcePlayerId);
     }
-  }, [actedTonightPlayerIds, beginBoneCollectorCopy, colossusReadyPlayerIds, usedTravellerPowerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, astronomerBlocksWerewolvesTonight, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, gameCyclePhase, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, recordGameEvent, recordSpiderCatch, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, motherCurseChangeUsed, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, villageElderLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
+  }, [actedTonightPlayerIds, beginBoneCollectorCopy, colossusReadyPlayerIds, usedTravellerPowerIds, abilityRoleAssignments, activeDogWolfPlayerIds, actorIdolPlayerId, actorIdolUses, actorPlayerId, applySourcedEffect, astronomerBlocksWerewolvesTonight, dogWolfPlayerIds, dogWolfStates, effectiveActorCopiedRole, gameCyclePhase, getPlayerLogSnapshot, getStoredDogWolfFallbackState, gmSnapshotLoaded, handleIndependentPowerStateChange, handlePlayerStatusChange, handleShamanDrop, handleSetIllusion, illusionTargetsBySource, independentPowerStates, recordGameEvent, recordTravellerPowerEvent, recordSpiderCatch, toggleEffect, players, playerEffects, angelCharges, getRolePlayerId, isPlayerActingPoisoned, mimeMechanicalRole, mimePlayerId, mimeWitchPoison, motherCurseChangeUsed, nightNumber, pickRandomPlayer, poisonTargetsBySource, poisonedPlayerIds, permanentlyDead, resetUsesForRole, roleAssignments, room?.status, saviourLastTarget, playerStatuses, paranoidCharges, setDogWolfOwner, sourcedEffectTargets, spiderDayChangeUsed, spiderWebbedDied, markScriptRoleAction, room?.language, werewolfPackPoisoned]);
 
   const phoneWorld = useMemo<PhoneWorld>(() => ({
     packBlocked: astronomerBlocksWerewolvesTonight,
@@ -5590,7 +5628,7 @@ const GMRoom = () => {
         illusion: illusionPlayerIds.has(player.id),
         foxDisabled: independentPowerStates[player.id]?.foxDisabled ?? foxDisabled,
         monkeyDisabled: independentPowerStates[player.id]?.monkeyDisabled ?? monkeyDisabled,
-        colossusReady: colossusReadyPlayerIds.has(player.id), actedTonight: actedTonightPlayerIds.has(player.id), host: effects.has("host"), soldier: effects.has("soldier"),
+        colossusReady: colossusReadyPlayerIds.has(player.id), actedTonight: effects.has("acted_tonight"), host: effects.has("host"), soldier: effects.has("soldier"),
         lover: effects.has("lover"), identityProtected: effects.has("immunity_cupid"), enemy: effects.has("enemy"),
         poisoned: poisonedPlayerIds.has(player.id), acquitted: effects.has("acquitted"),
         acquittedSourceIds: Object.entries(sourcedEffectTargets)
@@ -5607,8 +5645,8 @@ const GMRoom = () => {
         powerless: powerlessPlayerIds.has(player.id),
       };
     }),
-  }), [actedTonightPlayerIds, astronomerBlocksWerewolvesTonight, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerIds, powerlessPlayerIds, prophecyGhostPlayerIds, roleAssignments, sourcedEffectTargets]);
-  const applyPhoneAction = useCallback(({ action, targetPlayerId, targetPlayerIds, sourcePlayerId, monkeyReveal, foxReveal, gamblerReveal }: PhoneAction) => {
+  }), [astronomerBlocksWerewolvesTonight, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerIds, powerlessPlayerIds, prophecyGhostPlayerIds, roleAssignments, sourcedEffectTargets]);
+  const applyPhoneAction = useCallback(({ action, targetPlayerId, targetPlayerIds, sourcePlayerId, monkeyReveal, foxReveal, investigatorReveal, gamblerReveal }: PhoneAction) => {
     if (action === PHONE_MODE.MONKEY_TAMER_REVEAL) {
       if (!sourcePlayerId || !monkeyReveal) return;
       // Revealed Evil Beings exhaust this source's power without killing them.
@@ -5636,6 +5674,16 @@ const GMRoom = () => {
       if (!sourcePlayerId) return;
       handleDragAction("role-v12", targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
       markScriptRoleAction("v12", sourcePlayerId);
+      return;
+    }
+    if (action === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK) {
+      if (!sourcePlayerId || !investigatorReveal) return;
+      const actor = getPlayerLogSnapshot(sourcePlayerId);
+      recordGameEvent({ action: "role_action", actor, actorRole: "v29",
+        target: getPlayerLogSnapshot(targetPlayerId), participants: [sourcePlayerId, ...investigatorReveal.playerIds],
+        detail: format(getTranslation((room?.language as Language) || "pt").ui.gameLog.investigatorCount,
+          { count: investigatorReveal.count }) });
+      markScriptRoleAction("v29", sourcePlayerId);
       return;
     }
     if (action === PHONE_MODE.GAMBLER_GUESS) {
@@ -5669,7 +5717,7 @@ const GMRoom = () => {
       : action === PHONE_MODE.EVIL_WITCH_POISON ? "poison"
       : action === PHONE_MODE.SHAMAN_SAVE ? "shaman" : action;
     handleDragAction(dragAction, targetPlayerId, sourcePlayerId, { fromScriptLine: true, fromPhone: true });
-  }, [handleDragAction, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, markScriptRoleAction, nightNumber, players, recordTravellerPowerEvent, room?.language]);
+  }, [getPlayerLogSnapshot, handleDragAction, handleIndependentPowerStateChange, handlePlayerStatusChange, independentPowerStates, markScriptRoleAction, nightNumber, players, recordGameEvent, recordTravellerPowerEvent, room?.language]);
   const completePhoneLine = useCallback((session: PhoneSession) => {
     handleScriptLineCompleted(session.lineKey, true, session.progressOrder ?? null, getCompletedPhoneActionParticipants(session), !session.ignored);
   }, [handleScriptLineCompleted]);

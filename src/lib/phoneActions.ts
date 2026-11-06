@@ -537,7 +537,8 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
     const investigatorReveal = resolveInvestigatorReveal(actorId, target.id, world);
     if (!investigatorReveal) return { session: next };
     const revealed = { ...next, visible: true, investigatorReveal };
-    return { session: revealed, completedSession: revealed };
+    return { session: revealed, completedSession: revealed,
+      action: { action: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK, targetPlayerId: target.id, sourcePlayerId: actorId, investigatorReveal } };
   }
   if (session.mode === PHONE_MODE.GYPSY_POISON_CHECK && command.type === "confirm") {
     const result = resolveGypsyReveal(target.id, world);

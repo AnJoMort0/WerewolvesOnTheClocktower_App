@@ -203,7 +203,7 @@ describe("phone synchronization across GM and player devices", () => {
     const spider = renderHook(() => usePlayerPhoneActions("room", "spider"));
     act(() => gm.result.current.toggle(PHONE_MODE.SPIDER_TAMER_WEB, "first-spider-line", "spider", null));
     expect(spider.result.current.session?.mode).toBe(PHONE_MODE.SPIDER_TAMER_WEB);
-    act(() => spider.result.current.send("select", "victim"));
+    act(() => spider.result.current.send("confirm", "victim"));
     expect(onAction).toHaveBeenCalledExactlyOnceWith({ action: PHONE_MODE.SPIDER_TAMER_WEB, sourcePlayerId: "spider", targetPlayerId: "victim" });
     expect(onComplete).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ lineKey: "first-spider-line", participantIds: ["spider"] }));
     expect(spider.result.current.session?.pendingTargetPlayerId).toBe("victim");
@@ -385,7 +385,10 @@ describe("phone synchronization across GM and player devices", () => {
     act(() => device.result.current.send("confirm", "center"));
     expect(device.result.current.session?.investigatorReveal?.count).toBe(2);
     expect(bystander.result.current.session).toBeNull();
-    expect(onAction).not.toHaveBeenCalled();
+    expect(onAction).toHaveBeenCalledWith(expect.objectContaining({
+      action: PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK,
+      investigatorReveal: expect.objectContaining({ count: 2 }),
+    }));
     expect(onComplete).toHaveBeenCalledOnce();
     gm.unmount();
     const restored = renderHook(() => useGMPhoneActions(props));

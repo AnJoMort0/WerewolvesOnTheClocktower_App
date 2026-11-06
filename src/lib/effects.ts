@@ -23,6 +23,7 @@ export const STATUS_EFFECTS = [
   "cursed",
   "caught",
   "spied_on",
+  "acted_tonight",
   "immunity_execution",
   "devil_advocate_execution",
   "devil_advocate_used",

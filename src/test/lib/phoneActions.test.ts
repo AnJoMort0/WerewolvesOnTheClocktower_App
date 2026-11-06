@@ -64,9 +64,13 @@ describe("GM-controlled phone rules", () => {
     const result = applyPhoneCommand(session, "mime", { id: "check", sessionId: session.id, sequence: 1,
       type: "confirm", targetPlayerId: "idle" }, investigation);
     expect(result.session?.investigatorReveal?.count).toBe(2);
+    expect(result.action?.investigatorReveal?.count).toBe(2);
     expect(result.completedSession).toBeTruthy();
     expect(getPhoneView(result.session, "wolf", investigation)).toBeNull();
     expect(getPhoneView(result.session, "mime", investigation)?.investigatorReveal?.count).toBe(2);
+    investigation.players[1].actedTonight = false;
+    expect(resolveInvestigatorReveal("mime", "idle", investigation)?.count).toBe(1);
+    investigation.players[1].actedTonight = true;
     expect(applyPhoneCommand(result.session, "mime", { id: "again", sessionId: session.id, sequence: 2,
       type: "confirm", targetPlayerId: "wolf" }, investigation).completedSession).toBeUndefined();
     investigation.players[0].actingPoisoned = true;

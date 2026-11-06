@@ -177,6 +177,7 @@ export type GameLogActionKey =
   | "role_change"
   | "traveller_join"
   | "traveller_power"
+  | "role_action"
   | "game_over";
 
 export interface GameLogStrings {
@@ -199,6 +200,10 @@ export interface GameLogStrings {
   travellerGunslingerShot: string;
   travellerDevilsAdvocate: string;
   travellerBoneCollectorCopy: string;
+  investigatorCount: string;
+  swanCount: string;
+  bureaucratUse: string;
+  bureaucratUseReversed: string;
   phaseLabels: Record<GameLogPhaseKey, string>;
   actionLabels: Record<GameLogActionKey, string>;
 }
