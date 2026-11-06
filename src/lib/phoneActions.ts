@@ -562,7 +562,7 @@ export function applyPhoneCommand(session: PhoneSession | null, actorId: string,
   if (session.mode === PHONE_MODE.PRIEST_CONFESSION && command.type === "confirm" && !session.pendingTargetPlayerId) {
     return { session: { ...next, pendingTargetPlayerId: target.id } };
   }
-  if ((session.mode === PHONE_MODE.SPIDER_TAMER_WEB && command.type === "select"
+  if ((session.mode === PHONE_MODE.SPIDER_TAMER_WEB && command.type === "confirm"
     || session.mode === PHONE_MODE.SLEEPWALKER_VISIT && command.type === "confirm")
     && !session.pendingTargetPlayerId) {
     const selected = { ...next, pendingTargetPlayerId: target.id, completed: true };

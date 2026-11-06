@@ -22,8 +22,7 @@ This file is intentionally human-owned. Codex can add items, reorganize items, o
 
 ## Balance Changes
 
-* [ ] The Spider Tamer should see the Vampire Werewolf and the Werewolf Seer if they choose to use their powers on a webbed werewolf victim
-* [ ] Bias the results of the randomly assigned roles very slightly so prerequisite roles can appear more often, for example once the Hunter is added into the pool there a small higher chance that the Little Red Riding Hood appears too, same for the Secret Lover
+* [ ] 
 
 ## Additions
 

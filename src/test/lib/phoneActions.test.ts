@@ -361,8 +361,13 @@ describe("GM-controlled phone rules", () => {
     ] };
     expect(getPhoneParticipants(PHONE_MODE.SPIDER_TAMER_WEB, "dog", changed)).toEqual(["dog"]);
     const session: PhoneSession = { id: "web", mode: PHONE_MODE.SPIDER_TAMER_WEB, lineKey: "web-line", sourcePlayerId: "dog", participantIds: ["dog"], votes: {}, sequences: {} };
-    const confirmed = applyPhoneCommand(session, "dog", {
+    const premature = applyPhoneCommand(session, "dog", {
       id: "select", sessionId: "web", sequence: 1, type: "select", targetPlayerId: "target",
+    }, changed);
+    expect(premature.action).toBeUndefined();
+    expect(premature.session?.pendingTargetPlayerId).toBeUndefined();
+    const confirmed = applyPhoneCommand(premature.session, "dog", {
+      id: "confirm", sessionId: "web", sequence: 2, type: "confirm", targetPlayerId: "target",
     }, changed);
     expect(confirmed).toMatchObject({
       session: { pendingTargetPlayerId: "target" },
@@ -370,7 +375,7 @@ describe("GM-controlled phone rules", () => {
       action: { action: PHONE_MODE.SPIDER_TAMER_WEB, sourcePlayerId: "dog", targetPlayerId: "target" },
     });
     expect(applyPhoneCommand(session, "dog", {
-      id: "dead", sessionId: "web", sequence: 1, type: "select", targetPlayerId: "ghost",
+      id: "dead", sessionId: "web", sequence: 1, type: "confirm", targetPlayerId: "ghost",
     }, changed).action).toBeUndefined();
   });
 

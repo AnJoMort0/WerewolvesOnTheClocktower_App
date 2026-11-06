@@ -7130,6 +7130,8 @@ const GMRoom = () => {
               <GMPlayerActionApprovalPanel
                 title={tt("gmPlayerActionTitle")}
                 description={pendingPlayerActionDescription}
+                targetName={pendingPlayerActionTargetName}
+                selectionLabel={getTranslation(lang).ui.phoneActions.selectedTarget}
                 acceptLabel={getTranslation(lang).ui.actions.accept}
                 denyLabel={getTranslation(lang).ui.actions.deny}
                 closeLabel={getTranslation(lang).ui.actions.close}

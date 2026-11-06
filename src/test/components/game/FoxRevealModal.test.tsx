@@ -26,10 +26,13 @@ describe("Fox Tamer reveal modal", () => {
     const { rerender } = render(<FoxRevealModal {...props} session={view} />);
     const confirm = screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm });
     expect(confirm).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Outside" }));
+    expect(onConfirm).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
+    expect(onConfirm).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Left" }).querySelector("span")).toHaveClass("border-amber-400");
     expect(screen.getByRole("button", { name: "Right" }).querySelector("span")).toHaveClass("border-amber-400");
-    fireEvent.click(screen.getByRole("button", { name: "Confirm: Target" }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith("target");
 
     const resolved: PhoneView = { ...view, foxReveal: {

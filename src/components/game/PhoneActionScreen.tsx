@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Crosshair, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RevealCardGallery } from "./RevealCardGallery";
+import { ActionSelectionPrompt } from "./ActionSelectionPrompt";
 import { format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import { canIgnoreRoleActionPhoneMode, getFoxTargetPlayerIds, getRoleActionPhoneConfig, isRoleActionPhoneMode, type PhoneCommand, type PhoneView } from "@/lib/phoneActions";
 import { PHONE_MODE, isAssassinationPhoneMode } from "@/lib/phoneActionModes";
@@ -42,13 +43,14 @@ function getEllipseAngles(count: number, radiusX: number, radiusY: number): numb
   });
 }
 
-export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, onRoleClick, readOnly = false, selectedPlayerId, showHeader = true, showSelectionStatus = true, unframed = false, gmControlled = false, confirmLabel, showPoisonConfirmation = true, appearance }: {
+export function PhoneActionScreen({ session, playerId, language, pending, connected, onSend, onSelectionChange, onRoleClick, readOnly = false, selectedPlayerId, showHeader = true, showSelectionStatus = true, unframed = false, gmControlled = false, appearance }: {
   session: PhoneView;
   playerId: string;
   language: Language;
   pending: boolean;
   connected: boolean;
   onSend: (type: PhoneCommand["type"], targetPlayerId?: string, targetPlayerIds?: string[]) => void;
+  onSelectionChange?: (playerId: string) => void;
   onRoleClick?: (roleId: RoleId) => void;
   readOnly?: boolean;
   selectedPlayerId?: string | null;
@@ -56,8 +58,6 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   showSelectionStatus?: boolean;
   unframed?: boolean;
   gmControlled?: boolean;
-  confirmLabel?: string;
-  showPoisonConfirmation?: boolean;
   appearance?: { title: string; icon: LucideIcon; border: string; accent: string };
 }) {
   const ui = getTranslation(language).ui;
@@ -85,8 +85,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   const selectedSet = new Set(isRoleAction ? roleSelectedIds : selected ? [selected] : []);
   const players = [...session.players].sort((a, b) => (a.seat_position ?? 999) - (b.seat_position ?? 999));
   const actor = players.find((player) => player.id === (session.sourcePlayerId ?? session.participantIds[0]));
-  const selectsImmediately = session.mode === PHONE_MODE.SPIDER_TAMER_WEB;
-  const confirmsSelection = session.mode === PHONE_MODE.PRIEST_CONFESSION || session.mode === PHONE_MODE.SLEEPWALKER_VISIT;
+  const confirmsSelection = session.mode === PHONE_MODE.PRIEST_CONFESSION || session.mode === PHONE_MODE.SLEEPWALKER_VISIT
+    || session.mode === PHONE_MODE.SPIDER_TAMER_WEB;
   const roleSelectionCount = session.targetCount ?? 1;
   const roleMinimumSelectionCount = session.minTargetCount ?? roleSelectionCount;
   const highlightsEligibility = session.mode === PHONE_MODE.COLOSSUS_RETALIATION
@@ -143,15 +143,23 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
         ? format(text.huntComplete, { targets: completedTargets })
         : format(text.assassinationComplete, { actor: actor?.name ?? "", targets: completedTargets })
       : format(text.selectionComplete, { actor: actor?.name ?? "", targets: completedTargets });
+  const selectingNow = !readOnly && !session.completed && !session.approvalResult && !session.priestReveal
+    && !session.pendingTargetPlayerId && session.mode !== PHONE_MODE.WEREWOLF_ALLIES;
+  const selectedNames = isRoleAction ? roleTargets.map((player) => player.name).join(", ") : target?.name;
+  const liveHuntVote = session.mode === PHONE_MODE.WEREWOLF_HUNT && !gmControlled;
 
   const content = <>
-      {showHeader && <header className="flex items-center justify-center gap-2 border-b border-border/60 pb-3">
-        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background/40 ${theme.accent}`}>
-          <Icon className="h-4 w-4" />
+      {showHeader && <header className="flex items-center gap-3 border-b border-gold/20 pb-3">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gold/25 bg-background/60 ${theme.accent}`}>
+          <Icon className="h-5 w-5" />
         </span>
-        <h2 className={`font-display text-xl font-bold ${theme.accent}`}>{title}</h2>
+        <h2 className="min-w-0 font-display text-xl font-semibold text-foreground">{title}</h2>
       </header>}
-      {session.mode === PHONE_MODE.COLOSSUS_RETALIATION && <p className="text-center text-sm text-muted-foreground">{text.colossusInstructions}</p>}
+      {selectingNow && <ActionSelectionPrompt
+        instruction={roleMinimumSelectionCount !== roleSelectionCount ? text.chooseOneOrTwoPlayers
+          : roleSelectionCount > 1 ? text.chooseTwoPlayers : text.chooseOnePlayer}
+        selection={selectedNames} selectionLabel={text.selectedTarget} emptyLabel={text.noTargetSelected}
+      />}
       {session.approvalResult ? <div role="status" className={`flex flex-col items-center gap-3 rounded-lg border p-6 text-center ${
         session.approvalResult === "accepted" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-200" : "border-destructive/50 bg-destructive/10 text-destructive"
       }`}>
@@ -190,16 +198,13 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
                 aria-label={player.name}
                 aria-pressed={session.mode === PHONE_MODE.WEREWOLF_ALLIES ? undefined : selectedSet.has(player.id)}
                 disabled={readOnly || !!session.pendingTargetPlayerId || !!session.approvalResult || !player.selectable || !connected || (pending && session.mode !== PHONE_MODE.WEREWOLF_HUNT)}
-                onClick={() => (session.mode === PHONE_MODE.WEREWOLF_HUNT && !gmControlled)
-                  || session.mode === PHONE_MODE.MONKEY_TAMER_REVEAL || session.mode === PHONE_MODE.FOX_TAMER_CHECK
-                  || session.mode === PHONE_MODE.PRIVATE_INVESTIGATOR_CHECK
-                  || session.mode === PHONE_MODE.GYPSY_POISON_CHECK || selectsImmediately
+                onClick={() => liveHuntVote
                   ? onSend("select", player.id) : isRoleAction
                   ? setSelectedIds((current) => current.includes(player.id)
                     ? current.filter((id) => id !== player.id)
                     : roleSelectionCount === 1 ? [player.id]
                     : current.length < roleSelectionCount ? [...current, player.id] : [...current.slice(1), player.id])
-                  : setSelectedId(player.id)}
+                  : onSelectionChange ? onSelectionChange(player.id) : setSelectedId(player.id)}
                 className={`absolute flex w-[3.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 transition-opacity ${player.selectable ? "cursor-pointer" : "cursor-default"}`}
                 style={{
                   left: `${50 + MAP_HORIZONTAL_RADIUS * 100 * Math.cos(angle)}%`,
@@ -241,10 +246,11 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
       </div>}
       {!connected && <p role="status" className="text-sm">{text.reconnecting}</p>}
       {pending && session.mode !== PHONE_MODE.WEREWOLF_HUNT && <p role="status" className="text-sm text-muted-foreground">{text.waiting}</p>}
-      {showSelectionStatus && !session.completed && !session.approvalResult && session.pendingTargetPlayerId && target && <p role="status" className="text-center text-sm text-muted-foreground">
-        {session.mode === PHONE_MODE.COLOSSUS_RETALIATION ? text.waiting : format(text.selection, { actor: actor?.name ?? "", target: target.name })}
-      </p>}
-      {showPoisonConfirmation && session.mode === PHONE_MODE.EVIL_WITCH_POISON && target && <p className="break-words text-sm">{format(text.poisonConfirm, { target: target.name })}</p>}
+      {showSelectionStatus && !session.completed && !session.approvalResult && session.pendingTargetPlayerId && resultTarget && <div role="status">
+        <ActionSelectionPrompt
+          instruction={session.mode === PHONE_MODE.COLOSSUS_RETALIATION ? text.waiting : format(text.selection, { actor: actor?.name ?? "", target: resultTarget.name })}
+          selection={resultTarget.name} selectionLabel={text.selectedTarget} emptyLabel={text.noTargetSelected} />
+      </div>}
       {!readOnly && !session.completed && !session.priestReveal && !session.approvalResult
         && (session.mode === PHONE_MODE.EVIL_WITCH_POISON || session.mode === PHONE_MODE.SHAMAN_SAVE
           || session.mode === PHONE_MODE.COLOSSUS_RETALIATION || confirmsSelection || isRoleAction
@@ -262,7 +268,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
               ? roleTargets.length >= roleMinimumSelectionCount && roleTargets.length <= roleSelectionCount
                 && onSend("confirm", roleTargets[0].id, roleTargets.map((player) => player.id))
               : target && onSend("confirm", target.id)}>
-            <Check className="mr-2 h-4 w-4" />{confirmLabel ?? (session.mode === PHONE_MODE.SHAMAN_SAVE ? actions.save : actions.confirm)}
+            <Check className="mr-2 h-4 w-4" />{actions.confirm}
           </Button>
         </div>
       )}
@@ -273,7 +279,7 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
   return (
     <section
       aria-label={title}
-      className={`space-y-4 overflow-hidden rounded-lg border bg-card/90 p-4 shadow-md ring-1 ring-inset paper-texture ${theme.border}`}
+      className={`space-y-4 overflow-hidden rounded-xl border bg-card/95 p-4 shadow-lg ring-1 ring-inset paper-texture ${theme.border}`}
     >
       {content}
     </section>

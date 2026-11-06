@@ -33,7 +33,7 @@ export function FoxRevealModal({ session, language, pending = false, connected =
   ) : null;
   const footer = <div className="flex flex-col gap-2">
     {!revealed && <Button disabled={!target?.selectable || pending || !connected} onClick={() => target && onConfirm(target.id)}>
-      <PawPrint className="mr-2 h-4 w-4" />{actions.confirm}{target ? `: ${target.name}` : ""}
+      <PawPrint className="mr-2 h-4 w-4" />{actions.confirm}
     </Button>}
     {onClose && <Button variant="secondary" onClick={onClose} disabled={pending || !connected}>
       <X className="mr-2 h-4 w-4" />{actions.close}
@@ -42,7 +42,7 @@ export function FoxRevealModal({ session, language, pending = false, connected =
   const content = <div className="space-y-4">
     <PhoneActionScreen session={session} playerId="fox-selection" language={language}
       pending={pending} connected={connected} selectedPlayerId={targetId} showHeader={false} unframed
-      readOnly={!!revealed} onSend={(_type, id) => { if (id) setSelected(id); }} />
+      readOnly={!!revealed} onSelectionChange={setSelected} onSend={() => undefined} />
     {revealed && <div role="status" className={`rounded-lg border p-4 text-center ${
       revealed.result === "evil" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-200"
       : revealed.result === "clear" ? "border-rose-500/50 bg-rose-500/10 text-rose-100"
@@ -54,7 +54,7 @@ export function FoxRevealModal({ session, language, pending = false, connected =
     </div>}
   </div>;
   const title = getRoleLabel("v04", language);
-  const subtitle = revealed ? target?.name : actions.choose;
+  const subtitle = revealed ? target?.name : undefined;
   return embedded
     ? <GamePanel title={title} subtitle={subtitle} footer={footer}>{content}</GamePanel>
     : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={actions.close}

@@ -32,7 +32,7 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
   ) : null;
   const footer = <div className="flex flex-col gap-2">
     {!revealed && <Button disabled={!target?.selectable || pending || !connected} onClick={() => target && onConfirm(target.id)}>
-      <Eye className="mr-2 h-4 w-4" />{actions.see}{target ? `: ${target.name}` : ""}
+      <Eye className="mr-2 h-4 w-4" />{actions.confirm}
     </Button>}
     {onClose && <Button variant="secondary" onClick={onClose} disabled={pending || !connected}>
       <X className="mr-2 h-4 w-4" />{actions.close}
@@ -47,11 +47,11 @@ export function MonkeyRevealModal({ session, language, pending = false, connecte
   ) : <>
     <PhoneActionScreen session={session} playerId="monkey-selection" language={language}
       pending={pending} connected={connected} selectedPlayerId={selected} showHeader={false} unframed
-      onSend={(_type, id) => { if (id) setSelected(id); }} />
+      onSelectionChange={setSelected} onSend={() => undefined} />
     {session.error && <p role="status" className="text-sm text-muted-foreground">{text.noCard}</p>}
   </>;
   const title = getRoleLabel("v26", language);
-  const subtitle = revealed ? target?.name : actions.choose;
+  const subtitle = revealed ? target?.name : undefined;
   return embedded
     ? <GamePanel title={title} subtitle={subtitle} footer={footer}>{content}</GamePanel>
     : <GameModal open onClose={onClose ?? (() => undefined)} title={title} subtitle={subtitle} closeLabel={actions.close}

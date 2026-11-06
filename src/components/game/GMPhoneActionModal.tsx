@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { GameModal } from "./GameModal";
 import { PhoneActionScreen } from "./PhoneActionScreen";
+import { ActionSelectionPrompt } from "./ActionSelectionPrompt";
 import { format, getTranslation, type Language } from "@/lib/i18n";
 import { getHuntConsensus, getRoleActionPhoneConfig, isRoleActionPhoneMode, type PhoneCommand, type PhoneSession, type PhoneView } from "@/lib/phoneActions";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
@@ -40,8 +41,9 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
     ? session.sourcePlayerId ? text.soloHuntRequest : text.huntRequest
     : session.mode === PHONE_MODE.COLOSSUS_RETALIATION
     ? text.soloHuntRequest
-    : text.selection;
-  const subtitle = proposal ? format(proposalText, { actor: name(session.sourcePlayerId), target: name(proposal) })
+    : text.priestRequest;
+  const approvalPending = !!proposal && requiresApproval && !session.completed && !session.approvalResult;
+  const subtitle = approvalPending ? undefined : proposal ? format(text.selection, { actor: name(session.sourcePlayerId), target: name(proposal) })
     : session.priestReveal ? format(text.selection, { actor: name(session.sourcePlayerId), target: name(session.priestReveal.targetPlayerId) })
     : session.mode === PHONE_MODE.WEREWOLF_HUNT ? text.huntVotes
     : session.mode === PHONE_MODE.COLOSSUS_RETALIATION ? text.colossusInstructions : undefined;
@@ -53,10 +55,13 @@ export function GMPhoneActionModal({ session, view, language, onClose, onSend, o
   };
   return <GameModal open onClose={onClose} title={title} subtitle={subtitle}
     closeLabel={translation.ui.actions.close} dismissible={false} showCloseButton
-    footer={proposal && requiresApproval && !session.completed && !session.approvalResult ? <div className="flex flex-wrap justify-end gap-2">
+    footer={approvalPending ? <div className="flex flex-wrap justify-end gap-2">
       <Button variant="secondary" onClick={() => resolve(false)}>{translation.ui.actions.deny}</Button>
       <Button variant="destructive" onClick={() => resolve(true)}>{translation.ui.actions.accept}</Button>
     </div> : undefined}>
+    {approvalPending && <ActionSelectionPrompt
+      instruction={format(proposalText, { actor: name(session.sourcePlayerId), target: name(proposal) })}
+      selection={name(proposal)} selectionLabel={text.selectedTarget} emptyLabel={text.noTargetSelected} />}
     <PhoneActionScreen key={session.id} session={view} playerId="gm" language={language}
       pending={false} connected gmControlled showHeader={false} showSelectionStatus={false} unframed onSend={onSend} onRoleClick={onRoleClick} />
     {session.mode === PHONE_MODE.WEREWOLF_HUNT && <ul className="mt-3 space-y-1 text-sm">

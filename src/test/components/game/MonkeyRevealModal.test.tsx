@@ -2,6 +2,7 @@ import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MonkeyRevealModal } from "@/components/game/MonkeyRevealModal";
+import { getTranslation } from "@/lib/i18n";
 import type { PhoneView } from "@/lib/phoneActions";
 
 const view: PhoneView = { id: "monkey", mode: PHONE_MODE.MONKEY_TAMER_REVEAL, participantIds: ["monkey"], votes: {}, players: [
@@ -18,12 +19,12 @@ describe("Monkey reveal modal", () => {
     const onConfirm = vi.fn(), onClose = vi.fn(), onReopen = vi.fn(), onRoleClick = vi.fn();
     const props = { language: "en" as const, onConfirm, onClose, onReopen, onRoleClick };
     const { rerender } = render(<MonkeyRevealModal {...props} session={view} />);
-    expect(screen.getByRole("button", { name: "See" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "See" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Close" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Wolf" }));
     expect(onConfirm).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "See: Wolf" }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith("wolf");
     const resolved = { ...view, monkeyReveal: { targetPlayerId: "wolf", roleId: "e01" as const, evil: true } };
     rerender(<MonkeyRevealModal {...props} session={resolved} />);

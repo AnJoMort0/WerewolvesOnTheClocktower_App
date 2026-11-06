@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, Dices, Route, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GameModal, GamePanel } from "./GameModal";
+import { ActionSelectionPrompt } from "./ActionSelectionPrompt";
 import { format, getRoleLabel, getTranslation, type Language } from "@/lib/i18n";
 import { PHONE_ACTION_PRESENTATION } from "@/lib/phoneActionPresentation";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
@@ -182,7 +183,18 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
       <p className="mt-2 text-sm">{reveal.correct ? null : text.gamblerWrong}</p>
     </div>
     {roleGrid}
-  </div> : choosingRole ? roleGrid : playerCircle;
+  </div> : choosingRole ? <div className="space-y-4">
+    <ActionSelectionPrompt instruction={text.chooseCharacter}
+      selection={selectedRoleId ? getRoleLabel(selectedRoleId, language) : null}
+      selectionLabel={text.selectedTarget} emptyLabel={text.noCharacterSelected} />
+    {roleGrid}
+  </div> : <div className="space-y-4">
+    <ActionSelectionPrompt instruction={text.chooseOneOrTwoPlayers}
+      selection={selectedPlayerIds.map((id) => players.find((player) => player.id === id)?.name).filter(Boolean).join(", ")}
+      selectionLabel={text.selectedTarget} emptyLabel={text.noTargetSelected}
+    />
+    {playerCircle}
+  </div>;
 
   const footer = <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
     {!session.completed && !choosingRole && !reveal && <Button disabled={selectedPlayerIds.length === 0 || pending || !connected}
@@ -201,8 +213,7 @@ export function GamblerGuessModal({ session, language, pending = false, connecte
       <X className="mr-2 h-4 w-4" />{actions.close}
     </Button>}
   </div>;
-  const subtitle = ignored ? undefined : reveal ? getRoleLabel(reveal.roleId, language)
-    : choosingRole ? text.gamblerChooseRole : text.gamblerChoosePlayers;
+  const subtitle = reveal ? getRoleLabel(reveal.roleId, language) : undefined;
   const title = getRoleLabel("t02", language);
   const panelClass = `max-h-[calc(100dvh-12rem)] border-violet-400/40 ring-violet-400/10 ${PHONE_ACTION_PRESENTATION[PHONE_MODE.GAMBLER_GUESS].iconClass}`;
   return embedded

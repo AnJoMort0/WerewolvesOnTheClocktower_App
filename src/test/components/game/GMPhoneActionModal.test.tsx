@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { GMPhoneActionModal } from "@/components/game/GMPhoneActionModal";
 import { GMPlayerActionModal } from "@/components/game/GMPlayerActionModal";
-import { getTranslation, t } from "@/lib/i18n";
+import { getTranslation } from "@/lib/i18n";
 import type { PhoneSession, PhoneView } from "@/lib/phoneActions";
 
 const session: PhoneSession = { id: "retaliation", mode: PHONE_MODE.COLOSSUS_RETALIATION, sourcePlayerId: "actor", lineKey: "line", participantIds: ["actor"], votes: {}, sequences: {} };
@@ -37,7 +37,7 @@ describe("usable GM action mirrors", () => {
     render(<GMPhoneActionModal session={{ ...session, mode }} view={{ ...view, mode }} language="en"
       onClose={vi.fn()} onSend={onSend} onResolveHunt={vi.fn()} onResolveColossus={vi.fn()} onResolvePriest={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    fireEvent.click(screen.getByRole("button", { name: mode === PHONE_MODE.SHAMAN_SAVE ? getTranslation("en").ui.actions.save : getTranslation("en").ui.actions.confirm }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
     expect(onSend).toHaveBeenCalledWith("confirm", "target");
   });
 
@@ -61,8 +61,9 @@ describe("usable GM action mirrors", () => {
     const props = { language: "en" as const, onClose: vi.fn(), onSend, onResolveHunt: vi.fn(), onResolveColossus: vi.fn(), onResolvePriest: vi.fn() };
     const { rerender } = render(<GMPhoneActionModal {...props} session={{ ...session, mode }} view={{ ...view, mode }} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    if (mode === PHONE_MODE.SLEEPWALKER_VISIT) fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
-    expect(onSend).toHaveBeenCalledWith(mode === PHONE_MODE.SPIDER_TAMER_WEB ? "select" : "confirm", "target");
+    expect(onSend).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
+    expect(onSend).toHaveBeenCalledWith("confirm", "target");
     rerender(<GMPhoneActionModal {...props} session={{ ...session, mode, pendingTargetPlayerId: "target" }}
       view={{ ...view, mode, pendingTargetPlayerId: "target" }} />);
     expect(screen.getByRole("dialog")).toHaveTextContent("Actor selected Target.");
@@ -99,7 +100,7 @@ describe("usable GM action mirrors", () => {
       ]} />);
     expect(screen.getByRole("button", { name: resurrection ? "Target" : "Ghost" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: resurrection ? "Ghost" : "Target" }));
-    fireEvent.click(screen.getByRole("button", { name: resurrection ? t("resurrectPlayer", "en") : kind === "v23-web" ? t("changeWeb", "en") : getTranslation("en").ui.actions.confirm }));
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith(resurrection ? "ghost" : "target");
     expect(screen.queryByText(getTranslation("en").ui.phoneActions.poison)).toBeNull();
   });

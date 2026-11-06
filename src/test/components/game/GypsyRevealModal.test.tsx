@@ -19,7 +19,7 @@ describe("Gypsy reveal modal", () => {
     const { rerender } = render(<GypsyRevealModal embedded language="en" session={view} onConfirm={onConfirm} />);
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
     expect(screen.getByRole("button", { name: "Left" }).querySelector("span")).toHaveClass("border-amber-400");
-    fireEvent.click(screen.getByRole("button", { name: `${confirmLabel}: Target` }));
+    fireEvent.click(screen.getByRole("button", { name: confirmLabel }));
     expect(onConfirm).toHaveBeenCalledWith("target");
 
     rerender(<GypsyRevealModal embedded language="en" session={{ ...view, gypsyReveal: {

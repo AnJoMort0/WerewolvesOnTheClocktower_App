@@ -17,6 +17,32 @@ const baseView: PhoneView = {
 };
 
 describe("PhoneActionScreen", () => {
+  it("has localized shared choice prompts", () => {
+    for (const language of ["en", "pt", "fr"] as const) {
+      const prompts = getTranslation(language).ui.phoneActions;
+      expect(prompts.chooseOnePlayer).toBeTruthy();
+      expect(prompts.chooseTwoPlayers).toBeTruthy();
+      expect(prompts.chooseOneOrTwoPlayers).toBeTruthy();
+      expect(prompts.chooseCharacter).toBeTruthy();
+    }
+  });
+
+  it("shows the action and target above short controls while preserving optional powers", () => {
+    const witch = { ...baseView, mode: PHONE_MODE.EVIL_WITCH_POISON };
+    const { rerender } = render(<PhoneActionScreen session={witch} playerId="wolf" language="en"
+      pending={false} connected onSend={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Target" }));
+    expect(screen.getByText("Choose 1 player.")).toBeInTheDocument();
+    expect(screen.getByTestId("action-selection")).toHaveTextContent("Target");
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /poison target/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ignore" })).not.toBeInTheDocument();
+
+    rerender(<PhoneActionScreen session={{ ...baseView, mode: PHONE_MODE.SHAMAN_SAVE }} playerId="wolf" language="en"
+      pending={false} connected onSend={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Ignore" })).toBeInTheDocument();
+  });
+
   it("lets the GM select and confirm a hunt without casting a player vote", () => {
     const onSend = vi.fn();
     render(<PhoneActionScreen session={baseView} playerId="gm" language="en" pending={false} connected gmControlled onSend={onSend} />);
@@ -99,9 +125,12 @@ describe("PhoneActionScreen", () => {
     expect(screen.getByText(getTranslation("en").ui.phoneActions.waiting)).toBeInTheDocument();
   });
 
-  it("applies a Spider web selection immediately and keeps the target visible", () => {
+  it("lets the Spider Tamer change the target before confirming the web", () => {
     const onSend = vi.fn();
-    const session: PhoneView = { ...baseView, mode: PHONE_MODE.SPIDER_TAMER_WEB, participantIds: ["wolf"] };
+    const session: PhoneView = { ...baseView, mode: PHONE_MODE.SPIDER_TAMER_WEB, participantIds: ["wolf"], players: [
+      ...baseView.players,
+      { id: "other", name: "Other", seat_position: 2, selectable: true, redX: false, dead: false, marker: null },
+    ] };
     const { rerender } = render(
       <PhoneActionScreen
         session={session}
@@ -115,11 +144,17 @@ describe("PhoneActionScreen", () => {
 
     expect(screen.getByRole("region", { name: getTranslation("en").roleLabels.v23 })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Target" }));
-    expect(onSend).toHaveBeenCalledWith("select", "target");
-    rerender(<PhoneActionScreen session={{ ...session, pendingTargetPlayerId: "target" }} playerId="wolf"
+    expect(onSend).not.toHaveBeenCalled();
+    expect(screen.getByTestId("action-selection")).toHaveTextContent("Target");
+    fireEvent.click(screen.getByRole("button", { name: "Other" }));
+    expect(screen.getByTestId("action-selection")).toHaveTextContent("Other");
+    expect(onSend).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm }));
+    expect(onSend).toHaveBeenCalledExactlyOnceWith("confirm", "other");
+    rerender(<PhoneActionScreen session={{ ...session, pendingTargetPlayerId: "other" }} playerId="wolf"
       language="en" pending={false} connected onSend={onSend} />);
-    expect(screen.getByRole("status")).toHaveTextContent("Wolf selected Target.");
-    expect(screen.queryByRole("button", { name: getTranslation("en").ui.actions.confirm })).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Wolf selected Other.");
+    expect(screen.getByRole("button", { name: getTranslation("en").ui.actions.confirm })).toBeDisabled();
   });
 
   it("privately tells the cursed target without revealing the Mother", () => {

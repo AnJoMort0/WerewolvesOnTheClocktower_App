@@ -32,6 +32,7 @@ import { useSkinPack } from "@/lib/skinPackContext";
 import { usePlayerPhoneActions } from "@/hooks/usePhoneActions";
 import { PHONE_MODE } from "@/lib/phoneActionModes";
 import { PhoneActionScreen } from "@/components/game/PhoneActionScreen";
+import { ActionSelectionPrompt } from "@/components/game/ActionSelectionPrompt";
 import { FoxRevealModal } from "@/components/game/FoxRevealModal";
 import { InvestigatorRevealModal } from "@/components/game/InvestigatorRevealModal";
 import { GypsyRevealModal } from "@/components/game/GypsyRevealModal";
@@ -1039,16 +1040,6 @@ const PlayerView = () => {
     : actionMode === "v23"
     ? t("webMode", language)
     : t("assassinationMode", language);
-  const actionInstructions = actionMode === "v18"
-    ? t("resurrectionChooseTarget", language)
-    : actionMode === "v23"
-    ? t("webChooseTarget", language)
-    : t("assassinationChooseTarget", language);
-  const actionConfirmLabel = actionMode === "v18"
-    ? t("resurrectPlayer", language)
-    : actionMode === "v23"
-    ? t("changeWeb", language)
-    : getTranslation(language).ui.actions.confirm;
   const actionTargetId = actionMode === "v18"
     ? resurrectionTargetId
     : actionMode === "v23"
@@ -1270,10 +1261,11 @@ const PlayerView = () => {
                     <h2 className={`font-display text-2xl font-bold ${actionAccentClass}`}>
                       {actionTitle}
                     </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {actionInstructions}
-                    </p>
                   </div>
+                  <ActionSelectionPrompt instruction={getTranslation(language).ui.phoneActions.chooseOnePlayer}
+                    selection={actionPlayers.find((candidate) => candidate.id === actionTargetId)?.name}
+                    selectionLabel={getTranslation(language).ui.phoneActions.selectedTarget}
+                    emptyLabel={getTranslation(language).ui.phoneActions.noTargetSelected} />
                   <div className="relative mx-auto" style={{ width: 280, height: 280 }}>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className={`h-12 w-12 rounded-full border ${actionCenterClass}`} />
@@ -1329,7 +1321,7 @@ const PlayerView = () => {
                       className="font-display"
                     >
                       <ActionIcon className="mr-2 h-4 w-4" />
-                      {actionConfirmLabel}
+                      {getTranslation(language).ui.actions.confirm}
                     </Button>
                   </div>
                 </motion.div>

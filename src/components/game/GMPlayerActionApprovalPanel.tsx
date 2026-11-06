@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { ActionSelectionPrompt } from "./ActionSelectionPrompt";
 
-export function GMPlayerActionApprovalPanel({ title, description, acceptLabel, denyLabel, closeLabel, resolved, onAccept, onDeny, onClose }: {
+export function GMPlayerActionApprovalPanel({ title, description, targetName, selectionLabel, acceptLabel, denyLabel, closeLabel, resolved, onAccept, onDeny, onClose }: {
   title: string;
   description: string;
+  targetName: string;
+  selectionLabel: string;
   acceptLabel: string;
   denyLabel: string;
   closeLabel: string;
@@ -15,8 +18,8 @@ export function GMPlayerActionApprovalPanel({ title, description, acceptLabel, d
     data-testid="gm-player-action-approval"
     className="fixed inset-x-3 top-3 z-[70] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-xl border border-destructive/50 bg-card p-4 shadow-2xl sm:left-auto sm:right-4 sm:top-4 sm:w-96"
   >
-    <h2 className="font-display text-xl text-destructive">{title}</h2>
-    <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+    <h2 className="mb-3 font-display text-xl text-foreground">{title}</h2>
+    <ActionSelectionPrompt instruction={description} selection={targetName} selectionLabel={selectionLabel} emptyLabel={targetName} />
     <div className="mt-4 flex justify-end gap-2">
       {resolved ? <Button type="button" variant="secondary" onClick={onClose} className="font-display">
         {closeLabel}
