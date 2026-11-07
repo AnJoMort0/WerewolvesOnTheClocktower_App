@@ -251,13 +251,13 @@ Esta versão amplia vários poderes conhecidos e introduz personagens originais.
             {
                 type: `h3`,
                 id: `context`,
-                text: `Bem-vindo a Freeborough`
+                text: `Bem-vindo a Freeburgo`
             },
             {
                 type: `lore`,
-                text: `Freeborough tem um grande problema: pessoas muito reservadas e, mais urgentemente, Criaturas Malvadas. Os Lobisomens e os seus Aliados infiltraram-se na população, trazendo caos, morte e destruição. Com os Lobisomens a assassinar todas as noites, os Aldeões têm de os encontrar e executar. Mas em quem podem confiar?
+                text: `Freeburgo tem um grande problema: pessoas muito reservadas e, mais urgentemente, Criaturas Malvadas. Os Lobisomens e os seus Aliados infiltraram-se na população, trazendo caos, morte e destruição. Com os Lobisomens a assassinar todas as noites, os Aldeões têm de os encontrar e executar. Mas em quem podem confiar?
 
-Detalhe aleatório: a hidratação é muito valorizada em Freeborough. Todos deixam uma bebida junto à cama ou ao local de trabalho, pronta para a próxima vez que acordarem a meio da noite.`
+Detalhe aleatório: a hidratação é muito valorizada em Freeburgo. Todos deixam uma bebida junto à cama ou ao local de trabalho, pronta para a próxima vez que acordarem a meio da noite.`
             },
             {
                 type: `h3`,
@@ -420,13 +420,13 @@ Cette version enrichit de nombreux pouvoirs connus et introduit des personnages 
             {
                 type: `h3`,
                 id: `context`,
-                text: `Bienvenue à Freeborough`
+                text: `Bienvenue à Freebourg`
             },
             {
                 type: `lore`,
-                text: `Freeborough a un sérieux problème : des habitants très secrets et, plus urgent encore, des Créatures Maléfiques. Les Loups-garous et leurs Alliés se sont infiltrés parmi la population, semant le chaos, la mort et la destruction. Puisque les Loups-garous assassinent chaque nuit, les Villageois doivent les trouver et les exécuter. Mais à qui peuvent-ils faire confiance ?
+                text: `Freebourg a un sérieux problème : des habitants très secrets et, plus urgent encore, des Créatures Maléfiques. Les Loups-garous et leurs Alliés se sont infiltrés parmi la population, semant le chaos, la mort et la destruction. Puisque les Loups-garous assassinent chaque nuit, les Villageois doivent les trouver et les exécuter. Mais à qui peuvent-ils faire confiance ?
 
-Détail aléatoire: l'hydratation est très appréciée à Freeborough. Chacun garde une boisson près de son lit ou de son poste de travail, prête pour son prochain réveil au milieu de la nuit.`
+Détail aléatoire: l'hydratation est très appréciée à Freebourg. Chacun garde une boisson près de son lit ou de son poste de travail, prête pour son prochain réveil au milieu de la nuit.`
             },
             {
                 type: `h3`,
