@@ -16,6 +16,8 @@ describe("skin packs", () => {
     expect(getActiveSeasonalRoleIds("default", christmas)).toEqual([]);
     expect(getActiveSeasonalRoleIds("thiercelieux", christmas)).toEqual([]);
     expect(getActiveSeasonalRoleIds("seasonal", new Date(2026, 6, 17))).toEqual([]);
+    expect(getActiveSeasonalRoleIds("seasonal", new Date(2026, 4, 4))).toContain("v07");
+    expect(getActiveSeasonalRoleIds("seasonal", new Date(2026, 4, 5))).not.toContain("v07");
   });
   it("uses route defaults for fresh devices", () => {
     expect(getDefaultSkinPackForPath("/gm/abc")).toBe("default");
@@ -35,6 +37,8 @@ describe("skin packs", () => {
     expect(getActiveSeasonalEvents(new Date(2026, 11, 25))).toEqual(["new_years", "christmas"]);
     expect(getActiveSeasonalEvents(new Date(2026, 0, 7))).toEqual(["new_years"]);
     expect(getActiveSeasonalEvents(new Date(2026, 6, 17))).toEqual([]);
+    expect(getActiveSeasonalEvents(new Date(2026, 4, 4))).toContain("mayforth");
+    expect(getActiveSeasonalEvents(new Date(2026, 4, 3))).not.toContain("mayforth");
   });
 
   it("resolves skinpack images with default fallback", () => {

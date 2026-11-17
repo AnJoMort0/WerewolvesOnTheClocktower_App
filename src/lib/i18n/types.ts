@@ -222,7 +222,7 @@ export interface RoomDisplayStrings {
 }
 
 export type SkinPackLabelKey = "seasonal" | "default" | "thiercelieux";
-export type SeasonalLabelKey = "carnival" | "christmas" | "easter" | "halloween" | "new_years";
+export type SeasonalLabelKey = "carnival" | "christmas" | "easter" | "mayforth" | "halloween" | "new_years";
 export type FlexibleSkinLabelKey = "good" | "evil" | "solo";
 
 export interface SkinPackStrings {

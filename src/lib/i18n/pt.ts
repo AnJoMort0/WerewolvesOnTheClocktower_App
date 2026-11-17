@@ -647,6 +647,7 @@ export const pt: Translation = {
         carnival: "Carnaval",
         christmas: "Natal",
         easter: "Páscoa",
+        mayforth: "May the Forth (Dia de Star Wars)",
         halloween: "Halloween",
         new_years: "Ano Novo",
       },

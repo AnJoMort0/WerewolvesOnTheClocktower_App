@@ -3,7 +3,7 @@ import { getTranslation, type Language } from "@/lib/i18n";
 import { normalizeStatusEffectSet } from "@/lib/effects";
 
 export type SkinPackId = "seasonal" | "default" | "thiercelieux";
-export type SeasonalEventId = "carnival" | "christmas" | "easter" | "halloween" | "new_years";
+export type SeasonalEventId = "carnival" | "christmas" | "easter" | "halloween" | "mayforth" | "new_years";
 export type FlexibleSkinVariant = "good" | "evil" | "solo";
 export type RulebookSkinPreviewValue =
   | "device"
@@ -42,6 +42,7 @@ export const SEASONAL_EVENT_ORDER: SeasonalEventId[] = [
   "new_years",
   "christmas",
   "easter",
+  "mayforth",
   "halloween",
   "carnival",
 ];
@@ -55,6 +56,7 @@ const seasonalImages: SeasonalRoleImageMap = {
   carnival: {},
   christmas: {},
   easter: {},
+  mayforth: {},
   halloween: {},
   new_years: {},
 };
@@ -89,7 +91,7 @@ export function isSkinPackId(value: string | null | undefined): value is SkinPac
 }
 
 function isSeasonalEventId(value: string): value is SeasonalEventId {
-  return value === "carnival" || value === "christmas" || value === "easter" || value === "halloween" || value === "new_years";
+  return value === "carnival" || value === "christmas" || value === "easter" || value === "mayforth" || value === "halloween" || value === "new_years";
 }
 
 export function getSkinPackLabel(skinPackId: SkinPackId, language: Language): string {
@@ -118,6 +120,7 @@ export function getActiveSeasonalEvents(date: Date = new Date()): SeasonalEventI
   if (isWithinDays(day, new Date(year, 9, 31), 7, 7)) events.push("halloween");
   if (isWithinDays(day, addDays(getEasterSunday(year), -7), 0, 56)) events.push("easter");
   if (isWithinDays(day, addDays(getEasterSunday(year), -47), 7, 7)) events.push("carnival");
+  if (day.getMonth() === 4 && day.getDate() === 4) events.push("mayforth");
 
   return SEASONAL_EVENT_ORDER.filter((eventId) => events.includes(eventId));
 }

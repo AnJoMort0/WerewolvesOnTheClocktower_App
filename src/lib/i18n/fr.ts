@@ -647,6 +647,7 @@ export const fr: Translation = {
         carnival: "Carnaval",
         christmas: "Noël",
         easter: "Pâques",
+        mayforth: "May the Forth",
         halloween: "Halloween",
         new_years: "Nouvel An",
       },
