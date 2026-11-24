@@ -644,6 +644,12 @@ export const en: Translation = {
         thiercelieux: "Miller's Hollow",
       },
       seasonals: {
+        gaudete: "Gaudete Sunday",
+        laetare: "Laetare Sunday",
+        advent: "Advent",
+        lent: "Lent",
+        passion: "Passion",
+        pentecost: "Pentecost",
         carnival: "Carnival",
         christmas: "Christmas",
         easter: "Easter",

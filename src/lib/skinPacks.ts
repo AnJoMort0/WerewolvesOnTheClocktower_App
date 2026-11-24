@@ -1,9 +1,32 @@
+/*
+ * Skin packs:
+ * - default: original artwork, all year.
+ * - seasonal: default artwork with active seasonal overrides, all year.
+ * - thiercelieux: Miller's Hollow artwork, all year.
+ * - dynamic_flexibles: alignment variants (good / evil / solo), no date restriction.
+ *
+ * Seasons (inclusive dates, using the device's local calendar):
+ * - new_years: December 25–January 8.
+ * - christmas: Advent start–January 6 (start = Sunday on/before December 25 minus 21 days).
+ * - easter: Palm Sunday–49 days after Easter Sunday (Easter Sunday minus 7 / plus 49 days).
+ * - mayforth: May 4 only.
+ * - halloween: October 24–November 7.
+ * - carnival: 54–40 days before Easter Sunday (Shrove Tuesday minus/plus 7 days).
+ * - advent: Advent start through December 24 (purple Priest).
+ * - lent: Ash Wednesday through Holy Thursday (Easter minus 46 through minus 3 days).
+ * - passion: Palm Sunday and Good Friday (Easter minus 7 and minus 2 days).
+ * - pentecost: Easter Sunday plus 49 days.
+ * - Priest white/gold uses christmas and easter outside the above overrides.
+ * - gaudete: Third Sunday of Advent (Advent start plus 14 days; rose Priest).
+ * - laetare: Fourth Sunday of Lent (Easter minus 21 days; rose Priest).
+ * - Overlap priority: gaudete > laetare > passion > pentecost > advent > lent > new_years > christmas > easter > mayforth > halloween > carnival.
+ */
 import { EVIL_ROLES, ROLES, TRAVELLER_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { getTranslation, type Language } from "@/lib/i18n";
 import { normalizeStatusEffectSet } from "@/lib/effects";
 
 export type SkinPackId = "seasonal" | "default" | "thiercelieux";
-export type SeasonalEventId = "carnival" | "christmas" | "easter" | "halloween" | "mayforth" | "new_years";
+export type SeasonalEventId = "carnival" | "christmas" | "easter" | "halloween" | "mayforth" | "new_years" | "advent" | "lent" | "passion" | "pentecost" | "gaudete" | "laetare";
 export type FlexibleSkinVariant = "good" | "evil" | "solo";
 export type RulebookSkinPreviewValue =
   | "device"
@@ -39,6 +62,12 @@ export const DEFAULT_PLAYER_SKIN_PACK: SkinPackId = "seasonal";
 export const SKIN_PACK_ORDER: SkinPackId[] = ["seasonal", "default", "thiercelieux"];
 
 export const SEASONAL_EVENT_ORDER: SeasonalEventId[] = [
+  "gaudete",
+  "laetare",
+  "passion",
+  "pentecost",
+  "advent",
+  "lent",
   "new_years",
   "christmas",
   "easter",
@@ -53,6 +82,12 @@ const SKIN_PACK_IMAGE_MODULES = import.meta.glob<string>(
 );
 
 const seasonalImages: SeasonalRoleImageMap = {
+  gaudete: {},
+  laetare: {},
+  advent: {},
+  lent: {},
+  passion: {},
+  pentecost: {},
   carnival: {},
   christmas: {},
   easter: {},
@@ -91,7 +126,7 @@ export function isSkinPackId(value: string | null | undefined): value is SkinPac
 }
 
 function isSeasonalEventId(value: string): value is SeasonalEventId {
-  return value === "carnival" || value === "christmas" || value === "easter" || value === "mayforth" || value === "halloween" || value === "new_years";
+  return value === "gaudete" || value === "laetare" || value === "advent" || value === "lent" || value === "passion" || value === "pentecost" || value === "carnival" || value === "christmas" || value === "easter" || value === "mayforth" || value === "halloween" || value === "new_years";
 }
 
 export function getSkinPackLabel(skinPackId: SkinPackId, language: Language): string {
@@ -114,6 +149,14 @@ export function getActiveSeasonalEvents(date: Date = new Date()): SeasonalEventI
   const day = startOfDay(date);
   const year = day.getFullYear();
   const events: SeasonalEventId[] = [];
+
+  const easter = getEasterSunday(year);
+  if (+day === +addDays(getAdventStart(year), 14)) events.push("gaudete");
+  if (+day === +addDays(easter, -21)) events.push("laetare");
+  if (day >= getAdventStart(year) && day < new Date(year, 11, 25)) events.push("advent");
+  if (isWithinDays(day, easter, 46, -3)) events.push("lent");
+  if (+day === +addDays(easter, -7) || +day === +addDays(easter, -2)) events.push("passion");
+  if (+day === +addDays(easter, 49)) events.push("pentecost");
 
   if (isNewYearsSeason(day)) events.push("new_years");
   if (isChristmasSeason(day)) events.push("christmas");

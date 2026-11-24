@@ -644,6 +644,12 @@ export const fr: Translation = {
         thiercelieux: "Thiercelieux",
       },
       seasonals: {
+        gaudete: "Dimanche de Gaudete",
+        laetare: "Dimanche de Laetare",
+        advent: "Avent",
+        lent: "Car?me",
+        passion: "Passion",
+        pentecost: "Pentec?te",
         carnival: "Carnaval",
         christmas: "Noël",
         easter: "Pâques",

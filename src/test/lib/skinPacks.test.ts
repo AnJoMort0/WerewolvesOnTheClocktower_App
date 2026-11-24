@@ -12,12 +12,29 @@ import {
 describe("skin packs", () => {
   it("prefers only currently active seasonal cards when the seasonal pack is selected", () => {
     const christmas = new Date(2026, 11, 25);
-    expect(getActiveSeasonalRoleIds("seasonal", christmas).sort()).toEqual(["l04", "v24"]);
+    expect(getActiveSeasonalRoleIds("seasonal", christmas).sort()).toEqual(["l04", "v24", "v25"]);
     expect(getActiveSeasonalRoleIds("default", christmas)).toEqual([]);
     expect(getActiveSeasonalRoleIds("thiercelieux", christmas)).toEqual([]);
     expect(getActiveSeasonalRoleIds("seasonal", new Date(2026, 6, 17))).toEqual([]);
     expect(getActiveSeasonalRoleIds("seasonal", new Date(2026, 4, 4))).toContain("v07");
     expect(getActiveSeasonalRoleIds("seasonal", new Date(2026, 4, 5))).not.toContain("v07");
+  });
+  it("uses the Priest's liturgical colours with feast-day priority", () => {
+    for (const [date, variant] of [
+      [new Date(2026, 11, 10), "advent"],
+      [new Date(2026, 11, 13), "gaudete"],
+      [new Date(2026, 11, 14), "advent"],
+      [new Date(2026, 2, 15), "laetare"],
+      [new Date(2026, 2, 16), "lent"],
+      [new Date(2026, 11, 25), "christmas"],
+      [new Date(2026, 1, 18), "lent"],
+      [new Date(2026, 2, 29), "passion"],
+      [new Date(2026, 3, 3), "passion"],
+      [new Date(2026, 3, 5), "easter"],
+      [new Date(2026, 4, 24), "pentecost"],
+    ] as const) {
+      expect(resolveRoleImage("v25", { skinPackId: "seasonal", date }).variant).toBe(variant);
+    }
   });
   it("uses route defaults for fresh devices", () => {
     expect(getDefaultSkinPackForPath("/gm/abc")).toBe("default");

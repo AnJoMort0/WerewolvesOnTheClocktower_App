@@ -644,6 +644,12 @@ export const pt: Translation = {
         thiercelieux: "Aldeia Velha",
       },
       seasonals: {
+        gaudete: "Domingo Gaudete",
+        laetare: "Domingo Laetare",
+        advent: "Advento",
+        lent: "Quaresma",
+        passion: "Paix?o",
+        pentecost: "Pentecostes",
         carnival: "Carnaval",
         christmas: "Natal",
         easter: "Páscoa",
