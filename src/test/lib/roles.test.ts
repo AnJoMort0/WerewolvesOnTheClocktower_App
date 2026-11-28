@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { assignRoles, canRandomlyAssignRole, EXTRA_DEATH_ROLES, INFO_ROLES, LIMITED_USE_ROLES, MIME_COPY_ROLES, NO_UNCONDITIONAL_SCRIPT_ROLES, ROLES, TRAVELLER_ROLES, WEREWOLF_ROLES, type RoleId } from "@/lib/roles";
 import { BEGINNER_ROLE_SET } from "@/lib/beginnerMode";
 
-const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "s02"];
+const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "m08", "s02"];
 const IMPLEMENTED_NEW_ROLES: RoleId[] = ["v24", "v25", "m06", "m07", "l05", "l06"];
 
 function wolfRolesFor(playerCount: number) {
@@ -140,11 +140,11 @@ describe("random assignment eligibility", () => {
   });
 
   it("keeps extra Evil Beings out of drafts below twelve players", () => {
-    const extraEvilRoles = ["m01", "m02", "m03", "m04", "m05", "m07", "s02", "a06"] as const;
+    const extraEvilRoles = ["m01", "m02", "m03", "m04", "m05", "m07", "m08", "s02", "a06"] as const;
     for (const role of extraEvilRoles) {
       expect(canRandomlyAssignRole(role, [], 11)).toBe(false);
     }
-    for (const role of ["m01", "m02", "m03", "m04", "m05", "m07", "a06"] as const) {
+    for (const role of ["m01", "m02", "m03", "m04", "m05", "m07", "m08", "a06"] as const) {
       expect(canRandomlyAssignRole(role, [], 12)).toBe(true);
     }
 

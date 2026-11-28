@@ -10,6 +10,7 @@ const actions = {
 
 export const fr: Translation = {
   roleLabels: {
+    t07: "Gangster",
     t01: "Avocate", t02: "Parieur", t03: "Pistolero", t04: "Avocat du Diable", t05: "Collecteur d'Os", t06: "Bureaucrate",
     e01: "Loup-garou",
     e02: "Méchante Sorcière",
@@ -48,6 +49,7 @@ export const fr: Translation = {
     m04: "Ankou",
     m05: "Méchant Cupidon",
     m06: "Maître du Loup(-garou)",
+    m08: "Louveteau-Garou",
     m07: "Mère des Loups-garous",
     s01: "Cupidon",
     s02: "Loup-garou Blanc",
@@ -132,6 +134,7 @@ export const fr: Translation = {
       { text: "Le {Sauveur} se réveille et indique qui sera immunisé pendant cette nuit et le jour.", requires: ["v17"], phoneMode: PHONE_MODE.SAVIOUR_PROTECT },
       { text: "L'{Enfant} se réveille (toutes les nuits). S'il a accusé quelqu'un au Tribunal, il lui est indiqué si ces personnes sont des Loups-garous. Je rappelle que l'{Enfant} ne peut pas amener la même personne au Tribunal deux fois.", requires: ["v22"] },
       { text: "Les {Loups-garous} se réveillent et choisissent ensemble une victime qu'ils assassineront cette nuit.", requires: WEREWOLF_ROLES, phoneMode: PHONE_MODE.WEREWOLF_HUNT },
+      { text: "(Le {Louveteau-Garou} est mort, les {Loups-garous} peuvent choisir une deuxième victime.)", requires: WEREWOLF_ROLES, conditionKey: "cubSecondHunt", phoneMode: PHONE_MODE.WEREWOLF_HUNT },
       { text: "Le {Méchant Loup-garou} se réveille et choisit avec le pouce s'il veut se déguiser en Grand-mère cette nuit et ce jour, ou non. Il peut utiliser ce pouvoir deux fois pendant toute la partie.", requires: ["m01"], conditionKey: "bigBadWolfHasCharges" },
       { text: "Le {Loup-garou Voyant} se réveille et décide avec le pouce s'il veut sauver la victime pour voir son rôle ou la laisser mourir.", requires: ["m02"], conditionKey: "werewolfSeerHasCharges" },
       { text: "Le {Loup-garou Vampire} se réveille et indique avec le pouce s'il veut transformer la victime en Loup-garou. Si c'est le cas, la victime sera touchée et commencera à se réveiller toujours avec les Loups-garous. La victime indique avec le pouce si elle veut garder ses pouvoirs ou non.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
@@ -586,6 +589,7 @@ export const fr: Translation = {
       travellerGamblerGuess: "A deviné {role} parmi {players} : {result}.",
       travellerGuessCorrect: "correct",
       travellerGuessIncorrect: "incorrect",
+      cubSecondHunt: "Deuxième chasse après la mort du Louveteau-Garou.",
       travellerGunslingerShot: "A choisi ce joueur pour l'assassiner.",
       travellerDevilsAdvocate: "A choisi ce joueur pour l'immunité contre l'exécution.",
       travellerBoneCollectorCopy: "A copié le pouvoir du joueur mort le plus récemment.",

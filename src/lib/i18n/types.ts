@@ -197,6 +197,7 @@ export interface GameLogStrings {
   travellerGamblerGuess: string; // Supports {role}, {players}, and {result}
   travellerGuessCorrect: string;
   travellerGuessIncorrect: string;
+  cubSecondHunt: string;
   travellerGunslingerShot: string;
   travellerDevilsAdvocate: string;
   travellerBoneCollectorCopy: string;

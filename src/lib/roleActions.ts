@@ -30,6 +30,7 @@ export const ROLE_DRAG_ACTIONS = {
   a05: "role-a05",
   l02: "role-l02",
   l06: "role-l06",
+  t07: "role-t07",
   t03: "role-t03",
   t04: "role-t04",
   t05: "role-t05",

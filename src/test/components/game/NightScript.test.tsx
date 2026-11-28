@@ -24,6 +24,20 @@ const baseProps = {
 
 const phoneModeSelector = (mode: string) => `[data-phone-mode="${mode}"]`;
 
+it("offers two independent Cub hunts and routes a copied Seer reveal to the Mime", () => {
+  const reveal = vi.fn();
+  const props = { ...baseProps, activeRoles: new Set(["e01" as const, "a03" as const, "m02" as const]),
+    roleAssignments: { wolf: "e01" as const, mime: "a03" as const, seer: "m02" as const },
+    players: ["wolf", "mime", "seer"].map((id, seat_position) => ({ id, name: id, seat_position })),
+    conditionKeys: { cubSecondHunt: true, werewolfSeerHasCharges: true },
+    mimeMechanicalRole: "m02" as const, mimePlayerId: "mime", onWerewolfSeerReveal: reveal, onPhoneToggle: vi.fn() };
+  const { container, getAllByLabelText } = render(<LanguageContext.Provider value="en"><NightScript {...props} /></LanguageContext.Provider>);
+  expect(container.querySelectorAll(phoneModeSelector(PHONE_MODE.WEREWOLF_HUNT))).toHaveLength(2);
+  getAllByLabelText(getTranslation("en").ui.revealVampireWolfTitle).forEach(button => fireEvent.click(button));
+  expect(reveal).toHaveBeenCalledWith("mime");
+  expect(reveal).toHaveBeenCalledWith("seer");
+});
+
 describe("Swan Tamer night information", () => {
   it("counts living evil neighbors, treats the (Were)wolf Tamer as hidden, and lies when poisoned", () => {
     const props = { ...baseProps, activeRoles: new Set(["v28" as const, "e01" as const, "m06" as const]),

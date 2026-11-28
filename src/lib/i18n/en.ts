@@ -10,6 +10,7 @@ const actions = {
 
 export const en: Translation = {
   roleLabels: {
+    t07: "Gangster",
     t01: "Lawyer", t02: "Gambler", t03: "Gunslinger", t04: "Devil's Advocate", t05: "Bone Collector", t06: "Bureaucrat",
     e01: "Werewolf",
     e02: "Evil Witch",
@@ -48,6 +49,7 @@ export const en: Translation = {
     m04: "Ankou",
     m05: "Evil Cupid",
     m06: "(Were)wolf Tamer",
+    m08: "Werewolf Cub",
     m07: "Mother of Werewolves",
     s01: "Cupid",
     s02: "White Werewolf",
@@ -132,6 +134,7 @@ export const en: Translation = {
       { text: "The {Saviour} wakes up and indicates who will be immune during this night and the following day.", requires: ["v17"], phoneMode: PHONE_MODE.SAVIOUR_PROTECT },
       { text: "The {Boy} wakes up every night. If they accused anyone at the Tribunal, they are told whether those players are Werewolves. Remember that the {Boy} cannot bring the same player to the Tribunal twice.", requires: ["v22"] },
       { text: "The {Werewolves} wake up and jointly choose a victim to assassinate tonight.", requires: WEREWOLF_ROLES, phoneMode: PHONE_MODE.WEREWOLF_HUNT },
+      { text: "(The {Werewolf Cub} died, the {Werewolves} may choose a second victim.)", requires: WEREWOLF_ROLES, conditionKey: "cubSecondHunt", phoneMode: PHONE_MODE.WEREWOLF_HUNT },
       { text: "The {Big Bad Werewolf} wakes up and uses a thumb signal to choose whether to disguise himself as Grandmother for this night and day. This power may be used twice during the game.", requires: ["m01"], conditionKey: "bigBadWolfHasCharges" },
       { text: "The {Werewolf Seer} wakes up and uses a thumb signal to decide whether to save the victim and see their role, or let them die.", requires: ["m02"], conditionKey: "werewolfSeerHasCharges" },
       { text: "The {Vampire Werewolf} wakes up and uses a thumb signal to decide whether to turn the victim into a Werewolf. If so, the victim is touched and will wake up with the Werewolves from now on. The victim uses a thumb signal to choose whether to keep their powers.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
@@ -586,6 +589,7 @@ export const en: Translation = {
       travellerGamblerGuess: "Guessed {role} among {players}: {result}.",
       travellerGuessCorrect: "correct",
       travellerGuessIncorrect: "incorrect",
+      cubSecondHunt: "Second hunt after the Werewolf Cub’s death.",
       travellerGunslingerShot: "Selected this player for assassination.",
       travellerDevilsAdvocate: "Selected this player for execution immunity.",
       travellerBoneCollectorCopy: "Copied the most recently deceased player's power.",

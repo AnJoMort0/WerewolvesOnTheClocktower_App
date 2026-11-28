@@ -1,4 +1,4 @@
-// Optional real-browser smoke test. Node built-ins + an installed Chromium browser; no cloud access.
+﻿// Optional real-browser smoke test. Node built-ins + an installed Chromium browser; no cloud access.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -85,7 +85,7 @@ try {
   assert.ok(beginnerRoles.every(role => ["e01", "e02", "e03", "e04", "v01", "v02", "v03", "v06", "v07", "v08", "v10", "v11", "v13", "v14", "v17", "v18", "m01", "m02", "m04", "s01", "s02", "f01", "f02", "l01", "l02", "l04", "l05", "l06"].includes(role)));
   assert.equal((await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" })).phase_state.beginnerMode, true);
   // Use a deterministic lot for the role-specific smoke test after exercising random assignment.
-  const roles = ["v26", "m01", "m02", "v03", "v05", "v08", "v10", "e02"];
+  const roles = ["v26", "m01", "m02", "m08", "v05", "v08", "v10", "e02"];
   const assignments = Object.fromEntries(roster.map((player, index) => [player.id, roles[index]]));
   await cdp.evaluate(gm, `(() => {
     const key = 'wotct_gm_snapshot_${roomId}';
@@ -125,9 +125,9 @@ try {
     if (!selector) throw new Error('Traveller role selector is missing');
     selector.click();
   })()`);
-  await cdp.wait(gm, "[...document.querySelectorAll('[role=option]')].some(option => option.textContent.includes(\"t04. Devil's Advocate\"))");
-  await cdp.evaluate(gm, `[...document.querySelectorAll('[role=option]')].find(option => option.textContent.includes("t04. Devil's Advocate")).click()`);
-  await cdp.wait(gm, `document.body.innerText.includes("t04. Devil's Advocate")`);
+  await cdp.wait(gm, "[...document.querySelectorAll('[role=option]')].some(option => option.textContent.includes(\"t07. Gangster\"))");
+  await cdp.evaluate(gm, `[...document.querySelectorAll('[role=option]')].find(option => option.textContent.includes("t07. Gangster")).click()`);
+  await cdp.wait(gm, `document.body.innerText.includes("t07. Gangster")`);
   await cdp.click(gm, "Confirm");
   await cdp.wait(travellerPhone, "document.body.innerText.includes('You are a Villager') || document.body.innerText.includes('You are an Evil Being')");
   await cdp.click(travellerPhone, "I understand");
@@ -157,8 +157,8 @@ try {
   } while (Date.now() < travellerDeadline);
   assert.equal(traveller?.traveller_state, "placed");
   assert.equal(traveller?.seat_position, 1);
-  assert.equal(traveller?.traveller_role, "t04");
-  const travellerRoleNames = { t04: "Devil's Advocate" };
+  assert.equal(traveller?.traveller_role, "t07");
+  const travellerRoleNames = { t07: "Gangster" };
   await cdp.click(phones[1], "Hide Role");
   await cdp.wait(phones[1], `!!document.querySelector(${JSON.stringify(`button[aria-label="${travellerRoleNames[traveller.traveller_role]}"]`)})`);
   console.log("Late Traveller request, approval, secret alignment reveal, public role and circle placement worked through the real LAN transport.");
@@ -256,6 +256,18 @@ try {
   updated = await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" });
   assert.equal(updated.timer_state.status, "running");
   console.log("Resume persisted.");
+  const cub = roster.find(player => assignments[player.id] === "m08");
+  await cdp.evaluate(gm, `(() => {
+    const rows = [...document.querySelectorAll('div.bg-card.border.rounded-lg.p-2')];
+    const source = rows.find(row => row.textContent.includes('Late Traveller'));
+    const target = rows.find(row => row.textContent.includes(${JSON.stringify(cub.name)}));
+    const dataTransfer = new DataTransfer();
+    source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }));
+    target.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer }));
+  })()`);
+  await cdp.wait(gm, `JSON.parse(localStorage.getItem('wotct_gm_snapshot_${roomId}')).gameLogEvents.some(event =>
+    event.action === 'kill' && event.source === 't07' && event.actor?.id === ${JSON.stringify(traveller.id)}
+    && event.target?.id === ${JSON.stringify(cub.id)})`);
   await cdp.click(gm, "Start Tribunal");
   await cdp.wait(phones[0], "document.body.innerText.includes('Tribunal')");
   updated = await query({ table: "rooms", filters: [["id", roomId]], cardinality: "single" });
@@ -304,6 +316,7 @@ try {
   await cdp.call("Page.reload", {}, gm);
   await cdp.wait(phones[0], "document.body.innerText.includes('Night 2') && !!document.querySelector('button .lucide-x')");
   await cdp.wait(gm, "document.body.innerText.includes('Night 2')");
+  await cdp.wait(gm, "document.querySelectorAll('[data-phone-mode=werewolf-hunt]').length === 2");
   console.log("Voting threshold, Tribunal execution, permanent death and refreshed Night 2 state worked offline.");
   await cdp.evaluate(gm, "document.querySelector('button[aria-label=\"End Game Manually\"]').click()");
   await cdp.click(gm, "Village Victory");

@@ -270,6 +270,7 @@ export function useGMPhoneActions({ roomId, contextKey, enabled, world, onAction
     if (participantIds.length === 0) return false;
     const next = {
       id: createPlayerActionRequestId("gm", lineKey), lineKey, mode, sourcePlayerId, progressOrder, participantIds,
+      ...(mode === PHONE_MODE.WEREWOLF_HUNT && lineKey.endsWith(":cubSecondHunt") ? { excludedHuntTargets: current.current.world.packHuntTargets } : {}),
       votes: {}, sequences: {}, minTargetCount: getPhoneMinimumTargetCount(mode),
       targetCount: getPhoneTargetCount(mode, sourcePlayerId, current.current.world),
       ...(mode === PHONE_MODE.WHITE_WEREWOLF_ASSASSINATION ? { whiteWolfSolo: isWhiteWolfSolo(sourcePlayerId, current.current.world) } : {}),

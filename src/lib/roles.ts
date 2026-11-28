@@ -45,6 +45,7 @@ import m03Img from "@/assets/display/roles/m03.webp";
 import m04Img from "@/assets/display/roles/m04.webp";
 import m05Img from "@/assets/display/roles/m05.webp";
 import m06Img from "@/assets/display/roles/m06.webp";
+import m08Img from "@/assets/display/roles/m08.webp";
 import m07Img from "@/assets/display/roles/m07.webp";
 import s01Img from "@/assets/display/roles/s01.webp";
 import s02Img from "@/assets/display/roles/s02.webp";
@@ -63,6 +64,7 @@ import t02Img from "@/assets/display/roles/t02.webp";
 import t03Img from "@/assets/display/roles/t03.webp";
 import t04Img from "@/assets/display/roles/t04.webp";
 import t05Img from "@/assets/display/roles/t05.webp";
+import t07Img from "@/assets/display/roles/t07.webp";
 import t06Img from "@/assets/display/roles/t06.webp";
 
 export type RoleCategory = "e" | "v" | "m" | "s" | "f" | "a" | "l" | "t";
@@ -117,6 +119,7 @@ const ROLE_DEFINITIONS = {
   m04: { id: "m04", label: "Ankou", image: m04Img, category: "m" },
   m05: { id: "m05", label: "Evil Cupid", image: m05Img, category: "m" },
   m06: { id: "m06", label: "(Were)wolf Tamer", image: m06Img, category: "m" },
+  m08: { id: "m08", label: "Werewolf Cub", image: m08Img, category: "m" },
   m07: { id: "m07", label: "Mother of Werewolves", image: m07Img, category: "m" },
   s01: { id: "s01", label: "Cupid", image: s01Img, category: "s" },
   s02: { id: "s02", label: "White Werewolf", image: s02Img, category: "s" },
@@ -141,6 +144,7 @@ const ROLE_DEFINITIONS = {
   t03: { id: "t03", label: "Gunslinger", image: t03Img, category: "t" },
   t04: { id: "t04", label: "Devil's Advocate", image: t04Img, category: "t" },
   t05: { id: "t05", label: "Bone Collector", image: t05Img, category: "t" },
+  t07: { id: "t07", label: "Gangster", image: t07Img, category: "t" },
   t06: { id: "t06", label: "Bureaucrat", image: t06Img, category: "t" },
 } as const satisfies Record<string, RoleDefinition>;
 
@@ -160,15 +164,15 @@ export const ROLES: Record<RoleId, RoleDef> = ROLE_DEFINITIONS;
 
 export const ALL_ROLE_IDS: RoleId[] = Object.keys(ROLES) as RoleId[];
 
-export const TRAVELLER_ROLES: RoleId[] = ["t01", "t02", "t03", "t04", "t05", "t06"];
+export const TRAVELLER_ROLES: RoleId[] = ["t01", "t02", "t03", "t04", "t05", "t06", "t07"];
 
 export function isUniqueRole(id: RoleId): boolean {
   return id !== "e01" && id !== "l01" && !TRAVELLER_ROLES.includes(id);
 }
 
-export const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05", "m07"];
+export const EVIL_ROLES: RoleId[] = ["e01", "e02", "s02", "a06", "m01", "m02", "m03", "m04", "m05", "m07", "m08"];
 
-export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "m06", "m07", "s02"];
+export const WEREWOLF_ROLES: RoleId[] = ["e01", "m01", "m02", "m03", "m06", "m07", "m08", "s02"];
 
 export const HIDDEN_WEREWOLF_ROLES: RoleId[] = ["m06"];
 
@@ -194,7 +198,7 @@ export const MIME_COPY_ROLES: RoleId[] = [
 export const INFO_ROLES: RoleId[] = ["v02", "v03", "v28", "v04", "v05", "v26", "v23", "v06", "v22", "v25"];
 
 const ESSENTIAL_SINGLES: RoleId[] = ["e02", "e03", "e04"];
-const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "s02"];
+const SPECIAL_WEREWOLVES: RoleId[] = ["m01", "m02", "m03", "m06", "m07", "m08", "s02"];
 const VILLAGER_UNIQUE: RoleId[] = [
   "v01", "v02", "v03", "v28", "v29", "v04", "v05", "v26", "v06", "v07", "v08", "v08b", "v09", "v27", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25"
 ];

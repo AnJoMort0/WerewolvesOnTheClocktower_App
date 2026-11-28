@@ -183,6 +183,12 @@ const BOCT: LocalizedText = {
     en: `Blood on the Clocktower`
 };
 
+const UW: LocalizedText = {
+    pt: `Ultimate Werewolf`,
+    fr: `Ultimate Werewolf`,
+    en: `Ultimate Werewolf`
+};
+
 // ============================================================================
 // GENERAL RULES AND NAVIGATION TEXT — edit the language sections below
 // ============================================================================
@@ -2854,6 +2860,24 @@ export const RULEBOOK_CHARACTERS = {
         },
     },
 
+    // m08 | Werewolf Cub
+    "m08": {
+        id: "m08", group: "evil", team: "evilBeing",
+        name: { pt: "Cria de Lobisomem", fr: "Louveteau-Garou", en: "Werewolf Cub" },
+        mainDescription: {
+            pt: ["Se a Cria de Lobisomem for morta, os Lobisomens podem <red>escolher uma segunda vítima na noite seguinte à sua morte</red>. O Narrador indica discretamente aos Lobisomens que podem escolher uma segunda vítima."],
+            fr: ["Si le Louveteau-Garou est tué, les Loups-garous peuvent <red>choisir une deuxième victime la nuit suivant sa mort</red>. Le Narrateur leur indique discrètement qu’ils peuvent choisir une deuxième victime."],
+            en: ["If the Werewolf Cub is killed, the Werewolves may <red>choose a second victim on the night following his death</red>. The Narrator discreetly signals the Werewolves that they may hunt again."]
+        },
+        details: [WEREWOLF_POISON_DETAIL],
+        objective: EVIL_BEING_OBJECTIVE,
+        origin: {
+            pt: [`Cria de Lobo`, UW],
+            fr: [`Louveteau-Garou`, UW],
+            en: [`Werewolf Cub`, UW]
+        },
+    },
+
     // ---- SOLO CHARACTERS -----------------------------------------
 
     // s01 | Cupid
@@ -3844,6 +3868,59 @@ export const RULEBOOK_CHARACTERS = {
             en: [`Organ Grinder`, BOCT] },
     },
 
+    // t07 | Gangster
+    "t07": {
+        id: "t07",
+        group: "traveller",
+        team: "traveller",
+        name: {
+            pt: `Gangster`,
+            fr: `Gangster`,
+            en: `Gangster`
+        },
+        mainDescription: {
+            pt: [
+                `<red>Uma vez por dia</red>, no final do dia, antes do Tribunal, o Gangster pode pedir que um dos seus vizinhos seja assassinado.`,
+                `Para que o assassinato aconteça, <red>o outro vizinho deve dar publicamente o seu consentimento</red>.`
+            ],
+            fr: [
+                `<red>Une fois par jour</red>, à la fin de la journée, avant le Tribunal, le Gangster peut demander à ce que l'un de ses voisins soit assassiné.`,
+                `Pour que l'assassinat ait lieu, <red>l'autre voisin doit donner publiquement son accord</red>.`
+            ],
+            en: [
+                `<red>Once per day</red>, at the end of the day, before the Tribunal, the Gangster may ask for one of his neighbours to be assassinated.`,
+                `For the assassination to take place, <red>the other neighbour must publicly agree to it</red>.`
+            ]
+        },
+        details: [{
+            title: {
+                pt: `Se envenenado:`,
+                fr: `Si empoisonné :`,
+                en: `If poisoned:`
+            },
+            description: {
+                pt: `O outro vizinho é assassinado em vez do vizinho escolhido.`,
+                fr: `L'autre voisin est assassiné à la place du voisin choisi.`,
+                en: `The other neighbour is assassinated instead of the chosen neighbour.`
+            }
+        }],
+        objective: TRAVELLER_OBJECTIVE,
+        lore: [
+            {
+                text: {
+                    pt: `Se tivessem sido vizinhos durante mais tempo, talvez tivessem resolvido as suas diferenças. Afinal, viver temporariamente lado a lado ainda se tolera, mas sentarem-se um ao lado do outro no Tribunal já é pedir demais.`,
+                    fr: `S'ils avaient été voisins plus longtemps, peut-être auraient-ils réglé leurs différends. Après tout, vivre temporairement côte à côte, passe encore, mais s'asseoir l'un à côté de l'autre au Tribunal, c'est un peu trop demander.`,
+                    en: `Had they been neighbours for longer, perhaps they would have worked out their differences. After all, living next to each other temporarily is fine, but sitting next to each other at the courthouse is taking it one step too far.`
+                },
+            },
+        ],
+        origin: {
+            pt: [`Gangster`, BOCT],
+            fr: [`Gangster`, BOCT],
+            en: [`Gangster`, BOCT]
+        },
+    },
+
     // ---- LAME CHARACTERS -----------------------------------------
 
     // l01 | Ordinary Townsfolk
@@ -4445,6 +4522,7 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "m03",
     "m06",
     "m07",
+    "m08",
     "m04",
     "m05",
     "s01",
@@ -4470,7 +4548,8 @@ export const RULEBOOK_CHARACTER_ORDER = [
     "t03",
     "t04",
     "t05",
-    "t06"
+    "t06",
+    "t07"
 ] as RulebookCharacterId[];
 // ============================================================================
 // PRINTED NIGHT SCRIPTS — these also feed the analog character generator
@@ -5006,6 +5085,11 @@ export const RULEBOOK_NIGHT_SCRIPT = {
                 fr: `Les Loups-garous se réveillent et choisissent ensemble une victime qu’ils tenteront d’assassiner cette nuit. / Si un Loup-garou est empoisonné, la chasse se déroule normalement, mais l’attaque n’assassine pas la victime. / Si l’Astronome est mort la nuit précédente, les Loups-garous ne se réveillent pas.`,
                 en: `The Werewolves wake up and jointly choose a victim they will attempt to assassinate tonight. / If any Werewolf is poisoned, the hunt proceeds normally, but the attack does not assassinate the victim. / If the Astronomer died the previous night, the Werewolves do not wake up.`
             }
+        },
+        {
+            id: "normal-m08",
+            refs: ["m08"],
+            text: { en: "(If the Werewolf's Cub died, the Werewolves may choose a second victim.)", pt: "(Se a Cria de Lobisomem morreu, os Lobisomens podem escolher uma segunda vítima.)", fr: "(Si le Louveteau-Garou est mort, les Loups-garous peuvent choisir une deuxième victime.)" }
         },
         {
             id: "normal-m01",

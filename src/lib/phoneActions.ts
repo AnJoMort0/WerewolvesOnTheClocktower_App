@@ -99,10 +99,11 @@ export type PhonePlayer = {
   acquitted?: boolean;
   acquittedSourceIds?: string[];
 };
-export type PhoneWorld = { players: PhonePlayer[]; packBlocked: boolean; nightNumber?: number };
+export type PhoneWorld = { players: PhonePlayer[]; packBlocked: boolean; packHuntTargets?: string[]; nightNumber?: number };
 export type PhoneSession = {
   id: string;
   lineKey: string;
+  excludedHuntTargets?: string[];
   mode: PhoneMode;
   sourcePlayerId: string | null;
   progressOrder?: number | null;
@@ -322,7 +323,7 @@ export function getPhoneParticipants(mode: PhoneMode, sourcePlayerId: string | n
 }
 
 export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boolean {
-  if (session.completed) return false;
+  if (session.completed || session.excludedHuntTargets?.includes(player.id)) return false;
   if (isRoleActionPhoneMode(session.mode)) {
     if (session.approvalResult) return false;
     if (session.mode === PHONE_MODE.GRAVE_ROBBER_SWAP || session.mode === PHONE_MODE.DEVOUT_SERVANT_SAVE) {

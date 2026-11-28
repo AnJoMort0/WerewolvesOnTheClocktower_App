@@ -8,6 +8,8 @@ const PHASES = ["firstNight", "secondNight", "normalNight"] as const satisfies r
 function appSignature(lines: ScriptLine[]) {
   return lines.map((line) => line.conditionKey === "soldierDied"
     ? "v09"
+    // The Cub triggers the analog reminder; the surviving pack performs the app action.
+    : line.conditionKey === "cubSecondHunt" ? "m08"
     : line.requires?.join(",") ?? "general");
 }
 

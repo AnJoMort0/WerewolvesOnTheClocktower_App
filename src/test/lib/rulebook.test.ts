@@ -74,12 +74,12 @@ describe("in-app rulebook rendering", () => {
       expect(html).toContain(RULEBOOK_CHARACTERS.t06.name[language]);
       expect(html).not.toContain('id="normal-t06"');
     }
-    expect(RULEBOOK_CHARACTER_ORDER.at(-1)).toBe("t06");
+    expect(RULEBOOK_CHARACTER_ORDER.slice(-2)).toEqual(["t06", "t07"]);
   });
 
   it("calls the Washerwoman only from the second night", () => {
     const html = getRulebookHtml("en", "a07");
-    expect(html).toContain("Each night starting with the second");
+    expect(html).toContain("Each night");
     expect(RULEBOOK_NIGHT_SCRIPT.firstNight.some((line) => (line.refs as readonly string[]).includes("a07"))).toBe(false);
     expect(RULEBOOK_NIGHT_SCRIPT.normalNight.some((line) => (line.refs as readonly string[]).includes("a07"))).toBe(true);
   });

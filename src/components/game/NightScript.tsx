@@ -87,7 +87,7 @@ interface NightScriptProps {
   cupidCharges?: number;
   onCupidChargeToggle?: (idx: number) => void;
   vampireWolfUsed?: boolean;
-  onVampireWolfToggle?: () => void;
+  onVampireWolfToggle?: (source?: string | null) => void;
   judgeCharges?: number;
   onJudgeChargeToggle?: (idx: number) => void;
   accuserCharges?: number;
@@ -317,7 +317,7 @@ function ScriptLineDisplay({
   onCupidChargeToggle?: (idx: number) => void;
   showCupidCheckboxes: boolean;
   vampireWolfUsed?: boolean;
-  onVampireWolfToggle?: () => void;
+  onVampireWolfToggle?: (source?: string | null) => void;
   judgeCharges?: number;
   onJudgeChargeToggle?: (idx: number) => void;
   accuserCharges?: number;
@@ -610,7 +610,7 @@ function ScriptLineDisplay({
         )}
         {isVampireWolfLine && onVampireWolfToggle != null && (
           <div className="flex items-center gap-2 mt-2">
-            <Checkbox checked={!!vampireWolfUsed} aria-label={t("powerUsed", lang)} onCheckedChange={() => { onPowerUseChange(!vampireWolfUsed); onVampireWolfToggle(); }} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
+            <Checkbox checked={!!vampireWolfUsed} aria-label={t("powerUsed", lang)} onCheckedChange={() => onVampireWolfToggle(sourcePlayerId)} className="h-5 w-5 border-primary data-[state=checked]:bg-primary" />
             <span className="text-xs text-muted-foreground">{t("powerUsed", lang)}</span>
           </div>
         )}
@@ -1273,7 +1273,7 @@ export const NightScript = ({
         if (sourceHasCaught) {
           items.push({
             line,
-            key: `${nightNumber}:${source}:${index}`,
+            key: `${nightNumber}:${source}:${line.conditionKey === "cubSecondHunt" ? "cubSecondHunt" : index}`,
             progressOrder,
             actorJoins: isSharedCopiedRoleLine,
             sourcePlayerId: isCopiedRoleLine && line.requires?.length === 1 ? originalRolePlayerId : standardSourcePlayerId,
@@ -1633,7 +1633,7 @@ export const NightScript = ({
                 onCupidChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("cupidCharges", idx) : onCupidChargeToggle}
                 showCupidCheckboxes={nightNumber > 1}
                 vampireWolfUsed={usesIndependentPowerState ? powerState.vampireWolfUsed : vampireWolfUsed}
-                onVampireWolfToggle={usesIndependentPowerState ? () => toggleBoolean("vampireWolfUsed") : onVampireWolfToggle}
+                onVampireWolfToggle={onVampireWolfToggle}
                 judgeCharges={usesIndependentPowerState ? powerState.judgeCharges : judgeCharges}
                 onJudgeChargeToggle={usesIndependentPowerState ? (idx) => setNumericCharge("judgeCharges", idx) : onJudgeChargeToggle}
                 accuserCharges={usesIndependentPowerState ? powerState.accuserCharges : accuserCharges}

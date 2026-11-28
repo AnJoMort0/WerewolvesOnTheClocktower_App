@@ -10,6 +10,7 @@ const actions = {
 
 export const pt: Translation = {
   roleLabels: {
+    t07: "Gangster",
     t01: "Advogada", t02: "Apostador", t03: "Pistoleiro", t04: "Advogado do Diabo", t05: "Colecionador de Ossos", t06: "Burocrata",
     e01: "Lobisomem",
     e02: "Bruxa Malvada",
@@ -48,6 +49,7 @@ export const pt: Translation = {
     m04: "Ankou",
     m05: "Cupido Malvado",
     m06: "Mestre do Lobo(isomem)",
+    m08: "Cria de Lobisomem",
     m07: "Mãe dos Lobisomens",
     s01: "Cupido",
     s02: "Lobisomem Branco",
@@ -132,6 +134,7 @@ export const pt: Translation = {
       { text: "O {Salvador} acorda e indica quem será imune durante esta noite e o dia.", requires: ["v17"], phoneMode: PHONE_MODE.SAVIOUR_PROTECT },
       { text: "O {Pedro} acorda (todas as noites). Se ele acusou alguém em Tribunal, é-lhe indicado se essas pessoas são Lobisomens. Relembro que o {Pedro} não pode levar a mesma pessoa a Tribunal duas vezes.", requires: ["v22"] },
       { text: "Os {Lobisomens} acordam e escolhem em conjunto uma vitima que irão assassinar esta noite.", requires: WEREWOLF_ROLES, phoneMode: PHONE_MODE.WEREWOLF_HUNT },
+      { text: "(A {Cria de Lobisomem} morreu, os {Lobisomens} podem escolher uma segunda vítima.)", requires: WEREWOLF_ROLES, conditionKey: "cubSecondHunt", phoneMode: PHONE_MODE.WEREWOLF_HUNT },
       { text: "O {Lobisomem Mau} acorda e escolhe com o polegar se quer se mascarar de Avózinha esta noite e dia, ou não. Pode usar esse poder duas vezes durante todo o jogo.", requires: ["m01"], conditionKey: "bigBadWolfHasCharges" },
       { text: "O {Lobisomem Vidente} acorda e decide com o polegar se quer salvar a vítima para ver o seu papel ou deixá-la morrer.", requires: ["m02"], conditionKey: "werewolfSeerHasCharges" },
       { text: "O {Lobisomem Vampiro} acorda e diz com o polegar se quer transformar a vítima em Lobisomem. Se for o caso, a vítima será tocada, e passará a acordar sempre com os Lobisomens. A vítima diz com o polegar se quer guardar os seus poderes ou não.", requires: ["m03"], conditionKey: "vampireWolfHasCharges" },
@@ -586,6 +589,7 @@ export const pt: Translation = {
       travellerGamblerGuess: "Adivinhou {role} entre {players}: {result}.",
       travellerGuessCorrect: "certo",
       travellerGuessIncorrect: "errado",
+      cubSecondHunt: "Segunda caça após a morte da Cria de Lobisomem.",
       travellerGunslingerShot: "Escolheu este jogador para assassinar.",
       travellerDevilsAdvocate: "Escolheu este jogador para imunidade à execução.",
       travellerBoneCollectorCopy: "Copiou o poder do jogador que morreu mais recentemente.",
