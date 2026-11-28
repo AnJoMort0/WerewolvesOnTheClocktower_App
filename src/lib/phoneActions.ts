@@ -6,6 +6,8 @@ import { clothingNumbers, wrongClothingNumbers, type ClothingEffect } from "@/li
 import { ROLE_DRAG_ACTIONS } from "@/lib/roleActions";
 
 const ROLE_ACTION_PHONE_MODES = {
+  [PHONE_MODE.WEREWOLF_SEER_SAVE]: { roleId: "m02", dragAction: "seer-save", canIgnore: true },
+  [PHONE_MODE.VAMPIRE_WEREWOLF_TURN]: { roleId: "m03", dragAction: "role-m03", canIgnore: true },
   [PHONE_MODE.HUNTER_ASSASSINATION]: { roleId: "v08", dragAction: ROLE_DRAG_ACTIONS.v08 },
   [PHONE_MODE.SOLDIER_ASSASSINATION]: { roleId: "v09", dragAction: "role-soldier-kill" },
   [PHONE_MODE.WHITE_WEREWOLF_ASSASSINATION]: { roleId: "s02", dragAction: ROLE_DRAG_ACTIONS.s02 },
@@ -74,6 +76,7 @@ export type PhonePlayer = {
   seat_position: number | null;
   dead: boolean;
   redX: boolean;
+  huntVictim?: boolean;
   abilityRole?: RoleId;
   objectiveRole?: RoleId;
   werewolfTurned: boolean;
@@ -326,6 +329,7 @@ export function isPhoneTarget(session: PhoneSession, player: PhonePlayer): boole
   if (session.completed || session.excludedHuntTargets?.includes(player.id)) return false;
   if (isRoleActionPhoneMode(session.mode)) {
     if (session.approvalResult) return false;
+    if (session.mode === PHONE_MODE.WEREWOLF_SEER_SAVE || session.mode === PHONE_MODE.VAMPIRE_WEREWOLF_TURN) return !!player.huntVictim && player.redX && !player.dead;
     if (session.mode === PHONE_MODE.GRAVE_ROBBER_SWAP || session.mode === PHONE_MODE.DEVOUT_SERVANT_SAVE) {
       return player.redX && player.id !== session.sourcePlayerId;
     }

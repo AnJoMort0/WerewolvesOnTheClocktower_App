@@ -36,6 +36,8 @@ type PhoneActionPresentation = {
 
 /** Shared visual language for night-script buttons and their action screens. */
 export const PHONE_ACTION_PRESENTATION: Record<PhoneMode, PhoneActionPresentation> = {
+  [PHONE_MODE.WEREWOLF_SEER_SAVE]: { icon: Eye, iconClass: "text-blue-400" },
+  [PHONE_MODE.VAMPIRE_WEREWOLF_TURN]: { icon: Moon, iconClass: "text-red-400" },
   [PHONE_MODE.WEREWOLF_HUNT]: { icon: Crosshair, iconClass: "text-red-400" },
   [PHONE_MODE.WEREWOLF_ALLIES]: { icon: Users, iconClass: "text-gold" },
   [PHONE_MODE.EVIL_WITCH_POISON]: { icon: FlaskConical, iconClass: "text-green-400" },

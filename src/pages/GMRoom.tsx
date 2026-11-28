@@ -1,4 +1,3 @@
-import { GameModal } from "@/components/game/GameModal";
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -565,7 +564,6 @@ const GMRoom = () => {
   const [motherCurseChangeUsed, setMotherCurseChangeUsed] = useState(false);
   const [packHuntTargets, setPackHuntTargets] = useState<string[]>([]);
   const [cubSecondHunt, setCubSecondHunt] = useState(false);
-  const [wolfChoice, setWolfChoice] = useState<{role: "m02" | "m03"; source: string} | null>(null);
   const [astronomerBlocksWerewolvesTonight, setAstronomerBlocksWerewolvesTonight] = useState(false);
   const [hideScreenMode, setHideScreenMode] = useState(false);
   const [minimizedGmActionId, setMinimizedGmActionId] = useState<string | null>(null);
@@ -631,6 +629,7 @@ const GMRoom = () => {
   const [usedTravellerPowerIds, setUsedTravellerPowerIds] = useState<Set<string>>(new Set());
   const [bureaucratUsesByPlayer, setBureaucratUsesByPlayer] = useState<Record<string, number>>({});
   const [werewolfDeathFlags, setWerewolfDeathFlags] = useState<Record<string, boolean>>({});
+  const seerActionRef = useRef<(targetId: string, sourceId: string) => void>(() => {});
   const monkeyDragRef = useRef<(sourcePlayerId: string, targetPlayerId: string) => void>(() => {});
   const scriptLinesRef = useRef<import("@/components/game/NightScript").ScriptActionLine[]>([]);
   const [scriptActionLineKeys, setScriptActionLineKeys] = useState<Set<string>>(new Set());
@@ -5874,6 +5873,7 @@ const GMRoom = () => {
       return {
         id: player.id, name: player.name, seat_position: player.seat_position,
         dead, redX: playerStatuses[player.id] === "dead-this-night",
+        huntVictim: killSources[player.id] === "e01" || (packHuntTargets.includes(player.id) && !!werewolfDeathFlags[player.id]),
         abilityRole: abilityRoleAssignments[player.id], objectiveRole,
         // Information powers see the card a player was dealt. Copying changes
         // their ability, never the identity shown to another character.
@@ -5899,8 +5899,12 @@ const GMRoom = () => {
         powerless: powerlessPlayerIds.has(player.id),
       };
     }),
-  }), [packHuntTargets, astronomerBlocksWerewolvesTonight, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerIds, powerlessPlayerIds, prophecyGhostPlayerIds, roleAssignments, sourcedEffectTargets]);
+  }), [killSources, werewolfDeathFlags, packHuntTargets, astronomerBlocksWerewolvesTonight, colossusReadyPlayerIds, abilityRoleAssignments, dogWolfStates, foxDisabled, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, mimePlayerId, monkeyDisabled, nightNumber, objectiveRoleAssignments, permanentlyDead, playerEffects, playerStatuses, players, poisonedPlayerIds, powerlessPlayerIds, prophecyGhostPlayerIds, roleAssignments, sourcedEffectTargets]);
   const applyPhoneAction = useCallback(({ action, targetPlayerId, targetPlayerIds, sourcePlayerId, monkeyReveal, foxReveal, investigatorReveal, washerwomanReveal, gamblerReveal }: PhoneAction) => {
+    if (action === PHONE_MODE.WEREWOLF_SEER_SAVE && sourcePlayerId) {
+      seerActionRef.current(targetPlayerId, sourcePlayerId);
+      return;
+    }
     if (action === PHONE_MODE.MONKEY_TAMER_REVEAL) {
       if (!sourcePlayerId || !monkeyReveal) return;
       // Revealed Evil Beings exhaust this source's power without killing them.
@@ -6592,10 +6596,17 @@ const GMRoom = () => {
     });
   }, [getRevealRecipientIds, handleIndependentPowerStateChange, handlePlayerStatusChange, illusionPlayerIds, independentPowerStates, isPlayerActingPoisoned, markScriptRoleAction, recordSpiderCatch, roleAssignments, roomId]);
 
+  seerActionRef.current = (targetId, sourceId) => {
+    const victim = huntVictims.find(player => player.id === targetId);
+    if (!victim) return;
+    setNightRoleUse("m02", sourceId, true);
+    handleWerewolfSeerReveal(victim, sourceId);
+  };
+
   function openSeerChoice(sourceId?: string | null) {
     const source = sourceId ?? getRolePlayerId("m02");
     if (source && !usedNightPowerKeys.has(nightPowerUseKey(nightNumber, "m02", source, 0))) {
-      setWolfChoice({ role: "m02", source });
+      phone.toggle(PHONE_MODE.WEREWOLF_SEER_SAVE, `${nightNumber}:seer:${source}`, source);
     }
   }
 
@@ -6607,7 +6618,7 @@ const GMRoom = () => {
       setNightRoleUse("m03", source, false);
       if (state) handleIndependentPowerStateChange(source, { ...state, vampireWolfUsed: false });
       else setVampireWolfUsed(false);
-    } else if (hasHuntVictims) setWolfChoice({ role: "m03", source });
+    } else if (hasHuntVictims) phone.toggle(PHONE_MODE.VAMPIRE_WEREWOLF_TURN, `${nightNumber}:vampire:${source}`, source);
   }
 
   const handleCloseWerewolfSeerModal = useCallback(() => {
@@ -8350,20 +8361,6 @@ const GMRoom = () => {
         onRoleClick={(roleId) => openRulebook(roleId)}
       />
 
-      {wolfChoice && <GameModal open onClose={() => setWolfChoice(null)} title={roleLabel(wolfChoice.role)} closeLabel={getTranslation(lang).ui.actions.ignore}>
-        <div className="grid gap-2">
-          {huntVictims.map(victim => <Button key={victim.id} onClick={() => {
-            setWolfChoice(null);
-            setNightRoleUse(wolfChoice.role, wolfChoice.source, true);
-            if (wolfChoice.role === "m02") handleWerewolfSeerReveal(victim, wolfChoice.source);
-            else {
-              handleDragAction("role-m03", victim.id, wolfChoice.source);
-              setVampireVictimKeepsPower(true);
-            }
-          }}>{victim.name}</Button>)}
-          <Button variant="outline" onClick={() => setWolfChoice(null)}>{getTranslation(lang).ui.actions.ignore}</Button>
-        </div>
-      </GameModal>}
       <RevealModal
         language={lang}
         open={littleGirlRevealOpen}

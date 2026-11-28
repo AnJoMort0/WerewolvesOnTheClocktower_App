@@ -4,6 +4,8 @@
  * action configuration rather than in UI state.
  */
 export const PHONE_MODE = {
+  WEREWOLF_SEER_SAVE: "werewolf-seer-save",
+  VAMPIRE_WEREWOLF_TURN: "vampire-werewolf-turn",
   WEREWOLF_HUNT: "werewolf-hunt",
   WEREWOLF_ALLIES: "werewolf-allies",
   EVIL_WITCH_POISON: "evil-witch-poison",
