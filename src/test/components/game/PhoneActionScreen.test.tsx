@@ -17,6 +17,21 @@ const baseView: PhoneView = {
 };
 
 describe("PhoneActionScreen", () => {
+  it.each([PHONE_MODE.WEREWOLF_SEER_SAVE, PHONE_MODE.VAMPIRE_WEREWOLF_TURN])("shows only victim names for %s", (mode) => {
+    const onSend = vi.fn();
+    render(<PhoneActionScreen session={{ ...baseView, mode,
+      players: baseView.players.map(player => ({ ...player, selectable: player.id === "target" })) }}
+      playerId="wolf" language="en" pending={false} connected onSend={onSend} />);
+    expect(screen.queryByTestId("phone-action-map")).not.toBeInTheDocument();
+    expect(screen.getByTestId("hunt-victim-list")).toHaveTextContent("Target");
+    expect(screen.queryByRole("button", { name: "Wolf" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Target" }));
+    expect(onSend).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    expect(onSend).toHaveBeenCalledWith("confirm", "target", ["target"]);
+    fireEvent.click(screen.getByRole("button", { name: "Ignore" }));
+    expect(onSend).toHaveBeenCalledWith("ignore");
+  });
   it("has localized shared choice prompts", () => {
     for (const language of ["en", "pt", "fr"] as const) {
       const prompts = getTranslation(language).ui.phoneActions;

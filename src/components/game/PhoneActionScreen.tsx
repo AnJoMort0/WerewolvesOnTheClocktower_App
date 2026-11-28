@@ -70,6 +70,8 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
     setSelectedIds([]);
   }, [session.id]);
   const isRoleAction = isRoleActionPhoneMode(session.mode);
+  const usesVictimList = session.mode === PHONE_MODE.WEREWOLF_SEER_SAVE
+    || session.mode === PHONE_MODE.VAMPIRE_WEREWOLF_TURN;
   const roleActionConfig = isRoleActionPhoneMode(session.mode) ? getRoleActionPhoneConfig(session.mode) : null;
   const selected = session.foxReveal?.targetPlayerId ?? session.investigatorReveal?.targetPlayerId ?? session.washerwomanReveal?.targetPlayerId ?? session.gypsyReveal?.targetPlayerId ?? session.priestReveal?.targetPlayerId ?? session.pendingTargetPlayerId
     ?? (selectedPlayerId !== undefined ? selectedPlayerId
@@ -183,6 +185,16 @@ export function PhoneActionScreen({ session, playerId, language, pending, connec
             ? text.cursedNotice
             : completedText
         }</strong>
+      </div> : usesVictimList ? <div className="grid gap-2" data-testid="hunt-victim-list">
+        {players.filter((player) => player.selectable).map((player) => (
+          <Button key={player.id} variant={selectedSet.has(player.id) ? "default" : "outline"}
+            aria-pressed={selectedSet.has(player.id)}
+            disabled={readOnly || pending || !connected}
+            className="h-auto min-h-11 whitespace-normal break-words py-3"
+            onClick={() => setSelectedIds([player.id])}>
+            {player.name}
+          </Button>
+        ))}
       </div> : <div className="min-w-0 pb-1 touch-pan-y">
         <div
           data-testid="phone-action-map"
